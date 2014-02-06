@@ -20,7 +20,7 @@ from github import Github
 #logging.basicConfig(level=logging.DEBUG)
 
 # Constants
-github_url = 'https://api.github.com'
+_github_url = 'https://api.github.com'
 
 
 ## NOTE
@@ -31,14 +31,14 @@ github_url = 'https://api.github.com'
 
 # Internal functions
 
-pool = None
-def getConnectionPool():
-    global pool
-    if pool is None:
-        pool = ConnectionPool(factory=Connection)
-    return pool
+_pool = None
+def _getConnectionPool():
+    global _pool
+    if _pool is None:
+        _pool = ConnectionPool(factory=Connection)
+    return _pool
 
-def authorizeUser():
+def _authorizeUser():
     # using basic auth request an access token, then save it so that we don't
     # have to repeatedly ask for basic authentication credentials
 
@@ -53,7 +53,7 @@ def authorizeUser():
         'scopes': ['repo'],
           'note': 'yotta'
     }
-    resource = Resource(github_url + '/authorizations', pool=getConnectionPool(), filters=[auth])
+    resource = Resource(_github_url + '/authorizations', pool=_getConnectionPool(), filters=[auth])
     response = resource.post(
         headers = {'Content-Type': 'application/json'}, 
         payload = json.dumps(request_data)
@@ -61,17 +61,17 @@ def authorizeUser():
     token = json.loads(response.body_string())['token']
     settings.setProperty('github', 'authtoken', token)
 
-def userAuthorized():
+def _userAuthorized():
     return settings.getProperty('github', 'user') and \
            settings.getProperty('github', 'authtoken')
  
-def handleAuth(fn):
+def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except github.BadCredentialsException:
-            authorizeUser()
+            _authorizeUser()
             logging.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
             return fn(*args, **kwargs)
         except github.UnknownObjectException:
@@ -80,14 +80,14 @@ def handleAuth(fn):
             # and store multiple tokens that we can try for each request....
             # but for now we assume that if the user is logged in then a 404
             # really is a 404
-            if not userAuthorized():
-                authorizeUser()
+            if not _userAuthorized():
+                _authorizeUser()
                 return fn(*args, **kwargs)
             else:
                 raise
     return wrapped
 
-def fullySplitPath(path):
+def _fullySplitPath(path):
     components = []
     while True:
         path, component = os.path.split(path)
@@ -101,7 +101,7 @@ def fullySplitPath(path):
     return components
 
 # API
-@handleAuth
+@_handleAuth
 def getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
@@ -109,10 +109,10 @@ def getTags(repo):
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
     
-@handleAuth
+@_handleAuth
 def getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    resource = Resource(url, pool=getConnectionPool(), follow_redirect=True)
+    resource = Resource(url, pool=_getConnectionPool(), follow_redirect=True)
     response = resource.get(
         headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
     )
@@ -140,7 +140,7 @@ def getTarball(url, into_directory):
             to_extract = []
             # modify members to change where they extract to!
             for m in tf.getmembers():
-                split_path = fullySplitPath(m.name)
+                split_path = _fullySplitPath(m.name)
                 if len(split_path) > 1:
                     m.name = os.path.join(*(split_path[1:]))
                     to_extract.append(m)
