@@ -4,9 +4,12 @@ import json
 import getpass
 import os
 import tarfile
+import re
 
 # settings, , load and save settings, internal
 import settings
+# version, , represent versions and specifications, internal
+import version
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
@@ -100,17 +103,24 @@ def _fullySplitPath(path):
     components.reverse()
     return components
 
-# API
 @_handleAuth
-def getTags(repo):
+def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
+
+@_handleAuth
+def _getTipArchiveURL(repo):
+    ''' return a string containing a tarball url '''
+    g = Github(settings.getProperty('github', 'authtoken'))
+    repo = g.get_repo(repo)
+    return repo.archive_url
+
     
 @_handleAuth
-def getTarball(url, into_directory):
+def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
     resource = Resource(url, pool=_getConnectionPool(), follow_redirect=True)
     response = resource.get(
@@ -147,3 +157,45 @@ def getTarball(url, into_directory):
             tf.extractall(path=into_directory, members=to_extract)
     logging.debug('extraction complete %s', into_directory)
 
+
+# API
+class GithubComponentVersion(version.Version):
+    def unpackInto(self, directory):
+        assert(self.url)
+        _getTarball(self.url, directory)
+
+class GithubComponent:
+    def __init__(self, repo, version_spec=''):
+        self.repo = repo
+        self.spec = version.Spec(version_spec)
+    
+    @classmethod
+    def createFromURL(cls, url):
+        ''' returns a github component for any github url (including
+            git+ssh:// git+http:// etc. or None if this is not a Github URL.
+            For all of these we use the github api to grab a tarball, because
+            that's faster.
+
+            Normally version will be empty, unless the original url was of the
+            form: 'owner/repo @version' or 'url://...#version', which can be used
+            to grab a particular tagged version.
+        '''
+        url = url.strip()
+        m = re.match('([^/\s]*/[^/\s]*) *@?([.0-9a-zA-Z\*-]*)', url)
+        if m:
+            return GithubComponent(*m.groups())
+        m = re.match('[^:/]*://[^:/]*github\.com/([^/]*/[^/]*)#?([.0-9a-zA-Z\*-]*)', url)
+        if m:
+            return GithubComponent(*m.groups())
+        return None
+
+    def versionSpec(self):
+        return self.spec
+
+    def availableVersions(self):
+        ''' return a list of Version objects, each with a tarball URL set '''
+        return [GithubComponentVersion(t[0], url=t[1]) for t in _getTags(self.repo).iteritems()]
+
+    def tipVersion(self):
+        return GithubComponentVersion('master', _getTipArchiveURL(self.repo))
+    
