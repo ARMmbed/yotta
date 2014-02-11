@@ -1,5 +1,7 @@
+#! /usr/bin/env python2.7
 import os
 import shutil
+import errno
 
 from lib import access
 from lib import component
@@ -33,12 +35,13 @@ package_json = '''{
   "dependencies": {
     "toolchain": "ARM-RD/toolchain",
     "libc": "ARM-RD/libc",
-    "objc2": "ARM-RD/objc2 @>0.0.7",
-    "yottos_platform": "ARM-RD/yottos_platform @0.0.3",
+    "objc2": "ARM-RD/libobjc2 @>0.0.7",
+    "yottos_platform": "ARM-RD/yottos-platform @0.0.3",
     "emlib": "ARM-RD/emlib",
     "nsobject": "ARM-RD/nsobject",
     "nslog": "ARM-RD/nslog",
-    "nsassert": "ARM-RD/nsassert"
+    "nsassert": "ARM-RD/nsassert",
+    "thisdoesnotexist": "ARM-RD/thisdoesnotexist"
   },
   "devDependencies": {}
 }
@@ -68,8 +71,7 @@ c = component.Component(testdir)
 
 available = []
 
-#pool.map
-map(
+pool.map(
     lambda (name, ver_req): access.satisfyVersion(name, ver_req, testdir, available),
     c.getDependencies()
 )

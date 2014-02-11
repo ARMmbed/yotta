@@ -5,11 +5,14 @@ import getpass
 import os
 import tarfile
 import re
+import functools
 
 # settings, , load and save settings, internal
 import settings
 # version, , represent versions and specifications, internal
 import version
+# access_common, , things shared between different component access modules, internal
+import access_common
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
@@ -70,6 +73,7 @@ def _userAuthorized():
  
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
+    @functools.wraps(fn)
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
@@ -107,6 +111,7 @@ def _fullySplitPath(path):
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
+    print 'get repo:', repo
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
@@ -116,7 +121,7 @@ def _getTipArchiveURL(repo):
     ''' return a string containing a tarball url '''
     g = Github(settings.getProperty('github', 'authtoken'))
     repo = g.get_repo(repo)
-    return repo.archive_url
+    return repo.get_archive_link('tarball')
 
     
 @_handleAuth
@@ -194,8 +199,13 @@ class GithubComponent:
 
     def availableVersions(self):
         ''' return a list of Version objects, each with a tarball URL set '''
-        return [GithubComponentVersion(t[0], url=t[1]) for t in _getTags(self.repo).iteritems()]
+        try:
+            return [GithubComponentVersion(t[0], url=t[1]) for t in _getTags(self.repo).iteritems()]
+        except github.UnknownObjectException, e:
+            raise access_common.ComponentUnavailable(
+                'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
+            )
 
     def tipVersion(self):
-        return GithubComponentVersion('master', _getTipArchiveURL(self.repo))
+        return GithubComponentVersion('', _getTipArchiveURL(self.repo))
     
