@@ -4,6 +4,8 @@ import logging
 
 # Component, , represents an installed component, internal
 import component
+# Access common, , components shared between access modules, internal
+import access_common
 # Github Access, , access repositories on github, internal
 import github_access
 # version, , represent versions and specifications, internal
@@ -78,3 +80,5 @@ def satisfyVersion(name, version_required, working_directory, available):
         return r
     
     # !!! FIXME: next test generic git/hg/etc urls
+    
+    raise access_common.ComponentUnavailable('Dependency "%s":"%s" is not a supported form.' % (name, version_required))

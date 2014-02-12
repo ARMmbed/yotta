@@ -111,7 +111,7 @@ def _fullySplitPath(path):
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
-    print 'get repo:', repo
+    #print 'get repo:', repo
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}

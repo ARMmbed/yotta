@@ -71,9 +71,10 @@ c = component.Component(testdir)
 
 available = []
 
-pool.map(
-    lambda (name, ver_req): access.satisfyVersion(name, ver_req, testdir, available),
-    c.getDependencies()
-)
+installed, errs = c.satisfyDependenciesRecursive()
 
+for x in installed:
+    print 'installed', x
+for e in errs:
+    print 'Error:', e
 
