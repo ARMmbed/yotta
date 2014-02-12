@@ -36,7 +36,7 @@ class Version(object):
         version_string = version_string.strip()
         # strip of leading v or = characters, these are permitted in npm's
         # semver, and npm tags versions as v1.2.3
-        if version_string.startswith('v') or version_string.starswith('='):
+        if version_string.startswith('v') or version_string.startswith('='):
             self.version = semantic_version.Version(version_string[1:], partial=False)
         elif not version_string:
             self.version = 'tip'

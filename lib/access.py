@@ -55,17 +55,16 @@ def satisfyVersion(name, version_required, working_directory, available):
                     remote_component.repo
                 )
             )
-            v = remote_component.tipVersion()
-        else:
-            spec = remote_component.versionSpec()
-            v = spec.select(vers)
-            if not v:
-                raise Exception(
-                    'Github repository "%s" does not provide a version matching "%s"' % (
-                        remote_component.repo,
-                        remote_component.spec
-                    )
+            vers = [remote_component.tipVersion()]
+        spec = remote_component.versionSpec()
+        v = spec.select(vers)
+        if not v:
+            raise Exception(
+                'Github repository "%s" does not provide a version matching "%s"' % (
+                    remote_component.repo,
+                    remote_component.spec
                 )
+            )
         directory = os.path.join(working_directory, name)
         v.unpackInto(directory)
         r = component.Component(directory)
