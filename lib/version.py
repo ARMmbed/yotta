@@ -34,9 +34,9 @@ class Version(object):
         super(Version, self).__init__()
         self.url = url
         version_string = version_string.strip()
-        # try stripping off the v from the front of the version if there is
-        # one: the npm convention is to tag versions with a prepended v
-        if version_string.startswith('v'):
+        # strip of leading v or = characters, these are permitted in npm's
+        # semver, and npm tags versions as v1.2.3
+        if version_string.startswith('v') or version_string.starswith('='):
             self.version = semantic_version.Version(version_string[1:], partial=False)
         elif not version_string:
             self.version = 'tip'
