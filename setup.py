@@ -14,7 +14,7 @@ setup(
     license = "Proprietary",
     keywords = "embedded package module dependency management",
     url = "about:blank",
-    packages=['yotta', 'tests'],
+    packages=['yotta'],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -22,4 +22,14 @@ setup(
         "License :: Proprietary",
         "Environment :: Console",
     ],
+    entry_points={
+        "console_scripts": [
+            "yotta=yotta:main",
+               "yt=yotta:main",
+             # will remove this once old yotta is completely gone
+             "pyyt=yotta:main",
+        ],
+    },
+    # TODO dependencies go here...
+    requires=[]
 )

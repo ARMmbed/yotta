@@ -3,9 +3,9 @@ import os
 import shutil
 import errno
 
-from lib import access
-from lib import component
-from lib.pool import pool
+from yotta.lib import access
+from yotta.lib import component
+from yotta.lib.pool import pool
 
 package_json = '''{
   "name": "yottos",
@@ -35,7 +35,7 @@ package_json = '''{
   "dependencies": {
     "toolchain": "ARM-RD/toolchain",
     "libc": "ARM-RD/libc",
-    "objc2": "ARM-RD/libobjc2 @>0.0.7",
+    "libobjc2": "ARM-RD/libobjc2 @>0.0.7",
     "yottos_platform": "ARM-RD/yottos-platform @0.0.3",
     "emlib": "ARM-RD/emlib",
     "nsobject": "ARM-RD/nsobject",

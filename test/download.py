@@ -1,8 +1,8 @@
 #! /usr/bin/env python2.7
 import multiprocessing
 
-from lib import github_access
-from lib.pool import pool
+from yotta.lib import github_access
+from yotta.lib.pool import pool
 
 
 tags = github_access._getTags('ARM-RD/libobjc2')
