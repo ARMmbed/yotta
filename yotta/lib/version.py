@@ -30,6 +30,8 @@ class Version(object):
             'tip' versions as well as specific versions, and store an optional
             URL that can represent the location from which we can retrieve this
             version.
+
+            Also add some useful methods for manipulating versions.
         '''
         super(Version, self).__init__()
         self.url = url
@@ -43,9 +45,26 @@ class Version(object):
         else:
             self.version = semantic_version.Version(version_string, partial=False)
         self.url = url
+
+    def bump(self, bumptype):
+        if isinstance(self.version, str):
+            raise ValueError('cannot bump generic version "%s"' % self.version)
+        if bumptype == 'major':
+            self.version.major = self.version.major + 1
+            self.version.minor = 0
+            self.version.patch = 0
+        elif bumptype == 'minor':
+            self.version.minor = self.version.minor + 1
+            self.version.patch = 0
+        elif bumptype == 'patch':
+            self.version.patch = self.version.patch + 1
+        else:
+            raise ValueError('bumptype must be "major", "minor" or "patch"')
+        self.version.prerelease = None
+        self.version.build = None
         
     def __str__(self):
-        return self.version
+        return str(self.version)
 
     def __repr__(self):
         return 'Version(%s %s)' % (self.version, self.url)

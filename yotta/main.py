@@ -1,11 +1,11 @@
 # standard library modules, , ,
 import argparse
 import logging
+import sys
 
 # subcommand modules, , add subcommands, internal
 from . import version
 from . import link
-
 
 def logLevelFromVerbosity(v):
     return max(1, logging.ERROR - v * (logging.ERROR-logging.NOTSET) / 5)
@@ -26,7 +26,12 @@ def main():
 
     args = parser.parse_args()
     
-    logging.basicConfig(level=logLevelFromVerbosity(args.verbosity))
+    logging.basicConfig(
+        level=logLevelFromVerbosity(args.verbosity),
+        format='%(message)s'
+    )
 
-    args.command(args)
+    status = args.command(args)
+
+    sys.exit(status or 0)
 

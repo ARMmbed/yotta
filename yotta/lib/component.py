@@ -8,12 +8,21 @@ import access
 import access_common
 # pool, , shared thread pool, internal
 from pool import pool
+# version, , represent versions and specifications, internal
+import version
+# vcs, , represent version controlled directories, internal
+import vcs
 
 # NOTE: at the moment this module provides very little validation of the
 # contents of the description file: indeed if you replace the name of your
 # component with an object it won't matter. We should probably at least check
 # the type and format of the name (check for path-illegal characters) & version
 # (check it's a valid version)
+
+# !!! FIXME: should components lock their description file while they exist?
+# If not there are race conditions where the description file is modified by
+# another process (or in the worst case replaced by a symlink) after it has
+# been opened and before it is re-written
 
 
 # Internals
@@ -23,6 +32,9 @@ def _readPackageJSON(path):
         # of dependencies
         return json.load(f, object_pairs_hook=OrderedDict)
 
+def _writePackageJSON(path, obj):
+    with open(path, 'w') as f:
+        json.dump(obj, f, indent=2, separators=(',', ': '))
 
 # API
 class Component:
@@ -43,10 +55,6 @@ class Component:
             dependencies of the component
            
            
-            ... eventually it will also be possible to use components to tag &
-            commit new versions, etc.
-           
-           
             The component file format is currently assumed to be identical to
             NPM's package.json
         '''
@@ -54,13 +62,20 @@ class Component:
         self.path = path
         self.dependencies_attempted = False
         self.dependencies_failed = False
+        self.version = None
+        self.vcs = None
         try:
             self.component_info = _readPackageJSON(os.path.join(path, 'package.json'))
+            self.version = version.Version(self.component_info['version'])
             # !!! TODO: validate other stuff in the package, like that it has a
             # valid name & version
         except Exception, e:
             self.component_info = None
             self.error = e
+        try:
+            self.vcs = vcs.getVCS(path)
+        except Exception, e:
+            pass
 
     def getDependencies(self):
         ''' Returns [(component name, version requirement)]
@@ -138,6 +153,38 @@ class Component:
             that.
         '''
         return self.dependencies_attempted
+
+    def getVersion(self):
+        return self.version
+    
+    def setVersion(self, version):
+        self.version = version
+        self.component_info['version'] = str(self.version)
+
+    def writeDescription(self):
+        ''' Write the current (possibly modified) component description to a
+            package description file in the component directory.
+        '''
+        _writePackageJSON(os.path.join(self.path, 'package.json'), self.component_info)
+        if self.vcs:
+            self.vcs.markForCommit('package.json')
+
+    def vcsIsClean(self):
+        ''' Return true if the component directory is not version controlled,
+            or if it is version controlled with a supported system and is in a
+            clean state
+        '''
+        if not self.vcs:
+            return True
+        return self.vcs.isClean()
+
+    def commitVCS(self, tag=None):
+        ''' Commit the current working directory state (or do nothing if the
+            working directory is not version controlled)
+        '''
+        if not self.vcs:
+            return
+        self.vcs.commit(message='version %s' % tag, tag=tag)
 
     def __repr__(self):
         return "%s %s at %s" % (self.component_info['name'], self.component_info['version'], self.path)

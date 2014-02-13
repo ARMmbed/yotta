@@ -1,9 +1,12 @@
 # standard library modules, , ,
 import argparse
 import logging
+import os
 
 # version, , represent versions and specifications, internal
 from lib import version
+# Component, , represents an installed component, internal
+from lib import component
 
 
 def addOptions(parser):
@@ -20,6 +23,25 @@ def addOptions(parser):
 
 
 def execCommand(args):
-    print 'exec version command', args
+    c = component.Component(os.getcwd())
+    if not c:
+        logging.debug(str(c.error))
+        logging.error('The current directory does not contain a valid component.')
+        return 1
+    
+    if not c.vcsIsClean():
+        logging.error('The working directory is not clean')
+        return 1
+
+    v = c.getVersion()
+    if args.action in ('major', 'minor', 'patch'):
+        v.bump(args.action)
+    else:
+        v = args.action
+    c.setVersion(v)
+
+    c.writeDescription()
+
+    c.commitVCS(tag='v'+str(v))
 
 
