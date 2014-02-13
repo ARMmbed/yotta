@@ -14,7 +14,7 @@ setup(
     license = "Proprietary",
     keywords = "embedded package module dependency management",
     url = "about:blank",
-    packages=['yotta'],
+    packages=['yotta', os.path.join('yotta','lib')],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",

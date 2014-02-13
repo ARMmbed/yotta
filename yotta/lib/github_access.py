@@ -23,8 +23,6 @@ from socketpool import ConnectionPool
 import github
 from github import Github
 
-#logging.basicConfig(level=logging.DEBUG)
-
 # Constants
 _github_url = 'https://api.github.com'
 
