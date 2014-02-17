@@ -37,6 +37,7 @@ def satisfyVersion(name, version_required, working_directory, available):
     spec = None
 
     if name in available:
+        logging.debug('satisfy %s from already installed components' % name)
         try:
             spec = version.Spec(version_required)
         except Exception:
@@ -50,6 +51,7 @@ def satisfyVersion(name, version_required, working_directory, available):
 
     remote_component = github_access.GithubComponent.createFromURL(version_required)
     if remote_component is not None:
+        logging.debug('satisfy %s from github url' % name)
         vers = remote_component.availableVersions()
         if not len(vers):
             logging.warning(

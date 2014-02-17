@@ -2,6 +2,7 @@
 import json
 import os
 from collections import OrderedDict
+import logging
 
 # access, , get components, internal
 import access
@@ -24,6 +25,9 @@ import vcs
 # another process (or in the worst case replaced by a symlink) after it has
 # been opened and before it is re-written
 
+
+# Constants
+Modules_Folder = 'yotta_modules'
 
 # Internals
 def _readPackageJSON(path):
@@ -72,10 +76,7 @@ class Component:
         except Exception, e:
             self.component_info = None
             self.error = e
-        try:
-            self.vcs = vcs.getVCS(path)
-        except Exception, e:
-            pass
+        self.vcs = vcs.getVCS(path)
 
     def getDependencies(self):
         ''' Returns [(component name, version requirement)]
@@ -98,6 +99,9 @@ class Component:
             the version of C obtained from the URL happens to be 1.2.3
         '''
         return self.component_info['version']
+
+    def getName(self):
+        return self.component_info['name']
     
     def getError(self):
         ''' If this isn't a valid component, return some sort of explanation
@@ -111,20 +115,21 @@ class Component:
             Returns (components, errors)
         '''
         errors = []
+        modules_path = os.path.join(self.path, Modules_Folder)
         def satisfyDep((name, ver_req)):
             try:
                 # !!! TODO: validate that the installed component has the same
                 # name and version as we expected, and at least warn if it
                 # doesn't
-                return access.satisfyVersion(name, ver_req, self.path, available_components)
+                return access.satisfyVersion(name, ver_req, modules_path, available_components)
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
         dependencies = pool.map(
             satisfyDep, self.getDependencies()
         )
-        self.dependencies_satisfied = True
-        return (set(dependencies), errors)
+        self.dependencies_attempted = True
+        return ({d.component_info['name']: d for d in dependencies if d}, errors)
 
     def satisfyDependenciesRecursive(self, available_components=None):
         ''' Retrieve and install all the dependencies of this component and its
@@ -134,14 +139,16 @@ class Component:
             Returns (components, errors)
         '''
         if available_components is None:
-            available_components = set()
+            available_components = dict()
+        logging.info('%s@%s' % (self.getName(), self.getVersion()))
         components, errors = self.satisfyDependencies(available_components)
-        need_recursion = filter(lambda d: d and not d.dependenciesAttempted(), components)
+        need_recursion = filter(lambda d: d and not d.dependenciesAttempted(), components.values())
+        available_components.update(components)
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
         for c in need_recursion:
-            dep_components, dep_errors = c.satisfyDependenciesRecursive(available_components | components)
-            components |= dep_components
+            dep_components, dep_errors = c.satisfyDependenciesRecursive(available_components)
+            available_components.update(dep_components)
             errors += dep_errors
         return (components, errors)
 
