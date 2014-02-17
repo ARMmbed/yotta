@@ -42,7 +42,7 @@ def _writePackageJSON(path, obj):
 
 # API
 class Component:
-    def __init__(self, path):
+    def __init__(self, path, installed_previously=False, installed_linked=False):
         ''' How to use a Component:
            
             Initialise it with the directory into which the component has been
@@ -64,7 +64,9 @@ class Component:
         '''
         self.error = None
         self.path = path
-        self.dependencies_attempted = False
+        self.installed_previously = installed_previously
+        self.installed_linked = False
+        self.installed_dependencies = False
         self.dependencies_failed = False
         self.version = None
         self.vcs = None
@@ -128,21 +130,42 @@ class Component:
         dependencies = pool.map(
             satisfyDep, self.getDependencies()
         )
-        self.dependencies_attempted = True
+        self.installed_dependencies = True
         return ({d.component_info['name']: d for d in dependencies if d}, errors)
 
-    def satisfyDependenciesRecursive(self, available_components=None):
+    def satisfyDependenciesRecursive(self, available_components=None, update_installed=False):
         ''' Retrieve and install all the dependencies of this component and its
             dependencies, recursively, or satisfy them from a collection of
             available_components.
 
             Returns (components, errors)
         '''
+        def recursionFilter(c):
+            if not c:
+                # don't recurse into failed components
+                return False
+            if c.getName() in available_components:
+                logging.debug('do not recurse into already installed component: %s' % c)
+                # don't recurse into components added at a higher level: this
+                # ensures that dependencies are installed as high up the tree
+                # as possible
+                return False
+            if update_installed:
+                return not c.installedDependencies()
+            else:
+                # if we don't want to update things that were already installed
+                # (install mode, rather than update mode) then don't recurse
+                # into things that were already on disk
+                logging.debug('%s:%s:%s' % (
+                    self.getName(),
+                    ('new','installed previously')[c.installedPreviously()],
+                    ('new','dependencies installed')[c.installedDependencies()]
+                ))
+                return not (c.installedPreviously() or c.installedDependencies())
         if available_components is None:
             available_components = dict()
-        logging.info('%s@%s' % (self.getName(), self.getVersion()))
         components, errors = self.satisfyDependencies(available_components)
-        need_recursion = filter(lambda d: d and not d.dependenciesAttempted(), components.values())
+        need_recursion = filter(recursionFilter, components.values())
         available_components.update(components)
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
@@ -150,16 +173,23 @@ class Component:
             dep_components, dep_errors = c.satisfyDependenciesRecursive(available_components)
             available_components.update(dep_components)
             errors += dep_errors
+        logging.info('%s@%s' % (self.getName(), self.getVersion()))
         return (components, errors)
 
-    def dependenciesAttempted(self):
+    def installedPreviously(self):
+        ''' Return true if this component was created with
+            installed_previously=True
+        '''
+        return self.installed_previously
+
+    def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 
 
             Note that this is slightly different to when all of the
             dependencies are actually satisfied, but can be used as if it means
             that.
         '''
-        return self.dependencies_attempted
+        return self.installed_dependencies
 
     def getVersion(self):
         return self.version
