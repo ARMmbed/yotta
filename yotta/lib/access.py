@@ -47,7 +47,14 @@ def satisfyVersion(name, version_required, working_directory, available):
             raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
         return r
     
-    local_component = component.Component(os.path.join(working_directory, name), installed_previously=True)
+    component_path = os.path.join(working_directory, name)
+    local_component = component.Component(
+        component_path,
+        installed_previously=True,
+        # !!! FIXME: when windows symlinks are supported this check needs to support
+        # them too
+        installed_linked=os.path.islink(component_path)
+    )
     if local_component:
         # if we successfully created a component, that means the directory
         # exists and has a valid json file

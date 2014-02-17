@@ -142,6 +142,7 @@ class Component:
         '''
         def recursionFilter(c):
             if not c:
+                logging.debug('do not recurse into failed component')
                 # don't recurse into failed components
                 return False
             if c.getName() in available_components:
@@ -151,6 +152,10 @@ class Component:
                 # as possible
                 return False
             if update_installed:
+                logging.debug('%s:%s' % (
+                    self.getName(),
+                    ('new','dependencies installed')[c.installedDependencies()]
+                ))
                 return not c.installedDependencies()
             else:
                 # if we don't want to update things that were already installed
@@ -170,7 +175,9 @@ class Component:
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
         for c in need_recursion:
-            dep_components, dep_errors = c.satisfyDependenciesRecursive(available_components)
+            dep_components, dep_errors = c.satisfyDependenciesRecursive(
+                available_components, update_installed
+            )
             available_components.update(dep_components)
             errors += dep_errors
         logging.info('%s@%s' % (self.getName(), self.getVersion()))
