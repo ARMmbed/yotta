@@ -7,8 +7,6 @@ import os
 from lib import component
 
 
-
-
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
         help='If specified, update (and if necessary install) this component '+

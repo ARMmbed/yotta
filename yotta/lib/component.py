@@ -55,8 +55,10 @@ class Component:
             Check that component.getVersion() returns the version you think
             you've downloaded, if it doesn't be sure to make a fuss.
            
-            Use component.getDependencies() to get the names of the
-            dependencies of the component
+            Use component.getDependencySpecs() to get the names of the
+            dependencies of the component, or component.getDependencies() to
+            get Component objects (which may not be valid unless the
+            dependencies have been installed) for each of the dependencies.
            
            
             The component file format is currently assumed to be identical to
@@ -80,7 +82,7 @@ class Component:
             self.error = e
         self.vcs = vcs.getVCS(path)
 
-    def getDependencies(self):
+    def getDependencySpecs(self):
         ''' Returns [(component name, version requirement)]
             e.g. ('ARM-RD/yottos', '*')
 
@@ -89,6 +91,26 @@ class Component:
             proceeds in a predictable way.
         '''
         return self.component_info['dependencies'].items()
+
+    def getDependencies(self, available_components=None):
+        if available_components is None:
+            available_components = dict()
+        r = dict()
+        modules_path = os.path.join(self.path, Modules_Folder)
+        for name, ver_req in self.getDependencySpecs():
+            if name in available_components:
+                r[name] = available_components[name]
+            else:
+                component_path = os.path.join(modules_path, name)
+                c = Component(
+                    component_path,
+                    installed_previously=True,
+                    # !!! FIXME: when windows symlinks are supported this check
+                    # needs to support them too
+                    installed_linked=os.path.islink(component_path)
+                )
+                r[name] = c
+        return r;
     
     def getVersion(self):
         ''' Return the version string as specified by the package file.
@@ -128,7 +150,7 @@ class Component:
                 errors.append(e)
                 self.dependencies_failed = True
         dependencies = pool.map(
-            satisfyDep, self.getDependencies()
+            satisfyDep, self.getDependencySpecs()
         )
         self.installed_dependencies = True
         return ({d.component_info['name']: d for d in dependencies if d}, errors)
@@ -170,6 +192,8 @@ class Component:
         if available_components is None:
             available_components = dict()
         components, errors = self.satisfyDependencies(available_components)
+        if errors:
+            errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
         need_recursion = filter(recursionFilter, components.values())
         available_components.update(components)
         # NB: can't perform this step in parallel, since the available

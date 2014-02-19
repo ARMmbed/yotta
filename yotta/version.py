@@ -38,6 +38,7 @@ def execCommand(args):
         v.bump(args.action)
     else:
         v = args.action
+    logging.info('@%s' % v)
     c.setVersion(v)
 
     c.writeDescription()

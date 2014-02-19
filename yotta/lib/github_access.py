@@ -13,6 +13,8 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
@@ -131,8 +133,7 @@ def _getTarball(url, into_directory):
     )
     chunk = 1024 * 32
     stream = response.body_stream()
-    if not os.path.exists(into_directory):
-        os.makedirs(into_directory)
+    fsutils.mkDirP(into_directory)
     logging.debug('getting file: %s', url)
     # create the archive exclusively, we don't want someone else maliciously
     # overwriting our tar archive with something that unpacks to an absolute

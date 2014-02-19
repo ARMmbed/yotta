@@ -2,14 +2,15 @@
 import logging
 import os
 import errno
-
-# standard library modules, , ,
 import ConfigParser
 import threading
 
 # Watchdog, Apache 2, watch file for changes, pip install watchdog
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 # constants
 user_ini_file = '~/.yotta/config'
@@ -64,8 +65,7 @@ def setProperty(section, name, value):
     p = ConfigParser.SafeConfigParser()
     full_ini_path = os.path.expanduser(user_ini_file)
     ini_directory = os.path.dirname(full_ini_path)
-    if not os.path.exists(ini_directory):
-        os.makedirs(ini_directory)
+    fsutils.mkDirP(ini_directory)
     def saveTofile(f):
         p.readfp(f)
         f.seek(0)
