@@ -6,6 +6,8 @@ import logging
 import component
 # Access common, , components shared between access modules, internal
 import access_common
+# Registry Access, , access packages in the registry, internal
+import registry_access
 # Github Access, , access repositories on github, internal
 import github_access
 # version, , represent versions and specifications, internal
@@ -30,11 +32,18 @@ import fsutils
 #
 
 def latestSuitableVersion(name, version_required):
-    remote_component = github_access.GithubComponent.createFromURL(version_required)
 
-    # !!! FIXME: first test against the central module repository (mbed?)
+    # If the name/spec looks like a reference to a component in the registry
+    # then that takes precedence
+    remote_component = registry_access.RegistryComponent.createFromNameAndSpec(name, version_required) 
+    if remote_component:
+        logging.debug('satisfy %s from registry' % name)
+        
     
-    remote_component = github_access.GithubComponent.createFromURL(version_required)
+
+    # if it doesn't look like a registered component, then other schemes have a
+    # go at matching the name/spec
+    remote_component = github_access.GithubComponent.createFromNameAndSpec(name, version_required)
     if remote_component is not None:
         logging.debug('satisfy %s from github url' % name)
         vers = remote_component.availableVersions()
@@ -97,7 +106,8 @@ def satisfyVersion(
     # if we need to check for latest versions, get the latest available version
     # before checking for a local component so that we can create the local
     # component with a handle to its latest available version
-    if update_installed is not None: 
+    if update_installed is not None:
+        #logging.debug('attempt to check latest version of %s @%s...' % (name, version_required))
         v = latestSuitableVersion(name, version_required)
     
     component_path = os.path.join(working_directory, name)

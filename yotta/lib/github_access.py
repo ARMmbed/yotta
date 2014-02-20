@@ -3,7 +3,6 @@ import logging
 import json
 import getpass
 import os
-import tarfile
 import re
 import functools
 
@@ -13,8 +12,6 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
-# fsutils, , misc filesystem utils, internal
-import fsutils
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
@@ -94,19 +91,6 @@ def _handleAuth(fn):
                 raise
     return wrapped
 
-def _fullySplitPath(path):
-    components = []
-    while True:
-        path, component = os.path.split(path)
-        if component != '':
-            components.append(component)
-        else:
-            if path != '':
-                folders.append(path)
-            break
-    components.reverse()
-    return components
-
 @_handleAuth
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
@@ -131,50 +115,23 @@ def _getTarball(url, into_directory):
     response = resource.get(
         headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
     )
-    chunk = 1024 * 32
-    stream = response.body_stream()
-    fsutils.mkDirP(into_directory)
     logging.debug('getting file: %s', url)
-    # create the archive exclusively, we don't want someone else maliciously
-    # overwriting our tar archive with something that unpacks to an absolute
-    # path when we might be running sudo'd
-    fd = os.open(os.path.join(into_directory, 'download.tar.gz'), os.O_CREAT | os.O_EXCL | os.O_RDWR)
-    with os.fdopen(fd, 'rb+') as f:
-        f.seek(0)
-        while True:
-            data = stream.read(chunk)
-            if not data: break
-            f.write(data)
-        f.truncate()
-        logging.debug('got file, extract into %s', into_directory)
-        # head back to the start of the file and untar (without closing the
-        # file)
-        f.seek(0)
-        with tarfile.open(fileobj=f) as tf:
-            to_extract = []
-            # modify members to change where they extract to!
-            for m in tf.getmembers():
-                split_path = _fullySplitPath(m.name)
-                if len(split_path) > 1:
-                    m.name = os.path.join(*(split_path[1:]))
-                    to_extract.append(m)
-            tf.extractall(path=into_directory, members=to_extract)
-    logging.debug('extraction complete %s', into_directory)
+    access_common.unpackTarballStream(response.body_stream(), into_directory)
 
 
 # API
-class GithubComponentVersion(version.Version):
+class GithubComponentVersion(access_common.RemoteVersion):
     def unpackInto(self, directory):
         assert(self.url)
         _getTarball(self.url, directory)
 
-class GithubComponent:
+class GithubComponent(access_common.RemoteComponent):
     def __init__(self, repo, version_spec=''):
         self.repo = repo
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromURL(cls, url):
+    def createFromNameAndSpec(cls, name, url):    
         ''' returns a github component for any github url (including
             git+ssh:// git+http:// etc. or None if this is not a Github URL.
             For all of these we use the github api to grab a tarball, because
@@ -183,12 +140,18 @@ class GithubComponent:
             Normally version will be empty, unless the original url was of the
             form: 'owner/repo @version' or 'url://...#version', which can be used
             to grab a particular tagged version.
+
+            (Note that for github components we ignore the package name, and
+             just test to see if the "spec" looks like one of the supported URI
+             schemes)
         '''
+        # owner/package [@1.2.3] format
         url = url.strip()
-        m = re.match('([^/\s]*/[^/\s]*) *@?([.0-9a-zA-Z\*-]*)', url)
+        m = re.match('([^/\s]*/[^/\s]*) *@?([><=.0-9a-zA-Z\*-]*)', url)
         if m:
             return GithubComponent(*m.groups())
-        m = re.match('[^:/]*://[^:/]*github\.com/([^/]*/[^/]*)#?([.0-9a-zA-Z\*-]*)', url)
+        # something://[anything.|anything@]github.com/owner/package[#1.2.3] format
+        m = re.match('[^:/]*://(?:[^:/]*\.|[^:/]*@)?github\.com/([^/]*/[^/#]*)#?([><=.0-9a-zA-Z\*-]*)', url)
         if m:
             return GithubComponent(*m.groups())
         return None

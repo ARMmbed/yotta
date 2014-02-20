@@ -18,3 +18,16 @@ def rmRf(path):
             os.unlink(path)
         elif exception.errno != errno.ENOENT:
             raise
+
+def fullySplitPath(path):
+    components = []
+    while True:
+        path, component = os.path.split(path)
+        if component != '':
+            components.append(component)
+        else:
+            if path != '':
+                folders.append(path)
+            break
+    components.reverse()
+    return components
