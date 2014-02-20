@@ -10,7 +10,8 @@ import access_common
 import github_access
 # version, , represent versions and specifications, internal
 import version
-
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 
 # Version requirement strings we want to support:
@@ -28,40 +29,11 @@ import version
 #
 #
 
-def satisfyVersion(name, version_required, working_directory, available):
-    ''' returns a Component for the specified version (either to an already
-        installed copy (from the available list), or to a newly downloaded
-        one), or None if the version could not be satisfied.
-    '''
+def latestSuitableVersion(name, version_required):
+    remote_component = github_access.GithubComponent.createFromURL(version_required)
+
+    # !!! FIXME: first test against the central module repository (mbed?)
     
-    spec = None
-
-    if name in available:
-        logging.debug('satisfy %s from already installed components' % name)
-        try:
-            spec = version.Spec(version_required)
-        except Exception:
-            pass
-        r = available[name]
-        if spec and not spec.match(r.getVersion()):
-            raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
-        return r
-    
-    component_path = os.path.join(working_directory, name)
-    local_component = component.Component(
-        component_path,
-        installed_previously=True,
-        # !!! FIXME: when windows symlinks are supported this check needs to support
-        # them too
-        installed_linked=os.path.islink(component_path)
-    )
-    if local_component:
-        # if we successfully created a component, that means the directory
-        # exists and has a valid json file
-        return local_component
-
-    # !!! FIXME: next test against the central module repository (mbed?)
-
     remote_component = github_access.GithubComponent.createFromURL(version_required)
     if remote_component is not None:
         logging.debug('satisfy %s from github url' % name)
@@ -82,18 +54,91 @@ def satisfyVersion(name, version_required, working_directory, available):
                     remote_component.spec
                 )
             )
-        directory = os.path.join(working_directory, name)
-        v.unpackInto(directory)
-        r = component.Component(directory)
-        if not r:
-            raise Exception(
-                'Github repository "%s" version "%s" is not a valid component' % (
-                    remote_component.repo,
-                    remote_component.spec
-                )
-            )
-        return r
+        return v
     
     # !!! FIXME: next test generic git/hg/etc urls
     
-    raise access_common.ComponentUnavailable('Dependency "%s":"%s" is not a supported form.' % (name, version_required))
+    return None
+
+def satisfyVersion(
+        name,
+        version_required,
+        working_directory,
+        available,
+        update_installed=None
+    ):
+    ''' returns a Component for the specified version (either to an already
+        installed copy (from the available list), or to a newly downloaded
+        one), or None if the version could not be satisfied.
+
+        update_intalled = {None, 'Check', 'Update'}
+            None:   prevent any attempt to look for new versions if the
+                    component already exists
+            Check:  check for new versions, and pass new version information to
+                    the component object
+            Update: replace any existing version with the newest available, if
+                    the newest available has a higher version
+    '''
+    
+    spec = None
+    v = None
+
+    if name in available:
+        logging.debug('satisfy %s from already installed components' % name)
+        try:
+            spec = version.Spec(version_required)
+        except Exception:
+            pass
+        r = available[name]
+        if spec and not spec.match(r.getVersion()):
+            raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
+        return r
+
+    # if we need to check for latest versions, get the latest available version
+    # before checking for a local component so that we can create the local
+    # component with a handle to its latest available version
+    if update_installed is not None: 
+        v = latestSuitableVersion(name, version_required)
+    
+    component_path = os.path.join(working_directory, name)
+    local_component = component.Component(
+        component_path,
+        installed_previously=True,
+        # !!! FIXME: when windows symlinks are supported this check needs to support
+        # them too
+        installed_linked=os.path.islink(component_path),
+        latest_suitable_version=v
+    )
+    if local_component and (update_installed != 'Update' or not local_component.outdated()):
+        # if a component exists (has a valid description file), and either is
+        # not outdated, or we are not updating
+        return local_component
+    elif local_component and local_component.outdated():
+        logging.info('%soutdated: %s@%s -> %s' % (
+            ('update ' if update_installed == 'Update' else ''),
+            name,
+            local_component.getVersion(),
+            v
+        ))
+        # must rm the old component before continuing
+        fsutils.rmRf(component_path)
+
+    if not v and update_installed is None:
+        v = latestSuitableVersion(name, version_required)
+
+    if not v:
+        raise access_common.ComponentUnavailable(
+            'Dependency "%s":"%s" is not a supported form.' % (name, version_required)
+        )
+    directory = os.path.join(working_directory, name)
+    v.unpackInto(directory)
+    r = component.Component(directory)
+    if not r:
+        raise Exception(
+            'Repository "%s" version "%s" is not a valid component' % (
+                remote_component.repo,
+                remote_component.spec
+            )
+        )
+    return r
+

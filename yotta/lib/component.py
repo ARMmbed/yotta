@@ -42,7 +42,7 @@ def _writePackageJSON(path, obj):
 
 # API
 class Component:
-    def __init__(self, path, installed_previously=False, installed_linked=False):
+    def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None):
         ''' How to use a Component:
            
             Initialise it with the directory into which the component has been
@@ -71,6 +71,7 @@ class Component:
         self.installed_dependencies = False
         self.dependencies_failed = False
         self.version = None
+        self.latest_suitable_version = latest_suitable_version
         self.vcs = None
         try:
             self.component_info = _readPackageJSON(os.path.join(path, 'package.json'))
@@ -132,7 +133,18 @@ class Component:
             about why that is. '''
         return self.error
 
-    def satisfyDependencies(self, available_components):
+    def outdated(self):
+        ''' Return a truthy object if a newer suitable version is available,
+            otherwise return None.
+            (in fact the object returned is a ComponentVersion that can be used
+             to get the newer version)
+        '''
+        if self.latest_suitable_version and self.latest_suitable_version > self.version:
+            return self.latest_suitable_version
+        else:
+            return None
+
+    def satisfyDependencies(self, available_components, update_installed=False):
         ''' Retrieve and install all the dependencies of this component, or
             satisfy them from a collection of available_components.
 
@@ -145,11 +157,18 @@ class Component:
                 # !!! TODO: validate that the installed component has the same
                 # name and version as we expected, and at least warn if it
                 # doesn't
-                return access.satisfyVersion(name, ver_req, modules_path, available_components)
+                return access.satisfyVersion(
+                    name,
+                    ver_req,
+                    modules_path,
+                    available_components,
+                    update_installed=('Update' if update_installed else None)
+                )
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
-        dependencies = pool.map(
+        #dependencies = pool.map(
+        dependencies = map(
             satisfyDep, self.getDependencySpecs()
         )
         self.installed_dependencies = True
@@ -178,7 +197,7 @@ class Component:
                     self.getName(),
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
-                return not c.installedDependencies()
+                return c.outdated() or not c.installedDependencies()
             else:
                 # if we don't want to update things that were already installed
                 # (install mode, rather than update mode) then don't recurse
@@ -191,7 +210,9 @@ class Component:
                 return not (c.installedPreviously() or c.installedDependencies())
         if available_components is None:
             available_components = dict()
-        components, errors = self.satisfyDependencies(available_components)
+        components, errors = self.satisfyDependencies(
+            available_components, update_installed=update_installed
+        )
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
         need_recursion = filter(recursionFilter, components.values())

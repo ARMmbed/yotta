@@ -74,7 +74,7 @@ class Version(object):
         if isinstance(other, semantic_version.Version):
             other_is_specific_ver = True
             other_is_unwrapped = True
-        elif not isinstance(other, self.__class__):
+        elif not isinstance(other, Version):
             return NotImplemented
         else:
             other_is_specific_ver = isinstance(other.version, semantic_version.Version)

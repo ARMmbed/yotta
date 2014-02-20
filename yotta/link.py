@@ -2,6 +2,7 @@
 import argparse
 import errno
 import logging
+import os
 
 # Component, , represents an installed component, internal
 from lib import component
@@ -27,11 +28,14 @@ def execCommand(args):
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_modules'))
         src = os.path.join(folders.globalInstallDirectory(), args.component)
         dst = os.path.join(os.getcwd(), 'yotta_modules', args.component)
+        # if the component is already installed, rm it
+        fsutils.rmRf(dst)
     else:
         fsutils.mkDirP(folders.globalInstallDirectory())
         src = os.getcwd()
         dst = os.path.join(folders.globalInstallDirectory(), c.getName())
-    logging.info('%s -> %s' % (src, dst))
+    realsrc = os.path.realpath(src)
+    logging.info('%s -> %s -> %s' % (dst, src, realsrc))
     # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
     # work on windows, so use something else
     os.symlink(src, dst)
