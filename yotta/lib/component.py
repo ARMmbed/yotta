@@ -167,8 +167,7 @@ class Component:
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
-        #dependencies = pool.map(
-        dependencies = map(
+        dependencies = pool.map(
             satisfyDep, self.getDependencySpecs()
         )
         self.installed_dependencies = True
