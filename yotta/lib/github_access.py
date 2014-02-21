@@ -131,7 +131,7 @@ class GithubComponent(access_common.RemoteComponent):
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromNameAndSpec(cls, name, url):    
+    def createFromNameAndSpec(cls, url, name=None):    
         ''' returns a github component for any github url (including
             git+ssh:// git+http:// etc. or None if this is not a Github URL.
             For all of these we use the github api to grab a tarball, because

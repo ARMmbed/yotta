@@ -4,6 +4,8 @@ import logging
 
 # Component, , represents an installed component, internal
 import component
+# Target, , represents an installed target, internal
+import target
 # Access common, , components shared between access modules, internal
 import access_common
 # Registry Access, , access packages in the registry, internal
@@ -31,19 +33,29 @@ import fsutils
 #
 #
 
-def latestSuitableVersion(name, version_required):
+def latestSuitableVersion(name, version_required, registry='component'):
+    ''' Return a RemoteVersion object representing the latest suitable
+        version of the named component or target.
 
-    # If the name/spec looks like a reference to a component in the registry
-    # then that takes precedence
-    remote_component = registry_access.RegistryComponent.createFromNameAndSpec(name, version_required) 
-    if remote_component:
-        logging.debug('satisfy %s from registry' % name)
-        
-    
+        All RemoteVersion objects have a .unpackInto(directory) method.
+    '''
+    if registry == 'component':
+        # If the name/spec looks like a reference to a component in the registry
+        # then that takes precedence
+        remote_component = registry_access.RegistryComponent.createFromNameAndSpec(version_required, name)
+        if remote_component:
+            logging.debug('satisfy %s from registry' % name)
+            # TODO... get the version from the registry component as per github
+            # below
+    elif registry == 'target':
+        logging.warning('target registry not implemented yet')
+    else:
+        raise Exception('no known registry for %s objects' % registry)
+
 
     # if it doesn't look like a registered component, then other schemes have a
     # go at matching the name/spec
-    remote_component = github_access.GithubComponent.createFromNameAndSpec(name, version_required)
+    remote_component = github_access.GithubComponent.createFromNameAndSpec(version_required, name)
     if remote_component is not None:
         logging.debug('satisfy %s from github url' % name)
         vers = remote_component.availableVersions()
@@ -69,6 +81,7 @@ def latestSuitableVersion(name, version_required):
     
     return None
 
+
 def satisfyVersion(
         name,
         version_required,
@@ -77,10 +90,10 @@ def satisfyVersion(
         update_installed=None
     ):
     ''' returns a Component for the specified version (either to an already
-        installed copy (from the available list), or to a newly downloaded
-        one), or None if the version could not be satisfied.
+        installed copy (from the available list, or from disk), or to a newly
+        downloaded one), or None if the version could not be satisfied.
 
-        update_intalled = {None, 'Check', 'Update'}
+        update_installed = {None, 'Check', 'Update'}
             None:   prevent any attempt to look for new versions if the
                     component already exists
             Check:  check for new versions, and pass new version information to
@@ -145,16 +158,71 @@ def satisfyVersion(
     r = component.Component(directory)
     if not r:
         raise Exception(
-            'Repository "%s" version "%s" is not a valid component' % (
-                remote_component.repo,
-                remote_component.spec
-            )
+            'Dependency "%s":"%s" is not a valid component.' % (name, version_required)
         )
     return r
 
 
-def satisfyTarget(name_or_url, version_spec, working_directory, update_installed=None):
-    #raise access_common.TargetUnavailable('moo')
-    pass
+def satisfyTarget(name, version_required, working_directory, update_installed=None):
+    ''' returns a Target for the specified version (either to an already
+        installed copy (from disk), or to a newly downloaded one), or None if
+        the version could not be satisfied.
+
+        update_installed = {None, 'Check', 'Update'}
+            None:   prevent any attempt to look for new versions if the
+                    target already exists
+            Check:  check for new versions, and pass new version information to
+                    the target object
+            Update: replace any existing version with the newest available, if
+                    the newest available has a higher version
+    '''
+    
+    spec = None
+    v = None
+
+    # if we need to check for latest versions, get the latest available version
+    # before checking for a local target so that we can create the local
+    # target with a handle to its latest available version
+    if update_installed is not None:
+        logging.debug('attempt to check latest version of %s @%s...' % (name, version_required))
+        v = latestSuitableVersion(name, version_required, registry='target')
+    
+    target_path = os.path.join(working_directory, name)
+    local_target = target.Target(
+        target_path,
+        # !!! FIXME: when windows symlinks are supported this check needs to support
+        # them too
+        installed_linked=os.path.islink(target_path),
+        latest_suitable_version=v
+    )
+    if local_target and (update_installed != 'Update' or not local_target.outdated()):
+        # if a target exists (has a valid description file), and either is
+        # not outdated, or we are not updating
+        return local_target
+    elif local_target and local_target.outdated():
+        logging.info('%soutdated: %s@%s -> %s' % (
+            ('update ' if update_installed == 'Update' else ''),
+            name,
+            local_target.getVersion(),
+            v
+        ))
+        # must rm the old target before continuing
+        fsutils.rmRf(target_path)
+
+    if not v and update_installed is None:
+        v = latestSuitableVersion(name, version_required, registry='target')
+
+    if not v:
+        raise access_common.TargetUnavailable(
+            'Target "%s":"%s" is not a supported form.' % (name, version_required)
+        )
+    directory = os.path.join(working_directory, name)
+    v.unpackInto(directory)
+    r = target.Target(directory)
+    if not r:
+        raise Exception(
+            'Dependency "%s":"%s" is not a valid target.' % (name, version_required)
+        )
+    return r
 
     

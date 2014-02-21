@@ -6,6 +6,7 @@ import sys
 # subcommand modules, , add subcommands, internal
 from . import version
 from . import link
+from . import link_target
 from . import install
 from . import update
 from . import target
@@ -24,18 +25,20 @@ def main():
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
     parser.add_argument('-t', '--target', dest='target',
         default=settings.getProperty('build', 'target'),
-        # FIXME: support more schemes
-        #help='Set the build target to either a path, url or target name'
-        help='Set the build target to use the target description from this path'
+        help='Set the build target (targetname[,versionspec_or_url])'
     )
 
     version_parser = subparser.add_parser('version', description='bump the module version')
     version.addOptions(version_parser)
     version_parser.set_defaults(command=version.execCommand)
 
-    link_parser = subparser.add_parser('link', description='symlink a module')
+    link_parser = subparser.add_parser('link', description='symlink a component')
     link.addOptions(link_parser)
     link_parser.set_defaults(command=link.execCommand)
+
+    link_target_parser = subparser.add_parser('link-target', description='symlink a target')
+    link_target.addOptions(link_target_parser)
+    link_target_parser.set_defaults(command=link_target.execCommand)
 
     install_parser = subparser.add_parser(
         'install', description='install dependencies for the current module, or a specific module'
@@ -67,7 +70,13 @@ def main():
     })
 
     args = parser.parse_args()
-    
+
+    # once logging.something has been called you have to remove all logging
+    # handlers before re-configing...
+    root = logging.getLogger()
+    if root.handlers:
+        for handler in root.handlers:
+            root.removeHandler(handler)
     logging.basicConfig(
         level=logLevelFromVerbosity(args.verbosity),
         format='%(message)s'

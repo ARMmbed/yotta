@@ -27,7 +27,7 @@ class RegistryComponent(access_common.RemoteComponent):
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromNameAndSpec(cls, name, version_spec):
+    def createFromNameAndSpec(cls, version_spec, name):
         ''' returns a registry component for anything that's a valid package
             name (this does not guarantee that the component actually exists in
             the registry: use availableVersions() for that).

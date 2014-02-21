@@ -59,7 +59,7 @@ class Component:
         self.error = None
         self.path = path
         self.installed_previously = installed_previously
-        self.installed_linked = False
+        self.installed_linked = installed_linked
         self.installed_dependencies = False
         self.dependencies_failed = False
         self.version = None
@@ -192,6 +192,8 @@ class Component:
                 # ensures that dependencies are installed as high up the tree
                 # as possible
                 return False
+            if c.installed_linked:
+                return False
             if update_installed:
                 logging.debug('%s:%s' % (
                     self.getName(),
@@ -228,17 +230,19 @@ class Component:
         logging.info('%s@%s' % (self.getName(), self.getVersion()))
         return (components, errors)
 
-    def satisfyTarget(self, target_name_or_url, version_spec='*', update_installed=False):
-        ''' Ensure that the specified target spec (name, github ref or URL) is
-            installed in the targets directory of the current component
+    def satisfyTarget(self, target_name_and_version, update_installed=False):
+        ''' Ensure that the specified target name (and optionally version,
+            github ref or URL) is installed in the targets directory of the
+            current component
         '''
         errors = []
         targets_path = os.path.join(self.path, Targets_Folder)
         target = None
         try:
+            target_name, target_version_req = target_name_and_version.split(',', 1)
             target = access.satisfyTarget(
-                target_name_or_url,
-                version_spec,
+                target_name,
+                target_version_req,
                 targets_path,
                 update_installed=('Update' if update_installed else None)
             )
