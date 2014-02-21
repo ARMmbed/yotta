@@ -8,7 +8,7 @@ from . import version
 from . import link
 from . import install
 from . import update
-#from . import target
+from . import target
 from . import build
 
 # settings, , load and save settings, internal
@@ -19,10 +19,15 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, link}')
+    subparser = parser.add_subparsers(metavar='{install, update, link, target}')
 
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
-    #parser.add_argument('-t', '--target', dest='target', default=settings.getProperty('build', 'target'))
+    parser.add_argument('-t', '--target', dest='target',
+        default=settings.getProperty('build', 'target'),
+        # FIXME: support more schemes
+        #help='Set the build target to either a path, url or target name'
+        help='Set the build target to use the target description from this path'
+    )
 
     version_parser = subparser.add_parser('version', description='bump the module version')
     version.addOptions(version_parser)
@@ -44,9 +49,9 @@ def main():
     update.addOptions(update_parser)
     update_parser.set_defaults(command=update.execCommand)
 
-    #target_parser = subparser.add_parser('target', description='set the target device, create or edit a target')
-    #target.addOptions(target_parser)
-    #target_parser.set_defaults(command=target.execCommand)
+    target_parser = subparser.add_parser('target', description='set or display the target device')
+    target.addOptions(target_parser)
+    target_parser.set_defaults(command=target.execCommand)
 
     build_parser = subparser.add_parser('build', description='Build the current component.')
     build.addOptions(build_parser)
@@ -58,6 +63,7 @@ def main():
         'up':subparser.choices['update'],
         'in':subparser.choices['install'],
         'ln':subparser.choices['link'],
+       'tgt':subparser.choices['target'],
     })
 
     args = parser.parse_args()

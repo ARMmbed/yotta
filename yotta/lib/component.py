@@ -1,7 +1,6 @@
 # standard library modules, , ,
 import json
 import os
-from collections import OrderedDict
 import logging
 
 # access, , get components, internal
@@ -13,6 +12,8 @@ from pool import pool
 import version
 # vcs, , represent version controlled directories, internal
 import vcs
+# Ordered JSON, , read & write json, internal
+import ordered_json
 
 # NOTE: at the moment this module provides very little validation of the
 # contents of the description file: indeed if you replace the name of your
@@ -28,17 +29,8 @@ import vcs
 
 # Constants
 Modules_Folder = 'yotta_modules'
-
-# Internals
-def _readPackageJSON(path):
-    with open(path, 'r') as f:
-        # using an ordered dictionary for objects so that we preserve the order
-        # of dependencies
-        return json.load(f, object_pairs_hook=OrderedDict)
-
-def _writePackageJSON(path, obj):
-    with open(path, 'w') as f:
-        json.dump(obj, f, indent=2, separators=(',', ': '))
+Targets_Folder = 'yotta_targets'
+Component_Description_File = 'package.json'
 
 # API
 class Component:
@@ -74,16 +66,15 @@ class Component:
         self.latest_suitable_version = latest_suitable_version
         self.vcs = None
         try:
-            self.component_info = _readPackageJSON(os.path.join(path, 'package.json'))
+            self.component_info = ordered_json.readJSON(os.path.join(path, Component_Description_File))
             self.version = version.Version(self.component_info['version'])
-            # !!! TODO: validate other stuff in the package, like that it has a
-            # valid name & version
+            # !!! TODO: validate everything else
         except Exception, e:
             self.component_info = None
             self.error = e
         self.vcs = vcs.getVCS(path)
 
-    def getDependencySpecs(self):
+    def getDependencySpecs(self, target=None):
         ''' Returns [(component name, version requirement)]
             e.g. ('ARM-RD/yottos', '*')
 
@@ -91,9 +82,19 @@ class Component:
             component description file: this is so that dependency resolution
             proceeds in a predictable way.
         '''
-        return self.component_info['dependencies'].items()
+        deps =  self.component_info['dependencies'].items()
+        if target and 'targetDependencies' in self.component_info:
+            for t in target.dependencyResolutionOrder():
+                if t in self.component_info['targetDependencies']:
+                    logging.info(
+                        'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
+                        (target, t, self.getName())
+                    )
+                    deps += self.component_info['targetDependencies'][t]
+                    break
+        return deps
 
-    def getDependencies(self, available_components=None):
+    def getDependencies(self, available_components=None, target=None):
         if available_components is None:
             available_components = dict()
         r = dict()
@@ -144,7 +145,7 @@ class Component:
         else:
             return None
 
-    def satisfyDependencies(self, available_components, update_installed=False):
+    def satisfyDependencies(self, available_components, update_installed=False, target=None):
         ''' Retrieve and install all the dependencies of this component, or
             satisfy them from a collection of available_components.
 
@@ -168,12 +169,12 @@ class Component:
                 errors.append(e)
                 self.dependencies_failed = True
         dependencies = pool.map(
-            satisfyDep, self.getDependencySpecs()
+            satisfyDep, self.getDependencySpecs(target)
         )
         self.installed_dependencies = True
         return ({d.component_info['name']: d for d in dependencies if d}, errors)
 
-    def satisfyDependenciesRecursive(self, available_components=None, update_installed=False):
+    def satisfyDependenciesRecursive(self, available_components=None, update_installed=False, target=None):
         ''' Retrieve and install all the dependencies of this component and its
             dependencies, recursively, or satisfy them from a collection of
             available_components.
@@ -210,7 +211,7 @@ class Component:
         if available_components is None:
             available_components = dict()
         components, errors = self.satisfyDependencies(
-            available_components, update_installed=update_installed
+            available_components, update_installed=update_installed, target=target
         )
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
@@ -220,12 +221,30 @@ class Component:
         # components list must be updated in order
         for c in need_recursion:
             dep_components, dep_errors = c.satisfyDependenciesRecursive(
-                available_components, update_installed
+                available_components, update_installed, target
             )
             available_components.update(dep_components)
             errors += dep_errors
         logging.info('%s@%s' % (self.getName(), self.getVersion()))
         return (components, errors)
+
+    def satisfyTarget(self, target_name_or_url, version_spec='*', update_installed=False):
+        ''' Ensure that the specified target spec (name, github ref or URL) is
+            installed in the targets directory of the current component
+        '''
+        errors = []
+        targets_path = os.path.join(self.path, Targets_Folder)
+        target = None
+        try:
+            target = access.satisfyTarget(
+                target_name_or_url,
+                version_spec,
+                targets_path,
+                update_installed=('Update' if update_installed else None)
+            )
+        except access_common.TargetUnavailable, e:
+            errors.append(e)
+        return (target, errors)
 
     def installedPreviously(self):
         ''' Return true if this component was created with
@@ -253,9 +272,9 @@ class Component:
         ''' Write the current (possibly modified) component description to a
             package description file in the component directory.
         '''
-        _writePackageJSON(os.path.join(self.path, 'package.json'), self.component_info)
+        ordered_json.writeJSON(os.path.join(self.path, Component_Description_File), self.component_info)
         if self.vcs:
-            self.vcs.markForCommit('package.json')
+            self.vcs.markForCommit(Component_Description_File)
 
     def vcsIsClean(self):
         ''' Return true if the component directory is not version controlled,

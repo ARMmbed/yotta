@@ -1,0 +1,18 @@
+# standard library modules, , ,
+import json
+from collections import OrderedDict
+
+# provide read & write methods for json files that maintain the order of
+# dictionary keys, and indent consistently
+
+# Internals
+def readJSON(path):
+    with open(path, 'r') as f:
+        # using an ordered dictionary for objects so that we preserve the order
+        # of keys in objects (including, for example, dependencies)
+        return json.load(f, object_pairs_hook=OrderedDict)
+
+def writeJSON(path, obj):
+    with open(path, 'w') as f:
+        json.dump(obj, f, indent=2, separators=(',', ': '))
+

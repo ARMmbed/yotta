@@ -152,3 +152,9 @@ def satisfyVersion(
         )
     return r
 
+
+def satisfyTarget(name_or_url, version_spec, working_directory, update_installed=None):
+    #raise access_common.TargetUnavailable('moo')
+    pass
+
+    

@@ -14,6 +14,9 @@ class AccessException(Exception):
 class ComponentUnavailable(AccessException):
     pass
 
+class TargetUnavailable(AccessException):
+    pass
+
 class RemoteVersion(version.Version):
     def unpackInto(self, directory):
         raise NotImplementedError

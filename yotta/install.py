@@ -29,18 +29,24 @@ def execCommand(args):
 
 
 def installDeps(args):
-    c = component.Component(os.getcwd())
+    cwd = os.getcwd()
+    c = component.Component(cwd)
     if not c:
         logging.debug(str(c.error))
         logging.error('The current directory does not contain a valid component.')
         return 1
-    logging.debug('install dependencies of %s' % c)
+    logging.debug('install for %s' % c)
+    target, errors = c.satisfyTarget(args.target)
+    if errors:
+        for error in errors:
+            logging.error(error)
+        return 1
     if args.act_globally:
         # the npm behaviour here would be to install the working directory
         # module into the global modules dir
         raise NotImplementedError()
     else:
-        components, errors = c.satisfyDependenciesRecursive()
+        components, errors = c.satisfyDependenciesRecursive(target=target)
         for error in errors:
             logging.error(error)
 
