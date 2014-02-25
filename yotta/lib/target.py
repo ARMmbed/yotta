@@ -40,11 +40,14 @@ class Target:
         '''
         return [self.target_info['name']] + self.target_info['similar_to']
 
-    def toolchainFile(self):
-        return os.path.join(self.path, self.target_info['toolchain_file'])
+    def getToolchainFile(self):
+        return os.path.join(self.path, self.target_info['toolchain'])
 
-    def linkScriptFile(self):
-        return os.path.join(self.path, self.target_info['linkscript'])
+    #def getLinkScriptFile(self):
+    #    return os.path.join(self.path, self.target_info['linkscript'])
+    
+    def __repr__(self):
+        return "%s %s at %s" % (self.target_info['name'], self.target_info['version'], self.path)
     
     # provided for truthiness testing, we test true only if we successfully
     # read a package file

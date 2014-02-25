@@ -34,8 +34,13 @@ def execCommand(args):
         fsutils.mkDirP(folders.globalInstallDirectory())
         src = os.getcwd()
         dst = os.path.join(folders.globalInstallDirectory(), c.getName())
-    realsrc = os.path.realpath(src)
-    logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+
+    if args.component:
+        realsrc = os.path.realpath(src)
+        logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+    else:
+        logging.info('%s -> %s' % (dst, src))
+
     # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
     # work on windows, so use something else
     os.symlink(src, dst)

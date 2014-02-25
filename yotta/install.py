@@ -56,5 +56,11 @@ def installComponent(args):
     logging.debug('install component %s to %s' % (args.component, path))
     
     # !!! FIXME: should support other URL specs than just unadorned names
-    access.satisfyVersion(args.component, '*', path, dict())
+    access.satisfyVersion(
+              args.component,
+                         '*',
+        available_components = dict(),
+                search_paths = [path],
+                 working_dir = path
+    )
 

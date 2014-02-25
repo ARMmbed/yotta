@@ -2,6 +2,7 @@
 import json
 import os
 import logging
+import os.path as path
 
 # access, , get components, internal
 import access
@@ -14,6 +15,8 @@ import version
 import vcs
 # Ordered JSON, , read & write json, internal
 import ordered_json
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 # NOTE: at the moment this module provides very little validation of the
 # contents of the description file: indeed if you replace the name of your
@@ -45,16 +48,13 @@ class Component:
             download is indeed a valid component.
            
             Check that component.getVersion() returns the version you think
-            you've downloaded, if it doesn't be sure to make a fuss.
-           
+            you've downloaded.
+
             Use component.getDependencySpecs() to get the names of the
             dependencies of the component, or component.getDependencies() to
             get Component objects (which may not be valid unless the
             dependencies have been installed) for each of the dependencies.
            
-           
-            The component file format is currently assumed to be identical to
-            NPM's package.json
         '''
         self.error = None
         self.path = path
@@ -94,25 +94,32 @@ class Component:
                     break
         return deps
 
-    def getDependencies(self, available_components=None, target=None):
+    def getDependencies(self, available_components=None, search_dirs=None, target=None):
         if available_components is None:
             available_components = dict()
+        if search_dirs is None:
+            search_dirs = []
         r = dict()
-        modules_path = os.path.join(self.path, Modules_Folder)
+        modules_path = self.modulesPath()
         for name, ver_req in self.getDependencySpecs():
             if name in available_components:
                 r[name] = available_components[name]
             else:
-                component_path = os.path.join(modules_path, name)
-                c = Component(
-                    component_path,
-                    installed_previously=True,
-                    # !!! FIXME: when windows symlinks are supported this check
-                    # needs to support them too
-                    installed_linked=os.path.islink(component_path)
-                )
+                for d in search_dirs + [modules_path]:
+                    component_path = path.join(d, name)
+                    c = Component(
+                        component_path,
+                        installed_previously=True,
+                        installed_linked=fsutils.isLink(component_path)
+                    )
+                    if c:
+                        logging.info('found dependency %s of %s in %s' % (name, self.getName(), d))
+                        break
+                # if we didn't find a valid component in the search path, we
+                # use the component initialised with the last place checked
+                # (the modules path)
                 r[name] = c
-        return r;
+        return r
     
     def getVersion(self):
         ''' Return the version string as specified by the package file.
@@ -128,6 +135,12 @@ class Component:
 
     def getName(self):
         return self.component_info['name']
+
+    def modulesPath(self):
+        return os.path.join(self.path, Modules_Folder)
+
+    def targetsPath(self):
+        return os.path.join(self.path, Targets_Folder)
     
     def getError(self):
         ''' If this isn't a valid component, return some sort of explanation
@@ -145,41 +158,106 @@ class Component:
         else:
             return None
 
-    def satisfyDependencies(self, available_components, update_installed=False, target=None):
+    def satisfyDependencies(
+                            self,
+            available_components,
+                     search_dirs = None,
+                update_installed = False,
+                          target = None
+        ):
         ''' Retrieve and install all the dependencies of this component, or
             satisfy them from a collection of available_components.
 
             Returns (components, errors)
         '''
         errors = []
-        modules_path = os.path.join(self.path, Modules_Folder)
+        modules_path = self.modulesPath()
+        #if delete_unused and path.exists(modules_path):
+        #    remove_unused_modules = set([
+        #        d for d in os.listdir(modules_path) if
+        #            path.isdir(path.join(modules_path, d)) and
+        #            path.exists(path.join(modules_path, d, Component_Description_File))
+        #    ])
+        #else:
+        #    remove_unused_modules = set([])
         def satisfyDep((name, ver_req)):
             try:
                 # !!! TODO: validate that the installed component has the same
                 # name and version as we expected, and at least warn if it
                 # doesn't
-                return access.satisfyVersion(
+                component = access.satisfyVersion(
                     name,
                     ver_req,
-                    modules_path,
                     available_components,
+                    search_dirs,
+                    modules_path,
                     update_installed=('Update' if update_installed else None)
                 )
+                #subdir_path = path.normpath(path.join(modules_path, name))
+                #component_path = path.normpath(component.path)
+                #if subdir_path == component_path:
+                #    if name in remove_unused_modules:
+                #        remove_unused_modulsatisfyVersiones.remove(name)
+                return component
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
         dependencies = pool.map(
             satisfyDep, self.getDependencySpecs(target)
         )
+        #logging.debug('will remove unused dependencies:', remove_unused_modules)
+        #for d in remove_unused_modules:
+        #    fsutils.rmRf(path.join(modules_path, d))
         self.installed_dependencies = True
         return ({d.component_info['name']: d for d in dependencies if d}, errors)
 
-    def satisfyDependenciesRecursive(self, available_components=None, update_installed=False, target=None):
+    def satisfyDependenciesRecursive(
+                            self,
+            available_components = None,
+                     search_dirs = None,
+                update_installed = False,
+                          target = None
+        ):
         ''' Retrieve and install all the dependencies of this component and its
             dependencies, recursively, or satisfy them from a collection of
-            available_components.
+            available_components or from disk.
 
-            Returns (components, errors)
+            Returns
+            =======
+                (components, errors)
+
+                components: dictionary of name:Component
+                errors: sequence of errors
+
+
+            Parameters
+            ==========
+
+                available_components:
+                    None (default) or a dictionary of name:component. This is
+                    searched before searching directories or fetching remote
+                    components
+
+                search_dirs:
+                    None (default), or sequence of directories to search for
+                    already installed, (but not yet loaded) components. Used so
+                    that manually installed or linked components higher up the
+                    dependency tree are found by their users lower down.
+
+                    These directories are searched in order, and finally the
+                    current directory is checked.
+                
+                update_installed:
+                    False (default), or True: whether to check the available
+                    versions of installed components, and update if a newer
+                    version is available.
+                
+                target:
+                    None (default), or a Target object. If specified the target
+                    name and it's similar_to list will be used in resolving
+                    dependencies. If None, then only target-independent
+                    dependencies will be installed
+
         '''
         def recursionFilter(c):
             if not c:
@@ -212,8 +290,14 @@ class Component:
                 return not (c.installedPreviously() or c.installedDependencies())
         if available_components is None:
             available_components = dict()
+        if search_dirs is None:
+            search_dirs = []
+        search_dirs.append(self.modulesPath())
         components, errors = self.satisfyDependencies(
-            available_components, update_installed=update_installed, target=target
+            available_components,
+                     search_dirs,
+                update_installed = update_installed,
+                          target = target
         )
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
@@ -223,7 +307,7 @@ class Component:
         # components list must be updated in order
         for c in need_recursion:
             dep_components, dep_errors = c.satisfyDependenciesRecursive(
-                available_components, update_installed, target
+                available_components, search_dirs, update_installed, target
             )
             available_components.update(dep_components)
             errors += dep_errors
@@ -236,7 +320,7 @@ class Component:
             current component
         '''
         errors = []
-        targets_path = os.path.join(self.path, Targets_Folder)
+        targets_path = self.targetsPath()
         target = None
         try:
             target_name, target_version_req = target_name_and_version.split(',', 1)
@@ -255,6 +339,9 @@ class Component:
             installed_previously=True
         '''
         return self.installed_previously
+
+    def installedLinked(self):
+        return self.installed_linked
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 
@@ -276,7 +363,7 @@ class Component:
         ''' Write the current (possibly modified) component description to a
             package description file in the component directory.
         '''
-        ordered_json.writeJSON(os.path.join(self.path, Component_Description_File), self.component_info)
+        ordered_json.writeJSON(path.join(self.path, Component_Description_File), self.component_info)
         if self.vcs:
             self.vcs.markForCommit(Component_Description_File)
 

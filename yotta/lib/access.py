@@ -85,8 +85,9 @@ def latestSuitableVersion(name, version_required, registry='component'):
 def satisfyVersion(
         name,
         version_required,
-        working_directory,
         available,
+        search_paths,
+        working_directory,
         update_installed=None
     ):
     ''' returns a Component for the specified version (either to an already
@@ -116,6 +117,11 @@ def satisfyVersion(
             raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
         return r
 
+
+    # !!! FIXME: we don't update linked components, so really we should check
+    # to see if the component is satisfied by a symlink before checking for the
+    # latest available version
+
     # if we need to check for latest versions, get the latest available version
     # before checking for a local component so that we can create the local
     # component with a handle to its latest available version
@@ -123,28 +129,34 @@ def satisfyVersion(
         #logging.debug('attempt to check latest version of %s @%s...' % (name, version_required))
         v = latestSuitableVersion(name, version_required)
     
-    component_path = os.path.join(working_directory, name)
-    local_component = component.Component(
-        component_path,
-        installed_previously=True,
-        # !!! FIXME: when windows symlinks are supported this check needs to support
-        # them too
-        installed_linked=os.path.islink(component_path),
-        latest_suitable_version=v
-    )
-    if local_component and (update_installed != 'Update' or not local_component.outdated()):
-        # if a component exists (has a valid description file), and either is
-        # not outdated, or we are not updating
-        return local_component
-    elif local_component and local_component.outdated():
-        logging.info('%soutdated: %s@%s -> %s' % (
-            ('update ' if update_installed == 'Update' else ''),
-            name,
-            local_component.getVersion(),
-            v
-        ))
-        # must rm the old component before continuing
-        fsutils.rmRf(component_path)
+    for path in search_paths:
+        component_path = os.path.join(path, name)
+        logging.debug("check path %s for %s" % (component_path, name))
+        local_component = component.Component(
+                     component_path,
+               installed_previously = True,
+                   installed_linked = fsutils.isLink(component_path),
+            latest_suitable_version = v
+        )
+        logging.debug("%s %s" % (('found', 'not found')[not local_component], name))
+        if local_component and (local_component.installedLinked() or update_installed != 'Update' or not local_component.outdated()):
+            logging.debug("satisfy component from directory: %s" % component_path)
+            # if a component exists (has a valid description file), and either is
+            # not outdated, or we are not updating
+            return local_component
+        elif local_component and local_component.outdated():
+            logging.info('%soutdated: %s@%s -> %s' % (
+                ('update ' if update_installed == 'Update' else ''),
+                name,
+                local_component.getVersion(),
+                v
+            ))
+            # must rm the old component before continuing
+            fsutils.rmRf(component_path)
+        if local_component:
+            # once we've found one stop (ignore any other matching components
+            # in the search path)
+            break
 
     if not v and update_installed is None:
         v = latestSuitableVersion(name, version_required)
@@ -189,11 +201,9 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
     
     target_path = os.path.join(working_directory, name)
     local_target = target.Target(
-        target_path,
-        # !!! FIXME: when windows symlinks are supported this check needs to support
-        # them too
-        installed_linked=os.path.islink(target_path),
-        latest_suitable_version=v
+                    target_path,
+               installed_linked = fsutils.isLink(target_path),
+        latest_suitable_version = v
     )
     if local_target and (update_installed != 'Update' or not local_target.outdated()):
         # if a target exists (has a valid description file), and either is

@@ -27,8 +27,14 @@ def updateDeps(args):
         logging.debug(str(c.error))
         logging.error('The current directory does not contain a valid component.')
         return 1
+    logging.debug('update for %s' % c)
+    target, errors = c.satisfyTarget(args.target)
+    if errors:
+        for error in errors:
+            logging.error(error)
+        return 1
     
-    components, errors = c.satisfyDependenciesRecursive(update_installed=True)
+    components, errors = c.satisfyDependenciesRecursive(target=target, update_installed=True)
     for error in errors:
         logging.error(error)
 

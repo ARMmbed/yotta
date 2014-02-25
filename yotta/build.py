@@ -1,5 +1,6 @@
 # standard library modules, , ,
 import os
+import logging
 
 # Component, , represents an installed component, internal
 from lib import component
@@ -20,6 +21,12 @@ def execCommand(args):
         return 1
     builddir = os.path.join(cwd, 'build')
 
-    # FIXME: will pass target, or target-dependent defs from target, to generator
-    generator = cmakegen.CMakeGen(builddir)
-    generator.generateRecursive(c, builddir)
+    target, errors = c.satisfyTarget(args.target)
+    if errors:
+        for error in errors:
+            logging.error(error)
+        return 1
+
+    generator = cmakegen.CMakeGen(builddir, target)
+    for error in generator.generateRecursive(c, builddir):
+        logging.error(error)

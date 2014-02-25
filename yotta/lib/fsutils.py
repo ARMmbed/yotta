@@ -31,3 +31,8 @@ def fullySplitPath(path):
             break
     components.reverse()
     return components
+
+def isLink(path):
+    # !!! FIXME: when windows symlinks are supported this check needs to
+    # support them too
+    return os.path.islink(path)
