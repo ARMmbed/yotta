@@ -11,6 +11,7 @@ from . import install
 from . import update
 from . import target
 from . import build
+from . import init
 
 # settings, , load and save settings, internal
 from lib import settings
@@ -20,7 +21,7 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, link, target}')
+    subparser = parser.add_subparsers(metavar='{install, update, link, link-target, target, build, init}')
 
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
     parser.add_argument('-t', '--target', dest='target',
@@ -59,6 +60,10 @@ def main():
     build_parser = subparser.add_parser('build', description='Build the current component.')
     build.addOptions(build_parser)
     build_parser.set_defaults(command=build.execCommand)
+
+    init_parser = subparser.add_parser('init', description='Create a new component.')
+    init.addOptions(init_parser)
+    init_parser.set_defaults(command=init.execCommand)
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary

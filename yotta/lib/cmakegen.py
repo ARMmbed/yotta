@@ -29,6 +29,18 @@ $include_root_dirs
 # files with no prefix
 include_directories(SYSTEM $${YOTTA_SYSTEM_INCLUDE_DIRS})
 
+# And others (typically CMSIS implementations) need to export non-system header
+# files. Please don't use this facility. Please. It's much, much better to fix
+# implementations that import these headers to import them using
+# #include "modname/headername.h" instead
+include_directories($${YOTTA_EXTRA_INCLUDE_DIRS_DO_NOT_USE_THIS___PLEASE_SERIOUSLY_DO_NOT})
+
+
+# Build targets may define additional preprocessor definitions for all
+# components to use (such as chip variant information)
+add_definitions($${YOTTA_TARGET_DEFINITIONS})
+
+
 # recurse into dependencies that aren't built elsewhere
 $add_depend_subdirs
 

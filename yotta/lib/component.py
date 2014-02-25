@@ -3,6 +3,7 @@ import json
 import os
 import logging
 import os.path as path
+from collections import OrderedDict
 
 # access, , get components, internal
 import access
@@ -17,6 +18,7 @@ import vcs
 import ordered_json
 # fsutils, , misc filesystem utils, internal
 import fsutils
+
 
 # NOTE: at the moment this module provides very little validation of the
 # contents of the description file: indeed if you replace the name of your
@@ -70,9 +72,12 @@ class Component:
             self.version = version.Version(self.component_info['version'])
             # !!! TODO: validate everything else
         except Exception, e:
-            self.component_info = None
+            self.component_info = OrderedDict()
             self.error = e
         self.vcs = vcs.getVCS(path)
+
+    def getDescriptionFile(self):
+        return os.path.join(self.path, Component_Description_File)
 
     def getDependencySpecs(self, target=None):
         ''' Returns [(component name, version requirement)]
@@ -103,6 +108,7 @@ class Component:
         modules_path = self.modulesPath()
         for name, ver_req in self.getDependencySpecs():
             if name in available_components:
+                logging.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
             else:
                 for d in search_dirs + [modules_path]:
@@ -113,28 +119,13 @@ class Component:
                         installed_linked=fsutils.isLink(component_path)
                     )
                     if c:
-                        logging.info('found dependency %s of %s in %s' % (name, self.getName(), d))
+                        logging.debug('found dependency %s of %s in %s' % (name, self.getName(), d))
                         break
                 # if we didn't find a valid component in the search path, we
                 # use the component initialised with the last place checked
                 # (the modules path)
                 r[name] = c
         return r
-    
-    def getVersion(self):
-        ''' Return the version string as specified by the package file.
-            This will always be a real version: 1.2.3, not a hash or a URL.
-
-            Note that a component installed through a URL still provides a real
-            version - so if the first component to depend on some component C
-            depends on it via a URI, and a second component depends on a
-            specific version 1.2.3, dependency resolution will only succeed if
-            the version of C obtained from the URL happens to be 1.2.3
-        '''
-        return self.component_info['version']
-
-    def getName(self):
-        return self.component_info['name']
 
     def modulesPath(self):
         return os.path.join(self.path, Modules_Folder)
@@ -172,14 +163,6 @@ class Component:
         '''
         errors = []
         modules_path = self.modulesPath()
-        #if delete_unused and path.exists(modules_path):
-        #    remove_unused_modules = set([
-        #        d for d in os.listdir(modules_path) if
-        #            path.isdir(path.join(modules_path, d)) and
-        #            path.exists(path.join(modules_path, d, Component_Description_File))
-        #    ])
-        #else:
-        #    remove_unused_modules = set([])
         def satisfyDep((name, ver_req)):
             try:
                 # !!! TODO: validate that the installed component has the same
@@ -193,11 +176,6 @@ class Component:
                     modules_path,
                     update_installed=('Update' if update_installed else None)
                 )
-                #subdir_path = path.normpath(path.join(modules_path, name))
-                #component_path = path.normpath(component.path)
-                #if subdir_path == component_path:
-                #    if name in remove_unused_modules:
-                #        remove_unused_modulsatisfyVersiones.remove(name)
                 return component
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
@@ -205,9 +183,6 @@ class Component:
         dependencies = pool.map(
             satisfyDep, self.getDependencySpecs(target)
         )
-        #logging.debug('will remove unused dependencies:', remove_unused_modules)
-        #for d in remove_unused_modules:
-        #    fsutils.rmRf(path.join(modules_path, d))
         self.installed_dependencies = True
         return ({d.component_info['name']: d for d in dependencies if d}, errors)
 
@@ -353,11 +328,29 @@ class Component:
         return self.installed_dependencies
 
     def getVersion(self):
+        ''' Return the version as specified by the package file.
+            This will always be a real version: 1.2.3, not a hash or a URL.
+
+            Note that a component installed through a URL still provides a real
+            version - so if the first component to depend on some component C
+            depends on it via a URI, and a second component depends on a
+            specific version 1.2.3, dependency resolution will only succeed if
+            the version of C obtained from the URL happens to be 1.2.3
+        '''
         return self.version
+
+    def getName(self):
+        if self.component_info:
+            return self.component_info['name']
+        else:
+            return None
     
     def setVersion(self, version):
         self.version = version
         self.component_info['version'] = str(self.version)
+
+    def setName(self, name):
+        self.component_info['name'] = name
 
     def writeDescription(self):
         ''' Write the current (possibly modified) component description to a
