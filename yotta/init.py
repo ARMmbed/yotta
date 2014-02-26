@@ -40,6 +40,9 @@ def execCommand(args):
     c.setName(getUserInput("Enter the package name:", c.getName()))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
+    current_description = c.component_info['description'] if 'description' in c.component_info else None
+    c.component_info['description'] = getUserInput("Short description:", current_description)
+
     # TODO: more questions (homepage, bugs url,...), check that the name is
     # available in the registry, and make sure there are empty dependency
     # sections in the json file

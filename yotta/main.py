@@ -26,7 +26,7 @@ def main():
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
     parser.add_argument('-t', '--target', dest='target',
         default=settings.getProperty('build', 'target'),
-        help='Set the build target (targetname[,versionspec_or_url])'
+        help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
     version_parser = subparser.add_parser('version', description='bump the module version')

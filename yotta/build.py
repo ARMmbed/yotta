@@ -27,6 +27,11 @@ def execCommand(args):
             logging.error(error)
         return 1
 
+    all_components = c.getDependenciesRecursive(target=target)
+    print 'all deps:'
+    for moo in all_components.values():
+        print '    ', moo
+
     generator = cmakegen.CMakeGen(builddir, target)
-    for error in generator.generateRecursive(c, builddir):
+    for error in generator.generateRecursive(c, all_components, builddir):
         logging.error(error)

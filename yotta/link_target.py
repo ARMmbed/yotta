@@ -13,8 +13,8 @@ from . import folders
 
 def addOptions(parser):
     parser.add_argument('target', default=None, nargs='?',
-        help='Link a globally installed (or globally linked) target into'+
-             'the current target\'s dependencies. If ommited, globally'+
+        help='Link a globally installed (or globally linked) target into '+
+             'the current target\'s dependencies. If ommited, globally '+
              'link the current target.'
     )
 

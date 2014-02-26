@@ -87,7 +87,10 @@ class Component:
             component description file: this is so that dependency resolution
             proceeds in a predictable way.
         '''
-        deps =  self.component_info['dependencies'].items()
+        if 'dependencies' not in self.component_info:
+            logging.debug("component %s has no dependencies" % self.getName())
+            return tuple()
+        deps = self.component_info['dependencies'].items()
         if target and 'targetDependencies' in self.component_info:
             for t in target.dependencyResolutionOrder():
                 if t in self.component_info['targetDependencies']:
@@ -95,11 +98,18 @@ class Component:
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += self.component_info['targetDependencies'][t]
+                    deps += self.component_info['targetDependencies'][t].items()
                     break
         return deps
 
-    def getDependencies(self, available_components=None, search_dirs=None, target=None):
+    def getDependencies(self,
+        available_components = None,
+                 search_dirs = None,
+                      target = None,
+              available_only = False
+        ):
+        ''' Returns {component_name:component}
+        '''
         if available_components is None:
             available_components = dict()
         if search_dirs is None:
@@ -110,8 +120,9 @@ class Component:
             if name in available_components:
                 logging.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
-            else:
+            elif not available_only:
                 for d in search_dirs + [modules_path]:
+                    logging.debug('looking for dependency %s of %s in %s' % (name, self.getName(), d))
                     component_path = path.join(d, name)
                     c = Component(
                         component_path,
@@ -126,6 +137,45 @@ class Component:
                 # (the modules path)
                 r[name] = c
         return r
+
+    def getDependenciesRecursive(self,
+                 available_components = None,
+                            processed = None,
+                          search_dirs = None,
+                               target = None,
+                       available_only = False
+        ):
+        ''' Get available and already installed components, don't check for
+            remotely available components. See also
+            satisfyDependenciesRecursive()
+
+            Returns {component_name:component}
+        '''
+        def recursionFilter(c):
+            if not c:
+                # don't recurse into failed components
+                return False
+            if c.getName() in processed:
+                return False
+            return True
+        if available_components is None:
+            available_components = dict()
+        if processed is None:
+            processed = set()
+        if search_dirs is None:
+            search_dirs = []
+        search_dirs.append(self.modulesPath())
+        components = self.getDependencies(available_components, search_dirs, target, available_only)
+        processed.add(self.getName())
+        need_recursion = filter(recursionFilter, components.values())
+        available_components.update(components)
+        for c in need_recursion:
+            dep_components = c.getDependenciesRecursive(
+                available_components, processed, search_dirs, target, available_only
+            )
+            available_components.update(dep_components)
+            components.update(dep_components)
+        return components
 
     def modulesPath(self):
         return os.path.join(self.path, Modules_Folder)
