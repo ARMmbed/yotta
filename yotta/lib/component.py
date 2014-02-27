@@ -135,6 +135,8 @@ class Component:
                 # if we didn't find a valid component in the search path, we
                 # use the component initialised with the last place checked
                 # (the modules path)
+                if not c:
+                    logging.warning('failed to find dependency %s of %s' % (name, self.getName()))
                 r[name] = c
         return r
 
@@ -243,7 +245,8 @@ class Component:
             satisfyDep, self.getDependencySpecs(target)
         )
         self.installed_dependencies = True
-        return ({d.component_info['name']: d for d in dependencies if d}, errors)
+        # stable order is important!
+        return (OrderedDict([(d.component_info['name'], d) for d in dependencies if d]), errors)
 
     def satisfyDependenciesRecursive(
                             self,
@@ -323,7 +326,7 @@ class Component:
                 ))
                 return not (c.installedPreviously() or c.installedDependencies())
         if available_components is None:
-            available_components = dict()
+            available_components = OrderedDict()
         if search_dirs is None:
             search_dirs = []
         search_dirs.append(self.modulesPath())

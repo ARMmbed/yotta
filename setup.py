@@ -30,6 +30,5 @@ setup(
              "pyyt=yotta:main",
         ],
     },
-    # TODO dependencies go here...
-    requires=[]
+    install_requires=['semantic_version']
 )
