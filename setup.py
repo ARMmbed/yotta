@@ -30,5 +30,5 @@ setup(
              "pyyt=yotta:main",
         ],
     },
-    install_requires=['semantic_version']
+    install_requires=['semantic_version', 'watchdog', 'restkit', 'PyGithub']
 )

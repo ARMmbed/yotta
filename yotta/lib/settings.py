@@ -80,7 +80,7 @@ def setProperty(section, name, value):
     except IOError, e:
         # if the file didn't exist we can't open in r+, so open with w
         if e.errno == errno.ENOENT:
-            with open(full_ini_path, 'w') as f:
+            with open(full_ini_path, 'w+') as f:
                 saveTofile(f)
         else: 
             raise
