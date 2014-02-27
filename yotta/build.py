@@ -28,7 +28,7 @@ def execCommand(args):
         return 1
 
     all_components = c.getDependenciesRecursive(target=target)
-    print 'all deps:'
+    print 'all deps: (target=%s)' % target
     for moo in all_components.values():
         print '    ', moo
 

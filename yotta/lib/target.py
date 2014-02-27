@@ -38,7 +38,7 @@ class Target:
         ''' Return a sequence of names that should be used when resolving
             dependencies: if specific dependencies exist for 
         '''
-        return [self.target_info['name']] + self.target_info['similar_to']
+        return [self.target_info['name']] + self.target_info['similarTo']
 
     def getToolchainFile(self):
         return os.path.join(self.path, self.target_info['toolchain'])

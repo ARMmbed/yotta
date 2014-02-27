@@ -111,12 +111,12 @@ class Component:
         ''' Returns {component_name:component}
         '''
         if available_components is None:
-            available_components = dict()
+            available_components = OrderedDict()
         if search_dirs is None:
             search_dirs = []
-        r = dict()
+        r = OrderedDict()
         modules_path = self.modulesPath()
-        for name, ver_req in self.getDependencySpecs():
+        for name, ver_req in self.getDependencySpecs(target=target):
             if name in available_components:
                 logging.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
@@ -159,19 +159,28 @@ class Component:
                 return False
             return True
         if available_components is None:
-            available_components = dict()
+            available_components = OrderedDict()
         if processed is None:
             processed = set()
         if search_dirs is None:
             search_dirs = []
         search_dirs.append(self.modulesPath())
-        components = self.getDependencies(available_components, search_dirs, target, available_only)
+        components = self.getDependencies(
+                available_components,
+                         search_dirs,
+                              target,
+                      available_only
+        )
         processed.add(self.getName())
         need_recursion = filter(recursionFilter, components.values())
         available_components.update(components)
         for c in need_recursion:
             dep_components = c.getDependenciesRecursive(
-                available_components, processed, search_dirs, target, available_only
+                available_components,
+                           processed,
+                         search_dirs,
+                              target,
+                      available_only
             )
             available_components.update(dep_components)
             components.update(dep_components)
@@ -279,7 +288,7 @@ class Component:
                 
                 target:
                     None (default), or a Target object. If specified the target
-                    name and it's similar_to list will be used in resolving
+                    name and it's similarTo list will be used in resolving
                     dependencies. If None, then only target-independent
                     dependencies will be installed
 
@@ -376,6 +385,28 @@ class Component:
             that.
         '''
         return self.installed_dependencies
+
+    def getExtraIncludes(self):
+        ''' Some components must export whole directories full of headers into
+            the search path. This is really really bad, and they shouldn't do
+            it, but support is provided as a concession to compatibility.
+        '''
+        if 'extraIncludes' in self.component_info:
+            return self.component_info['extraIncludes']
+        else:
+            return []
+    
+    def getExtraSysIncludes(self):
+        ''' Some components (e.g. libc) must export directories of header files
+            into the system include search path. They do this by adding a
+            'extraSysIncludes' : [ array of directories ] field in their
+            package description. This function returns the list of directories
+            (or an empty list), if it doesn't exist.
+        '''
+        if 'extraSysIncludes' in self.component_info:
+            return self.component_info['extraSysIncludes']
+        else:
+            return []
 
     def getVersion(self):
         ''' Return the version as specified by the package file.

@@ -22,7 +22,8 @@ project($component_name)
 # include own root directory
 $include_own_dir
 
-# include root directories of all components we depend on
+# include root directories of all components we depend on (directly and
+# indirectly)
 $include_root_dirs
 
 # recurse into dependencies that aren't built elsewhere
@@ -30,16 +31,15 @@ $add_depend_subdirs
 
 
 # Some components (I'm looking at you, libc), need to export system header
-# files with no prefix
-get_property(EXTRA_SYSTEM_INCLUDE_DIRS GLOBAL PROPERTY YOTTA_SYSTEM_INCLUDE_DIRS)
-include_directories(SYSTEM $${EXTRA_SYSTEM_INCLUDE_DIRS})
+# files with no prefix, these directories are listed in the component
+# description files:
+$include_sys_dirs
 
 # And others (typically CMSIS implementations) need to export non-system header
 # files. Please don't use this facility. Please. It's much, much better to fix
 # implementations that import these headers to import them using
 # #include "modname/headername.h" instead
-get_property(EXTRA_INCLUDE_DIRS GLOBAL PROPERTY YOTTA_EXTRA_INCLUDE_DIRS_DO_NOT_USE_THIS___PLEASE_SERIOUSLY_DO_NOT)
-include_directories($${EXTRA_INCLUDE_DIRS})
+$include_other_dirs
 
 # Components may defined additional preprocessor definitions: use this at your
 # peril, this support WILL go away! (it's here to bridge toolchain component ->
@@ -47,10 +47,11 @@ include_directories($${EXTRA_INCLUDE_DIRS})
 get_property(EXTRA_DEFINITIONS GLOBAL PROPERTY YOTTA_GLOBAL_DEFINITIONS)
 add_definitions($${EXTRA_DEFINITIONS})
 
-
+# !!! FIXME: actually the target can just add these to the toolchain, no need
+# for repitition in every single cmake list
 # Build targets may define additional preprocessor definitions for all
 # components to use (such as chip variant information)
-$yotta_target_definitions
+#$yotta_target_definitions
 
 
 # recurse into subdirectories for this component, using the two-argument
@@ -70,7 +71,7 @@ class CMakeGen(object):
         logging.info("generate for target: %s" % target)
         self.target = target
 
-    def generateRecursive(self, component, all_components, builddir=None, processed_components=None, search_dirs=None):
+    def generateRecursive(self, component, all_components, builddir=None, processed_components=None):
         ''' generate top-level CMakeLists for this component and its
             dependencies: the CMakeLists are all generated in self.buildroot,
             which MUST be out-of-source
@@ -86,36 +87,38 @@ class CMakeGen(object):
             builddir = self.buildroot
         if processed_components is None:
             processed_components = dict()
-        if search_dirs is None:
-            search_dirs = []
         if not self.target:
             yield 'Target "%s" is not a valid build target' % self.target
     
+        logging.debug('generate build files: %s (target=%s)' % (component, self.target))
         # because of the way c-family language includes work we need to put the
         # public header directories of all components that this component
         # depends on (directly OR indirectly) into the search path, which means
         # we need to first enumerate all the direct and indirect dependencies
-        recursive_deps_of_this_component = component.getDependenciesRecursive(
+        recursive_deps = component.getDependenciesRecursive(
             available_components = all_components,
                           target = self.target,
                   available_only = True
         )
-        print 'recursive deps of', component, ':'
-        for d in recursive_deps_of_this_component.values():
-            print '    ', d
+        dependencies = component.getDependencies(
+                  all_components,
+                          target = self.target,
+                  available_only = True
+        )
 
-        logging.debug('generate build files: %s' % component)
-        dependencies = component.getDependencies(all_components, search_dirs, target=self.target, available_only=True)
         for name, dep in dependencies.items():
             if not dep:
                 yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
-        self.generate(builddir, component, new_dependencies, dependencies)
+        self.generate(builddir, component, new_dependencies, recursive_deps)
+
+        print 'recursive deps of', component, ':'
+        for d in recursive_deps.values():
+            print '    ', d
 
         processed_components.update(new_dependencies)
-        search_dirs.append(component.modulesPath())
         for name, c in new_dependencies.items():
-            for error in self.generateRecursive(c, all_components, os.path.join(builddir, name), processed_components, search_dirs):
+            for error in self.generateRecursive(c, all_components, os.path.join(builddir, name), processed_components):
                 yield error
 
 
@@ -130,10 +133,22 @@ class CMakeGen(object):
         ).substitute(path=component.path)
 
         include_root_dirs = ''
+        include_sys_dirs = ''
+        include_other_dirs = ''
         for name, c in all_dependencies.items():
             include_root_dirs += string.Template(
                 'include_directories("$path")\n'
             ).substitute(path=c.path)
+            dep_sys_include_dirs = c.getExtraSysIncludes()
+            for d in dep_sys_include_dirs:
+                include_sys_dirs += string.Template(
+                    'include_directories(SYSTEM "$path")\n'
+                ).substitute(path=os.path.join(c.path, d))
+            dep_extra_include_dirs = c.getExtraIncludes()
+            for d in dep_extra_include_dirs:
+                include_other_dirs += string.Template(
+                    'include_directories("$path")\n'
+                ).substitute(path=os.path.join(c.path, d))
 
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
@@ -167,6 +182,8 @@ class CMakeGen(object):
                       component_name = component.getName(),
                      include_own_dir = include_own_dir,
                    include_root_dirs = include_root_dirs,
+                    include_sys_dirs = include_sys_dirs,
+                  include_other_dirs = include_other_dirs,
                   add_depend_subdirs = add_depend_subdirs,
                      add_own_subdirs = add_own_subdirs,
             yotta_target_definitions = '' # TODO
