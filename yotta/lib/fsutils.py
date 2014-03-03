@@ -19,6 +19,13 @@ def rmRf(path):
         elif exception.errno != errno.ENOENT:
             raise
 
+def rmF(path):
+    try:
+        os.remove(path)
+    except OSError as exception: 
+        if exception.errno != errno.ENOENT:
+            raise
+
 def fullySplitPath(path):
     components = []
     while True:

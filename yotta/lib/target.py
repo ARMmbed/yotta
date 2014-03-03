@@ -4,53 +4,40 @@ import os
 
 # version, , represent versions and specifications, internal
 import version
-# Ordered JSON, , read & write json, internal
-import ordered_json
-
+# Pack, , common parts of Components/Targets, internal
+import pack
 
 Target_Description_File = 'target.json'
-
+# no SSL cert for here yet
+#Registry_Base_URL = 'https://registry.yottos.org/target'
+Registry_Base_URL = 'https://pure-earth-8670.herokuapp.com/target'
 
 # API
-class Target:
+class Target(pack.Pack):
+    description_filename = Target_Description_File
+
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
         ''' Initialise a Target based on a directory. If the directory does not
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
-        self.error = None
-        self.path = path
-        self.installed_linked = installed_linked
-        self.version = None
+        super(Target, self).__init__(path, installed_linked=installed_linked)
         self.latest_suitable_version = latest_suitable_version
-        try:
-            self.target_info = ordered_json.readJSON(os.path.join(path, Target_Description_File))
-            self.version     = version.Version(self.target_info['version'])
-            # TODO: validate everything else
-        except Exception, e:
-            self.target_info = None
-            self.error = e
-    
-    def getName(self):
-        return self.target_info['name']
+        # !!! TODO: validate self.description, possibly add a
+        # description_schema class variable used when loading...
     
     def dependencyResolutionOrder(self):
         ''' Return a sequence of names that should be used when resolving
             dependencies: if specific dependencies exist for 
         '''
-        return [self.target_info['name']] + self.target_info['similarTo']
+        return [self.description['name']] + self.description['similarTo']
 
     def getToolchainFile(self):
-        return os.path.join(self.path, self.target_info['toolchain'])
+        return os.path.join(self.path, self.description['toolchain'])
 
     #def getLinkScriptFile(self):
-    #    return os.path.join(self.path, self.target_info['linkscript'])
+    #    return os.path.join(self.path, self.description['linkscript'])
     
-    def __repr__(self):
-        return "%s %s at %s" % (self.target_info['name'], self.target_info['version'], self.path)
-    
-    # provided for truthiness testing, we test true only if we successfully
-    # read a package file
-    def __nonzero__(self):
-        return bool(self.target_info)
+    def getRegistryURL(self):
+        return Registry_Base_URL + '/' + self.getName()
 

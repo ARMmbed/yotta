@@ -40,10 +40,14 @@ def unpackTarballStream(stream, into_directory):
     '''
     chunk = 1024 * 32
     fsutils.mkDirP(into_directory)
+    download_fname = os.path.join(into_directory, 'download.tar.gz')
+    # remove any partially downloaded file: TODO: checksumming & caching of
+    # downloaded components in some central place
+    fsutils.rmF(download_fname)
     # create the archive exclusively, we don't want someone else maliciously
     # overwriting our tar archive with something that unpacks to an absolute
     # path when we might be running sudo'd
-    fd = os.open(os.path.join(into_directory, 'download.tar.gz'), os.O_CREAT | os.O_EXCL | os.O_RDWR)
+    fd = os.open(download_fname, os.O_CREAT | os.O_EXCL | os.O_RDWR)
     with os.fdopen(fd, 'rb+') as f:
         f.seek(0)
         while True:

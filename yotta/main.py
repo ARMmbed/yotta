@@ -12,6 +12,7 @@ from . import update
 from . import target
 from . import build
 from . import init
+from . import publish
 
 # settings, , load and save settings, internal
 from lib import settings
@@ -21,7 +22,7 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, link, link-target, target, build, init}')
+    subparser = parser.add_subparsers(metavar='{install, update, link, link-target, target, build, init, publish}')
 
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
     parser.add_argument('-t', '--target', dest='target',
@@ -29,41 +30,20 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
-    version_parser = subparser.add_parser('version', description='bump the module version')
-    version.addOptions(version_parser)
-    version_parser.set_defaults(command=version.execCommand)
+    def addParser(name, module, description):
+        parser = subparser.add_parser(name, description=description)
+        module.addOptions(parser)
+        parser.set_defaults(command=module.execCommand)
 
-    link_parser = subparser.add_parser('link', description='symlink a component')
-    link.addOptions(link_parser)
-    link_parser.set_defaults(command=link.execCommand)
-
-    link_target_parser = subparser.add_parser('link-target', description='symlink a target')
-    link_target.addOptions(link_target_parser)
-    link_target_parser.set_defaults(command=link_target.execCommand)
-
-    install_parser = subparser.add_parser(
-        'install', description='install dependencies for the current module, or a specific module'
-    )
-    install.addOptions(install_parser)
-    install_parser.set_defaults(command=install.execCommand)
-
-    update_parser = subparser.add_parser(
-        'update', description='update dependencies for the current module, or a specific module'
-    )
-    update.addOptions(update_parser)
-    update_parser.set_defaults(command=update.execCommand)
-
-    target_parser = subparser.add_parser('target', description='set or display the target device')
-    target.addOptions(target_parser)
-    target_parser.set_defaults(command=target.execCommand)
-
-    build_parser = subparser.add_parser('build', description='Build the current component.')
-    build.addOptions(build_parser)
-    build_parser.set_defaults(command=build.execCommand)
-
-    init_parser = subparser.add_parser('init', description='Create a new component.')
-    init.addOptions(init_parser)
-    init_parser.set_defaults(command=init.execCommand)
+    addParser('version', version, 'Bump the module version.')
+    addParser('link', link, 'Symlink a component.')
+    addParser('link-target', link_target, 'Symlink a target.')
+    addParser('install', install, 'Install dependencies for the current module, or a specific module.')
+    addParser('update', update, 'Update dependencies for the current module, or a specific module.')
+    addParser('target', target, 'Set or display the target device.')
+    addParser('build', build, 'Build the current component.')
+    addParser('init', init, 'Create a new component.')
+    addParser('publish', publish, 'Publish a component or target to the public registry.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -72,6 +52,7 @@ def main():
         'in':subparser.choices['install'],
         'ln':subparser.choices['link'],
        'tgt':subparser.choices['target'],
+       'pub':subparser.choices['publish'],
     })
 
     args = parser.parse_args()

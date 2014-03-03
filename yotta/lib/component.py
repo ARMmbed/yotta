@@ -14,10 +14,10 @@ from pool import pool
 import version
 # vcs, , represent version controlled directories, internal
 import vcs
-# Ordered JSON, , read & write json, internal
-import ordered_json
 # fsutils, , misc filesystem utils, internal
 import fsutils
+# Pack, , common parts of Components/Targets, internal
+import pack
 
 
 # NOTE: at the moment this module provides very little validation of the
@@ -36,9 +36,15 @@ import fsutils
 Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'package.json'
+# !!! FIXME: change /package to /component , get SSL cert for main domain
+#Registry_Base_URL = 'https://registry.yottos.org/package' 
+Registry_Base_URL = 'https://pure-earth-8670.herokuapp.com/package'
+
 
 # API
-class Component:
+class Component(pack.Pack):
+    description_filename = Component_Description_File
+
     def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None):
         ''' How to use a Component:
            
@@ -58,26 +64,13 @@ class Component:
             dependencies have been installed) for each of the dependencies.
            
         '''
-        self.error = None
-        self.path = path
+        super(Component, self).__init__(path, installed_linked=installed_linked)
         self.installed_previously = installed_previously
-        self.installed_linked = installed_linked
         self.installed_dependencies = False
         self.dependencies_failed = False
-        self.version = None
         self.latest_suitable_version = latest_suitable_version
-        self.vcs = None
-        try:
-            self.component_info = ordered_json.readJSON(os.path.join(path, Component_Description_File))
-            self.version = version.Version(self.component_info['version'])
-            # !!! TODO: validate everything else
-        except Exception, e:
-            self.component_info = OrderedDict()
-            self.error = e
-        self.vcs = vcs.getVCS(path)
-
-    def getDescriptionFile(self):
-        return os.path.join(self.path, Component_Description_File)
+        # !!! TODO: validate self.description, possibly add a
+        # description_schema class variable used when loading...
 
     def getDependencySpecs(self, target=None):
         ''' Returns [(component name, version requirement)]
@@ -87,18 +80,18 @@ class Component:
             component description file: this is so that dependency resolution
             proceeds in a predictable way.
         '''
-        if 'dependencies' not in self.component_info:
+        if 'dependencies' not in self.description:
             logging.debug("component %s has no dependencies" % self.getName())
             return tuple()
-        deps = self.component_info['dependencies'].items()
-        if target and 'targetDependencies' in self.component_info:
+        deps = self.description['dependencies'].items()
+        if target and 'targetDependencies' in self.description:
             for t in target.dependencyResolutionOrder():
-                if t in self.component_info['targetDependencies']:
+                if t in self.description['targetDependencies']:
                     logging.info(
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += self.component_info['targetDependencies'][t].items()
+                    deps += self.description['targetDependencies'][t].items()
                     break
         return deps
 
@@ -193,11 +186,6 @@ class Component:
 
     def targetsPath(self):
         return os.path.join(self.path, Targets_Folder)
-    
-    def getError(self):
-        ''' If this isn't a valid component, return some sort of explanation
-            about why that is. '''
-        return self.error
 
     def outdated(self):
         ''' Return a truthy object if a newer suitable version is available,
@@ -246,7 +234,7 @@ class Component:
         )
         self.installed_dependencies = True
         # stable order is important!
-        return (OrderedDict([(d.component_info['name'], d) for d in dependencies if d]), errors)
+        return (OrderedDict([(d.description['name'], d) for d in dependencies if d]), errors)
 
     def satisfyDependenciesRecursive(
                             self,
@@ -377,9 +365,6 @@ class Component:
         '''
         return self.installed_previously
 
-    def installedLinked(self):
-        return self.installed_linked
-
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 
 
@@ -394,8 +379,8 @@ class Component:
             the search path. This is really really bad, and they shouldn't do
             it, but support is provided as a concession to compatibility.
         '''
-        if 'extraIncludes' in self.component_info:
-            return self.component_info['extraIncludes']
+        if 'extraIncludes' in self.description:
+            return self.description['extraIncludes']
         else:
             return []
     
@@ -406,66 +391,10 @@ class Component:
             package description. This function returns the list of directories
             (or an empty list), if it doesn't exist.
         '''
-        if 'extraSysIncludes' in self.component_info:
-            return self.component_info['extraSysIncludes']
+        if 'extraSysIncludes' in self.description:
+            return self.description['extraSysIncludes']
         else:
             return []
 
-    def getVersion(self):
-        ''' Return the version as specified by the package file.
-            This will always be a real version: 1.2.3, not a hash or a URL.
-
-            Note that a component installed through a URL still provides a real
-            version - so if the first component to depend on some component C
-            depends on it via a URI, and a second component depends on a
-            specific version 1.2.3, dependency resolution will only succeed if
-            the version of C obtained from the URL happens to be 1.2.3
-        '''
-        return self.version
-
-    def getName(self):
-        if self.component_info:
-            return self.component_info['name']
-        else:
-            return None
-    
-    def setVersion(self, version):
-        self.version = version
-        self.component_info['version'] = str(self.version)
-
-    def setName(self, name):
-        self.component_info['name'] = name
-
-    def writeDescription(self):
-        ''' Write the current (possibly modified) component description to a
-            package description file in the component directory.
-        '''
-        ordered_json.writeJSON(path.join(self.path, Component_Description_File), self.component_info)
-        if self.vcs:
-            self.vcs.markForCommit(Component_Description_File)
-
-    def vcsIsClean(self):
-        ''' Return true if the component directory is not version controlled,
-            or if it is version controlled with a supported system and is in a
-            clean state
-        '''
-        if not self.vcs:
-            return True
-        return self.vcs.isClean()
-
-    def commitVCS(self, tag=None):
-        ''' Commit the current working directory state (or do nothing if the
-            working directory is not version controlled)
-        '''
-        if not self.vcs:
-            return
-        self.vcs.commit(message='version %s' % tag, tag=tag)
-
-    def __repr__(self):
-        return "%s %s at %s" % (self.component_info['name'], self.component_info['version'], self.path)
-
-    # provided for truthiness testing, we test true only if we successfully
-    # read a package file
-    def __nonzero__(self):
-        return bool(self.component_info)
-
+    def getRegistryURL(self):
+        return Registry_Base_URL + '/' + self.getName()

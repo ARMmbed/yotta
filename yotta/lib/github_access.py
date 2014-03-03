@@ -12,11 +12,11 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
+# connection_pool, , shared connection pool, internal
+import connection_pool
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
-# socket pool, Public Domain / MIT, installed with restkit
-from socketpool import ConnectionPool
 
 # PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
 import github
@@ -34,13 +34,6 @@ _github_url = 'https://api.github.com'
 
 # Internal functions
 
-_pool = None
-def _getConnectionPool():
-    global _pool
-    if _pool is None:
-        _pool = ConnectionPool(factory=Connection)
-    return _pool
-
 def _authorizeUser():
     # using basic auth request an access token, then save it so that we don't
     # have to repeatedly ask for basic authentication credentials
@@ -56,7 +49,7 @@ def _authorizeUser():
         'scopes': ['repo'],
           'note': 'yotta'
     }
-    resource = Resource(_github_url + '/authorizations', pool=_getConnectionPool(), filters=[auth])
+    resource = Resource(_github_url + '/authorizations', pool=connection_pool.getPool(), filters=[auth])
     response = resource.post(
         headers = {'Content-Type': 'application/json'}, 
         payload = json.dumps(request_data)
@@ -111,7 +104,7 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    resource = Resource(url, pool=_getConnectionPool(), follow_redirect=True)
+    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
     response = resource.get(
         headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
     )
