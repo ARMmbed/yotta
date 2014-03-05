@@ -36,9 +36,8 @@ import pack
 Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'package.json'
-# !!! FIXME: change /package to /component , get SSL cert for main domain
-#Registry_Base_URL = 'https://registry.yottos.org/package' 
-Registry_Base_URL = 'https://pure-earth-8670.herokuapp.com/package'
+# !!! FIXME: change /package to /component
+Registry_Namespace = 'package' 
 
 
 # API
@@ -229,7 +228,8 @@ class Component(pack.Pack):
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
-        dependencies = pool.map(
+        #dependencies = pool.map(
+        dependencies = map(
             satisfyDep, self.getDependencySpecs(target)
         )
         self.installed_dependencies = True
@@ -396,5 +396,5 @@ class Component(pack.Pack):
         else:
             return []
 
-    def getRegistryURL(self):
-        return Registry_Base_URL + '/' + self.getName()
+    def getRegistryNamespace(self):
+        return Registry_Namespace

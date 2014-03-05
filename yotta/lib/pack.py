@@ -12,6 +12,11 @@ import version
 import ordered_json
 # vcs, , represent version controlled directories, internal
 import vcs
+# fsutils, , misc filesystem utils, internal
+import fsutils
+# Registry Access, , access packages in the registry, internal
+import registry_access
+
 
 # TODO: .xxx_ignore file support for overriding the defaults, use glob syntax
 # instead of regexes...
@@ -41,7 +46,7 @@ class Pack(object):
         self.vcs = None
         self.error = None
         try:
-            self.description = ordered_json.readJSON(os.path.join(path, self.description_filename))
+            self.description = ordered_json.load(os.path.join(path, self.description_filename))
             self.version = version.Version(self.description['version'])
         except Exception, e:
             self.description = OrderedDict()
@@ -107,7 +112,7 @@ class Pack(object):
         ''' Write the current (possibly modified) component description to a
             package description file in the component directory.
         '''
-        ordered_json.writeJSON(path.join(self.path, Component_Description_File), self.description)
+        ordered_json.dump(path.join(self.path, Component_Description_File), self.description)
         if self.vcs:
             self.vcs.markForCommit(Component_Description_File)
     
@@ -125,6 +130,28 @@ class Pack(object):
             archive_name = '%s-%s' % (self.getName(), self.getVersion())
             logging.info('generate archive extracting to "%s"' % archive_name)
             tf.add(self.path, arcname=archive_name, filter=filterArchive)
+
+    def publish(self):
+        ''' Publish to the appropriate registry, return a description of any
+            errors that occured, or None if successful.
+            No VCS tagging is performed.
+        '''
+        upload_archive = os.path.join(self.path, 'upload.tar.gz')
+        fsutils.rmF(upload_archive)
+        fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        with os.fdopen(fd, 'rb+') as tar_file:
+            tar_file.truncate()
+            self.generateTarball(tar_file)
+            tar_file.seek(0)
+            with open(self.getDescriptionFile(), 'r') as description_file:
+                return registry_access.publish(
+                    self.getRegistryNamespace(),
+                    self.getName(),
+                    self.getVersion(),
+                    description_file,
+                    tar_file
+                )
+
 
     def __repr__(self):
         return "%s %s at %s" % (self.description['name'], self.description['version'], self.path)

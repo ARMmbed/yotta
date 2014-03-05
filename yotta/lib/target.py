@@ -8,9 +8,7 @@ import version
 import pack
 
 Target_Description_File = 'target.json'
-# no SSL cert for here yet
-#Registry_Base_URL = 'https://registry.yottos.org/target'
-Registry_Base_URL = 'https://pure-earth-8670.herokuapp.com/target'
+Registry_Namespace = 'target'
 
 # API
 class Target(pack.Pack):
@@ -38,6 +36,6 @@ class Target(pack.Pack):
     #def getLinkScriptFile(self):
     #    return os.path.join(self.path, self.description['linkscript'])
     
-    def getRegistryURL(self):
-        return Registry_Base_URL + '/' + self.getName()
+    def getRegistryNamespace(self):
+        return Registry_Namespace
 

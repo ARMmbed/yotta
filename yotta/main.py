@@ -22,7 +22,7 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, link, link-target, target, build, init, publish}')
+    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish}')
 
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
     parser.add_argument('-t', '--target', dest='target',
@@ -35,7 +35,7 @@ def main():
         module.addOptions(parser)
         parser.set_defaults(command=module.execCommand)
 
-    addParser('version', version, 'Bump the module version.')
+    addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
     addParser('link', link, 'Symlink a component.')
     addParser('link-target', link_target, 'Symlink a target.')
     addParser('install', install, 'Install dependencies for the current module, or a specific module.')
@@ -53,6 +53,7 @@ def main():
         'ln':subparser.choices['link'],
        'tgt':subparser.choices['target'],
        'pub':subparser.choices['publish'],
+       'ver':subparser.choices['version'],
     })
 
     args = parser.parse_args()

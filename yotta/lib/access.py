@@ -39,19 +39,26 @@ def latestSuitableVersion(name, version_required, registry='component'):
 
         All RemoteVersion objects have a .unpackInto(directory) method.
     '''
-    if registry == 'component':
+    if registry in ('component', 'target'):
         # If the name/spec looks like a reference to a component in the registry
         # then that takes precedence
-        remote_component = registry_access.RegistryComponent.createFromNameAndSpec(version_required, name)
+        remote_component = registry_access.RegistryThing.createFromNameAndSpec(
+            version_required, name, registry=registry
+        )
         if remote_component:
-            logging.debug('satisfy %s from registry' % name)
-            # TODO... get the version from the registry component as per github
-            # below
-    elif registry == 'target':
-        logging.warning('target registry not implemented yet')
+            logging.debug('satisfy %s from %s registry' % (name, registry))
+            vers = remote_component.availableVersions()
+            spec = remote_component.versionSpec()
+            v = spec.select(vers)
+            if not v:
+                raise Exception(
+                    'The %s registry does not provide a version of "%s" matching "%s"' % (
+                        registry, name, spec
+                    )
+                )
+            return v
     else:
-        raise Exception('no known registry for %s objects' % registry)
-
+        raise Exception('no known registry namespace "%s"' % registry)
 
     # if it doesn't look like a registered component, then other schemes have a
     # go at matching the name/spec
