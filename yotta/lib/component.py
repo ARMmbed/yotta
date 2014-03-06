@@ -86,7 +86,7 @@ class Component(pack.Pack):
         if target and 'targetDependencies' in self.description:
             for t in target.dependencyResolutionOrder():
                 if t in self.description['targetDependencies']:
-                    logging.info(
+                    logging.debug(
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )

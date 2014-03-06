@@ -28,6 +28,9 @@ def updateDeps(args):
         logging.error('The current directory does not contain a valid component.')
         return 1
     logging.debug('update for %s' % c)
+    if not args.target:
+        logging.error('No target has been set, use "yotta target" to set one.')
+        return 1
     target, errors = c.satisfyTarget(args.target)
     if errors:
         for error in errors:

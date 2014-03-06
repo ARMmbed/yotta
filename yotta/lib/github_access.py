@@ -34,29 +34,6 @@ _github_url = 'https://api.github.com'
 
 # Internal functions
 
-def _authorizeUser():
-    # using basic auth request an access token, then save it so that we don't
-    # have to repeatedly ask for basic authentication credentials
-
-    user = settings.getProperty('github', 'user')
-    if not user:
-        user = raw_input('enter your github username:')
-        settings.setProperty('github', 'user', user)
-
-    auth = BasicAuth(user, getpass.getpass('Enter the password for github user %s:' % user))
-
-    request_data = {
-        'scopes': ['repo'],
-          'note': 'yotta'
-    }
-    resource = Resource(_github_url + '/authorizations', pool=connection_pool.getPool(), filters=[auth])
-    response = resource.post(
-        headers = {'Content-Type': 'application/json'}, 
-        payload = json.dumps(request_data)
-    )
-    token = json.loads(response.body_string())['token']
-    settings.setProperty('github', 'authtoken', token)
-
 def _userAuthorized():
     return settings.getProperty('github', 'user') and \
            settings.getProperty('github', 'authtoken')
@@ -68,7 +45,7 @@ def _handleAuth(fn):
         try:
             return fn(*args, **kwargs)
         except github.BadCredentialsException:
-            _authorizeUser()
+            authorizeUser()
             logging.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
             return fn(*args, **kwargs)
         except github.UnknownObjectException:
@@ -78,7 +55,7 @@ def _handleAuth(fn):
             # but for now we assume that if the user is logged in then a 404
             # really is a 404
             if not _userAuthorized():
-                _authorizeUser()
+                authorizeUser()
                 return fn(*args, **kwargs)
             else:
                 raise
@@ -109,10 +86,42 @@ def _getTarball(url, into_directory):
         headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
     )
     logging.debug('getting file: %s', url)
+    # TODO: there's an MD5 in the response headers, verify it
     access_common.unpackTarballStream(response.body_stream(), into_directory)
 
 
 # API
+def authorizeUser():
+    # using basic auth request an access token, then save it so that we don't
+    # have to repeatedly ask for basic authentication credentials
+
+    # !!! FIXME: if we already have a github authtoken, but it isn't working,
+    # then we should try to delete it before creating a new one (we're limited
+    # to 5 concurrent tokens per app), just in case the error wasn't that the
+    # authorisation had been revoked/expired
+    # !!! FIXME-also: could just get /authorizations, and re-use an existing
+    # token
+
+    user = settings.getProperty('github', 'user')
+    if not user:
+        user = raw_input('enter your github username:')
+        settings.setProperty('github', 'user', user)
+
+    auth = BasicAuth(user, getpass.getpass('Enter the password for github user %s:' % user))
+
+    request_data = {
+        'scopes': ['repo'],
+          'note': 'yotta'
+    }
+    resource = Resource(_github_url + '/authorizations', pool=connection_pool.getPool(), filters=[auth])
+    response = resource.post(
+        headers = {'Content-Type': 'application/json'}, 
+        payload = json.dumps(request_data)
+    )
+    token = json.loads(response.body_string())['token']
+    settings.setProperty('github', 'authtoken', token)
+
+
 class GithubComponentVersion(access_common.RemoteVersion):
     def unpackInto(self, directory):
         assert(self.url)

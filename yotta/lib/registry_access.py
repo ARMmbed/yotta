@@ -3,6 +3,8 @@ import re
 import logging
 from collections import OrderedDict
 import uuid
+import functools
+import json
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
@@ -18,6 +20,8 @@ import access_common
 import version
 # Ordered JSON, , read & write json, internal
 import ordered_json
+# Github Access, , access repositories on github, internal
+import github_access
 
 
 # !!! FIXME get SSL cert for main domain
@@ -32,14 +36,37 @@ def _registryAuthFilter():
     # after that this will be removed
     return  BasicAuth('yotta','h297fb08625rixmzw7s9')
 
-# !!! FIXME: wrap for github auth
+def _returnRequestError(fn):
+    ''' Decorator that captures un-caught restkit_errors.RequestFailed errors
+        and returns them as an error message. If no error occurs the return
+        value of the wrapped function is returned (normally None). '''
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except restkit_errors.RequestFailed as e:
+            return "sever returned status %s: %s" % (e.status_int, e.message)
+    return wrapped
+ 
+def _handleAuth(fn):
+    ''' Decorator to re-try API calls after asking the user for authentication. '''
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except restkit_errors.Unauthorized as e:
+            github_access.authorizeUser()
+            logging.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+            return fn(*args, **kwargs)
+    return wrapped
+
+
 def _listVersions(namespace, name):
     # list versions of the package:
-    url = '%s/%s/%s?access_token=%s' % (
+    url = '%s/%s/%s' % (
         Registry_Base_URL,
         namespace,
-        name,
-        settings.getProperty('github', 'authtoken')
+        name
     )
     headers = { }
     auth = _registryAuthFilter()
@@ -60,20 +87,19 @@ def _tarballURL(namespace, name, version):
         Registry_Base_URL, namespace, name, version
     )
 
-# !!! FIXME: wrap for github auth
-def _getTarball(tarball_url, directory):
-    url = '%s?access_token=%s' % (
-        tarball_url,
-        settings.getProperty('github', 'authtoken')
-    )
-    headers = { }
+def _getTarball(url, directory):
     auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth], follow_redirect=True)
-    response = resource.get(
-        headers = headers
-    )
-    print 'response:', response
-    print 'headers:', dict(response.headers.items())
+    logging.debug('registry: get: %s' % url)
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+    #resource = Resource('http://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz', pool=connection_pool.getPool(), follow_redirect=True)
+    response = resource.get()
+    # there seems to be an issue with following the redirect using restkit:
+    # follow redirect manually
+    if response.status_int == 302 and 'Location' in response.headers:
+        redirect_url = response.headers['Location']
+        logging.debug('registry: redirect to: %s' % redirect_url)
+        resource = Resource(redirect_url, pool=connection_pool.getPool())
+        response = resource.get()
     return access_common.unpackTarballStream(response.body_stream(), directory)
 
 
@@ -128,10 +154,13 @@ class RegistryThing(access_common.RemoteComponent):
         raise NotImplementedError()
 
 
-# !!! FIXME: wrap for github auth
+@_returnRequestError
+@_handleAuth
 def publish(namespace, name, version, description_file, tar_file):
-    ''' Publish a tarblob to the registry, return any error encountered, or
-        None if successful.
+    ''' Publish a tarblob to the registry, if the request fails, an exception
+        is raised, which either triggers re-authentication, or is turned into a
+        return value by the decorators. (If successful, the decorated function
+        returns None)
     '''
 
     url = '%s/%s/%s/%s?access_token=%s' % (
@@ -150,13 +179,10 @@ def publish(namespace, name, version, description_file, tar_file):
     auth = _registryAuthFilter()
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
 
-    try:
-        response = resource.put(
-            headers = headers,
-            payload = body
-        )
-    except restkit_errors.RequestFailed as e:
-        return "sever returned status %s: %s" % (e.status_int, e.message)
+    response = resource.put(
+        headers = headers,
+        payload = body
+    )
 
     return None
 

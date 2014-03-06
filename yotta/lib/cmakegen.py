@@ -112,9 +112,9 @@ class CMakeGen(object):
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
         self.generate(builddir, component, new_dependencies, recursive_deps)
 
-        print 'recursive deps of', component, ':'
+        logging.debug('recursive deps of %s:' % component)
         for d in recursive_deps.values():
-            print '    ', d
+            logging.debug('    %s' % d)
 
         processed_components.update(new_dependencies)
         for name, c in new_dependencies.items():

@@ -21,10 +21,10 @@ package_json = '''{
 
 testdir = '/tmp/yttest/registry-access'
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(message)s'
-)
+#logging.basicConfig(
+#    level=logging.DEBUG,
+#    format='%(message)s'
+#)
 
 def mkDirP(path):
     try:

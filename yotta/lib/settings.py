@@ -58,6 +58,8 @@ def getProperty(section, name):
             return parser.get(section, name)
     except ConfigParser.NoSectionError:
         return None
+    except ConfigParser.NoOptionError:
+        return None
 
 def setProperty(section, name, value):
     # use a local parser instance so that we don't copy system-wide settings
