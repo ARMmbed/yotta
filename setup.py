@@ -15,7 +15,7 @@ setup(
     keywords = "embedded package module dependency management",
     url = "about:blank",
     packages=['yotta', os.path.join('yotta','lib')],
-    long_description=read('README'),
+    long_description=read('readme.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

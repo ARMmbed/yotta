@@ -2,6 +2,7 @@
 import argparse
 import logging
 import os
+import re
 
 # Component, , represents an installed component, internal
 from lib import component
@@ -58,12 +59,26 @@ def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
     
-    # !!! FIXME: should support other URL specs than just unadorned names
-    access.satisfyVersion(
-              args.component,
-                         '*',
-        available_components = dict(),
-                search_paths = [path],
-                 working_dir = path
-    )
-
+    # !!! FIXME: should support other URL specs, spec matching should be in
+    # access module
+    github_ref_match = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)').match(args.component)
+    if github_ref_match:
+        component_name = github_ref_match.group(1)
+        access.satisfyVersion(
+                  component_name,
+                  args.component,
+                       available = dict(),
+                    search_paths = [path],
+               working_directory = path
+        )
+    else:
+        component_name = args.component
+        access.satisfyVersion(
+                  component_name,
+                             '*',
+                       available = dict(),
+                    search_paths = [path],
+               working_directory = path
+        )
+    os.chdir(component_name)
+    installDeps(args)

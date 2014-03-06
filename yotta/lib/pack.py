@@ -27,9 +27,11 @@ Default_Publish_Ignore = [
     '^\.svn$',
     '^yotta_modules$',
     '^yotta_targets$',
+    '^build$',
     '^\.DS_Store$',
-    '^\.sw[ponml]$',
+    '^\.[^\/]*\.sw[ponml]$',
     '^\._.*$',
+    '~$',
     '[/\\\\]\.DS_Store$',
     '[/\\\\]\.[^\/]*\.sw[ponml]$',
     '[/\\\\]\._.*$',
@@ -113,9 +115,9 @@ class Pack(object):
         ''' Write the current (possibly modified) component description to a
             package description file in the component directory.
         '''
-        ordered_json.dump(path.join(self.path, Component_Description_File), self.description)
+        ordered_json.dump(os.path.join(self.path, self.description_filename), self.description)
         if self.vcs:
-            self.vcs.markForCommit(Component_Description_File)
+            self.vcs.markForCommit(self.description_filename)
     
     def generateTarball(self, file_object):
         ''' Write a tarball of the current component/target to the file object

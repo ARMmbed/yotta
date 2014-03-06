@@ -34,7 +34,7 @@ def fullySplitPath(path):
             components.append(component)
         else:
             if path != '':
-                folders.append(path)
+                components.append(path)
             break
     components.reverse()
     return components

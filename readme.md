@@ -1,16 +1,16 @@
-##Yotta: Software Components for Embedded Systems
+###Yotta: Software Components for Embedded Systems
 
-###Build a Project from Github
-
+####Build a Project
 ```bash
 # set the target device:
 yotta target stk3700
 
-# install a yotta-enabled github project, and all its dependencies
-yotta install ARM-RD/objectador
+# install from the public registry (also accepts Owner/Project github URLs,
+# including privately accessible repos, such as ARM-RD/objectador)
+yotta install matrixlcd
 
 # cd into the installed project
-cd objectador
+cd matrixlcd
 
 # generate build files, and build 
 yotta build
@@ -18,7 +18,7 @@ cd build
 cmake . && make
 ```
 
-### Developing on an Existing Project
+#### Developing on an Existing Project
     
 ```bash
 # get the version-controlled source
@@ -36,7 +36,8 @@ yotta build
 cd build
 cmake . && make
 
-# change some files
+# go back up and work on things
+cd ..
 vim ./source/somefile.h
 ...
 
