@@ -22,17 +22,17 @@ yotta install matrixlcd
 # cd into the installed project
 cd matrixlcd
 
-# generate build files, and build 
+# generate build files, and build
 yotta build
 cd build
 cmake . && make
 ```
 
 #### Developing on an Existing Project
-    
+
 ```bash
 # get the version-controlled source
-git clone git@github.com/ARM-RD/yottos
+git clone git@github.com:ARM-RD/yottos.git
 cd yottos
 
 # set the target device:
@@ -41,7 +41,7 @@ yotta target stk3700
 # install dependencies
 yotta install
 
-# generate build files, and build 
+# generate build files, and build
 yotta build
 cd build
 cmake . && make
