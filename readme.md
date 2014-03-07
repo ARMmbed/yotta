@@ -26,7 +26,7 @@ git clone git@github.com/ARM-RD/yottos
 cd yottos
 
 # set the target device:
-yotta target stk-3700
+yotta target stk3700
 
 # install dependencies
 yotta install
