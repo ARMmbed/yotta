@@ -1,5 +1,15 @@
 ###Yotta: Software Components for Embedded Systems
 
+####Install Yotta
+```bash
+brew tap ARM-RD/formulae
+brew install yotta
+```
+or
+``` bash
+sudo pip install -e git://github.com/ARM-RD/yotta.git#egg=yotta
+```
+
 ####Build a Project
 ```bash
 # set the target device:
