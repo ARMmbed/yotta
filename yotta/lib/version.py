@@ -1,6 +1,8 @@
+# standard library modules, , ,
+import re
+
 # Semantic Versioning, BSD, Represent and compare version strings, pip install -e git://github.com/autopulated/python-semanticversion.git#egg=semantic_version
 import semantic_version
-
 
 # Parse and match pure version strings and version specifications
 #
@@ -123,5 +125,14 @@ class Spec(semantic_version.Spec):
     def __init__(self, version_spec):
         if not version_spec:
             version_spec = '*'
+        # add support for version specs that are unadorned versions, or a
+        # single equals
+        if re.match('^[0-9]', version_spec):
+            version_spec = '==' + version_spec
+        elif re.match('^=[0-9]', version_spec):
+            version_spec = '=' + version_spec
         super(Spec, self).__init__(version_spec)
 
+    # base type contains function checks the type, so must replace it
+    def __contains__(self, version):
+        return self.match(version)

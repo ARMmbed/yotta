@@ -1,4 +1,5 @@
 #! /usr/bin/env python2.7
+
 import os
 import shutil
 import errno
@@ -59,22 +60,26 @@ def mkDirP(path):
         else:
             raise
 
-try:
-    shutil.rmtree(testdir)
-except OSError: pass
+# !!! TODO unit-ify this
+def main():
+    try:
+        shutil.rmtree(testdir)
+    except OSError: pass
 
-mkDirP(testdir)
-with open(os.path.join(testdir, 'package.json'), 'w') as f:
-    f.write(package_json)
+    mkDirP(testdir)
+    with open(os.path.join(testdir, 'package.json'), 'w') as f:
+        f.write(package_json)
 
-c = component.Component(testdir)
+    c = component.Component(testdir)
 
-available = []
+    available = []
 
-installed, errs = c.satisfyDependenciesRecursive()
+    installed, errs = c.satisfyDependenciesRecursive()
 
-for x in installed:
-    print 'installed', x
-for e in errs:
-    print 'Error:', e
+    for x in installed:
+        print 'installed', x
+    for e in errs:
+        print 'Error:', e
+
+# main()
 

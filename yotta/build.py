@@ -30,7 +30,10 @@ def execCommand(args):
     all_components = c.getDependenciesRecursive(target=target)
     logging.info('all dependencies: (target=%s)' % target)
     for d in all_components.values():
-        logging.info('    %s@%s: %s' % (d.getName(), d.getVersion(), os.path.relpath(d.path)))
+        if d:
+            logging.info('    %s@%s: %s' % (d.getName(), d.getVersion(), os.path.relpath(d.path)))
+        else:
+            logging.error('    %s not available' % os.path.split(d.path)[1])
 
     generator = cmakegen.CMakeGen(builddir, target)
     for error in generator.generateRecursive(c, all_components, builddir):

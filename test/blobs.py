@@ -14,31 +14,37 @@ from yotta.lib import access_common
 
 
 
-url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
-print 'get:', url
-resource = Resource(url)
-response = resource.get()
-print 'response:', response
-print 'headers:', dict(response.headers.items())
-print 'body len:', len(response.body_string())
+# !!! TODO unit-ify this
+def main():
+
+    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    print 'get:', url
+    resource = Resource(url)
+    response = resource.get()
+    print 'response:', response
+    print 'headers:', dict(response.headers.items())
+    print 'body len:', len(response.body_string())
 
 
-url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
-headers = { }
-print 'get:', url
-resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
-response = resource.get(
-    headers = headers
-)
-print 'response:', response
-print 'headers:', dict(response.headers.items())
-print 'body len:', len(response.body_string())
+    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    headers = { }
+    print 'get:', url
+    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
+    response = resource.get(
+        headers = headers
+    )
+    print 'response:', response
+    print 'headers:', dict(response.headers.items())
+    print 'body len:', len(response.body_string())
 
-url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
-headers = { }
-print 'get:', url
-resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
-response = resource.get(
-    headers = headers
-)
-access_common.unpackTarballStream(response.body_stream(), '/tmp/yttest/blobs/')
+    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    headers = { }
+    print 'get:', url
+    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
+    response = resource.get(
+        headers = headers
+    )
+    access_common.unpackTarballStream(response.body_stream(), '/tmp/yttest/blobs/')
+
+# main()
+

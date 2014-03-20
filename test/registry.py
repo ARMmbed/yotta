@@ -35,23 +35,26 @@ def mkDirP(path):
         else:
             raise
 
-try:
-    shutil.rmtree(testdir)
-except OSError: pass
 
-mkDirP(testdir)
-with open(os.path.join(testdir, 'package.json'), 'w') as f:
-    f.write(package_json)
+# !!! TODO: unit-ify this
+def main():
+    try:
+        shutil.rmtree(testdir)
+    except OSError: pass
 
-c = component.Component(testdir)
+    mkDirP(testdir)
+    with open(os.path.join(testdir, 'package.json'), 'w') as f:
+        f.write(package_json)
 
-available = []
+    c = component.Component(testdir)
 
-installed, errs = c.satisfyDependenciesRecursive()
+    available = []
 
-for x in installed:
-    print 'installed', x
-for e in errs:
-    print 'Error:', e
+    installed, errs = c.satisfyDependenciesRecursive()
 
+    for x in installed:
+        print 'installed', x
+    for e in errs:
+        print 'Error:', e
 
+# main()
