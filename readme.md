@@ -1,5 +1,7 @@
 ###Yotta: Software Components for Embedded Systems
 
+[![Build Status](https://magnum.travis-ci.com/ARM-RD/yotta.svg?token=XG7YezaYG4fZCZqqBSsP&branch=master)](https://magnum.travis-ci.com/ARM-RD/yotta)
+
 ####Install Yotta
 ```bash
 brew tap ARM-RD/formulae
