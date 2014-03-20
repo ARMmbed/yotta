@@ -1,4 +1,4 @@
-import unittest as unittest
+import unittest
 
 from yotta.lib import version
 
