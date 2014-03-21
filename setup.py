@@ -10,7 +10,7 @@ setup(
     version = "0.0.1",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
-    description = ("Package management for embedded modules."),
+    description = ("Software components for embedded modules."),
     license = "Proprietary",
     keywords = "embedded package module dependency management",
     url = "about:blank",
@@ -26,8 +26,6 @@ setup(
         "console_scripts": [
             "yotta=yotta:main",
                "yt=yotta:main",
-             # will remove this once old yotta is completely gone
-             "pyyt=yotta:main",
         ],
     },
     test_suite = 'test',

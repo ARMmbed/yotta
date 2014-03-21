@@ -159,15 +159,20 @@ class Pack(object):
                 )
 
     @classmethod
-    def orderedDict(cls, sequence=None):
-        if sequence:
+    def ensureOrderedDict(cls, sequence=None):
+        # !!! NB: MUST return the same object if the object is already an
+        # ordered dictionary. we rely on spooky-action-at-a-distance to keep
+        # the "available components" dictionary synchronised between all users
+        if isinstance(sequence, OrderedDict):
+            return sequence
+        elif sequence:
             return OrderedDict(sequence)
         else:
             return OrderedDict()
 
     def __repr__(self):
         if not self:
-            return "INVALID COMPONENT: %s" % (self.description)
+            return "INVALID COMPONENT @ %s: %s" % (self.path, self.description)
         return "%s %s at %s" % (self.description['name'], self.description['version'], self.path)
 
     # provided for truthiness testing, we test true only if we successfully

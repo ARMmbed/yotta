@@ -61,6 +61,9 @@ def installDeps(args):
 def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
+
+    # !!! FIXME: if the current directory is a component, it should be
+    # made available to satisfy dependencies of the installed component
     
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module

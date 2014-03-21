@@ -24,7 +24,15 @@ def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish}')
 
-    parser.add_argument('-v', '--verbose', dest='verbosity', action='count', default=0)
+    parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
+        default=0,
+        help='increase verbosity: can be used multiple times'
+    )
+    parser.add_argument('-d', '--debug', dest='debug', action='append',
+        metavar='SUBSYS',
+        help='specify subsystems to debug: use in conjunction with -v to '+
+             'increase the verbosity only for specified subsystems'
+    )
     parser.add_argument('-t', '--target', dest='target',
         default=settings.getProperty('build', 'target'),
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
@@ -65,10 +73,16 @@ def main():
         for handler in root.handlers:
             root.removeHandler(handler)
     logging.basicConfig(
-        level=logLevelFromVerbosity(args.verbosity),
         format='%(message)s'
     )
-
+    loglevel = logLevelFromVerbosity(args.verbosity)
+    if args.debug:
+        for subsys in args.debug:
+            logging.getLogger(subsys).setLevel(loglevel)
+    else:
+        logging.getLogger().setLevel(loglevel)
+    
+    # finally, do stuff!
     status = args.command(args)
 
     sys.exit(status or 0)

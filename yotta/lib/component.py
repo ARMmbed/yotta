@@ -39,6 +39,8 @@ Component_Description_File = 'package.json'
 # !!! FIXME: change /package to /component
 Registry_Namespace = 'package' 
 
+logger = logging.getLogger('components')
+
 
 # API
 class Component(pack.Pack):
@@ -80,13 +82,13 @@ class Component(pack.Pack):
             proceeds in a predictable way.
         '''
         if 'dependencies' not in self.description:
-            logging.debug("component %s has no dependencies" % self.getName())
+            logger.debug("component %s has no dependencies" % self.getName())
             return tuple()
         deps = self.description['dependencies'].items()
         if target and 'targetDependencies' in self.description:
             for t in target.dependencyResolutionOrder():
                 if t in self.description['targetDependencies']:
-                    logging.debug(
+                    logger.debug(
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
@@ -102,18 +104,18 @@ class Component(pack.Pack):
         ):
         ''' Returns {component_name:component}
         '''
-        available_components = self.orderedDict(available_components)        
+        available_components = self.ensureOrderedDict(available_components)        
         if search_dirs is None:
             search_dirs = []
         r = OrderedDict()
         modules_path = self.modulesPath()
         for name, ver_req in self.getDependencySpecs(target=target):
             if name in available_components:
-                logging.debug('found dependency %s of %s in available components' % (name, self.getName()))
+                logger.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
             elif not available_only:
                 for d in search_dirs + [modules_path]:
-                    logging.debug('looking for dependency %s of %s in %s' % (name, self.getName(), d))
+                    logger.debug('looking for dependency %s of %s in %s' % (name, self.getName(), d))
                     component_path = path.join(d, name)
                     c = Component(
                         component_path,
@@ -121,13 +123,13 @@ class Component(pack.Pack):
                         installed_linked=fsutils.isLink(component_path)
                     )
                     if c:
-                        logging.debug('found dependency %s of %s in %s' % (name, self.getName(), d))
+                        logger.debug('found dependency %s of %s in %s' % (name, self.getName(), d))
                         break
                 # if we didn't find a valid component in the search path, we
                 # use the component initialised with the last place checked
                 # (the modules path)
                 if not c:
-                    logging.warning('failed to find dependency %s of %s' % (name, self.getName()))
+                    logger.warning('failed to find dependency %s of %s' % (name, self.getName()))
                 r[name] = c
         return r
 
@@ -151,7 +153,7 @@ class Component(pack.Pack):
             if c.getName() in processed:
                 return False
             return True
-        available_components = self.orderedDict(available_components)
+        available_components = self.ensureOrderedDict(available_components)
         if processed is None:
             processed = set()
         if search_dirs is None:
@@ -284,11 +286,11 @@ class Component(pack.Pack):
         '''
         def recursionFilter(c):
             if not c:
-                logging.debug('do not recurse into failed component')
+                logger.debug('do not recurse into failed component')
                 # don't recurse into failed components
                 return False
             if c.getName() in available_components:
-                logging.debug('do not recurse into already installed component: %s' % c)
+                logger.debug('do not recurse into already installed component: %s' % c)
                 # don't recurse into components added at a higher level: this
                 # ensures that dependencies are installed as high up the tree
                 # as possible
@@ -296,8 +298,9 @@ class Component(pack.Pack):
             if c.installed_linked:
                 return False
             if update_installed:
-                logging.debug('%s:%s' % (
+                logger.debug('%s:%s:%s' % (
                     self.getName(),
+                    c.getName(),
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
                 return c.outdated() or not c.installedDependencies()
@@ -305,13 +308,16 @@ class Component(pack.Pack):
                 # if we don't want to update things that were already installed
                 # (install mode, rather than update mode) then don't recurse
                 # into things that were already on disk
-                logging.debug('%s:%s:%s' % (
+                logger.debug('%s:%s:%s:%s' % (
                     self.getName(),
+                    c.getName(),
                     ('new','installed previously')[c.installedPreviously()],
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
                 return not (c.installedPreviously() or c.installedDependencies())
-        available_components = self.orderedDict(available_components)
+        available_components = self.ensureOrderedDict(available_components)
+        logger.debug('install deps of %s@%s...' % (self.getName(), self.getVersion()))
+        logger.debug('available: %s' % available_components.keys())
         if search_dirs is None:
             search_dirs = []
         search_dirs.append(self.modulesPath())
@@ -323,8 +329,11 @@ class Component(pack.Pack):
         )
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
-        need_recursion = filter(recursionFilter, components.values())
+        need_recursion = filter(recursionFilter, components.values()) 
         available_components.update(components)
+        logger.debug('deps: %s' % components.keys())
+        logger.debug('recurse into: %s' % ([c.getName() for c in need_recursion]))
+        logger.debug('available now: %s' % available_components.keys())
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
         for c in need_recursion:
@@ -333,7 +342,7 @@ class Component(pack.Pack):
             )
             available_components.update(dep_components)
             errors += dep_errors
-        logging.info('%s@%s' % (self.getName(), self.getVersion()))
+        logger.info('%s@%s' % (self.getName(), self.getVersion()))
         return (components, errors)
 
     def satisfyTarget(self, target_name_and_version, update_installed=False):
