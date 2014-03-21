@@ -50,7 +50,10 @@ def installDeps(args):
         # module into the global modules dir
         raise NotImplementedError()
     else:
-        components, errors = c.satisfyDependenciesRecursive(target=target)
+        components, errors = c.satisfyDependenciesRecursive(
+                          target = target,
+            available_components = [(c.getName(), c)]
+        )
         for error in errors:
             logging.error(error)
 

@@ -102,8 +102,7 @@ class Component(pack.Pack):
         ):
         ''' Returns {component_name:component}
         '''
-        if available_components is None:
-            available_components = OrderedDict()
+        available_components = self.orderedDict(available_components)        
         if search_dirs is None:
             search_dirs = []
         r = OrderedDict()
@@ -152,8 +151,7 @@ class Component(pack.Pack):
             if c.getName() in processed:
                 return False
             return True
-        if available_components is None:
-            available_components = OrderedDict()
+        available_components = self.orderedDict(available_components)
         if processed is None:
             processed = set()
         if search_dirs is None:
@@ -313,8 +311,7 @@ class Component(pack.Pack):
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
                 return not (c.installedPreviously() or c.installedDependencies())
-        if available_components is None:
-            available_components = OrderedDict()
+        available_components = self.orderedDict(available_components)
         if search_dirs is None:
             search_dirs = []
         search_dirs.append(self.modulesPath())

@@ -122,6 +122,10 @@ def satisfyVersion(
         r = available[name]
         if spec and not spec.match(r.getVersion()):
             raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
+        if name != r.getName():
+            raise Exception('Component %s was installed as different name %s in %s' % (
+                r.getName(), name, r.path
+            ))
         return r
 
 
@@ -150,6 +154,10 @@ def satisfyVersion(
             logging.debug("satisfy component from directory: %s" % component_path)
             # if a component exists (has a valid description file), and either is
             # not outdated, or we are not updating
+            if name != local_component.getName():
+                raise Exception('Component %s found in incorrectly named directory %s (%s)' % (
+                    local_component.getName(), name, local_component.path
+                ))
             return local_component
         elif local_component and local_component.outdated():
             logging.info('%soutdated: %s@%s -> %s' % (
@@ -179,6 +187,10 @@ def satisfyVersion(
         raise Exception(
             'Dependency "%s":"%s" is not a valid component.' % (name, version_required)
         )
+    if name != r.getName():
+        raise Exception('Component %s (specification %s) has incorrect name %s' % (
+            name, version_required, r.getName()
+        ))
     return r
 
 

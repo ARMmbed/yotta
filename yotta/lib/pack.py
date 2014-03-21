@@ -85,7 +85,6 @@ class Pack(object):
             return
         self.vcs.commit(message='version %s' % tag, tag=tag)
 
-
     def getVersion(self):
         ''' Return the version as specified by the package file.
             This will always be a real version: 1.2.3, not a hash or a URL.
@@ -159,8 +158,16 @@ class Pack(object):
                     tar_file
                 )
 
+    @classmethod
+    def orderedDict(cls, sequence=None):
+        if sequence:
+            return OrderedDict(sequence)
+        else:
+            return OrderedDict()
 
     def __repr__(self):
+        if not self:
+            return "INVALID COMPONENT: %s" % (self.description)
         return "%s %s at %s" % (self.description['name'], self.description['version'], self.path)
 
     # provided for truthiness testing, we test true only if we successfully

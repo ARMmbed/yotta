@@ -37,7 +37,11 @@ def updateDeps(args):
             logging.error(error)
         return 1
     
-    components, errors = c.satisfyDependenciesRecursive(target=target, update_installed=True)
+    components, errors = c.satisfyDependenciesRecursive(
+                          target = target,
+                update_installed = True,
+            available_components = [(c.getName(), c)]
+        )
     for error in errors:
         logging.error(error)
 

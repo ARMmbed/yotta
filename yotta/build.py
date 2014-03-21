@@ -27,7 +27,10 @@ def execCommand(args):
             logging.error(error)
         return 1
 
-    all_components = c.getDependenciesRecursive(target=target)
+    all_components = c.getDependenciesRecursive(
+                      target = target,
+        available_components = [(c.getName(), c)]
+    )
     logging.info('all dependencies: (target=%s)' % target)
     for d in all_components.values():
         if d:
