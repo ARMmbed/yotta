@@ -3,13 +3,13 @@
 [![Build Status](https://magnum.travis-ci.com/ARM-RD/yotta.svg?token=XG7YezaYG4fZCZqqBSsP&branch=master)](https://magnum.travis-ci.com/ARM-RD/yotta)
 
 ####Install Yotta
+``` bash
+sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
+```
+The toolchain can be installed with homebrew:
 ```bash
 brew tap ARM-RD/formulae
-brew install yotta
-```
-or
-``` bash
-sudo pip install -e git://github.com/ARM-RD/yotta.git#egg=yotta
+brew install arm-rd-clang arm-none-eabi-gcc cmake ninja
 ```
 
 ####Build a Project
