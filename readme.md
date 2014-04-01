@@ -6,6 +6,7 @@
 ``` bash
 sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
 ```
+(If you don't have `pip` installed, you may need to install that first using `easy_install pip`)  
 The toolchain can be installed with homebrew:
 ```bash
 brew tap ARM-RD/formulae
