@@ -19,8 +19,11 @@ class Target(pack.Pack):
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
-        super(Target, self).__init__(path, installed_linked=installed_linked)
-        self.latest_suitable_version = latest_suitable_version
+        super(Target, self).__init__(
+            path,
+            installed_linked=installed_linked,
+            latest_suitable_version=latest_suitable_version
+        )
         # !!! TODO: validate self.description, possibly add a
         # description_schema class variable used when loading...
     

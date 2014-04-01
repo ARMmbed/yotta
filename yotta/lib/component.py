@@ -65,11 +65,14 @@ class Component(pack.Pack):
             dependencies have been installed) for each of the dependencies.
            
         '''
-        super(Component, self).__init__(path, installed_linked=installed_linked)
+        super(Component, self).__init__(
+            path,
+            installed_linked=installed_linked,
+            latest_suitable_version=latest_suitable_version
+        )
         self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
-        self.latest_suitable_version = latest_suitable_version
         # !!! TODO: validate self.description, possibly add a
         # description_schema class variable used when loading...
 
@@ -192,17 +195,6 @@ class Component(pack.Pack):
 
     def targetsPath(self):
         return os.path.join(self.path, Targets_Folder)
-
-    def outdated(self):
-        ''' Return a truthy object if a newer suitable version is available,
-            otherwise return None.
-            (in fact the object returned is a ComponentVersion that can be used
-             to get the newer version)
-        '''
-        if self.latest_suitable_version and self.latest_suitable_version > self.version:
-            return self.latest_suitable_version
-        else:
-            return None
 
     def satisfyDependencies(
                             self,

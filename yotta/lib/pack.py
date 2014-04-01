@@ -43,11 +43,12 @@ Default_Publish_Ignore = [
 class Pack(object):
     description_filename = None
 
-    def __init__(self, path, installed_linked):
+    def __init__(self, path, installed_linked, latest_suitable_version=None):
         self.path = path
         self.installed_linked = installed_linked
         self.vcs = None
         self.error = None
+        self.latest_suitable_version = latest_suitable_version
         try:
             self.description = ordered_json.load(os.path.join(path, self.description_filename))
             self.version = version.Version(self.description['version'])
@@ -66,6 +67,17 @@ class Pack(object):
 
     def installedLinked(self):
         return self.installed_linked
+
+    def outdated(self):
+        ''' Return a truthy object if a newer suitable version is available,
+            otherwise return None.
+            (in fact the object returned is a ComponentVersion that can be used
+             to get the newer version)
+        '''
+        if self.latest_suitable_version and self.latest_suitable_version > self.version:
+            return self.latest_suitable_version
+        else:
+            return None
 
     def vcsIsClean(self):
         ''' Return true if the directory is not version controlled, or if it is
