@@ -47,7 +47,7 @@ class Git(VCS):
 
     def commit(self, message, tag=None):
         commands = [
-            self._gitCmd('commit', '-m', message),
+            self._gitCmd('commit', '--allow-empty', '-m', message),
         ]
         if tag:
             commands.append(

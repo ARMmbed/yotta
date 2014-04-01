@@ -133,6 +133,13 @@ class Component(pack.Pack):
                 r[name] = c
         return r
 
+    #def __doRecursive(self,
+    #  available_components = None,
+    #           search_dirs = None,
+    #                target = None
+    #):
+    #    pass
+
     def getDependenciesRecursive(self,
                  available_components = None,
                             processed = None,

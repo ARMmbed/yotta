@@ -7,10 +7,10 @@ def read(fname):
 
 setup(
     name = "yotta",
-    version = "0.0.1",
+    version = "0.0.2",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
-    description = ("Software components for embedded modules."),
+    description = ("Re-usable components for embedded software."),
     license = "Proprietary",
     keywords = "embedded package module dependency management",
     url = "about:blank",

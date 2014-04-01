@@ -31,7 +31,7 @@ def updateDeps(args):
     if not args.target:
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, update_installed=True)
     if errors:
         for error in errors:
             logging.error(error)

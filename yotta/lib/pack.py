@@ -54,8 +54,6 @@ class Pack(object):
         except Exception, e:
             self.description = OrderedDict()
             self.error = e
-
-    def initVCS(self):
         self.vcs = vcs.getVCS(path)
     
     def getError(self):
