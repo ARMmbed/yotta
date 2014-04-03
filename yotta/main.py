@@ -13,6 +13,7 @@ from . import target
 from . import build
 from . import init
 from . import publish
+from . import debug
 
 # settings, , load and save settings, internal
 from lib import settings
@@ -50,6 +51,7 @@ def main():
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
     addParser('build', build, 'Build the current component.')
+    addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
     addParser('init', init, 'Create a new component.')
     addParser('publish', publish, 'Publish a component or target to the public registry.')
 
@@ -62,6 +64,7 @@ def main():
        'tgt':subparser.choices['target'],
        'pub':subparser.choices['publish'],
        'ver':subparser.choices['version'],
+       'dbg':subparser.choices['debug'],
     })
 
     args = parser.parse_args()

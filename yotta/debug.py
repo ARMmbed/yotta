@@ -9,7 +9,9 @@ from lib import cmakegen
 
 
 def addOptions(parser):
-    pass
+    parser.add_argument('program', default=None,
+        help='name of the program to be debugged'
+    )
 
 
 def execCommand(args):
@@ -26,27 +28,12 @@ def execCommand(args):
         for error in errors:
             logging.error(error)
         return 1
-
-    all_components = c.getDependenciesRecursive(
-                      target = target,
-        available_components = [(c.getName(), c)]
-    )
-    logging.info('all dependencies: (target=%s)' % target)
-    for d in all_components.values():
-        if d:
-            logging.info('    %s@%s: %s' % (d.getName(), d.getVersion(), os.path.relpath(d.path)))
-        else:
-            logging.error('    %s not available' % os.path.split(d.path)[1])
-
-    generator = cmakegen.CMakeGen(builddir, target)
-    errcode = None
-    for error in generator.generateRecursive(c, all_components, builddir):
-        logging.error(error)
-        errcode = 1
     
-    for error in target.build(builddir):
+    errcode = None
+    for error in target.debug(builddir, args.program):
         logging.error(error)
         errcode = 1
 
     return errcode
+
 
