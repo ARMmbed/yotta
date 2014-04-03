@@ -40,5 +40,6 @@ def execCommand(args):
         return 1
     
     # tag the version published as 'latest'
-    p.commitVCS(tag='latest')
+    # !!! can't do this, as can't move tags in git?
+    #p.commitVCS(tag='latest')
     logging.info('published latest version: %s', p.getVersion())
