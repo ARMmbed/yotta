@@ -15,6 +15,7 @@ brew install arm-rd-clang arm-none-eabi-gcc cmake ninja
 ```
 
 ####Build a Project
+Use yotta to download and build the current version of a project.
 ```bash
 # set the target device:
 yotta target stk3700
@@ -33,7 +34,7 @@ cmake . && make
 ```
 
 #### Developing on an Existing Project
-
+To develop a project we want to grab the source using git, so we have a copy we can can use to commit and push changes:
 ```bash
 # get the version-controlled source
 git clone git@github.com:ARM-RD/yottos.git
@@ -65,4 +66,34 @@ git push && git push --tags
 # publish the new version to the world
 yotta publish
 ```
+
+# Make changes to a dependency: `yotta link`
+It's often useful to make changes to a dependency of what you're working on, and have those changes immediately reflected in your main project, yotta makes this really easy:
+
+```bash
+# create a new project directory with the version-controlled source of
+# the dependency you care about:
+git clone git@github.com:ARM-RD/libc.git
+cd libc
+
+# install the dependencies
+yotta install
+
+# link this component into the globally installed component
+# (may need `sudo' depending on your configuration)
+yotta link
+
+# go back to the main project
+cd ../yottos
+yotta link libc
+
+# regenerate build files and rebuild
+yotta build
+cd build
+make
+
+# now you can make changes to the dependency, rebuild, and they will
+# be immediately reflected in the main project
+```
+
 
