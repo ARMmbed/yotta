@@ -67,7 +67,7 @@ git push && git push --tags
 yotta publish
 ```
 
-# Make changes to a dependency: `yotta link`
+#### Make changes to a dependency: `yotta link`
 It's often useful to make changes to a dependency of what you're working on, and have those changes immediately reflected in your main project, yotta makes this really easy:
 
 ```bash
