@@ -27,10 +27,8 @@ yotta install matrixlcd
 # cd into the installed project
 cd matrixlcd
 
-# generate build files, and build
+# build (generates top level CMake files, runs cmake, then make)
 yotta build
-cd build
-cmake . && make
 ```
 
 #### Developing on an Existing Project
@@ -46,10 +44,8 @@ yotta target stk3700
 # install dependencies
 yotta install
 
-# generate build files, and build
+# build
 yotta build
-cd build
-cmake . && make
 
 # go back up and work on things
 cd ..
@@ -87,13 +83,39 @@ yotta link
 cd ../yottos
 yotta link libc
 
-# regenerate build files and rebuild
+# rebuild
 yotta build
-cd build
-make
 
 # now you can make changes to the dependency, rebuild, and they will
 # be immediately reflected in the main project
+```
+
+#### Attach a debugger `yotta debug`
+For targets that support it, you can attach a debugger to download and run code directly from yotta:
+
+```
+
+yotta target stk3700
+yotta build
+
+# launch a debugger connected (possibly via a debug server) to the target
+yotta debug test/mytest
+
+...
+
+Waiting for GDB connection...Connected to 127.0.0.1
+Reading all registers
+Read 4 bytes @ address 0x00000000 (Data = 0x20005D00)
+0x00000000 in __isr_vector ()
+Selecting device: EFM32GG990F1024
+Flash download enabled
+SWO started.
+> load
+...
+Transfer rate: 16536 KB/sec, 15240 bytes/write.
+> monitor reset
+Resetting target
+> continue
 ```
 
 
