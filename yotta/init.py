@@ -7,6 +7,10 @@ from lib import component
 # version, , represent versions and specifications, internal
 from lib import version
 
+Known_Licenses = {
+    'mit' : 'https://spdx.org/licenses/MIT',
+    'bsd-3-clause' : 'https://spdx.org/licenses/BSD-3-Clause'
+}
 
 def getUserInput(question, default = None, type_class=str):
     while True:
@@ -40,12 +44,25 @@ def execCommand(args):
     c.setName(getUserInput("Enter the package name:", c.getName()))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
-    current_description = c.description['description'] if 'description' in c.description else None
-    c.description['description'] = getUserInput("Short description:", current_description)
+    def current(x):
+        return c.description[x] if x in c.description else None
 
-    # TODO: more questions (homepage, bugs url,...), check that the name is
-    # available in the registry, and make sure there are empty dependency
-    # sections in the json file
+    c.description['description'] = getUserInput("Short description: ", current('description'))
+    c.description['author'] = getUserInput("Author: ", current('author'))
+    c.description['homepage'] = getUserInput("Homepage: ", current('homepage'))
+
+    if not current('licenses') or current('license'):
+        license = getUserInput('What is the license for this project (MIT, BSD-3-Clause, etc.)? ')
+        license_url = 'about:blank'
+        if license.lower().strip() in Known_Licenses:
+            license_url = Known_Licenses[license.lower().strip()]
+        c.description['licenses'] = [{'type':license, 'url':license_url}]
+
+    c.description['dependencies'] = current('dependencies') or {}
+    c.description['targetDependencies'] = current('targetDependencies') or {}
+
+    # TODO: more questions ( bugs url,...), check that the name is available in
+    # the registry...
 
     c.writeDescription()
 

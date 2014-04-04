@@ -49,6 +49,7 @@ class Pack(object):
         self.vcs = None
         self.error = None
         self.latest_suitable_version = latest_suitable_version
+        self.version = None
         try:
             self.description = ordered_json.load(os.path.join(path, self.description_filename))
             self.version = version.Version(self.description['version'])
