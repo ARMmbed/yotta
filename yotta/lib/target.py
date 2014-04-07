@@ -1,9 +1,11 @@
 # standard library modules, , ,
 import json
 import os
+import signal
 import subprocess
 import logging
 import string
+import traceback
 
 # version, , represent versions and specifications, internal
 import version
@@ -12,6 +14,14 @@ import pack
 
 Target_Description_File = 'target.json'
 Registry_Namespace = 'target'
+
+def _ignoreSignal(signum, frame):
+    logging.debug('ignoring signal %s, traceback:\n%s' % (
+        signum, ''.join(traceback.format_list(traceback.extract_stack(frame)))
+    ))
+
+def _newPGroup():
+    os.setpgrp()
 
 # API
 class Target(pack.Pack):
@@ -79,12 +89,13 @@ class Target(pack.Pack):
                     logging.debug('starting debug server...')
                     daemon = subprocess.Popen(
                         self.description['debug-server'], cwd=builddir,
-                        stdout = dev_null, stderr = dev_null
+                        stdout=dev_null, stderr=dev_null, preexec_fn=_newPGroup
                     )
                 else:
                     daemon = None
                 
                 
+                signal.signal(signal.SIGINT, _ignoreSignal);
                 cmd = [
                     string.Template(x).safe_substitute(program=prog_path)
                     for x in self.description['debug']
@@ -96,11 +107,17 @@ class Target(pack.Pack):
                 child.wait()
                 if child.returncode:
                     yield "debug process executed with status %s" % child.returncode
+                child = None
             except:
                 # reset the terminal, in case the debugger has screwed it up
                 os.system('reset')
                 raise
             finally:
-                if daemon:
+                if child is not None:
+                    child.terminate()
+                if daemon is not None:
                     logging.debug('shutting down debug server...')
                     daemon.terminate()
+                # clear the sigint handler
+                signal.signal(signal.SIGINT, signal.SIG_DFL);
+
