@@ -72,32 +72,35 @@ class Target(pack.Pack):
             )
             return
         
-        try:
-            if 'debug-server' in self.description:
-                logging.debug('starting debug server...')
-                daemon = subprocess.Popen(
-                    self.description['debug-server'], cwd=builddir
+        
+        with open(os.devnull, "w") as dev_null:
+            try:
+                if 'debug-server' in self.description:
+                    logging.debug('starting debug server...')
+                    daemon = subprocess.Popen(
+                        self.description['debug-server'], cwd=builddir,
+                        stdout = dev_null, stderr = dev_null
+                    )
+                else:
+                    daemon = None
+                
+                
+                cmd = [
+                    string.Template(x).safe_substitute(program=prog_path)
+                    for x in self.description['debug']
+                ]
+                logging.debug('starting debugger: %s', cmd)
+                child = subprocess.Popen(
+                    cmd, cwd=builddir
                 )
-            else:
-                daemon = None
-            
-            
-            cmd = [
-                string.Template(x).safe_substitute(program=prog_path)
-                for x in self.description['debug']
-            ]
-            logging.debug('starting debugger: %s', cmd)
-            child = subprocess.Popen(
-                cmd, cwd=builddir
-            )
-            child.wait()
-            if child.returncode:
-                yield "debug process executed with status %s" % child.returncode
-        except:
-            # reset the terminal, in case the debugger has screwed it up
-            os.system('reset')
-            raise
-        finally:
-            if daemon:
-                logging.debug('shutting down debug server...')
-                daemon.terminate()
+                child.wait()
+                if child.returncode:
+                    yield "debug process executed with status %s" % child.returncode
+            except:
+                # reset the terminal, in case the debugger has screwed it up
+                os.system('reset')
+                raise
+            finally:
+                if daemon:
+                    logging.debug('shutting down debug server...')
+                    daemon.terminate()

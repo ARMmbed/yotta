@@ -9,7 +9,10 @@ from lib import cmakegen
 
 
 def addOptions(parser):
-    pass
+    parser.add_argument('-g', '--generate-only', dest='generate_only',
+        action='store_true', default=False,
+        help='Only generate CMakeLists, don\'t run CMake or build'
+    )
 
 
 def execCommand(args):
@@ -44,9 +47,10 @@ def execCommand(args):
         logging.error(error)
         errcode = 1
     
-    for error in target.build(builddir):
-        logging.error(error)
-        errcode = 1
+    if not args.generate_only:
+        for error in target.build(builddir):
+            logging.error(error)
+            errcode = 1
 
     return errcode
 
