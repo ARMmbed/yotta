@@ -88,6 +88,8 @@ class Target(pack.Pack):
         
         
         with open(os.devnull, "w") as dev_null:
+            daemon = None
+            child = None
             try:
                 if 'debug-server' in self.description:
                     logging.debug('starting debug server...')
