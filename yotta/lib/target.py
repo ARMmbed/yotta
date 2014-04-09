@@ -55,20 +55,24 @@ class Target(pack.Pack):
     def getRegistryNamespace(self):
         return Registry_Namespace
 
-    def build(self, builddir):
+    def build(self, builddir, debug_build=False, release_build=False):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
         #commands = [['cmake','.', '-G', 'Ninja'], ['ninja']]
-        commands = [['cmake','.'], ['make']]
+        commands = []
+        build_type = ((None, 'Debug'), ('Release', 'RelWithDebInfo'))[release_build][debug_build]
+        if build_type:
+            commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '.'])
+        commands.append(['make'])
         for cmd in commands:
             child = subprocess.Popen(
                 cmd, cwd=builddir
             )
             child.wait()
             if child.returncode:
-                yield err
+                yield 'command %s failed' % (cmd)
     
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. '''

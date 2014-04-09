@@ -13,6 +13,8 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
     )
+    parser.add_argument('-d', '--debug-build', dest='debug_build', action='store_true', default=False)
+    parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=False)
 
 
 def execCommand(args):
@@ -48,7 +50,7 @@ def execCommand(args):
         errcode = 1
     
     if not args.generate_only:
-        for error in target.build(builddir):
+        for error in target.build(builddir, debug_build=args.debug_build, release_build=args.release_build):
             logging.error(error)
             errcode = 1
 
