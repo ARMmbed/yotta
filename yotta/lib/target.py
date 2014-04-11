@@ -65,6 +65,8 @@ class Target(pack.Pack):
         build_type = ((None, 'Debug'), ('Release', 'RelWithDebInfo'))[release_build][debug_build]
         if build_type:
             commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '.'])
+        else:
+            commands.append(['cmake', '.'])
         commands.append(['make'])
         for cmd in commands:
             child = subprocess.Popen(
