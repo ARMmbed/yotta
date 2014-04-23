@@ -93,6 +93,8 @@ yotta build
 #### Attach a debugger `yotta debug`
 For targets that support it, you can attach a debugger to download and run code directly from yotta:
 
+Currently the only target that supports this is [stk3700](https://github.com/ARM-RD/target-stk3700), which has more help on debugging in its readme.
+
 ```
 
 yotta target stk3700
