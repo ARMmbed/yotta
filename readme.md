@@ -10,7 +10,7 @@ sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
 
 The toolchain can be installed with [homebrew](https://github.com/ARM-RD/homebrew-formulae):
 ```bash
-brew tap ARM-RD/formulae
+brew tap ARM-RD/homebrew-formulae
 brew install arm-rd-clang arm-none-eabi-gcc cmake ninja
 ```
 
