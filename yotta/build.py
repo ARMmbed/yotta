@@ -24,13 +24,14 @@ def execCommand(args):
         logging.debug(str(c.error))
         logging.error('The current directory does not contain a valid component.')
         return 1
-    builddir = os.path.join(cwd, 'build')
 
     target, errors = c.satisfyTarget(args.target)
     if errors:
         for error in errors:
             logging.error(error)
         return 1
+
+    builddir = os.path.join(cwd, 'build', target.getName())
 
     all_components = c.getDependenciesRecursive(
                       target = target,

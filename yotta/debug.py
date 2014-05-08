@@ -21,13 +21,14 @@ def execCommand(args):
         logging.debug(str(c.error))
         logging.error('The current directory does not contain a valid component.')
         return 1
-    builddir = os.path.join(cwd, 'build')
 
     target, errors = c.satisfyTarget(args.target)
     if errors:
         for error in errors:
             logging.error(error)
         return 1
+
+    builddir = os.path.join(cwd, 'build', target.getName())
     
     # !!! FIXME: the program should be specified by the description of the
     # current project (or a default value for the program should)
