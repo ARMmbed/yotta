@@ -11,6 +11,8 @@ from lib import component
 from lib import fsutils
 # folders, , get places to install things, internal
 from . import folders
+# install, , install subcommand, internal
+from . import install
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
@@ -19,7 +21,21 @@ def addOptions(parser):
              'link the current component.'
     )
 
+def dropSudoPrivs(fn):
+    running_as_root = (os.geteuid() == 0)
+    if running_as_root and os.environ['SUDO_UID']:
+        os.seteuid(int(os.environ['SUDO_UID']))
+    r = fn()
+    if running_as_root:
+        os.seteuid(0)
+    return r
+
 def execCommand(args):
+    # run the install command first, if we're being run sudo'd, drop sudo
+    # privileges for this
+    args.act_globally = False
+    dropSudoPrivs(lambda: install.execCommand(args))
+
     c = component.Component(os.getcwd())
     if not c:
         logging.debug(str(c.error))
@@ -47,7 +63,5 @@ def execCommand(args):
     else:
         logging.info('%s -> %s' % (dst, src))
 
-    # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
-    # work on windows, so use something else
-    os.symlink(src, dst)
+    fsutils.symlink(src, dst)
 
