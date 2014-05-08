@@ -3,6 +3,7 @@ import argparse
 import errno
 import logging
 import os
+import colorama
 
 # Component, , represents an installed component, internal
 from lib import component
@@ -37,7 +38,12 @@ def execCommand(args):
 
     if args.component:
         realsrc = os.path.realpath(src)
-        logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+        if src == realsrc:
+            logging.warning(
+              ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET
+            )
+        else:
+            logging.info('%s -> %s -> %s' % (dst, src, realsrc))
     else:
         logging.info('%s -> %s' % (dst, src))
 

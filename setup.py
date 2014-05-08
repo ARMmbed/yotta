@@ -29,5 +29,5 @@ setup(
         ],
     },
     test_suite = 'test',
-    install_requires=['semantic_version', 'watchdog', 'restkit', 'PyGithub']
+    install_requires=['semantic_version', 'watchdog', 'restkit', 'PyGithub', 'colorama']
 )

@@ -15,6 +15,8 @@ from . import init
 from . import publish
 from . import debug
 
+from lib import logging_setup
+
 # settings, , load and save settings, internal
 from lib import settings
 
@@ -67,23 +69,10 @@ def main():
        'dbg':subparser.choices['debug'],
     })
 
-    args = parser.parse_args()
+    args = parser.parse_args() 
 
-    # once logging.something has been called you have to remove all logging
-    # handlers before re-configing...
-    root = logging.getLogger()
-    if root.handlers:
-        for handler in root.handlers:
-            root.removeHandler(handler)
-    logging.basicConfig(
-        format='%(message)s'
-    )
     loglevel = logLevelFromVerbosity(args.verbosity)
-    if args.debug:
-        for subsys in args.debug:
-            logging.getLogger(subsys).setLevel(loglevel)
-    else:
-        logging.getLogger().setLevel(loglevel)
+    logging_setup.init(level=loglevel, enable_subsystems=args.debug)
     
     # finally, do stuff!
     status = args.command(args)
