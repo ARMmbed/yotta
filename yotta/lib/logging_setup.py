@@ -58,7 +58,7 @@ def init(level=0, enable_subsystems=[]):
     handler.setFormatter(Formatter())
     root.addHandler(handler)
     
-    # set appropriate levels on subsystem loggers - maybe selective logging
+    # set appropriate levels on subsystem loggers - maybe selective logging
     # should use filters instead?
     if enable_subsystems and len(enable_subsystems):
         for subsys in enable_subsystems:
