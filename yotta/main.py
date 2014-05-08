@@ -15,6 +15,8 @@ from . import build
 from . import init
 from . import publish
 from . import debug
+from . import login
+from . import logout
 
 from lib import logging_setup
 
@@ -26,7 +28,7 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish}')
+    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout}')
 
     parser.add_argument('--version', dest='show_version', action='version',
             version=pkg_resources.require("yotta")[0].version,
@@ -61,6 +63,8 @@ def main():
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
     addParser('init', init, 'Create a new component.')
     addParser('publish', publish, 'Publish a component or target to the public registry.')
+    addParser('login', login, 'Authorize for access to private github repositories and publishing to the Yotta Registry.')
+    addParser('logout', logout, 'Remove saved authorization token for the current user')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary

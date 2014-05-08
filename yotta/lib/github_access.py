@@ -92,7 +92,7 @@ def _getTarball(url, into_directory):
 
 
 # API
-def authorizeUser():
+def authorizeUser(as_user=None):
     # using basic auth request an access token, then save it so that we don't
     # have to repeatedly ask for basic authentication credentials
 
@@ -102,11 +102,17 @@ def authorizeUser():
     # authorisation had been revoked/expired
     # !!! FIXME-also: could just get /authorizations, and re-use an existing
     # token
-
-    user = settings.getProperty('github', 'user')
-    if not user:
-        user = raw_input('enter your github username:')
-        settings.setProperty('github', 'user', user)
+    
+    if as_user:
+        user = as_user
+        # !!! FIXME: if we already have an authtoken and the authtoken is for a
+        # different user, then revoke that authtoken with github before
+        # deleting it, as the number of tokens is limited
+    else:
+        user = settings.getProperty('github', 'user')
+        if not user:
+            user = raw_input('enter your github username:')
+            settings.setProperty('github', 'user', user)
 
     auth = BasicAuth(user, getpass.getpass('Enter the password for github user %s:' % user))
 
@@ -122,6 +128,15 @@ def authorizeUser():
     token = json.loads(response.body_string())['token']
     settings.setProperty('github', 'authtoken', token)
 
+def deauthorizeUser():
+    # !!! FIXME should revoke token with github, number of tokens is limited
+    user = settings.getProperty('github', 'user')
+    if user:
+        # FIXME: if token is set system-wide this will add a property that
+        # masks it rather than removing the actual token
+        settings.setProperty('github', 'authtoken', '')
+        settings.setProperty('github', 'user', '')
+    
 
 class GithubComponentVersion(access_common.RemoteVersion):
     def unpackInto(self, directory):
