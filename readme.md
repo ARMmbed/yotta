@@ -10,7 +10,7 @@ sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
 
 The toolchain can be installed with [homebrew](https://github.com/ARM-RD/homebrew-formulae):
 ```bash
-brew tap ARM-RD/formulae
+brew tap ARM-RD/homebrew-formulae
 brew install arm-rd-clang arm-none-eabi-gcc cmake ninja
 ```
 
@@ -92,6 +92,8 @@ yotta build
 
 #### Attach a debugger `yotta debug`
 For targets that support it, you can attach a debugger to download and run code directly from yotta:
+
+Currently the only target that supports this is [stk3700](https://github.com/ARM-RD/target-stk3700), which has more help on debugging in its readme.
 
 ```
 
