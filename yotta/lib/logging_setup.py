@@ -33,7 +33,7 @@ class Formatter(logging.Formatter):
     def format(self, record):
         s = ''
         s += self.levelStyle(record)
-        s += record.levelname
+        s += record.levelname.lower()
         s += colorama.Fore.RESET + ':'
         if record.levelno <= logging.DEBUG:
             s += record.name + ': '

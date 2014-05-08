@@ -31,11 +31,6 @@ def dropSudoPrivs(fn):
     return r
 
 def execCommand(args):
-    # run the install command first, if we're being run sudo'd, drop sudo
-    # privileges for this
-    args.act_globally = False
-    dropSudoPrivs(lambda: install.execCommand(args))
-
     c = component.Component(os.getcwd())
     if not c:
         logging.debug(str(c.error))
@@ -48,7 +43,12 @@ def execCommand(args):
         # if the component is already installed, rm it
         fsutils.rmRf(dst)
     else:
+        # run the install command first, if we're being run sudo'd, drop sudo
+        # privileges for this
+        args.act_globally = False
+        dropSudoPrivs(lambda: install.execCommand(args))
         fsutils.mkDirP(folders.globalInstallDirectory())
+
         src = os.getcwd()
         dst = os.path.join(folders.globalInstallDirectory(), c.getName())
 
