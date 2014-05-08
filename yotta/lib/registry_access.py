@@ -72,6 +72,7 @@ def _listVersions(namespace, name):
     auth = _registryAuthFilter()
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
     try:
+        logging.info('get versions for ' + name)
         response = resource.get(
             headers = headers
         )

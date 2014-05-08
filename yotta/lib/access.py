@@ -181,6 +181,7 @@ def satisfyVersion(
             'Dependency "%s":"%s" is not a supported form.' % (name, version_required)
         )
     directory = os.path.join(working_directory, name)
+    logging.info('get tarball for ' + name)
     v.unpackInto(directory)
     r = component.Component(directory)
     if not r:

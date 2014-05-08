@@ -1,4 +1,7 @@
+# standard library modules, , ,
 import logging
+
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
 import colorama
 
 class Formatter(logging.Formatter):
@@ -14,7 +17,7 @@ class Formatter(logging.Formatter):
             return colorama.Style.BRIGHT + colorama.Fore.RED
         elif record.levelno >= logging.WARNING:
             return colorama.Style.BRIGHT + colorama.Fore.YELLOW
-        return colorama.Style.BRIGHT + colorama.Fore.GREEN
+        return colorama.Style.NORMAL + colorama.Fore.GREEN
 
     def messageStyle(self, record):
         if record.levelno <= logging.DEBUG:
