@@ -1,0 +1,8 @@
+build
+dist
+yotta.egg-info
+*.pyc
+*.pyo
+.*.swp
+.*.swo
+.*.swn
