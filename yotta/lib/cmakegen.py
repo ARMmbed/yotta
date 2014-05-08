@@ -47,11 +47,11 @@ $include_other_dirs
 get_property(EXTRA_DEFINITIONS GLOBAL PROPERTY YOTTA_GLOBAL_DEFINITIONS)
 add_definitions($${EXTRA_DEFINITIONS})
 
-# !!! FIXME: actually the target can just add these to the toolchain, no need
-# for repitition in every single cmake list
+# !!! FIXME: maybe the target can just add these to the toolchain, no need
+# for repetition in every single cmake list
 # Build targets may define additional preprocessor definitions for all
 # components to use (such as chip variant information)
-#$yotta_target_definitions
+add_definitions($yotta_target_definitions)
 
 
 # recurse into subdirectories for this component, using the two-argument
@@ -175,6 +175,14 @@ class CMakeGen(object):
                     working_dir=builddir,
                     subdir_name=f
                 )
+        
+        def sanitizeTarget(t):
+            return t.replace('-', '_').upper()
+
+        target_definitions = '-DTARGET=' + sanitizeTarget(self.target.getName())  + ' '
+        for target in self.target.dependencyResolutionOrder():
+            if '*' not in target:
+                target_definitions += '-DTARGET_LIKE_' + sanitizeTarget(target) + ' '
 
         file_contents = CMakeLists_Template.substitute(
                          target_name = self.target.getName(),
@@ -186,7 +194,7 @@ class CMakeGen(object):
                   include_other_dirs = include_other_dirs,
                   add_depend_subdirs = add_depend_subdirs,
                      add_own_subdirs = add_own_subdirs,
-            yotta_target_definitions = '' # TODO
+            yotta_target_definitions = target_definitions
         )
         fsutils.mkDirP(builddir)
         with open(os.path.join(builddir, 'CMakeLists.txt'), 'w') as f:
