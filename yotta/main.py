@@ -2,6 +2,7 @@
 import argparse
 import logging
 import sys
+import pkg_resources
 
 # subcommand modules, , add subcommands, internal
 from . import version
@@ -27,6 +28,10 @@ def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish}')
 
+    parser.add_argument('--version', dest='show_version', action='version',
+            version=pkg_resources.require("yotta")[0].version,
+        help='display the version'
+    )
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
         default=0,
         help='increase verbosity: can be used multiple times'
