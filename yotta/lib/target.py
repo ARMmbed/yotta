@@ -83,9 +83,12 @@ class Target(pack.Pack):
             return
         prog_path = os.path.join(builddir, program)
         if not os.path.isfile(prog_path):
-            yield "%s does not exist, perhaps you meant %s" % (
-                os.path.relpath(program), os.path.relpath(os.path.join('source', program))
-            )
+            suggestion = ''
+            if prog_path.endswith('.c'):
+                suggestion = prog_path[:-2]
+            else:
+                suggestion = os.path.relpath(program), os.path.relpath(os.path.join('source', program))
+            yield "%s does not exist, perhaps you meant %s" % suggestion
             return
         
         

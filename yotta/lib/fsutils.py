@@ -44,11 +44,17 @@ def isLink(path):
     # support them too
     return os.path.islink(path)
 
+def tryReadLink(path):
+    try:
+        return os.readlink(path)
+    except OSError as e:
+        return None
+
 def symlink(src, dst):
     # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
     # work on windows, so use something else
     try:
         os.symlink(src, dst)
     except OSError as exception:
-        if exception.errno != errno.EEXIST and (os.readlink(dst) != src):
+        if exception.errno != errno.EEXIST and (tryReadLink(dst) != src):
             raise
