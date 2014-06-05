@@ -11,8 +11,10 @@ sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
 The toolchain can be installed with [homebrew](https://github.com/ARM-RD/homebrew-formulae):
 ```bash
 brew tap ARM-RD/homebrew-formulae
-brew install arm-rd-clang arm-none-eabi-gcc cmake ninja
+brew install arm-rd-clang arm-none-eabi-gcc cmake ninja jlink
 ```
+
+On Linux, the current workaround is to use [linuxbrew](https://github.com/Homebrew/linuxbrew) to install the packages above. Alternatively, [jlink](http://www.segger.com/jlink-software.html) and [arm-gcc](https://launchpad.net/gcc-arm-embedded/+download) can be downloaded seperately. Since linuxbrew puts the Cellar directory in ~/.linuxbrew/Cellar, make a symlink to it in /usr/local/Cellar. 
 
 ####Build a Project
 Use yotta to download and build the current version of a project.
@@ -59,7 +61,7 @@ git commit -m "make stuff more awesome, getting ready for a new release"
 yotta version minor
 git push && git push --tags
 
-# publish the new version to the world
+# publish the new version to the world (note: you have to be the owner of the project inorder to publish)
 yotta publish
 ```
 
