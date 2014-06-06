@@ -30,24 +30,6 @@ def _ensureParser():
     with parser_lock:
         if not parser:
             parser = ConfigParser.SafeConfigParser()
-            # set up handlers to re-load settings whenever they change
-            class ReloadHandler(FileSystemEventHandler):
-                def on_deleted(self, event):
-                    logging.debug('settings: file deleted, will reload all files, event: %s', event)
-                    self.on_modified(event);
-                def on_modified(self, event):
-                    global parser
-                    with parser_lock:
-                        logging.debug('settings: file changed, will reload all files, event: %s', event)
-                        p = ConfigParser.SafeConfigParser()
-                        p.read(_iniFiles())
-                        parser = p
-            for filepath in _iniFiles():
-                if os.path.exists(filepath):
-                    logging.debug('will watch settings file "%s" for changes', filepath)
-                    o = Observer()
-                    o.schedule(ReloadHandler(), filepath, recursive=False)
-                    o.start()
             parser.read(_iniFiles())
 
 # public API
