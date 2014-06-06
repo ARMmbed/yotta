@@ -42,6 +42,10 @@ $include_sys_dirs
 # #include "modname/headername.h" instead
 $include_other_dirs
 
+# CMake doesn't have native support for Objective-C specific flags, these are
+# specified by any depended-on objc runtime using secret package properties...
+set(CMAKE_OBJC_FLAGS $set_objc_flags)
+
 # Components may defined additional preprocessor definitions: use this at your
 # peril, this support WILL go away! (it's here to bridge toolchain component ->
 # target package switchover)
@@ -136,7 +140,9 @@ class CMakeGen(object):
         include_root_dirs = ''
         include_sys_dirs = ''
         include_other_dirs = ''
-        for name, c in all_dependencies.items():
+        objc_flags_set = {}
+        objc_flags = []
+        for name, c in all_dependencies.items() + [(component.getName(), component)]:
             include_root_dirs += string.Template(
                 'include_directories("$path")\n'
             ).substitute(path=c.path)
@@ -150,6 +156,28 @@ class CMakeGen(object):
                 include_other_dirs += string.Template(
                     'include_directories("$path")\n'
                 ).substitute(path=os.path.join(c.path, d))
+            dep_extra_objc_flags = c.getExtraObjcFlags()
+            # Try to warn Geraint when flags are clobbered. This will probably
+            # miss some obscure flag forms, but it tries pretty hard
+            for f in dep_extra_objc_flags:
+                flag_name = None
+                if len(f.split('=')) == 2:
+                    flag_name = f.split('=')[0]
+                elif f.startswith('-fno-'):
+                    flag_name = f[5:]
+                elif f.startswith('-fno'):
+                    flag_name = f[4:]
+                elif f.startswith('-f'):
+                    flag_name = f[2:]
+                if flag_name is not None:
+                    if flag_name in objc_flags_set and objc_flags_set[flag_name] != name:
+                        logging.warning(
+                            'component %s Objective-C flag "%s" clobbers a value earlier set by component %s' % (
+                            name, f, objc_flags_set[flag_name]
+                        ))
+                    objc_flags_set[flag_name] = name
+                objc_flags.append(f)
+        set_objc_flags = ' '.join(objc_flags)
 
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
@@ -197,6 +225,7 @@ class CMakeGen(object):
                    include_root_dirs = include_root_dirs,
                     include_sys_dirs = include_sys_dirs,
                   include_other_dirs = include_other_dirs,
+                      set_objc_flags = set_objc_flags,
                   add_depend_subdirs = add_depend_subdirs,
                      add_own_subdirs = add_own_subdirs,
             yotta_target_definitions = target_definitions
