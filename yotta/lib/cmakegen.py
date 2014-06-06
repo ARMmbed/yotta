@@ -16,6 +16,7 @@ cmake_minimum_required(VERSION 2.8)
 
 # toolchain file for $target_name
 set(CMAKE_TOOLCHAIN_FILE $toolchain_file)
+$set_targets_like
 
 project($component_name)
 
@@ -180,12 +181,16 @@ class CMakeGen(object):
             return t.replace('-', '_').upper()
 
         target_definitions = '-DTARGET=' + sanitizeTarget(self.target.getName())  + ' '
+        set_targets_like = ''
         for target in self.target.dependencyResolutionOrder():
             if '*' not in target:
                 target_definitions += '-DTARGET_LIKE_' + sanitizeTarget(target) + ' '
+                set_targets_like += 'set(TARGET_LIKE_' + sanitizeTarget(target) + ' TRUE)\n'
+
 
         file_contents = CMakeLists_Template.substitute(
                          target_name = self.target.getName(),
+                    set_targets_like = set_targets_like,
                       toolchain_file = self.target.getToolchainFile(),
                       component_name = component.getName(),
                      include_own_dir = include_own_dir,
