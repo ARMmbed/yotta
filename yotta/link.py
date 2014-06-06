@@ -3,6 +3,8 @@ import argparse
 import errno
 import logging
 import os
+
+# colorama, BSD 3-Clause license, color terminal output, pip install colorama
 import colorama
 
 # Component, , represents an installed component, internal

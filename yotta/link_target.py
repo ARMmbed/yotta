@@ -4,6 +4,9 @@ import errno
 import logging
 import os
 
+# colorama, BSD 3-Clause license, color terminal output, pip install colorama
+import colorama
+
 # Target, , represents an installed target, internal
 from lib import target
 # fsutils, , misc filesystem utils, internal
@@ -34,10 +37,17 @@ def execCommand(args):
         fsutils.mkDirP(folders.globalInstallDirectory())
         src = os.getcwd()
         dst = os.path.join(folders.globalInstallDirectory(), c.getName())
-    realsrc = os.path.realpath(src)
-    logging.info('%s -> %s -> %s' % (dst, src, realsrc))
-    # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
-    # work on windows, so use something else
-    os.symlink(src, dst)
+
+    if args.target:
+        realsrc = os.path.realpath(src)
+        if src == realsrc:
+            logging.warning(
+              ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET
+            )
+        else:
+            logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+    else:
+        logging.info('%s -> %s' % (dst, src))
+    fsutils.symlink(src, dst)
 
 
