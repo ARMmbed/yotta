@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name = "yotta",
-    version = "0.0.9",
+    version = "0.0.10",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
