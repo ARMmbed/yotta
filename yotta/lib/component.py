@@ -408,7 +408,7 @@ class Component(pack.Pack):
             compiled, it does this using an extraObjcFlags: [...] parameter in
             its package description
         '''
-        if 'extraObjcFlags' in self.description:
+        if 'extraObjCFlags' in self.description:
             return self.description['extraObjCFlags']
         else:
             return []

@@ -44,7 +44,7 @@ $include_other_dirs
 
 # CMake doesn't have native support for Objective-C specific flags, these are
 # specified by any depended-on objc runtime using secret package properties...
-set(CMAKE_OBJC_FLAGS $set_objc_flags)
+set(CMAKE_OBJC_FLAGS "$set_objc_flags")
 
 # Components may defined additional preprocessor definitions: use this at your
 # peril, this support WILL go away! (it's here to bridge toolchain component ->
@@ -67,13 +67,15 @@ $add_own_subdirs
 '''
 )
 
+logger = logging.getLogger('cmakegen')
+
 Ignore_Subdirs = set(('build',))
 
 class CMakeGen(object):
     def __init__(self, directory, target):
         super(CMakeGen, self).__init__()
         self.buildroot = directory
-        logging.info("generate for target: %s" % target)
+        logger.info("generate for target: %s" % target)
         self.target = target
 
     def generateRecursive(self, component, all_components, builddir=None, processed_components=None):
@@ -95,7 +97,7 @@ class CMakeGen(object):
         if not self.target:
             yield 'Target "%s" is not a valid build target' % self.target
     
-        logging.debug('generate build files: %s (target=%s)' % (component, self.target))
+        logger.debug('generate build files: %s (target=%s)' % (component, self.target))
         # because of the way c-family language includes work we need to put the
         # public header directories of all components that this component
         # depends on (directly OR indirectly) into the search path, which means
@@ -117,9 +119,9 @@ class CMakeGen(object):
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
         self.generate(builddir, component, new_dependencies, recursive_deps)
 
-        logging.debug('recursive deps of %s:' % component)
+        logger.debug('recursive deps of %s:' % component)
         for d in recursive_deps.values():
-            logging.debug('    %s' % d)
+            logger.debug('    %s' % d)
 
         processed_components.update(new_dependencies)
         for name, c in new_dependencies.items():
@@ -172,7 +174,7 @@ class CMakeGen(object):
                     flag_name = f[2:]
                 if flag_name is not None:
                     if flag_name in objc_flags_set and objc_flags_set[flag_name] != name:
-                        logging.warning(
+                        logger.warning(
                             'component %s Objective-C flag "%s" clobbers a value earlier set by component %s' % (
                             name, f, objc_flags_set[flag_name]
                         ))
