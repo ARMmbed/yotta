@@ -408,7 +408,7 @@ class Component(pack.Pack):
             its package description
         '''
         if 'extraObjcFlags' in self.description:
-            return self.description['extraObjcFlags']
+            return self.description['extraObjCFlags']
         else:
             return []
 
