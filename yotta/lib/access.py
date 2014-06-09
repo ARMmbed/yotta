@@ -17,7 +17,6 @@ import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
 
-
 # Version requirement strings we want to support:
 #
 # (>,>=,<,<=,)version                         # central repo
@@ -29,9 +28,15 @@ import fsutils
 # hg+(ssh://..., http://...)(#hash-or-tag)    # hg
 # * (any version)                             # central repo
 #
-# Currently working:
-#
-#
+# Currently should work:
+# *
+# <,>,>= etc
+# 1.2.x
+# owner/repo
+
+
+logger = logging.getLogger('access')
+
 
 def latestSuitableVersion(name, version_required, registry='component'):
     ''' Return a RemoteVersion object representing the latest suitable
@@ -46,7 +51,7 @@ def latestSuitableVersion(name, version_required, registry='component'):
             version_required, name, registry=registry
         )
         if remote_component:
-            logging.debug('satisfy %s from %s registry' % (name, registry))
+            logger.debug('satisfy %s from %s registry' % (name, registry))
             vers = remote_component.availableVersions()
             spec = remote_component.versionSpec()
             v = spec.select(vers)
@@ -64,10 +69,10 @@ def latestSuitableVersion(name, version_required, registry='component'):
     # go at matching the name/spec
     remote_component = github_access.GithubComponent.createFromNameAndSpec(version_required, name)
     if remote_component is not None:
-        logging.debug('satisfy %s from github url' % name)
+        logger.debug('satisfy %s from github url' % name)
         vers = remote_component.availableVersions()
         if not len(vers):
-            logging.warning(
+            logger.warning(
                 'Github repository "%s" has no tagged versions, master branch will be used' % (
                     remote_component.repo
                 )
@@ -88,6 +93,19 @@ def latestSuitableVersion(name, version_required, registry='component'):
     
     return None
 
+def searchPathsForComponent(name, version_required, search_paths):
+    for path in search_paths:
+        component_path = os.path.join(path, name)
+        logger.debug("check path %s for %s" % (component_path, name))
+        local_component = component.Component(
+                     component_path,
+               installed_previously = True,
+                   installed_linked = fsutils.isLink(component_path),
+            latest_suitable_version = None
+        )
+        if local_component:
+            return local_component
+    return None
 
 def satisfyVersion(
         name,
@@ -114,7 +132,7 @@ def satisfyVersion(
     v = None
 
     if name in available:
-        logging.debug('satisfy %s from already installed components' % name)
+        logger.debug('satisfy %s from already installed components' % name)
         try:
             spec = version.Spec(version_required)
         except Exception:
@@ -129,29 +147,30 @@ def satisfyVersion(
         return r
 
 
-    # !!! FIXME: we don't update linked components, so really we should check
-    # to see if the component is satisfied by a symlink before checking for the
-    # latest available version
+    local_component = searchPathsForComponent(name, version_required, search_paths)
+    logger.debug("%s %s locally" % (('found', 'not found')[not local_component], name))
+    if local_component and (local_component.installedLinked() or update_installed != 'Update'):
+        logger.debug("satisfy component from directory: %s" % local_component.path)
+        # if a component exists (has a valid description file), and either is
+        # not outdated, or we are not updating
+        if name != local_component.getName():
+            raise Exception('Component %s found in incorrectly named directory %s (%s)' % (
+                local_component.getName(), name, local_component.path
+            ))
+        return local_component
 
     # if we need to check for latest versions, get the latest available version
     # before checking for a local component so that we can create the local
     # component with a handle to its latest available version
     if update_installed is not None:
-        #logging.debug('attempt to check latest version of %s @%s...' % (name, version_required))
+        #logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
         v = latestSuitableVersion(name, version_required)
+        if local_component:
+            local_component.setLatestAvailable(v)
     
-    for path in search_paths:
-        component_path = os.path.join(path, name)
-        logging.debug("check path %s for %s" % (component_path, name))
-        local_component = component.Component(
-                     component_path,
-               installed_previously = True,
-                   installed_linked = fsutils.isLink(component_path),
-            latest_suitable_version = v
-        )
-        logging.debug("%s %s" % (('found', 'not found')[not local_component], name))
-        if local_component and (local_component.installedLinked() or update_installed != 'Update' or not local_component.outdated()):
-            logging.debug("satisfy component from directory: %s" % component_path)
+    if local_component:
+        if not local_component.outdated():
+            logger.debug("satisfy component from directory: %s" % local_component.path)
             # if a component exists (has a valid description file), and either is
             # not outdated, or we are not updating
             if name != local_component.getName():
@@ -159,19 +178,15 @@ def satisfyVersion(
                     local_component.getName(), name, local_component.path
                 ))
             return local_component
-        elif local_component and local_component.outdated():
-            logging.info('%soutdated: %s@%s -> %s' % (
+        elif local_component.outdated():
+            logger.info('%soutdated: %s@%s -> %s' % (
                 ('update ' if update_installed == 'Update' else ''),
                 name,
                 local_component.getVersion(),
                 v
             ))
             # must rm the old component before continuing
-            fsutils.rmRf(component_path)
-        if local_component:
-            # once we've found one stop (ignore any other matching components
-            # in the search path)
-            break
+            fsutils.rmRf(local_component.path)
 
     if not v and update_installed is None:
         v = latestSuitableVersion(name, version_required)
@@ -181,7 +196,7 @@ def satisfyVersion(
             'Dependency "%s":"%s" is not a supported form.' % (name, version_required)
         )
     directory = os.path.join(working_directory, name)
-    logging.info('get tarball for ' + name)
+    logger.info('get tarball for ' + name)
     v.unpackInto(directory)
     r = component.Component(directory)
     if not r:
@@ -216,7 +231,7 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
     # before checking for a local target so that we can create the local
     # target with a handle to its latest available version
     if update_installed is not None:
-        logging.debug('attempt to check latest version of %s @%s...' % (name, version_required))
+        logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
         v = latestSuitableVersion(name, version_required, registry='target')
     
     target_path = os.path.join(working_directory, name)
@@ -230,7 +245,7 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
         # not outdated, or we are not updating
         return local_target
     elif local_target and local_target.outdated():
-        logging.info('%soutdated: %s@%s -> %s' % (
+        logger.info('%soutdated: %s@%s -> %s' % (
             ('update ' if update_installed == 'Update' else ''),
             name,
             local_target.getVersion(),

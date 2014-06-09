@@ -66,6 +66,7 @@ class Component(pack.Pack):
             dependencies have been installed) for each of the dependencies.
            
         '''
+        logger.debug("Component: " +  path +  ' installed_linked=' + str(installed_linked))
         super(Component, self).__init__(
             path,
             installed_linked=installed_linked,

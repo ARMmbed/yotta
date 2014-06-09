@@ -69,6 +69,9 @@ class Pack(object):
     def installedLinked(self):
         return self.installed_linked
 
+    def setLatestAvailable(self, version):
+        self.latest_suitable_version = version
+
     def outdated(self):
         ''' Return a truthy object if a newer suitable version is available,
             otherwise return None.

@@ -142,7 +142,7 @@ class CMakeGen(object):
         include_other_dirs = ''
         objc_flags_set = {}
         objc_flags = []
-        for name, c in all_dependencies.items() + [(component.getName(), component)]:
+        for name, c in all_dependencies.items():
             include_root_dirs += string.Template(
                 'include_directories("$path")\n'
             ).substitute(path=c.path)
@@ -156,6 +156,7 @@ class CMakeGen(object):
                 include_other_dirs += string.Template(
                     'include_directories("$path")\n'
                 ).substitute(path=os.path.join(c.path, d))
+        for name, c in all_dependencies.items() + [(component.getName(), component)]:
             dep_extra_objc_flags = c.getExtraObjcFlags()
             # Try to warn Geraint when flags are clobbered. This will probably
             # miss some obscure flag forms, but it tries pretty hard
