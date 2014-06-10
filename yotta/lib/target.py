@@ -70,7 +70,7 @@ class Target(pack.Pack):
     @classmethod
     def overrideBuildCommand(cls, generator_name):
         # when we build using cmake --build, the nice colourised output is lost
-        # – so override with the actual build command for command-line
+        # - so override with the actual build command for command-line
         # generators where people will care:
         try:
             return {
