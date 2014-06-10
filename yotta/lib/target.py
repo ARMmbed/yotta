@@ -54,20 +54,63 @@ class Target(pack.Pack):
     
     def getRegistryNamespace(self):
         return Registry_Namespace
+    
+    @classmethod
+    def addBuildOptions(cls, parser):
+        parser.add_argument('-G', '--cmake-generator', dest='cmake_generator', default='Unix Makefiles',
+           choices=(
+               'Unix Makefiles',
+               'Ninja',
+               'Xcode',
+               'Sublime Text 2 - Ninja',
+               'Sublime Text 2 - Unix Makefiles'
+           )
+        )
 
-    def build(self, builddir, debug_build=False, release_build=False):
+    @classmethod
+    def overrideBuildCommand(cls, generator_name):
+        # when we build using cmake --build, the nice colourised output is lost
+        # – so override with the actual build command for command-line
+        # generators where people will care:
+        try:
+            return {
+                'Unix Makefiles': ['make'],
+                'Ninja': ['ninja']
+            }[generator_name]
+        except KeyError:
+            return None
+
+    def hintForCMakeGenerator(self, generator_name, component):
+        try:
+            name = self.getName()
+            component_name = component.getName()
+            return {
+                'Xcode':
+                    'to open the built project, run:\nopen ./build/%s/%s.xcodeproj' % (name, component_name),
+                'Sublime Text 2 - Ninja':
+                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name),
+                'Sublime Text 2 - Unix Makefiles':
+                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name)
+            }[generator_name]
+        except KeyError:
+            return None
+
+    def build(self, builddir, component, args, debug_build=False, release_build=False):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
-        #commands = [['cmake','.', '-G', 'Ninja'], ['ninja']]
         commands = []
         build_type = ((None, 'Debug'), ('Release', 'RelWithDebInfo'))[release_build][debug_build]
         if build_type:
-            commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '.'])
+            commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.'])
         else:
-            commands.append(['cmake', '.'])
-        commands.append(['make'])
+            commands.append(['cmake', '-G', args.cmake_generator, '.'])
+        build_command = self.overrideBuildCommand(args.cmake_generator)
+        if build_command:
+            commands.append(build_command)
+        else:
+            commands.append(['cmake', '--build', builddir])
         for cmd in commands:
             child = subprocess.Popen(
                 cmd, cwd=builddir
@@ -75,6 +118,9 @@ class Target(pack.Pack):
             child.wait()
             if child.returncode:
                 yield 'command %s failed' % (cmd)
+        hint = self.hintForCMakeGenerator(args.cmake_generator, component)
+        if hint:
+            print hint
     
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. '''
