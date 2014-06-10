@@ -58,6 +58,9 @@ add_definitions($${EXTRA_DEFINITIONS})
 # components to use (such as chip variant information)
 add_definitions($yotta_target_definitions)
 
+# Provide the version of the component being built, in case components want to
+# embed this into compiled libraries
+set(YOTTA_COMPONENT_VERSION "$component_version")
 
 # recurse into subdirectories for this component, using the two-argument
 # add_subdirectory because the directories referred to here exist in the source
@@ -231,7 +234,8 @@ class CMakeGen(object):
                       set_objc_flags = set_objc_flags,
                   add_depend_subdirs = add_depend_subdirs,
                      add_own_subdirs = add_own_subdirs,
-            yotta_target_definitions = target_definitions
+            yotta_target_definitions = target_definitions,
+                   component_version = component.getVersion()
         )
         fsutils.mkDirP(builddir)
         with open(os.path.join(builddir, 'CMakeLists.txt'), 'w') as f:
