@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Utility function to cat in a file (used for the README)
 def read(fname):
@@ -7,14 +7,14 @@ def read(fname):
 
 setup(
     name = "yotta",
-    version = "0.0.12",
+    version = "0.0.13",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
     license = "Proprietary",
     keywords = "embedded package module dependency management",
     url = "about:blank",
-    packages=['yotta', os.path.join('yotta','lib')],
+    packages=find_packages(),
     long_description=read('readme.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -41,7 +41,7 @@ def execCommand(args):
             print None
     else:
         if not Target_RE.match(args.target):
-            logging.error('''Invalid target: "%s"''')#, targets must be one of:
+            logging.error('''Invalid target: "%s"''' % args.target)#, targets must be one of:
             #
             #    a valid name (lowercase letters, numbers, and hyphen)
             #    a github ref (owner/project)

@@ -129,12 +129,17 @@ class Target(pack.Pack):
             return
         prog_path = os.path.join(builddir, program)
         if not os.path.isfile(prog_path):
-            suggestion = ''
-            if prog_path.endswith('.c'):
-                suggestion = prog_path[:-2]
+            suggestion = None
+            if (prog_path.endswith('.c') or prog_path.endswith('.m')) and os.path.isfile(prog_path[:-2]):
+                suggestion = program[:-2]
+            elif (prog_path.endswith('.cpp') or prog_path.endswith('.cxx')) and os.path.isfile(prog_path[:-4]):
+                suggestion = program[:-4]
+            elif os.path.isfile(os.path.join(builddir, 'source', program)):
+                suggestion = os.path.join('source', program)
+            if suggestion is not None:
+                yield "%s does not exist, perhaps you meant %s" % (program, suggestion)
             else:
-                suggestion = os.path.relpath(program), os.path.relpath(os.path.join('source', program))
-            yield "%s does not exist, perhaps you meant %s" % suggestion
+                yield "%s does not exist" % program
             return
         
         
@@ -145,8 +150,11 @@ class Target(pack.Pack):
                 if 'debug-server' in self.description:
                     logging.debug('starting debug server...')
                     daemon = subprocess.Popen(
-                        self.description['debug-server'], cwd=builddir,
-                        stdout=dev_null, stderr=dev_null, preexec_fn=_newPGroup
+                                   self.description['debug-server'],
+                             cwd = builddir,
+                          stdout = dev_null,
+                          stderr = dev_null,
+                      preexec_fn = _newPGroup
                     )
                 else:
                     daemon = None
@@ -154,12 +162,12 @@ class Target(pack.Pack):
                 
                 signal.signal(signal.SIGINT, _ignoreSignal);
                 cmd = [
-                    string.Template(x).safe_substitute(program=prog_path)
+                    os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
                 ]
                 logging.debug('starting debugger: %s', cmd)
                 child = subprocess.Popen(
-                    cmd, cwd=builddir
+                    cmd, cwd = builddir
                 )
                 child.wait()
                 if child.returncode:
