@@ -3,8 +3,10 @@
 [![Build Status](https://magnum.travis-ci.com/ARM-RD/yotta.svg?token=XG7YezaYG4fZCZqqBSsP&branch=master)](https://magnum.travis-ci.com/ARM-RD/yotta)
 
 ####Install Yotta
+Download the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
 ``` bash
-sudo pip install -e git+ssh://git@github.com/ARM-RD/yotta.git#egg=yotta
+sudo pip install -U setuptools
+sudo pip install ./path/to/yotta-a.b.c.tar.gz
 ```
 (If you don't have `pip` installed, you may need to install that first using `easy_install pip`, and you will need a [ssh public key](https://help.github.com/articles/generating-ssh-keys) added to github.)  
 
