@@ -1,8 +1,8 @@
-###Yotta: Software Components for Embedded Systems
+##Yotta: Reusable Software Components
 
 [![Build Status](https://magnum.travis-ci.com/ARM-RD/yotta.svg?token=XG7YezaYG4fZCZqqBSsP&branch=master)](https://magnum.travis-ci.com/ARM-RD/yotta)
 
-####Install Yotta
+###Install Yotta
 Download the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
 ``` bash
 sudo pip install -U setuptools
@@ -18,7 +18,7 @@ brew install arm-rd-clang arm-none-eabi-gcc cmake ninja jlink
 
 On Linux, the current workaround is to use [linuxbrew](https://github.com/Homebrew/linuxbrew) to install the packages above. Alternatively, [jlink](http://www.segger.com/jlink-software.html) and [arm-gcc](https://launchpad.net/gcc-arm-embedded/+download) can be downloaded seperately. Since linuxbrew puts the Cellar directory in ~/.linuxbrew/Cellar, make a symlink to it in /usr/local/Cellar. 
 
-####Build a Project
+###Build a Project
 Use yotta to download and build the current version of a project.
 ```bash
 # set the target device:
@@ -35,7 +35,50 @@ cd matrixlcd
 yotta build
 ```
 
-#### Developing on an Existing Project
+### Create a new Component
+```bash
+# create a directory for the new software component
+mkdir my-component
+cd my-component
+# run `yotta init` to create a template component desctiption (package.json file):
+yotta init
+...
+```
+Components should have the following basic layout:
+```bash
+source/<source files>
+<projectname>/<public header files>
+test/<source files>
+readme.md
+```
+Any directories (normally just the source and test directories) that contain libraries or executables to be built should contain a [CMakeLists.txt](http://www.cmake.org/cmake/help/v2.8.8/cmake.html#section_Description) file describing the libraries and/or executables to built from the files in that directory.
+
+Here's an example:
+```CMake
+# the actual library we export
+add_library(my-library
+    some_file.c
+    some_other_file.c
+)
+
+target_link_libraries(my-library
+    some-dependency
+)
+```
+In this case, we're telling CMake to link our library against `some-dependency`. We need to also make sure this dependency is installed and built by yotta by adding it to the `package.json` file, in the `dependencies` section:
+```json
+{
+  "name": "my-library",
+  "version": "0.0.1",
+  "description": "My awesome new library",
+  "dependencies": {
+    "some-dependency": "*"
+  }
+}
+```
+
+
+### Developing on an Existing Project
 To develop a project we want to grab the source using git, so we have a copy we can can use to commit and push changes:
 ```bash
 # get the version-controlled source
@@ -94,7 +137,7 @@ yotta build
 # be immediately reflected in the main project
 ```
 
-#### Attach a debugger `yotta debug`
+### Attach a debugger `yotta debug`
 For targets that support it, you can attach a debugger to download and run code directly from yotta:
 
 Currently the only target that supports this is [stk3700](https://github.com/ARM-RD/target-stk3700), which has more help on debugging in its readme.
