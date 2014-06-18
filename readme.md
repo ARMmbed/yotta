@@ -76,7 +76,7 @@ In this case, we're telling CMake to link our library against `some-dependency`.
   }
 }
 ```
-
+Now you can `yotta install` and `yotta build` to build the new component. When you're ready to share it with other people, use `yotta publish` to publish it to the component registry for others to use.
 
 ### Developing on an Existing Project
 To develop a project we want to grab the source using git, so we have a copy we can can use to commit and push changes:
