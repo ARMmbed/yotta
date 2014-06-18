@@ -167,4 +167,9 @@ Resetting target
 > continue
 ```
 
+### Secret Tips
+Congratulations for reading to the end of the readme, unless you skipped straight here, in which case, naughty you. In either case, here's some helpful tips:
+
+ * `yt` is a shorthand for the `yotta` command, and it's much quicker to type!
+ * yotta is strongly influenced by [npm](http://npmjs.org), the awesome node.js software packaging system. Much of the syntax for package description and commands is very similar.
 
