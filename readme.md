@@ -2,7 +2,7 @@
 
 [![Build Status](https://magnum.travis-ci.com/ARM-RD/yotta.svg?token=XG7YezaYG4fZCZqqBSsP&branch=master)](https://magnum.travis-ci.com/ARM-RD/yotta)
 
-###Install Yotta
+###Install Yotta on Mac
 Download the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
 ``` bash
 sudo pip install -U setuptools
@@ -16,7 +16,27 @@ brew tap ARM-RD/homebrew-formulae
 brew install arm-rd-clang arm-none-eabi-gcc cmake ninja jlink
 ```
 
-On Linux, the current workaround is to use [linuxbrew](https://github.com/Homebrew/linuxbrew) to install the packages above. Alternatively, [jlink](http://www.segger.com/jlink-software.html) and [arm-gcc](https://launchpad.net/gcc-arm-embedded/+download) can be downloaded seperately. Since linuxbrew puts the Cellar directory in ~/.linuxbrew/Cellar, make a symlink to it in /usr/local/Cellar. 
+###Install Yotta on Debian/Ubuntu
+Add Yotta repository to /etc/apt/sources.list:
+```bash
+# 32-bit architecture
+deb https://yottos.blob.core.windows.net 97be88d77f5daa7f37574a2a0600a87d/
+ 
+# 64-bit architecture
+deb https://yottos.blob.core.windows.net 631ac5876889410e847e527b137756dc/
+
+# Yotta requires CMake 2.8.12 or higher
+# In Debian, add the testing repository (jessie) to get access to CMake 2.8.12
+```
+
+Update the package list and install Yotta using the meta-package:
+```bash
+sudo apt-get update
+sudo apt-get install yottos-build-tools
+```
+
+Note: packages have been tested on Ubuntu 14.04 LTS 32/64-bit and Debian 7 32-bit.
+
 
 ###Build a Project
 Use yotta to download and build the current version of a project.
