@@ -26,7 +26,12 @@ deb https://yottos.blob.core.windows.net 97be88d77f5daa7f37574a2a0600a87d/
 deb https://yottos.blob.core.windows.net 631ac5876889410e847e527b137756dc/
 
 # Yotta requires CMake 2.8.12 or higher
-# In Debian, add the testing repository (jessie) to get access to CMake 2.8.12
+# On Debian, add the testing repository (jessie) to get access to CMake 2.8.12
+```
+
+On 64-bit architectures, make sure multi-arch is enabled before updating apt-get:
+```bash
+sudo dpkg --add-architecture i386
 ```
 
 Update the package list and install Yotta using the meta-package:
@@ -35,7 +40,7 @@ sudo apt-get update
 sudo apt-get install yottos-build-tools
 ```
 
-Note: packages have been tested on Ubuntu 14.04 LTS 32/64-bit and Debian 7 32-bit.
+Note: packages have been tested on Ubuntu 14.04 LTS 32/64-bit and Debian 7.5 32/64-bit.
 
 
 ###Build a Project
