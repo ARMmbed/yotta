@@ -8,7 +8,7 @@ Download the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
 sudo pip install -U setuptools
 sudo pip install ./path/to/yotta-a.b.c.tar.gz
 ```
-(If you don't have `pip` installed, you may need to install that first using `easy_install pip`, and you will need a [ssh public key](https://help.github.com/articles/generating-ssh-keys) added to github.)  
+(If you don't have `pip` installed, you may need to install that first using `easy_install pip`)  
 
 The toolchain can be installed with [homebrew](https://github.com/ARM-RD/homebrew-formulae):
 ```bash
@@ -17,7 +17,7 @@ brew install arm-rd-clang arm-none-eabi-gcc cmake ninja jlink
 ```
 
 ###Install Yotta on Debian/Ubuntu
-Add Yotta repository to /etc/apt/sources.list:
+Add Yotta repository to `/etc/apt/sources.list`:
 ```bash
 # 32-bit architecture
 deb https://yottos.blob.core.windows.net 97be88d77f5daa7f37574a2a0600a87d/
@@ -69,16 +69,17 @@ cd my-component
 yotta init
 ...
 ```
-Components should have the following basic layout:
+In addition to the `package.json` file, components should have the following basic layout:
 ```bash
 source/<source files>
 <projectname>/<public header files>
 test/<source files>
 readme.md
+package.json
 ```
 Any directories (normally just the source and test directories) that contain libraries or executables to be built should contain a [CMakeLists.txt](http://www.cmake.org/cmake/help/v2.8.8/cmake.html#section_Description) file describing the libraries and/or executables to built from the files in that directory.
 
-Here's an example:
+Here's an example `CMakeLists.txt`:
 ```CMake
 # the actual library we export
 add_library(my-library
