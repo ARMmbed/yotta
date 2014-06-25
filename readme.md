@@ -9,6 +9,7 @@ sudo pip install -U setuptools
 sudo pip install ./path/to/yotta-a.b.c.tar.gz
 ```
 (If you don't have `pip` installed, you may need to install that first using `easy_install pip`)  
+(If you get an unknown argument error from Clang, it means some of the components have not been updated to support Apple LLVM in XCode 5.1. Insert 'ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future' between 'sudo' and 'pip' above.) 
 
 The toolchain can be installed with [homebrew](https://github.com/ARM-RD/homebrew-formulae):
 ```bash
