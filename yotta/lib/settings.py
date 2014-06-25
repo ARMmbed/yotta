@@ -5,10 +5,6 @@ import errno
 import ConfigParser
 import threading
 
-# Watchdog, Apache 2, watch file for changes, pip install watchdog
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
 # fsutils, , misc filesystem utils, internal
 import fsutils
 

@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name = "yotta",
-    version = "0.0.14",
+    version = "0.0.15",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -29,5 +29,5 @@ setup(
         ],
     },
     test_suite = 'test',
-    install_requires=['semantic_version', 'watchdog', 'restkit', 'PyGithub', 'colorama']
+    install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama']
 )
