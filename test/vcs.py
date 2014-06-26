@@ -10,12 +10,11 @@ from yotta.lib import vcs
 from yotta.lib import fsutils
 
 
-# !!! FIXME: need to use a publicly accessible repository here
-Test_Repo = "git@github.com:ARM-RD/foundation.git"
+Test_Repo = "git@github.com:autopulated/testing-dummy.git"
 
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
-        self.working_copy = vcs.Git.cloneToTemporaryDir("git@github.com:ARM-RD/foundation.git")
+        self.working_copy = vcs.Git.cloneToTemporaryDir(Test_Repo)
         self.assertTrue(self.working_copy)
         
     def tearDown(self):
