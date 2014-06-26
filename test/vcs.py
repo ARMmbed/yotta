@@ -3,6 +3,7 @@
 # standard library modules, , ,
 import unittest
 import os
+import subprocess
 
 # vcs, , represent version controlled directories, internal
 from yotta.lib import vcs
@@ -12,8 +13,20 @@ from yotta.lib import fsutils
 
 Test_Repo = "git@github.com:autopulated/testing-dummy.git"
 
-class TestSequenceFunctions(unittest.TestCase):
+class TestGit(unittest.TestCase):
     def setUp(self):
+        # test if we have a git user set up, if not we need to set one
+        child = subprocess.Popen([
+                'git','config', '--global', 'user.email'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = child.communicate()
+        if not len(out):
+            child = subprocess.Popen([
+                    'git','config', '--global', 'user.email', 'test@yottabuild.org'
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            out, err = child.communicate()
         self.working_copy = vcs.Git.cloneToTemporaryDir(Test_Repo)
         self.assertTrue(self.working_copy)
         
