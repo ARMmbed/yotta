@@ -22,10 +22,12 @@ class TestGit(unittest.TestCase):
         )
         out, err = child.communicate()
         if not len(out):
-            child = subprocess.Popen([
-                    'git','config', '--global', 'user.email', 'test@yottabuild.org'
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+            commands = [
+                ['git','config', '--global', 'user.email', 'test@yottabuild.org'],
+                ['git','config', '--global', 'user.name', 'Yotta Test']
+            ]
+            for cmd in commands:
+                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = child.communicate()
         self.working_copy = vcs.Git.cloneToTemporaryDir(Test_Repo)
         self.assertTrue(self.working_copy)
