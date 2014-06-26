@@ -1,6 +1,14 @@
 # standard library modules, , ,
 import os
 import subprocess
+import tempfile
+import logging
+
+# fsutils, , misc filesystem utils, internal
+import fsutils
+
+git_logger = logging.getLogger('git')
+
 
 
 class VCS(object):
@@ -18,6 +26,27 @@ class Git(VCS):
     def __init__(self, path):
         self.worktree = path
         self.gitdir = os.path.join(path, '.git')
+
+    @classmethod
+    def cloneToTemporaryDir(cls, remote):
+        tmp_dir = tempfile.mkdtemp()
+        commands = [
+            ['git', 'clone', remote, tmp_dir]
+        ]
+        for cmd in commands:
+            git_logger.debug('will clone %s into %s', remote, tmp_dir)
+            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = child.communicate()
+            git_logger.debug('clone %s into %s: %s', remote, tmp_dir, out or err)
+            if child.returncode:
+                raise Exception('failed to clone repository %s: %s', remote, err or out)
+        return Git(tmp_dir)
+
+    def remove(self):
+        fsutils.rmRf(self.worktree)
+
+    def workingDirectory(self):
+        return self.worktree
 
     def _gitCmd(self, *args):
         return ['git','--work-tree=%s' % self.worktree,'--git-dir=%s'%self.gitdir] + list(args);
@@ -42,8 +71,18 @@ class Git(VCS):
             child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = child.communicate()
             if child.returncode:
-                raise Exception('command failed: %s', cmd)
-
+                raise Exception('command failed: %s:%s', cmd, err or out)
+    
+    def tags(self):
+        commands = [
+            self._gitCmd('tag', '-l')
+        ]
+        for cmd in commands:
+            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = child.communicate()
+            if child.returncode:
+                raise Exception('command failed: %s:%s', cmd, err or out)
+        return out.split('\n')
 
     def commit(self, message, tag=None):
         commands = [
@@ -57,7 +96,7 @@ class Git(VCS):
             child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = child.communicate()
             if child.returncode:
-                raise Exception('command failed: %s', cmd)
+                raise Exception('command failed: %s:%s', cmd, err or out)
 
     def __nonzero__(self):
         return True
