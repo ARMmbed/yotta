@@ -25,6 +25,7 @@ from github import Github
 # Constants
 _github_url = 'https://api.github.com'
 
+logger = logging.getLogger('access')
 
 ## NOTE
 ## It may be tempting to re-use resources (like Github instances) between
@@ -46,7 +47,7 @@ def _handleAuth(fn):
             return fn(*args, **kwargs)
         except github.BadCredentialsException:
             authorizeUser()
-            logging.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+            logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
             return fn(*args, **kwargs)
         except github.UnknownObjectException:
             # some endpoints return 404 if the user doesn't have access, maybe
@@ -66,7 +67,7 @@ def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
     #print 'get repo:', repo
-    logging.info('get versions for ' + repo)
+    logger.info('get versions for ' + repo)
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
@@ -86,7 +87,7 @@ def _getTarball(url, into_directory):
     response = resource.get(
         headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
     )
-    logging.debug('getting file: %s', url)
+    logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
     access_common.unpackTarballStream(response.body_stream(), into_directory)
 
@@ -145,6 +146,7 @@ class GithubComponentVersion(access_common.RemoteVersion):
 
 class GithubComponent(access_common.RemoteComponent):
     def __init__(self, repo, version_spec=''):
+        logging.debug('create Github component for repo:%s version spec:%s' % (repo, version_spec))
         self.repo = repo
         self.spec = version.Spec(version_spec)
     
@@ -165,13 +167,17 @@ class GithubComponent(access_common.RemoteComponent):
         '''
         # owner/package [@1.2.3] format
         url = url.strip()
-        m = re.match('([^/\s]*/[^/\s]*) *@?([><=.0-9a-zA-Z\*-]*)', url)
+        m = re.match('([^:/\s]*/[^:/\s]*) *@?([><=.0-9a-zA-Z\*-]*)', url)
         if m:
             return GithubComponent(*m.groups())
         # something://[anything.|anything@]github.com/owner/package[#1.2.3] format
-        m = re.match('[^:/]*://(?:[^:/]*\.|[^:/]*@)?github\.com/([^/]*/[^/#]*)#?([><=.0-9a-zA-Z\*-]*)', url)
+        m = re.match('(?:[^:/]*://)?(?:[^:/]*\.|[^:/]*@)?github\.com[:/]([^/]*/[^/#]*)#?([><=.0-9a-zA-Z\*-]*)', url)
         if m:
-            return GithubComponent(*m.groups())
+            repo = m.group(1)
+            spec = m.group(2)
+            if repo.endswith('.git'):
+                repo = repo[:-4]
+            return GithubComponent(repo, spec)
         return None
 
     def versionSpec(self):

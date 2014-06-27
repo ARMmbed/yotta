@@ -9,6 +9,8 @@ import access_common
 # vcs, , represent version controlled directories, internal
 import vcs
 
+logger = logging.getLogger('access')
+
 
 # a GitCloneVersion represents a version in a git clone. (the version may be
 # different from the checked out version in the working_copy, but should be a
@@ -16,13 +18,29 @@ import vcs
 class GitCloneVersion(version.Version):
     def __init__(self, tag, working_copy):
         self.working_copy = working_copy
+        self.tag = tag
         return super(GitCloneVersion, self).__init__(tag)
+
+    def unpackInto(self, directory):
+        logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))
+        if self.isTip():
+            tag = None
+        else:
+            tag = self.tag
+        vcs.Git.cloneToDirectory(self.working_copy.directory, directory, tag)
+
+        # remove temporary files created by the GitWorkingCopy clone
+        self.working_copy.remove()
         
 
 class GitWorkingCopy(object):
     def __init__(self, vcs):
         self.vcs = vcs
         self.directory = vcs.workingDirectory()
+
+    def remove(self):
+        self.vcs.remove()
+        self.directory = None
 
     def availableVersions(self):
         # return a list of GitCloneVersion objects

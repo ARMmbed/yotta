@@ -12,6 +12,10 @@ import access_common
 import registry_access
 # Github Access, , access repositories on github, internal
 import github_access
+# Git Access, , access repositories via generic git URLs, internal
+import git_access
+# hg Access, , access repositories via generic mercurial URLs, internal
+#import hg_access
 # version, , represent versions and specifications, internal
 import version
 # fsutils, , misc filesystem utils, internal
@@ -33,6 +37,7 @@ import fsutils
 # <,>,>= etc
 # 1.2.x
 # owner/repo
+#
 
 
 logger = logging.getLogger('access')
@@ -89,7 +94,37 @@ def latestSuitableVersion(name, version_required, registry='component'):
             )
         return v
     
-    # !!! FIXME: next test generic git/hg/etc urls
+    clone_type = 'git'
+    remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
+    #if remote_component is None:
+    #    remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
+    #    clone_type = 'hg'
+    if remote_component is not None:
+        logger.debug('satisfy %s from %s url' % (name, clone_type))
+        local_clone = remote_component.clone()
+        if not local_clone:
+            raise Exception(
+                'Failed to clone %s URL %s to satisfy dependency %s' % (clone_type, version_required, name)
+            )
+        vers = local_clone.availableVersions()
+        if not len(vers):
+            logger.warning(
+                '%s repository "%s" has no tagged versions, master branch will be used' % (clone_type, version_required)
+            )
+            vers = [local_clone.tipVersion()]
+        spec = remote_component.versionSpec()
+        v = spec.select(vers)
+        if not v:
+            raise Exception(
+                '%s repository "%s" does not provide a version matching "%s"' % (
+                    clone_type,
+                    version_required,
+                    remote_component.spec
+                )
+            )
+        return v
+    
+    # !!! FIXME: next: generic http urls to tarballs
     
     return None
 
@@ -196,7 +231,7 @@ def satisfyVersion(
             'Dependency "%s":"%s" is not a supported form.' % (name, version_required)
         )
     directory = os.path.join(working_directory, name)
-    logger.info('get tarball for ' + name)
+    logger.info('download ' + name)
     v.unpackInto(directory)
     r = component.Component(directory)
     if not r:

@@ -48,6 +48,9 @@ class Version(object):
             self.version = semantic_version.Version(version_string, partial=False)
         self.url = url
 
+    def isTip(self):
+        return self.version == 'tip'
+
     def bump(self, bumptype):
         if isinstance(self.version, str):
             raise ValueError('cannot bump generic version "%s"' % self.version)

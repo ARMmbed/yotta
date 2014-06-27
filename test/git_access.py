@@ -4,6 +4,7 @@
 import unittest
 import os
 import subprocess
+from collections import namedtuple
 
 # git_access, , access to components available from git repositories, internal
 from yotta.lib import git_access
@@ -11,11 +12,15 @@ from yotta.lib import git_access
 from yotta.lib import fsutils
 # version, , represent versions and specifications, internal
 from yotta.lib import version
+# install, , install components, internal
+from yotta import install
 
 
 Test_Name = 'testing-dummy'
 Test_Repo = "git@github.com:autopulated/testing-dummy.git"
 Test_Repo_With_Spec = "git@github.com:autopulated/testing-dummy.git#0.0.1"
+Test_Deps_Name = 'git-access-testing'
+Test_Deps_Target = 'x86-osx,*'
 
 
 def ensureGitConfig():
@@ -54,6 +59,11 @@ class TestGitAccess(unittest.TestCase):
         spec = git_access.GitComponent.createFromNameAndSpec(Test_Repo_With_Spec, Test_Name).versionSpec()
         v = spec.select(self.working_copy.availableVersions())
         self.assertTrue(v)
+
+    def test_installDeps(self):
+        Args = namedtuple('Args', ['component', 'target', 'act_globally'])
+        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False))
+
 
 if __name__ == '__main__':
     unittest.main()
