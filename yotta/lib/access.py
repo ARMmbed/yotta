@@ -27,8 +27,6 @@ import fsutils
 # 1.2.x                                       # central repo
 # http://...                                  # tarball or zipfile
 # owner/repo @((>,>=,<,<=,,)version)          # Github
-# git://github.com/user/project(#version)     # Github
-# git+(ssh://..., http://...)(#hash-or-tag)   # git
 # hg+(ssh://..., http://...)(#hash-or-tag)    # hg
 # * (any version)                             # central repo
 #
@@ -37,6 +35,9 @@ import fsutils
 # <,>,>= etc
 # 1.2.x
 # owner/repo
+# git://github.com/user/project(#version)     # Github
+# git+(ssh://..., http://...)(#hash-or-tag)   # git
+# anything://anything.git                     # git
 #
 
 
