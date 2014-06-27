@@ -15,7 +15,7 @@ import github_access
 # Git Access, , access repositories via generic git URLs, internal
 import git_access
 # hg Access, , access repositories via generic mercurial URLs, internal
-#import hg_access
+import hg_access
 # version, , represent versions and specifications, internal
 import version
 # fsutils, , misc filesystem utils, internal
@@ -97,9 +97,9 @@ def latestSuitableVersion(name, version_required, registry='component'):
     
     clone_type = 'git'
     remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
-    #if remote_component is None:
-    #    remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
-    #    clone_type = 'hg'
+    if remote_component is None:
+        remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
+        clone_type = 'hg'
     if remote_component is not None:
         logger.debug('satisfy %s from %s url' % (name, clone_type))
         local_clone = remote_component.clone()

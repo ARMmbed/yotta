@@ -12,12 +12,26 @@ git_logger = logging.getLogger('git')
 
 
 class VCS(object):
+    @classmethod
+    def cloneToTemporaryDir(cls, remote):
+        raise NotImplementedError()
+
+    @classmethod
+    def cloneToDirectory(cls, remote, directory, tag=None):
+        raise NotImplementedError()
+
     def isClean(self):
         raise NotImplementedError()
     def commit(self, message, tag=None):
         raise NotImplementedError()
+    def isClean(self):
+        raise NotImplementedError()
+    def tags(self):
+        raise NotImplementedError()
     def markForCommit(self, path):
         pass
+    def remove(self):
+        raise NotImplementedError()
     def __nonzero__(self):
         raise NotImplementedError()
     
@@ -117,11 +131,15 @@ class Git(VCS):
         return True
 
 
+class HG(VCS):
+    pass
+
 def getVCS(path):
     # crude heuristic, does the job...
     if os.path.isdir(os.path.join(path, '.git')):
         return Git(path)
-    # !!! FIXME: support other version control systems than git
+    if os.path.isdir(os.path.join(path, '.hg')):
+        return HG(path)
     return None
 
 
