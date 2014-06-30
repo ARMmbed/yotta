@@ -16,5 +16,6 @@ before_script:
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
   - echo -e 'Host bitbucket.org\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
+  - ssh-keygen -t rsa -C "test@yottabuild.org" -f ~/.ssh/id_rsa -N ""
 # command to run tests
 script: python setup.py test 
