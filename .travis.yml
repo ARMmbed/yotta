@@ -10,7 +10,7 @@ python:
 # command to install dependencies
 install:
   - pip install .
-# don't check host keys – the tests need to access repos over ssh, which would
+# don't check host keys - the tests need to access repos over ssh, which would
 # otherwise stall asking about the server's fingerprint
 before_script:
   - mkdir -p ~/.ssh
