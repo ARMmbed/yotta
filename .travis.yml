@@ -10,5 +10,9 @@ python:
 # command to install dependencies
 install:
   - pip install .
+# don't check host keys – the tests need to access repos over ssh, which would
+# otherwise stall asking about the server's fingerprint
+before_script:
+  - echo -e "Host bitbucket.org\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 # command to run tests
 script: python setup.py test 
