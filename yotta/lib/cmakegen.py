@@ -242,12 +242,17 @@ class CMakeGen(object):
                    component_version = component.getVersion()
         )
         fsutils.mkDirP(builddir)
-        with open(os.path.join(builddir, 'CMakeLists.txt'), "r+") as f:
-            current_contents = f.read()
-            if current_contents != file_contents: 
-                f.seek(0)
+        fname = os.path.join(builddir, 'CMakeLists.txt')
+        try:
+            with open(fname, "r+") as f:
+                current_contents = f.read()
+                if current_contents != file_contents: 
+                    f.seek(0)
+                    f.write(file_contents)
+                    f.truncate()
+        except IOError:
+            with open(fname, "w") as f:
                 f.write(file_contents)
-                f.truncate()
 
 
         
