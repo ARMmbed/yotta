@@ -119,6 +119,10 @@ class CMakeGen(object):
         for name, dep in dependencies.items():
             if not dep:
                 yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
+        # ensure this component is assumed to have been installed before we
+        # check for its dependencies, in case it has a circular dependency on
+        # itself
+        processed_components[component.getName()] = component
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
         self.generate(builddir, component, new_dependencies, recursive_deps)
 
@@ -238,8 +242,12 @@ class CMakeGen(object):
                    component_version = component.getVersion()
         )
         fsutils.mkDirP(builddir)
-        with open(os.path.join(builddir, 'CMakeLists.txt'), 'w') as f:
-            f.write(file_contents)
+        with open(os.path.join(builddir, 'CMakeLists.txt'), "r+") as f:
+            current_contents = f.read()
+            if current_contents != file_contents: 
+                f.seek(0)
+                f.write(file_contents)
+                f.truncate()
 
 
         

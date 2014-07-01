@@ -86,10 +86,12 @@ class Component(pack.Pack):
             component description file: this is so that dependency resolution
             proceeds in a predictable way.
         '''
-        if 'dependencies' not in self.description:
+        if 'dependencies' not in self.description and 'targetDependencies' not in self.description:
             logger.debug("component %s has no dependencies" % self.getName())
             return tuple()
-        deps = self.description['dependencies'].items()
+        deps = []
+        if 'dependencies' in self.description:
+            deps += self.description['dependencies'].items()
         if target and 'targetDependencies' in self.description:
             for t in target.dependencyResolutionOrder():
                 if t in self.description['targetDependencies']:

@@ -59,6 +59,7 @@ def execCommand(args):
         for error in target.build(builddir, c, args, debug_build=args.debug_build, release_build=args.release_build):
             logging.error(error)
             errcode = 1
+            break
 
     return errcode
 
