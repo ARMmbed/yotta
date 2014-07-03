@@ -311,7 +311,6 @@ class Component(pack.Pack):
                     c.getName(),
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
-                return c.outdated() or not c.installedDependencies()
             else:
                 # if we don't want to update things that were already installed
                 # (install mode, rather than update mode) then don't recurse
@@ -322,7 +321,7 @@ class Component(pack.Pack):
                     ('new','installed previously')[c.installedPreviously()],
                     ('new','dependencies installed')[c.installedDependencies()]
                 ))
-                return not (c.installedPreviously() or c.installedDependencies())
+            return True
         available_components = self.ensureOrderedDict(available_components)
         logger.debug('install deps of %s@%s...' % (self.getName(), self.getVersion()))
         logger.debug('available: %s' % available_components.keys())

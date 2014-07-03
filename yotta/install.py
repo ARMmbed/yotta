@@ -20,6 +20,10 @@ def addOptions(parser):
     parser.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
         help='Install globally instead of in the current working directory.'
     )
+    parser.add_argument('-l', '--install-linked', dest='install_linked',
+        action='store_true', default=False,
+        help='Traverse linked components, and install dependencies needed there too.'
+    )
 
 
 def execCommand(args):
@@ -52,6 +56,7 @@ def installDeps(args):
     else:
         components, errors = c.satisfyDependenciesRecursive(
                           target = target,
+                  traverse_links = args.install_linked,
             available_components = [(c.getName(), c)]
         )
         for error in errors:
