@@ -244,6 +244,7 @@ class Component(pack.Pack):
             available_components = None,
                      search_dirs = None,
                 update_installed = False,
+                  traverse_links = False,
                           target = None
         ):
         ''' Retrieve and install all the dependencies of this component and its
@@ -279,7 +280,11 @@ class Component(pack.Pack):
                     False (default), or True: whether to check the available
                     versions of installed components, and update if a newer
                     version is available.
-                
+
+                traverse_links:
+                    False (default) or True: whether to recurse into linked
+                    dependencies when updating/installing.
+
                 target:
                     None (default), or a Target object. If specified the target
                     name and it's similarTo list will be used in resolving
@@ -298,7 +303,7 @@ class Component(pack.Pack):
                 # ensures that dependencies are installed as high up the tree
                 # as possible
                 return False
-            if c.installed_linked:
+            if c.installed_linked and not traverse_links:
                 return False
             if update_installed:
                 logger.debug('%s:%s:%s' % (
@@ -341,7 +346,8 @@ class Component(pack.Pack):
         # components list must be updated in order
         for c in need_recursion:
             dep_components, dep_errors = c.satisfyDependenciesRecursive(
-                available_components, search_dirs, update_installed, target
+                available_components, search_dirs, update_installed,
+                traverse_links, target
             )
             available_components.update(dep_components)
             errors += dep_errors

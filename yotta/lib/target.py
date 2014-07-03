@@ -120,7 +120,7 @@ class Target(pack.Pack):
                 yield 'command %s failed' % (cmd)
         hint = self.hintForCMakeGenerator(args.cmake_generator, component)
         if hint:
-            print hint
+            logging.info(hint)
     
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. '''

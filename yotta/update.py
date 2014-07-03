@@ -12,6 +12,11 @@ def addOptions(parser):
         help='If specified, update (and if necessary install) this component '+
              'instead of updating the dependencies of the current component.'
     )
+    parser.add_argument('-l', '--update-linked', dest='update_linked',
+        action='store_true', default=False,
+        help='Traverse linked components, and update dependencies found there too.'
+    )
+    
 
 
 def execCommand(args):
@@ -40,6 +45,7 @@ def updateDeps(args):
     components, errors = c.satisfyDependenciesRecursive(
                           target = target,
                 update_installed = True,
+                  traverse_links = args.update_linked,
             available_components = [(c.getName(), c)]
         )
     for error in errors:
