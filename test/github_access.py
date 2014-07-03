@@ -35,8 +35,8 @@ class TestGitHubAccess(unittest.TestCase):
         pass
 
     def test_installDeps(self):
-        Args = namedtuple('Args', ['component', 'target', 'act_globally'])
-        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False))
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked'])
+        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False))
 
 
 if __name__ == '__main__':
