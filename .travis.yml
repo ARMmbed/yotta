@@ -11,6 +11,6 @@ python:
 install:
   - pip install .
 before_script:
-  - sh .travis_init.sh
+  - /bin/bash .travis_init.sh
 # command to run tests
 script: python setup.py test 
