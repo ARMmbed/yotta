@@ -54,9 +54,12 @@ def installDeps(args):
         # module into the global modules dir
         raise NotImplementedError()
     else:
+        install_linked = False
+        if 'install_linked' in args:
+            install_linked = args.install_linked
         components, errors = c.satisfyDependenciesRecursive(
                           target = target,
-                  traverse_links = args.install_linked,
+                  traverse_links = install_linked,
             available_components = [(c.getName(), c)]
         )
         for error in errors:
