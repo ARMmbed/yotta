@@ -143,30 +143,9 @@ def searchPathsForComponent(name, version_required, search_paths):
             return local_component
     return None
 
-def satisfyVersion(
-        name,
-        version_required,
-        available,
-        search_paths,
-        working_directory,
-        update_installed=None
-    ):
-    ''' returns a Component for the specified version (either to an already
-        installed copy (from the available list, or from disk), or to a newly
-        downloaded one), or None if the version could not be satisfied.
 
-        update_installed = {None, 'Check', 'Update'}
-            None:   prevent any attempt to look for new versions if the
-                    component already exists
-            Check:  check for new versions, and pass new version information to
-                    the component object
-            Update: replace any existing version with the newest available, if
-                    the newest available has a higher version
-    '''
-    
+def satisfyVersionFromAvailble(name, version_required, available):
     spec = None
-    v = None
-
     if name in available:
         logger.debug('satisfy %s from already installed components' % name)
         try:
@@ -181,31 +160,28 @@ def satisfyVersion(
                 r.getName(), name, r.path
             ))
         return r
+    return None
 
+def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=False):
+    ''' returns a Component for the specified version, if found in the list of
+        search paths. If `update' is True, then also check for newer versions
+        of the found component, and update it in-place (unless it was installed
+        via a symlink).
+    '''
+    spec = None
+    v    = None
 
     local_component = searchPathsForComponent(name, version_required, search_paths)
     logger.debug("%s %s locally" % (('found', 'not found')[not local_component], name))
-    if local_component and (local_component.installedLinked() or update_installed != 'Update'):
-        logger.debug("satisfy component from directory: %s" % local_component.path)
-        # if a component exists (has a valid description file), and either is
-        # not outdated, or we are not updating
-        if name != local_component.getName():
-            raise Exception('Component %s found in incorrectly named directory %s (%s)' % (
-                local_component.getName(), name, local_component.path
-            ))
-        return local_component
-
-    # if we need to check for latest versions, get the latest available version
-    # before checking for a local component so that we can create the local
-    # component with a handle to its latest available version
-    if update_installed is not None:
-        #logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-        v = latestSuitableVersion(name, version_required)
-        if local_component:
-            local_component.setLatestAvailable(v)
-    
     if local_component:
-        if not local_component.outdated():
+        if update and not local_component.installedLinked():
+            #logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
+            v = latestSuitableVersion(name, version_required)
+            if local_component:
+                local_component.setLatestAvailable(v)
+
+        # if we don't need to update, then we're done
+        if local_component.installedLinked() or not local_component.outdated():
             logger.debug("satisfy component from directory: %s" % local_component.path)
             # if a component exists (has a valid description file), and either is
             # not outdated, or we are not updating
@@ -214,27 +190,36 @@ def satisfyVersion(
                     local_component.getName(), name, local_component.path
                 ))
             return local_component
-        elif local_component.outdated():
-            logger.info('%soutdated: %s@%s -> %s' % (
-                ('update ' if update_installed == 'Update' else ''),
-                name,
-                local_component.getVersion(),
-                v
-            ))
-            # must rm the old component before continuing
-            fsutils.rmRf(local_component.path)
+        
+        # otherwise, we need to update the installed component
+        logger.info('update outdated: %s@%s -> %s' % (
+            name,
+            local_component.getVersion(),
+            v
+        ))
+        # must rm the old component before continuing
+        fsutils.rmRf(local_component.path)
+        return _satisfyVersionByInstallingVersion(name, version_required, local_component.path, v)
+    return None
 
-    if not v and update_installed is None:
-        v = latestSuitableVersion(name, version_required)
+def satisfyVersionByInstalling(name, version_required, working_directory):
+    ''' installs and returns a Component for the specified name+version
+        requirement, into a subdirectory of `working_directory'
+    '''
+    v = latestSuitableVersion(name, version_required)
+    install_into = os.path.join(working_directory, name)
+    return _satisfyVersionByInstallingVersion(name, version_required, install_into, v)
 
-    if not v:
-        raise access_common.ComponentUnavailable(
-            'Dependency "%s":"%s" is not a supported form.' % (name, version_required)
-        )
-    directory = os.path.join(working_directory, name)
+def _satisfyVersionByInstallingVersion(name, version_required, working_directory, version):
+    ''' installs and returns a Component for the specified version requirement into
+        'working_directory' using the provided remote version object.
+        This function is not normally called via `satisfyVersionByInstalling',
+        which looks up a suitable remote version object.
+    '''
+    assert(version)
     logger.info('download ' + name)
-    v.unpackInto(directory)
-    r = component.Component(directory)
+    version.unpackInto(working_directory)
+    r = component.Component(working_directory)
     if not r:
         raise Exception(
             'Dependency "%s":"%s" is not a valid component.' % (name, version_required)
@@ -244,6 +229,35 @@ def satisfyVersion(
             name, version_required, r.getName()
         ))
     return r
+
+def satisfyVersion(
+        name,
+        version_required,
+        available,
+        search_paths,
+        working_directory,
+        update_installed=None
+    ):
+    ''' returns a Component for the specified version (either to an already
+        installed copy (from the available list, or from disk), or to a newly
+        downloaded one), or None if the version could not be satisfied.
+
+        update_installed = None / 'Update'
+            None:   prevent any attempt to look for new versions if the
+                    component already exists
+            Update: replace any existing version with the newest available, if
+                    the newest available has a higher version
+    '''
+
+    r = satisfyVersionFromAvailble(name, version_required, available)
+    if r is not None:
+        return r
+    
+    r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update')
+    if r is not None:
+        return r
+
+    return satisfyVersionByInstalling(name, version_required, working_directory)
 
 
 def satisfyTarget(name, version_required, working_directory, update_installed=None):

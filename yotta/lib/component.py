@@ -41,7 +41,7 @@ Component_Description_File = 'package.json'
 Registry_Namespace = 'package' 
 
 logger = logging.getLogger('components')
-
+VVVERBOSE_DEBUG = logging.DEBUG - 8
 
 # API
 class Component(pack.Pack):
@@ -66,7 +66,7 @@ class Component(pack.Pack):
             dependencies have been installed) for each of the dependencies.
            
         '''
-        logger.debug("Component: " +  path +  ' installed_linked=' + str(installed_linked))
+        logger.log(VVVERBOSE_DEBUG, "Component: " +  path +  ' installed_linked=' + str(installed_linked))
         super(Component, self).__init__(
             path,
             installed_linked=installed_linked,
@@ -140,12 +140,154 @@ class Component(pack.Pack):
                 r[name] = c
         return r
 
-    #def __doRecursive(self,
-    #  available_components = None,
-    #           search_dirs = None,
-    #                target = None
-    #):
-    #    pass
+    def __getDependenciesWithProvider(self,
+                      available_components = None,
+                               search_dirs = None,
+                                    target = None,
+                          update_installed = False,
+                                  provider = None
+   ):
+        ''' Get installed components using "provider" to find (and possibly
+            install) components.
+
+            See documentation for __getDependenciesRecursiveWithProvider
+
+            returns (components, errors)
+        '''
+        errors = []
+        modules_path = self.modulesPath()
+        def satisfyDep((name, ver_req)):
+            try:
+                return provider(
+                  name,
+                  ver_req,
+                  available_components,
+                  search_dirs,
+                  modules_path,
+                  update_installed
+                )
+            except access_common.ComponentUnavailable, e:
+                errors.append(e)
+                self.dependencies_failed = True
+        #dependencies = pool.map(
+        dependencies = map(
+            satisfyDep, self.getDependencySpecs(target)
+        )
+        self.installed_dependencies = True
+        # stable order is important!
+        return (OrderedDict([(d.description['name'], d) for d in dependencies if d]), errors)
+
+
+    def __getDependenciesRecursiveWithProvider(self,
+                               available_components = None,
+                                        search_dirs = None,
+                                             target = None,
+                                     traverse_links = False,
+                                   update_installed = False,                                     
+                                           provider = None,
+                                         _processed = None
+    ):
+        ''' Get installed components using "provider" to find (and possibly
+            install) components.
+
+            This function is called with different provider functions in order
+            to retrieve a list of all of the dependencies, or install all
+            dependencies.
+
+            Returns
+            =======
+                (components, errors)
+
+                components: dictionary of name:Component
+                errors: sequence of errors
+
+            Parameters
+            ==========
+                available_components:
+                    None (default) or a dictionary of name:component. This is
+                    searched before searching directories or fetching remote
+                    components
+
+                search_dirs:
+                    None (default), or sequence of directories to search for
+                    already installed, (but not yet loaded) components. Used so
+                    that manually installed or linked components higher up the
+                    dependency tree are found by their users lower down.
+
+                    These directories are searched in order, and finally the
+                    current directory is checked.
+
+                target:
+                    None (default), or a Target object. If specified the target
+                    name and it's similarTo list will be used in resolving
+                    dependencies. If None, then only target-independent
+                    dependencies will be installed
+
+                traverse_links:
+                    False (default) or True: whether to recurse into linked
+                    dependencies. You normally want to set this to "True" when
+                    getting a list of dependencies, and False when installing
+                    them (unless the user has explicitly asked dependencies to
+                    be installed in linked components).
+
+                provider: None (default) or function:
+                          provider(
+                            name,
+                            version_req,
+                            available_components,
+                            search_dirs,
+                            working_directory,
+                            update_if_installed
+                          )
+        '''
+        def recursionFilter(c):
+            if not c:
+                logger.debug('do not recurse into failed component')
+                # don't recurse into failed components
+                return False
+            if c.getName() in _processed:
+                logger.debug('do not recurse into already processed component: %s' % c)
+                return False
+            if c.installedLinked() and not traverse_links:
+                return False
+            return True
+        available_components = self.ensureOrderedDict(available_components)
+        if search_dirs is None:
+            search_dirs = []
+        if _processed is None:
+            _processed = set()
+        search_dirs.append(self.modulesPath())
+        logger.debug('process %s\nsearch dirs:%s' % (self.getName(), search_dirs))
+        components, errors = self.__getDependenciesWithProvider(
+            available_components = available_components,
+                     search_dirs = search_dirs,
+                update_installed = update_installed,
+                          target = target,
+                        provider = provider
+        )
+        _processed.add(self.getName())
+        if errors:
+            errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
+        need_recursion = filter(recursionFilter, components.values()) 
+        available_components.update(components)
+        logger.debug('processed %s\nneed recursion: %s\navailable:%s\nsearch dirs:%s' % (self.getName(), need_recursion, available_components, search_dirs))
+        # NB: can't perform this step in parallel, since the available
+        # components list must be updated in order
+        for c in need_recursion:
+            dep_components, dep_errors = c.__getDependenciesRecursiveWithProvider(
+                available_components = available_components,
+                         search_dirs = search_dirs,
+                              target = target,
+                      traverse_links = traverse_links,
+                    update_installed = update_installed,
+                            provider = provider,
+                          _processed = _processed
+            )
+            available_components.update(dep_components)
+            components.update(dep_components)
+            errors += dep_errors
+        return (components, errors)
+        
 
     def getDependenciesRecursive(self,
                  available_components = None,
@@ -160,38 +302,38 @@ class Component(pack.Pack):
 
             Returns {component_name:component}
         '''
-        def recursionFilter(c):
-            if not c:
-                # don't recurse into failed components
-                return False
-            if c.getName() in processed:
-                return False
-            return True
-        available_components = self.ensureOrderedDict(available_components)
-        if processed is None:
-            processed = set()
-        if search_dirs is None:
-            search_dirs = []
-        search_dirs.append(self.modulesPath())
-        components = self.getDependencies(
-                available_components,
-                         search_dirs,
-                              target,
-                      available_only
+        def provideInstalled(name,
+                      version_req,
+             available_components,
+                      search_dirs,
+                working_directory,
+              update_if_installed
+        ):
+            r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            if r:
+                return r
+            r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
+            if r:
+                return r
+            # return an in invalid component, so that it's possible to use
+            # getDependenciesRecursive to find a list of failed dependencies,
+            # as well as just available ones
+            r = Component(os.path.join(self.path, name))
+            assert(not r)
+            return r
+
+        components, errors = self.__getDependenciesRecursiveWithProvider(
+           available_components = available_components,
+                    search_dirs = search_dirs,
+                         target = target,
+                 traverse_links = True,
+               update_installed = False,
+                       provider = provideInstalled
         )
-        processed.add(self.getName())
-        need_recursion = filter(recursionFilter, components.values())
-        available_components.update(components)
-        for c in need_recursion:
-            dep_components = c.getDependenciesRecursive(
-                available_components,
-                           processed,
-                         search_dirs,
-                              target,
-                      available_only
-            )
-            available_components.update(dep_components)
-            components.update(dep_components)
+        for error in errors:
+            logger.error(error)
+        if available_only:
+            components = OrderedDict((k, v) for k, v in components.items() if v)
         return components
 
     def modulesPath(self):
@@ -199,45 +341,6 @@ class Component(pack.Pack):
 
     def targetsPath(self):
         return os.path.join(self.path, Targets_Folder)
-
-    def satisfyDependencies(
-                            self,
-            available_components,
-                     search_dirs = None,
-                update_installed = False,
-                          target = None
-        ):
-        ''' Retrieve and install all the dependencies of this component, or
-            satisfy them from a collection of available_components.
-
-            Returns (components, errors)
-        '''
-        errors = []
-        modules_path = self.modulesPath()
-        def satisfyDep((name, ver_req)):
-            try:
-                # !!! TODO: validate that the installed component has the same
-                # name and version as we expected, and at least warn if it
-                # doesn't
-                component = access.satisfyVersion(
-                    name,
-                    ver_req,
-                    available_components,
-                    search_dirs,
-                    modules_path,
-                    update_installed=('Update' if update_installed else None)
-                )
-                return component
-            except access_common.ComponentUnavailable, e:
-                errors.append(e)
-                self.dependencies_failed = True
-        #dependencies = pool.map(
-        dependencies = map(
-            satisfyDep, self.getDependencySpecs(target)
-        )
-        self.installed_dependencies = True
-        # stable order is important!
-        return (OrderedDict([(d.description['name'], d) for d in dependencies if d]), errors)
 
     def satisfyDependenciesRecursive(
                             self,
@@ -292,66 +395,36 @@ class Component(pack.Pack):
                     dependencies will be installed
 
         '''
-        def recursionFilter(c):
-            if not c:
-                logger.debug('do not recurse into failed component')
-                # don't recurse into failed components
-                return False
-            if c.getName() in available_components:
-                logger.debug('do not recurse into already installed component: %s' % c)
-                # don't recurse into components added at a higher level: this
-                # ensures that dependencies are installed as high up the tree
-                # as possible
-                return False
-            if c.installed_linked and not traverse_links:
-                return False
-            if update_installed:
-                logger.debug('%s:%s:%s' % (
-                    self.getName(),
-                    c.getName(),
-                    ('new','dependencies installed')[c.installedDependencies()]
-                ))
-            else:
-                # if we don't want to update things that were already installed
-                # (install mode, rather than update mode) then don't recurse
-                # into things that were already on disk
-                logger.debug('%s:%s:%s:%s' % (
-                    self.getName(),
-                    c.getName(),
-                    ('new','installed previously')[c.installedPreviously()],
-                    ('new','dependencies installed')[c.installedDependencies()]
-                ))
-            return True
-        available_components = self.ensureOrderedDict(available_components)
-        logger.debug('install deps of %s@%s...' % (self.getName(), self.getVersion()))
-        logger.debug('available: %s' % available_components.keys())
-        if search_dirs is None:
-            search_dirs = []
-        search_dirs.append(self.modulesPath())
-        components, errors = self.satisfyDependencies(
+        def provider(
+            name,
+            version_req,
             available_components,
-                     search_dirs,
-                update_installed = update_installed,
-                          target = target
+            search_dirs,
+            working_directory,
+            update_if_installed
+        ):
+            r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            if r:
+                return r
+            r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
+            if r:
+                logger.info('%s@%s' % (name, r.getVersion()))
+                return r
+            r = access.satisfyVersionByInstalling(name, version_req, working_directory)
+            if r:
+                logger.info('%s@%s' % (name, r.getVersion()))
+            else:
+                logger.error('could not install %s' % name)
+            return r
+
+        return self.__getDependenciesRecursiveWithProvider(
+           available_components = available_components,
+                    search_dirs = search_dirs,
+                         target = target,
+                 traverse_links = traverse_links,
+               update_installed = update_installed,
+                       provider = provider
         )
-        if errors:
-            errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
-        need_recursion = filter(recursionFilter, components.values()) 
-        available_components.update(components)
-        logger.debug('deps: %s' % components.keys())
-        logger.debug('recurse into: %s' % ([c.getName() for c in need_recursion]))
-        logger.debug('available now: %s' % available_components.keys())
-        # NB: can't perform this step in parallel, since the available
-        # components list must be updated in order
-        for c in need_recursion:
-            dep_components, dep_errors = c.satisfyDependenciesRecursive(
-                available_components, search_dirs, update_installed,
-                traverse_links, target
-            )
-            available_components.update(dep_components)
-            errors += dep_errors
-        logger.info('%s@%s' % (self.getName(), self.getVersion()))
-        return (components, errors)
 
     def satisfyTarget(self, target_name_and_version, update_installed=False):
         ''' Ensure that the specified target name (and optionally version,
