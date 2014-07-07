@@ -1,3 +1,4 @@
+#!/bin/bash
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 # don't check host keys - the tests need to access repos over ssh, which would
