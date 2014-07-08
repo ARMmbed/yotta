@@ -3,11 +3,13 @@ import os
 import subprocess
 import tempfile
 import logging
+import hgapi
 
 # fsutils, , misc filesystem utils, internal
 import fsutils
 
 git_logger = logging.getLogger('git')
+hg_logger = logging.getLogger('hg')
 
 
 
@@ -131,8 +133,50 @@ class Git(VCS):
         return True
 
 
+# FIXME: hgapi will throw HgException when something goes wrong, it may be worth trying
+# to catch that in some methods
 class HG(VCS):
-    pass
+    def __init__(self, path):
+        self.worktree = path
+        self.repo = hgapi.Repo(path)
+
+    @classmethod
+    def cloneToTemporaryDir(cls, remote):
+        return cls.cloneToDirectory(remote, tempfile.mkdtemp())
+
+    @classmethod
+    def cloneToDirectory(cls, remote, directory, tag=None):
+        hg_logger.debug('will clone %s into %s', remote, directory)
+        r = hgapi.Repo.hg_clone(remote, directory)
+        if tag is not None:
+            r.updateToTag(tag)
+        return r
+
+    def remove(self):
+        fsutils.rmRf(self.worktree)
+
+    def workingDirectory(self):
+        return self.worktree
+
+    def isClean(self):
+        return bool(self.repo.hg_status(empty=True))
+
+    def markForCommit(self, relative_path):
+        self.repo.hg_add(os.path.join(self.worktree, relative_path))
+
+    def updateToTag(self, tag):
+        self.repo.hg_update(tag)
+
+    def tags(self):
+        return self.repo.hg_tags().keys()
+
+    def commit(self, message, tag=None):
+        self.repo.hg_commit(message)
+        if tag:
+            self.repo.hg_tag(tag)
+
+    def __nonzero__(self):
+        return True
 
 def getVCS(path):
     # crude heuristic, does the job...
@@ -141,5 +185,4 @@ def getVCS(path):
     if os.path.isdir(os.path.join(path, '.hg')):
         return HG(path)
     return None
-
 
