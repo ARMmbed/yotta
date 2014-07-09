@@ -147,7 +147,8 @@ class HG(VCS):
     @classmethod
     def cloneToDirectory(cls, remote, directory, tag=None):
         hg_logger.debug('will clone %s into %s', remote, directory)
-        r = hgapi.Repo.hg_clone(remote, directory)
+        hgapi.Repo.hg_clone(remote, directory)
+        r = HG(directory)
         if tag is not None:
             r.updateToTag(tag)
         return r
@@ -159,7 +160,7 @@ class HG(VCS):
         return self.worktree
 
     def isClean(self):
-        return bool(self.repo.hg_status(empty=True))
+        return not bool(self.repo.hg_status(empty=True))
 
     def markForCommit(self, relative_path):
         self.repo.hg_add(os.path.join(self.worktree, relative_path))
