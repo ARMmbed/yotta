@@ -169,7 +169,9 @@ class HG(VCS):
         self.repo.hg_update(tag)
 
     def tags(self):
-        return self.repo.hg_tags().keys()
+        l = self.repo.hg_tags().keys()
+        l.remove('tip')
+        return l
 
     def commit(self, message, tag=None):
         self.repo.hg_commit(message)
