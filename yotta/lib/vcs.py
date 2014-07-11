@@ -146,6 +146,11 @@ class HG(VCS):
 
     @classmethod
     def cloneToDirectory(cls, remote, directory, tag=None):
+        # hg doesn't automatically create the directories needed by destination
+        try:
+            os.makedirs(directory)
+        except:
+            pass
         hg_logger.debug('will clone %s into %s', remote, directory)
         hgapi.Repo.hg_clone(remote, directory)
         r = HG(directory)
