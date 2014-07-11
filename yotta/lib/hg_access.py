@@ -65,7 +65,10 @@ class HGComponent(access_common.RemoteComponent):
             tagged version.
         '''
         # hg+ssh://anything#tag or anything.hg#tag formats
-        m = re.match('(ssh://.*|.*\.hg)#?([><=.0-9a-zA-Z\*-]*)', url)
+        if url.find('#') == -1:
+            m = re.match('(ssh://.*$)', url)
+        else:
+            m = re.match('(ssh://.*)#([><=.0-9a-zA-Z\*-]*)', url)
         if m:
             return HGComponent(*m.groups())
         return None
