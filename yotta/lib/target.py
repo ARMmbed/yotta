@@ -25,8 +25,6 @@ def _newPGroup():
 
 # API
 class Target(pack.Pack):
-    description_filename = Target_Description_File
-
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
         ''' Initialise a Target based on a directory. If the directory does not
             contain a valid target.json file the initialised object will test
@@ -34,6 +32,7 @@ class Target(pack.Pack):
         '''
         super(Target, self).__init__(
             path,
+            description_filename=Target_Description_File,
             installed_linked=installed_linked,
             latest_suitable_version=latest_suitable_version
         )

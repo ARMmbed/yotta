@@ -41,17 +41,16 @@ Default_Publish_Ignore = [
 # VCS, etc.)
 
 class Pack(object):
-    description_filename = None
-
-    def __init__(self, path, installed_linked, latest_suitable_version=None):
+    def __init__(self, path, description_filename, installed_linked, latest_suitable_version=None):
         self.path = path
         self.installed_linked = installed_linked
         self.vcs = None
         self.error = None
         self.latest_suitable_version = latest_suitable_version
         self.version = None
+        self.description_filename = description_filename
         try:
-            self.description = ordered_json.load(os.path.join(path, self.description_filename))
+            self.description = ordered_json.load(os.path.join(path, description_filename))
             self.version = version.Version(self.description['version'])
         except Exception, e:
             self.description = OrderedDict()

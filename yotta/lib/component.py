@@ -36,7 +36,8 @@ import pack
 # Constants
 Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
-Component_Description_File = 'package.json'
+Component_Description_File = 'module.json'
+Component_Description_File_Fallback = 'package.json'
 # !!! FIXME: change /package to /component
 Registry_Namespace = 'package' 
 
@@ -45,8 +46,6 @@ VVVERBOSE_DEBUG = logging.DEBUG - 8
 
 # API
 class Component(pack.Pack):
-    description_filename = Component_Description_File
-
     def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None):
         ''' How to use a Component:
            
@@ -67,11 +66,27 @@ class Component(pack.Pack):
            
         '''
         logger.log(VVVERBOSE_DEBUG, "Component: " +  path +  ' installed_linked=' + str(installed_linked))
+        warn_deprecated_filename = False
+        if (not os.path.exists(os.path.join(path, Component_Description_File))) and \
+           os.path.exists(os.path.join(path, Component_Description_File_Fallback)):
+            warn_deprecated_filename = True
+            description_filename = Component_Description_File_Fallback
+        else:
+            description_filename = Component_Description_File
         super(Component, self).__init__(
             path,
+            description_filename=description_filename,
             installed_linked=installed_linked,
             latest_suitable_version=latest_suitable_version
         )
+        if warn_deprecated_filename:
+            logger.warning(
+                "Component %s uses deprecated %s file, use %s instead." % (
+                    self.getName(),
+                    Component_Description_File_Fallback,
+                    Component_Description_File
+                )
+            )
         self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False

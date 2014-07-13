@@ -8,7 +8,7 @@ from yotta.lib import access
 from yotta.lib import component
 from yotta.lib.pool import pool
 
-package_json = '''{
+module_json = '''{
   "name": "registry-test",
   "version": "0.0.0",
   "description": "",
@@ -43,8 +43,8 @@ def main():
     except OSError: pass
 
     mkDirP(testdir)
-    with open(os.path.join(testdir, 'package.json'), 'w') as f:
-        f.write(package_json)
+    with open(os.path.join(testdir, 'module.json'), 'w') as f:
+        f.write(module_json)
 
     c = component.Component(testdir)
 

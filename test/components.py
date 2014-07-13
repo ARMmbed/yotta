@@ -10,7 +10,7 @@ from yotta.lib import access
 from yotta.lib import component
 from yotta.lib.pool import pool
 
-package_json = '''{
+module_json = '''{
   "name": "yottos",
   "version": "0.0.7",
   "description": "The core Yottos scheduler.",
@@ -68,8 +68,8 @@ def main():
     except OSError: pass
 
     mkDirP(testdir)
-    with open(os.path.join(testdir, 'package.json'), 'w') as f:
-        f.write(package_json)
+    with open(os.path.join(testdir, 'module.json'), 'w') as f:
+        f.write(module_json)
 
     c = component.Component(testdir)
 
@@ -140,7 +140,7 @@ class ComponentTestCase(unittest.TestCase):
         except OSError: pass
 
         mkDirP(testdir)
-        with open(os.path.join(testdir, 'package.json'), 'w') as f:
+        with open(os.path.join(testdir, 'module.json'), 'w') as f:
             f.write(self.test_json)
 
         c = component.Component(testdir)

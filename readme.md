@@ -66,17 +66,17 @@ yotta build
 # create a directory for the new software component
 mkdir my-component
 cd my-component
-# run `yotta init` to create a template component desctiption (package.json file):
+# run `yotta init` to create a template component desctiption (module.json file):
 yotta init
 ...
 ```
-In addition to the `package.json` file, components should have the following basic layout:
+In addition to the `module.json` file, components should have the following basic layout:
 ```bash
 source/<source files>
 <projectname>/<public header files>
 test/<source files>
 readme.md
-package.json
+module.json
 ```
 Any directories (normally just the source and test directories) that contain libraries or executables to be built should contain a [CMakeLists.txt](http://www.cmake.org/cmake/help/v2.8.8/cmake.html#section_Description) file describing the libraries and/or executables to built from the files in that directory.
 
@@ -92,7 +92,7 @@ target_link_libraries(my-library
     some-dependency
 )
 ```
-In this case, we're telling CMake to link our library against `some-dependency`. We need to also make sure this dependency is installed and built by yotta by adding it to the `package.json` file, in the `dependencies` section:
+In this case, we're telling CMake to link our library against `some-dependency`. We need to also make sure this dependency is installed and built by yotta by adding it to the `module.json` file, in the `dependencies` section:
 ```json
 {
   "name": "my-library",
@@ -198,5 +198,5 @@ Resetting target
 Congratulations for reading to the end of the readme, unless you skipped straight here, in which case, naughty you. In either case, here's some helpful tips:
 
  * `yt` is a shorthand for the `yotta` command, and it's much quicker to type!
- * yotta is strongly influenced by [npm](http://npmjs.org), the awesome node.js software packaging system. Much of the syntax for package description and commands is very similar.
+ * yotta is strongly influenced by [npm](http://npmjs.org), the awesome node.js software packaging system. Much of the syntax for module description and commands is very similar.
 
