@@ -50,11 +50,13 @@ def tryReadLink(path):
     except OSError as e:
         return None
 
-def symlink(src, dst):
+def symlink(source, link_name):
     # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
     # work on windows, so use something else
     try:
-        os.symlink(src, dst)
+        # os.symlink doesn't update existing links, so need to rm first
+        rmF(link_name)
+        os.symlink(source, link_name)
     except OSError as exception:
-        if exception.errno != errno.EEXIST and (tryReadLink(dst) != src):
+        if exception.errno != errno.EEXIST and (tryReadLink(link_name) != source):
             raise
