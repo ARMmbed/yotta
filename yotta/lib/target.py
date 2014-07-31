@@ -94,13 +94,13 @@ class Target(pack.Pack):
         except KeyError:
             return None
 
-    def build(self, builddir, component, args, debug_build=False, release_build=False):
+    def build(self, builddir, component, args, release_build=False):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
         commands = []
-        build_type = ((None, 'Debug'), ('Release', 'RelWithDebInfo'))[release_build][debug_build]
+        build_type = ('Debug', 'RelWithDebInfo')[release_build]
         if build_type:
             commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.'])
         else:

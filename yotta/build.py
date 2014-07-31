@@ -15,7 +15,6 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
     )
-    parser.add_argument('-d', '--debug-build', dest='debug_build', action='store_true', default=False)
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=False)
     # the target class adds its own build-system specific options. In the
     # future we probably want to load these from a target instance, rather than
@@ -56,7 +55,7 @@ def execCommand(args):
         errcode = 1
     
     if not args.generate_only:
-        for error in target.build(builddir, c, args, debug_build=args.debug_build, release_build=args.release_build):
+        for error in target.build(builddir, c, args, release_build=args.release_build):
             logging.error(error)
             errcode = 1
             break
