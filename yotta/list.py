@@ -3,6 +3,9 @@ import argparse
 import logging
 import os
 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
 # Component, , represents an installed component, internal
 from lib import component
 # Target, , represents an installed target, internal
@@ -10,8 +13,9 @@ from lib import target
 
 
 def addOptions(parser):
-    pass
-
+    parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
+        help='Show all dependencies (including repeats)'
+    )
 
 def execCommand(args):
     wd = os.getcwd()
@@ -32,11 +36,52 @@ def execCommand(args):
             logging.error(error)
         return 1
 
-    components = c.getDependenciesRecursive(
+    dependencies = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)]
     )
 
-    for v in components.values():
-        logging.info(str(v))
+    printComponentDepsRecursive(c, dependencies, target, args.show_all)
+
+
+
+def islast(generator):
+    next_x = None
+    first = True
+    for x in generator:
+        if not first:
+            yield (next_x, False)
+        next_x = x
+        first = False
+    if not first:
+        yield (next_x, True)
+
+def printComponentDepsRecursive(component, all_components, target, all, indent=u'', tee=u''):
+    mods_path = component.modulesPath()
+    deps = component.getDependencies(
+            available_components = all_components,
+                          target = target
+    )
+
+    line = indent[:-2] + tee
+    line += component.getName() 
+    if component.installedLinked():
+        line += colorama.Style.BRIGHT + colorama.Fore.GREEN + ' -> ' + colorama.Style.DIM + component.path + colorama.Style.RESET_ALL 
+    print line
+
+    for (name, dep), last in islast(filter(lambda x: all or (not x[1]) or x[1].path == os.path.join(mods_path, x[0]), deps.items(), )):
+        if last:
+            next_indent = indent + u'  '
+            tee = u'\u2517\u2500 '
+            next_tee = u'\u2517\u2500 '
+        else:
+            next_indent = indent + u'\u2503 '
+            tee = u'\u2523\u2500 '
+            next_tee = u'\u2520\u2500 '
+        if not dep:
+            print indent + tee + name + colorama.Style.BRIGHT + colorama.Fore.RED + ' missing' + colorama.Style.RESET_ALL 
+        elif dep.path == os.path.join(mods_path, name):
+            printComponentDepsRecursive(dep, all_components, target, all, next_indent, next_tee)
+        else:
+            print indent + tee + colorama.Style.DIM + name + colorama.Style.RESET_ALL 
 
