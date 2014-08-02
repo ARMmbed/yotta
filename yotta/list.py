@@ -40,7 +40,6 @@ def execCommand(args):
                       target = target,
         available_components = [(c.getName(), c)]
     )
-
     printComponentDepsRecursive(c, dependencies, target, args.show_all)
 
 
@@ -63,10 +62,10 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
                           target = target
     )
 
-    line = indent[:-2] + tee
-    line += component.getName() 
+    line = indent[:-2] + tee + component.getName() + ' ' + colorama.Style.DIM + str(component.getVersion()) + colorama.Style.RESET_ALL
     if component.installedLinked():
         line += colorama.Style.BRIGHT + colorama.Fore.GREEN + ' -> ' + colorama.Style.DIM + component.path + colorama.Style.RESET_ALL 
+
     print line
 
     for (name, dep), last in islast(filter(lambda x: all or (not x[1]) or x[1].path == os.path.join(mods_path, x[0]), deps.items(), )):

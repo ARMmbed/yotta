@@ -41,11 +41,8 @@ def execCommand(args):
                       target = target,
         available_components = [(c.getName(), c)]
     )
-    logging.info('all dependencies: (target=%s)' % target)
     for d in all_components.values():
-        if d:
-            logging.info('    %s@%s: %s' % (d.getName(), d.getVersion(), os.path.relpath(d.path)))
-        else:
+        if not d:
             logging.error('    %s not available' % os.path.split(d.path)[1])
 
     generator = cmakegen.CMakeGen(builddir, target)

@@ -423,12 +423,9 @@ class Component(pack.Pack):
                 return r
             r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
             if r:
-                logger.info('%s@%s' % (name, r.getVersion()))
                 return r
             r = access.satisfyVersionByInstalling(name, version_req, working_directory)
-            if r:
-                logger.info('%s@%s' % (name, r.getVersion()))
-            else:
+            if not r:
                 logger.error('could not install %s' % name)
             return r
 
