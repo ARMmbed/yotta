@@ -17,6 +17,7 @@ from . import publish
 from . import debug
 from . import login
 from . import logout
+from . import list
 
 from lib import logging_setup
 
@@ -65,6 +66,7 @@ def main():
     addParser('publish', publish, 'Publish a component or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the Yotta Registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user')
+    addParser('list', list, 'List the dependencies of the current module.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -72,10 +74,8 @@ def main():
         'up':subparser.choices['update'],
         'in':subparser.choices['install'],
         'ln':subparser.choices['link'],
-       'tgt':subparser.choices['target'],
-       'pub':subparser.choices['publish'],
-       'ver':subparser.choices['version'],
-       'dbg':subparser.choices['debug'],
+         'v':subparser.choices['version'],
+        'ls':subparser.choices['list'],
     })
 
     args = parser.parse_args() 
