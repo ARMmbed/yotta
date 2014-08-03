@@ -8,6 +8,8 @@ from lib import component
 from lib import cmakegen
 # Target, , represents an installed target, internal
 from lib import target
+# install, , install subcommand, internal
+from . import install
 
 
 def addOptions(parser):
@@ -34,6 +36,12 @@ def execCommand(args):
         for error in errors:
             logging.error(error)
         return 1
+    
+    # run the install command before building, we need to add some options the
+    # install command expects to be present to do this:
+    vars(args)['component'] = None
+    vars(args)['act_globally'] = False
+    install.execCommand(args)
 
     builddir = os.path.join(cwd, 'build', target.getName())
 
