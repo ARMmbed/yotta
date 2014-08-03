@@ -115,10 +115,7 @@ cd yottos
 # set the target device:
 yotta target stk3700
 
-# install dependencies
-yotta install
-
-# build
+# install dependencies then build:
 yotta build
 
 # go back up and work on things
@@ -145,9 +142,6 @@ It's often useful to make changes to a dependency of what you're working on, and
 # the dependency you care about:
 git clone git@github.com:ARM-RD/libc.git
 cd libc
-
-# install the dependencies
-yotta install
 
 # link this component into the globally installed component
 # (may need `sudo' depending on your configuration)
