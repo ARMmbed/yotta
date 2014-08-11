@@ -112,6 +112,9 @@ To develop a project we want to grab the source using git, so we have a copy we 
 git clone git@github.com:ARM-RD/yottos.git
 cd yottos
 
+# run yotta install (optional, but currently recommended)
+yotta install
+
 # set the target device:
 yotta target stk3700
 
