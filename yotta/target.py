@@ -1,5 +1,6 @@
 # standard library modules, , ,
 import re
+import logging
 
 # settings, , load and save settings, internal
 from lib import settings
