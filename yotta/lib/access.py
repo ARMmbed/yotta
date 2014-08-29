@@ -169,7 +169,7 @@ def satisfyVersionFromAvailble(name, version_required, available):
     spec = None
     if name in available:
         logger.debug('satisfy %s from already installed components' % name)
-        # we still need to check the version specification - which the remote
+        # we still need to check the version specification - which the remote
         # components know how to parse:
         remote_component = remoteComponentFor(name, version_required, 'component')
         if not remote_component.versionSpec().match(available[name].version):
