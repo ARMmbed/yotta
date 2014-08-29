@@ -87,5 +87,8 @@ class HGComponent(access_common.RemoteComponent):
         clone = vcs.HG.cloneToTemporaryDir(self.url)
         return HGWorkingCopy(clone)
 
+    @classmethod
+    def remoteType(cls):
+        return 'hg'
         
 

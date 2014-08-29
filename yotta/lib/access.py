@@ -44,12 +44,12 @@ import fsutils
 logger = logging.getLogger('access')
 
 
-def latestSuitableVersion(name, version_required, registry='component'):
-    ''' Return a RemoteVersion object representing the latest suitable
-        version of the named component or target.
-
-        All RemoteVersion objects have a .unpackInto(directory) method.
+def remoteComponentFor(name, version_required, registry='component'):
+    ''' Return a RemoteComponent sublclass for the specified component and
+        version specification.
+        Raises an exception if any arguments are invalid.
     '''
+
     if registry in ('component', 'target'):
         # If the name/spec looks like a reference to a component in the registry
         # then that takes precedence
@@ -57,17 +57,7 @@ def latestSuitableVersion(name, version_required, registry='component'):
             version_required, name, registry=registry
         )
         if remote_component:
-            logger.debug('satisfy %s from %s registry' % (name, registry))
-            vers = remote_component.availableVersions()
-            spec = remote_component.versionSpec()
-            v = spec.select(vers)
-            if not v:
-                raise Exception(
-                    'The %s registry does not provide a version of "%s" matching "%s"' % (
-                        registry, name, spec
-                    )
-                )
-            return v
+            return remote_component
     else:
         raise Exception('no known registry namespace "%s"' % registry)
 
@@ -75,6 +65,42 @@ def latestSuitableVersion(name, version_required, registry='component'):
     # go at matching the name/spec
     remote_component = github_access.GithubComponent.createFromNameAndSpec(version_required, name)
     if remote_component is not None:
+        return remote_component
+
+    remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
+    if remote_component:
+        return remote_component
+
+    remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
+    if remote_component:
+        return remote_component
+
+    # !!! FIXME: next: generic http urls to tarballs
+
+    raise Exception('unsupported component req: %s' % version_required)
+
+def latestSuitableVersion(name, version_required, registry='component'):
+    ''' Return a RemoteVersion object representing the latest suitable
+        version of the named component or target.
+
+        All RemoteVersion objects have a .unpackInto(directory) method.
+    '''
+
+    remote_component = remoteComponentFor(name, version_required, registry)
+
+    if remote_component.remoteType() == 'registry':
+        logger.debug('satisfy %s from %s registry' % (name, registry))
+        vers = remote_component.availableVersions()
+        spec = remote_component.versionSpec()
+        v = spec.select(vers)
+        if not v:
+            raise Exception(
+                'The %s registry does not provide a version of "%s" matching "%s"' % (
+                    registry, name, spec
+                )
+            )
+        return v
+    elif remote_component.remoteType() == 'github': 
         logger.debug('satisfy %s from github url' % name)
         vers = remote_component.availableVersions()
         if not len(vers):
@@ -94,13 +120,8 @@ def latestSuitableVersion(name, version_required, registry='component'):
                 )
             )
         return v
-    
-    clone_type = 'git'
-    remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
-    if remote_component is None:
-        remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
-        clone_type = 'hg'
-    if remote_component is not None:
+    elif remote_component.remoteType() in ('git', 'hg'):
+        clone_type = remote_component.remoteType()
         logger.debug('satisfy %s from %s url' % (name, clone_type))
         local_clone = remote_component.clone()
         if not local_clone:
@@ -148,10 +169,13 @@ def satisfyVersionFromAvailble(name, version_required, available):
     spec = None
     if name in available:
         logger.debug('satisfy %s from already installed components' % name)
-        try:
-            spec = version.Spec(version_required)
-        except Exception:
-            pass
+        # we still need to check the version specification – which the remote
+        # components know how to parse:
+        remote_component = remoteComponentFor(name, version_required, 'component')
+        if not remote_component.versionSpec().match(available[name].version):
+            raise access_common.SpecificationNotMet(
+                "Installed component %s doesn't match specification %s" % (name, remote_component.versionSpec())
+            ) 
         r = available[name]
         if spec and not spec.match(r.getVersion()):
             raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))

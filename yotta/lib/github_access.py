@@ -195,3 +195,6 @@ class GithubComponent(access_common.RemoteComponent):
     def tipVersion(self):
         return GithubComponentVersion('', _getTipArchiveURL(self.repo))
     
+    @classmethod
+    def remoteType(cls):
+        return 'github'

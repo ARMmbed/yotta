@@ -83,4 +83,6 @@ class GitComponent(access_common.RemoteComponent):
         clone = vcs.Git.cloneToTemporaryDir(self.url)
         return GitWorkingCopy(clone)
 
-        
+    @classmethod
+    def remoteType(cls):
+        return 'git'

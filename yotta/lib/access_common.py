@@ -17,6 +17,9 @@ class ComponentUnavailable(AccessException):
 class TargetUnavailable(AccessException):
     pass
 
+class SpecificationNotMet(AccessException):
+    pass
+
 class RemoteVersion(version.Version):
     def unpackInto(self, directory):
         raise NotImplementedError
@@ -33,6 +36,10 @@ class RemoteComponent(object):
         raise NotImplementedError
 
     def tipVersion(self):
+        raise NotImplementedError
+
+    @classmethod
+    def remoteType(cls):
         raise NotImplementedError
 
 def unpackTarballStream(stream, into_directory):

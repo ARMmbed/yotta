@@ -324,7 +324,11 @@ class Component(pack.Pack):
                 working_directory,
               update_if_installed
         ):
-            r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            r = None
+            try:
+                r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            except access_common.SpecificationNotMet as e:
+                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
             if r:
                 return r
             r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
@@ -418,7 +422,11 @@ class Component(pack.Pack):
             working_directory,
             update_if_installed
         ):
-            r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            r = None
+            try:
+                r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+            except access_common.SpecificationNotMet as e:
+                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
             if r:
                 return r
             r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)

@@ -153,7 +153,10 @@ class RegistryThing(access_common.RemoteComponent):
 
     def tipVersion(self):
         raise NotImplementedError()
-
+    
+    @classmethod
+    def remoteType(cls):
+        return 'registry'
 
 @_returnRequestError
 @_handleAuth
