@@ -64,5 +64,11 @@ def execCommand(args):
     # TODO: more questions ( bugs url,...), check that the name is available in
     # the registry...
 
+    # Create folders while initing
+    folders_to_creat = ["./source", "./test", "./" + c.getName()]
+    for folder_name in folders_to_creat:
+        if not os.path.exists(folder_name):
+            os.mkdir(folder_name)
+
     c.writeDescription()
 
