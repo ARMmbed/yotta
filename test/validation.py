@@ -6,14 +6,6 @@ import unittest
 # validate, , validate various things, internal
 from yotta.lib import validate
 
-
-Test_Name = 'testing-dummy'
-Test_Deps_Name = "autopulated/github-access-testing"
-Test_Deps_Target = "x86-osx,*"
-Test_Username = 'yottatest'
-Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
-
-
 class TestValidation(unittest.TestCase):
     def setUp(self):
         pass
