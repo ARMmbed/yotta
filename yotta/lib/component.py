@@ -20,7 +20,6 @@ import fsutils
 # Pack, , common parts of Components/Targets, internal
 import pack
 
-
 # NOTE: at the moment this module provides very little validation of the
 # contents of the description file: indeed if you replace the name of your
 # component with an object it won't matter. We should probably at least check
@@ -480,6 +479,20 @@ class Component(pack.Pack):
             that.
         '''
         return self.installed_dependencies
+
+    def getBinaries(self):
+        ''' Return a dictionary of binaries to compile: {"dirname":"exename"},
+            this is used when automatically generating CMakeLists '''
+        # the module.json syntax is a subset of the package.json syntax: a
+        # single string that defines the source directory to use to build an
+        # executable with the same name as the component. This may be extended
+        # to include the rest of the npm syntax in future (map of source-dir to
+        # exe name).
+        if 'bin' in self.description:
+            return {self.description['bin']: self.getName()}
+        else:
+            return {}
+
 
     def getExtraIncludes(self):
         ''' Some components must export whole directories full of headers into

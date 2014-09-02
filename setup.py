@@ -29,5 +29,5 @@ setup(
         ],
     },
     test_suite = 'test',
-    install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama', 'hgapi']
+    install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama', 'hgapi', 'cheetah']
 )
