@@ -111,7 +111,7 @@ target_link_libraries($object_name
 
 logger = logging.getLogger('cmakegen')
 
-Ignore_Subdirs = set(('build','yotta_modules', 'yotta_targets'))
+Ignore_Subdirs = set(('build','yotta_modules', 'yotta_targets', 'CMake'))
 
 
 class SourceFile(object):
