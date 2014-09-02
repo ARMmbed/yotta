@@ -174,7 +174,7 @@ class CMakeGen(object):
         # itself
         processed_components[component.getName()] = component
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
-        self.generate(builddir, component, new_dependencies, recursive_deps)
+        self.generate(builddir, component, new_dependencies, dependencies, recursive_deps)
 
         logger.debug('recursive deps of %s:' % component)
         for d in recursive_deps.values():
@@ -190,7 +190,7 @@ class CMakeGen(object):
         if err:
             logger.warn(err)
 
-    def generate(self, builddir, component, active_dependencies, all_dependencies):
+    def generate(self, builddir, component, active_dependencies, immediate_dependencies, all_dependencies):
         ''' active_dependencies is the dictionary of components that need to be
             built for this component, but will not already have been built for
             another component.
@@ -297,7 +297,7 @@ class CMakeGen(object):
                 exe_name = binary_subdirs[f]
             else:
                 exe_name = None
-            self.generateSubDirList(builddir, f, source_files, component, all_subdirs, active_dependencies, exe_name);
+            self.generateSubDirList(builddir, f, source_files, component, all_subdirs, immediate_dependencies, exe_name);
             add_own_subdirs += string.Template(
                 '''add_subdirectory(
     "$working_dir/$subdir_name"
@@ -338,21 +338,25 @@ class CMakeGen(object):
         )
         fsutils.mkDirP(builddir)
         fname = os.path.join(builddir, 'CMakeLists.txt')
+        self.writeIfDifferent(fname, file_contents)
+
+    def writeIfDifferent(self, fname, contents):
         try:
             with open(fname, "r+") as f:
                 current_contents = f.read()
-                if current_contents != file_contents: 
+                if current_contents != contents: 
                     f.seek(0)
-                    f.write(file_contents)
+                    f.write(contents)
                     f.truncate()
         except IOError:
             with open(fname, "w") as f:
-                f.write(file_contents)
+                f.write(contents)
 
-    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, active_dependencies, executable_name):
+
+    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name):
         logger.info('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
-        link_dependencies = [x for x in active_dependencies]
+        link_dependencies = [x for x in immediate_dependencies]
 
         # if the directory name is 'test' then, then generate multiple
         # independent executable targets:
@@ -376,15 +380,16 @@ class CMakeGen(object):
             link_dependencies += [x for x in all_subdirs if x not in ('source', 'test', dirname)]
             
             fsutils.mkDirP(os.path.join(builddir, dirname))
-            with open(os.path.join(builddir, dirname, 'CMakeLists.txt'), 'w') as outf:
-                outf.write(str(Cheetah.Template.Template(Subdir_CMakeLists_Template, searchList=[{
-                        'source_directory':os.path.join(component.path, dirname),
-                              'executable':executable,
-                              'file_names':[str(f) for f in source_files],
-                             'object_name':object_name,
-                       'link_dependencies':link_dependencies,
-                               'languages':set(f.lang for f in source_files)
-                }])))
+            fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
+            file_contents = str(Cheetah.Template.Template(Subdir_CMakeLists_Template, searchList=[{
+                    'source_directory':os.path.join(component.path, dirname),
+                          'executable':executable,
+                          'file_names':[str(f) for f in source_files],
+                         'object_name':object_name,
+                   'link_dependencies':link_dependencies,
+                           'languages':set(f.lang for f in source_files)
+            }]))
+            self.writeIfDifferent(fname, file_contents);
         else:
             raise Exception('auto CMakeLists for non-source/test directories is not supported')
 
