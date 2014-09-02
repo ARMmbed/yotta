@@ -354,7 +354,7 @@ class CMakeGen(object):
 
 
     def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name):
-        logger.info('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
+        logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
 
