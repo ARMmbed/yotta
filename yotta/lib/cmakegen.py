@@ -388,7 +388,8 @@ class CMakeGen(object):
         if dirname == 'test':
             tests = []
             for f in source_files:
-                tests.append([[str(f)], os.path.basename(os.path.splitext(str(f))[0]), [f.lang]])
+                object_name = component.getName() + '_' + os.path.basename(os.path.splitext(str(f))[0]).lower()
+                tests.append([[str(f)], object_name, [f.lang]])
 
             # link tests against the main executable
             link_dependencies.append(component.getName())
