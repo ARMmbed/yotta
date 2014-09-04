@@ -35,10 +35,15 @@ On 64-bit architectures, make sure multi-arch is enabled before updating apt-get
 sudo dpkg --add-architecture i386
 ```
 
-Update the package list and install Yotta using the meta-package:
+Update the package list and install build tools using the meta-package:
 ```bash
 sudo apt-get update
 sudo apt-get install yottos-build-tools
+```
+
+Update to the newest version of Yotta by downloading the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
+``` bash
+sudo pip install ./path/to/yotta-a.b.c.tar.gz
 ```
 
 Note: packages have been tested on Ubuntu 14.04 LTS 32/64-bit and Debian 7.5 32/64-bit.
