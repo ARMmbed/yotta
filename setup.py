@@ -28,6 +28,6 @@ setup(
                "yt=yotta:main",
         ],
     },
-    test_suite = 'test',
+    test_suite = 'yotta.test',
     install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama', 'hgapi', 'cheetah']
 )
