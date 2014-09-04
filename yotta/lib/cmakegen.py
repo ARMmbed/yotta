@@ -278,7 +278,7 @@ class CMakeGen(object):
                 component_name=name
             )
         
-        binary_subdirs = component.getBinaries();
+        binary_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         manual_subdirs = []
         autogen_subdirs = []
         for f in os.listdir(component.path):
@@ -288,7 +288,7 @@ class CMakeGen(object):
                 self.checkStandardSourceDir(f, component)
                 # if the subdirectory has a CMakeLists.txt in it, then use that
                 manual_subdirs.append(f)
-            elif f in ('source', 'test') or f in binary_subdirs:
+            elif f in ('source', 'test') or os.path.normpath(f) in binary_subdirs:
                 # otherwise, if the directory has source files, generate a
                 # CMakeLists in the corresponding temporary directory, and add
                 # that.
