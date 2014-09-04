@@ -300,13 +300,6 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
     
     spec = None
     v = None
-
-    # if we need to check for latest versions, get the latest available version
-    # before checking for a local target so that we can create the local
-    # target with a handle to its latest available version
-    if update_installed is not None:
-        logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-        v = latestSuitableVersion(name, version_required, registry='target')
     
     target_path = os.path.join(working_directory, name)
     local_target = target.Target(
@@ -314,10 +307,18 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
                installed_linked = fsutils.isLink(target_path),
         latest_suitable_version = v
     )
-    if local_target and (update_installed != 'Update' or not local_target.outdated()):
+    
+    if local_target and (local_target.installedLinked() or update_installed != 'Update' or not local_target.outdated()):
         # if a target exists (has a valid description file), and either is
         # not outdated, or we are not updating
         return local_target
+
+    # if we need to check for latest versions, get the latest available version
+    # before checking for a local target so that we can create the local
+    # target with a handle to its latest available version
+    if update_installed is not None:
+        logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
+        v = latestSuitableVersion(name, version_required, registry='target')
     elif local_target and local_target.outdated():
         logger.info('%soutdated: %s@%s -> %s' % (
             ('update ' if update_installed == 'Update' else ''),
