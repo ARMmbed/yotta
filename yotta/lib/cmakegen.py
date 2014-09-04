@@ -129,6 +129,8 @@ set_target_properties($object_name PROPERTIES
 target_link_libraries($object_name
     #echo '    ' + '\\n    '.join($link_dependencies) + '\\n'
 )
+add_test($object_name $object_name)
+
 #end for
 '''
 
@@ -388,7 +390,7 @@ class CMakeGen(object):
         if dirname == 'test':
             tests = []
             for f in source_files:
-                object_name = component.getName() + '_' + os.path.basename(os.path.splitext(str(f))[0]).lower()
+                object_name = component.getName() + '-' + os.path.basename(os.path.splitext(str(f))[0]).lower()
                 tests.append([[str(f)], object_name, [f.lang]])
 
             # link tests against the main executable
