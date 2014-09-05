@@ -41,6 +41,12 @@ sudo apt-get update
 sudo apt-get install yottos-build-tools
 ```
 
+Add environmental variables for the paths to Clang and GCC:
+```bash
+export ARM_CLANG_PATH=/opt/arm-llvm-clang
+export ARM_GCC_PATH=/opt/gcc-arm-none-eabi
+``` 
+
 Update to the newest version of Yotta by downloading the latest [release tarball](https://github.com/ARM-RD/yotta/releases).
 ``` bash
 sudo pip install ./path/to/yotta-a.b.c.tar.gz
