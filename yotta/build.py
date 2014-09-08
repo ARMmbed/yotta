@@ -41,6 +41,8 @@ def execCommand(args):
     # install command expects to be present to do this:
     vars(args)['component'] = None
     vars(args)['act_globally'] = False
+    vars(args)['save'] = False
+    vars(args)['save_target'] = False
     install.execCommand(args)
 
     builddir = os.path.join(cwd, 'build', target.getName())

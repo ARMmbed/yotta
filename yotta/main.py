@@ -18,6 +18,7 @@ from . import debug
 from . import login
 from . import logout
 from . import list
+from . import uninstall
 
 from lib import logging_setup
 
@@ -64,18 +65,20 @@ def main():
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
     addParser('init', init, 'Create a new component.')
     addParser('publish', publish, 'Publish a component or target to the public registry.')
-    addParser('login', login, 'Authorize for access to private github repositories and publishing to the Yotta Registry.')
-    addParser('logout', logout, 'Remove saved authorization token for the current user')
+    addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
+    addParser('logout', logout, 'Remove saved authorization token for the current user.')
     addParser('list', list, 'List the dependencies of the current module.')
+    addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
     subparser.choices.update({
-        'up':subparser.choices['update'],
-        'in':subparser.choices['install'],
-        'ln':subparser.choices['link'],
-         'v':subparser.choices['version'],
-        'ls':subparser.choices['list'],
+            'up':subparser.choices['update'],
+            'in':subparser.choices['install'],
+            'ln':subparser.choices['link'],
+             'v':subparser.choices['version'],
+            'ls':subparser.choices['list'],
+        'unlink':subparser.choices['uninstall']
     })
 
     args = parser.parse_args() 
