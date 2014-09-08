@@ -51,6 +51,13 @@ class Version(object):
     def isTip(self):
         return self.version == 'tip'
 
+    def major(self):
+        return self.version.major
+    def minor(self):
+        return self.version.minor
+    def patch(self):
+        return self.version.patch
+
     def bump(self, bumptype):
         if isinstance(self.version, str):
             raise ValueError('cannot bump generic version "%s"' % self.version)
@@ -58,11 +65,17 @@ class Version(object):
             self.version.major = self.version.major + 1
             self.version.minor = 0
             self.version.patch = 0
+            self.version.prerelease = ''
+            self.version.build = ''
         elif bumptype == 'minor':
             self.version.minor = self.version.minor + 1
             self.version.patch = 0
+            self.version.prerelease = ''
+            self.version.build = ''
         elif bumptype == 'patch':
             self.version.patch = self.version.patch + 1
+            self.version.prerelease = ''
+            self.version.build = ''
         else:
             raise ValueError('bumptype must be "major", "minor" or "patch"')
         self.version.prerelease = None
@@ -134,6 +147,24 @@ class Spec(semantic_version.Spec):
             version_spec = '==' + version_spec
         elif re.match('^=[0-9]', version_spec):
             version_spec = '=' + version_spec
+        # add support for the ~ and ^ version specifiers:
+        #  ~1.2.3 := >=1.2.3-0 <1.3.0-0
+        #  ^1.2.3 := >=1.2.3-0 <2.0.0-0
+        #  ^0.1.2 := 0.1.2 exactly (for 0.x.x versions)
+        elif re.match('^\^', version_spec):
+            v = semantic_version.Version(version_spec[1:])
+            if v.major == 0:
+                # for 0. releases, ^ means exact version only
+                version_spec = '==' + str(v)
+            else:
+                v2 = Version(version_spec[1:])
+                v2.bump('major')
+                version_spec = '>=' + str(v) + ',<' +str(v2)
+        elif re.match('^~', version_spec):
+            v = semantic_version.Version(version_spec[1:])
+            v2 = Version(version_spec[1:])
+            v2.bump('minor')
+            version_spec = '>=' + str(v) + ',<' +str(v2)
         super(Spec, self).__init__(version_spec)
 
     # base type contains function checks the type, so must replace it
