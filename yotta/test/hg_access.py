@@ -44,8 +44,8 @@ class TestHGAccess(unittest.TestCase):
         fsutils.rmRf(self.working_copy.directory)
 
     def test_installDeps(self):
-        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked'])
-        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False))
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
+        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False))
     def test_availableVersions(self):
         versions = self.working_copy.availableVersions()
         self.assertIn(version.Version('v0.0.1'), versions)

@@ -61,8 +61,8 @@ class TestGitAccess(unittest.TestCase):
         self.assertTrue(v)
 
     def test_installDeps(self):
-        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked'])
-        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False))
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
+        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False))
 
 
 if __name__ == '__main__':

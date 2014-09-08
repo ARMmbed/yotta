@@ -528,3 +528,32 @@ class Component(pack.Pack):
 
     def getRegistryNamespace(self):
         return Registry_Namespace
+
+    def __saveSpecForComponent(self, component):
+        version = component.getVersion()
+        if version.isTip():
+            spec = '*'
+        elif version.major() == 0:
+            # for 0.x.x versions, when we save a dependency we don't use ^0.x.x
+            # a that would peg to the exact version - instead we use ~ to peg
+            # to the same minor version
+            spec = '~' + str(version)
+        else:
+            spec = '^' + str(version)
+        return spec
+
+    def saveDependency(self, component, spec=None):
+        if not 'dependencies' in self.description:
+            self.description['dependencies'] = OrderedDict()
+        if spec is None:
+            spec = self.__saveSpecForComponent(component)
+        self.description['dependencies'][component.getName()] = spec
+
+    def saveTargetDependency(self, target, component, spec=None):
+        if not 'targetDependencies' in self.description:
+            self.description['targetDependencies'] = OrderedDict()
+        if not target.getName() in self.description['targetDependencies']:
+            self.description['targetDependencies'][target.getName()] = OrderedDict()
+        if spec is None:
+            spec = self.__saveSpecForComponent(component)
+        self.description['targetDependencies'][target.getName()][component.getName()] = spec
