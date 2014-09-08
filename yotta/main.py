@@ -78,7 +78,8 @@ def main():
             'ln':subparser.choices['link'],
              'v':subparser.choices['version'],
             'ls':subparser.choices['list'],
-        'unlink':subparser.choices['uninstall']
+        'unlink':subparser.choices['uninstall'],
+            'rm':subparser.choices['uninstall']
     })
 
     args = parser.parse_args() 
