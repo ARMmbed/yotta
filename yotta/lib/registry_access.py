@@ -160,7 +160,7 @@ class RegistryThing(access_common.RemoteComponent):
 
 @_returnRequestError
 @_handleAuth
-def publish(namespace, name, version, description_file, tar_file):
+def publish(namespace, name, version, description_file, tar_file, readme_file, readme_file_ext):
     ''' Publish a tarblob to the registry, if the request fails, an exception
         is raised, which either triggers re-authentication, or is turned into a
         return value by the decorators. (If successful, the decorated function
@@ -174,9 +174,16 @@ def publish(namespace, name, version, description_file, tar_file):
         version,
         settings.getProperty('github', 'authtoken')
     )
+
+    if readme_file_ext == '.md':
+        readme_section_name = 'readme.md'
+    elif readme_file_ext == '':
+        readme_section_name = 'readme'
+    else:
+        raise ValueError('unsupported readme type: "%s"' % readne_file_ext)
     
     # description file is in place as text (so read it), tar file is a file
-    body = OrderedDict([('metadata',description_file.read()), ('tarball',tar_file)])
+    body = OrderedDict([('metadata',description_file.read()), ('tarball',tar_file), (readme_section_name, readme_file)])
     headers = { }
     body, headers = multipart_form_encode(body, headers, uuid.uuid4().hex)
 

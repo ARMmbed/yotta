@@ -37,6 +37,33 @@ Default_Publish_Ignore = [
     '[/\\\\]\._.*$',
 ]
 
+Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
+
+
+# OptionalFileWrapper provides a scope object that can wrap a none-existent file
+class OptionalFileWrapper(object):
+    def __init__(self, fname=None, mode=None):
+        self.fname = fname
+        self.mode = mode
+        super(OptionalFileWrapper, self).__init__()
+    def __enter__(self):
+        if self.fname:
+            self.file = open(self.fname, self.mode)
+        return self
+    def __exit__(self, type, value, traceback):
+        if self.fname:
+            self.file.close()
+    def contents(self):
+        if self.fname:
+            return self.file.read()
+        else:
+            return ''
+    def extension(self):
+        if self.fname:
+            return os.path.splitext(self.fname)[1]
+        else:
+            return ''
+
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
 
@@ -149,6 +176,22 @@ class Pack(object):
         with tarfile.open(fileobj=file_object, mode='w:gz') as tf:
             logging.info('generate archive extracting to "%s"' % archive_name)
             tf.add(self.path, arcname=archive_name, filter=filterArchive)
+    
+    def findAndOpenReadme(self):
+        files = os.listdir(self.path)
+        readme_files = filter(lambda x: Readme_Regex.match(x), files)
+        reamde_file_if_found = None
+        for f in readme_files:
+            if f.endswith('.md'):
+                return OptionalFileWrapper(f, 'r')
+        if len(readme_files):
+            # if we have multiple files and none of them end with .md, then we're
+            # in some hellish world where files have the same name with different
+            # casing. Just choose the first in the directory listing:
+            return OptionalFileWrapper(readme_files[0], 'r')
+        else:
+            # no readme files: return an empty file wrapper
+            return OptionalFileWrapper()
 
     def publish(self):
         ''' Publish to the appropriate registry, return a description of any
@@ -162,14 +205,17 @@ class Pack(object):
             tar_file.truncate()
             self.generateTarball(tar_file)
             tar_file.seek(0)
-            with open(self.getDescriptionFile(), 'r') as description_file:
-                return registry_access.publish(
-                    self.getRegistryNamespace(),
-                    self.getName(),
-                    self.getVersion(),
-                    description_file,
-                    tar_file
-                )
+            with self.findAndOpenReadme() as readme_file_wrapper:
+                with open(self.getDescriptionFile(), 'r') as description_file:
+                    return registry_access.publish(
+                        self.getRegistryNamespace(),
+                        self.getName(),
+                        self.getVersion(),
+                        description_file,
+                        tar_file,
+                        readme_file_wrapper.contents(),
+                        readme_file_wrapper.extension().lower()
+                    )
 
     @classmethod
     def ensureOrderedDict(cls, sequence=None):
