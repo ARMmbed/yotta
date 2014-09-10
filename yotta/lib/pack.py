@@ -39,6 +39,7 @@ Default_Publish_Ignore = [
 
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
 
+logger = logging.getLogger('components')
 
 # OptionalFileWrapper provides a scope object that can wrap a none-existent file
 class OptionalFileWrapper(object):
@@ -63,6 +64,9 @@ class OptionalFileWrapper(object):
             return os.path.splitext(self.fname)[1]
         else:
             return ''
+    
+    def __nonzero__(self):
+        return bool(self.fname)
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
@@ -174,7 +178,7 @@ class Pack(object):
             else:
                 return tarinfo
         with tarfile.open(fileobj=file_object, mode='w:gz') as tf:
-            logging.info('generate archive extracting to "%s"' % archive_name)
+            logger.info('generate archive extracting to "%s"' % archive_name)
             tf.add(self.path, arcname=archive_name, filter=filterArchive)
     
     def findAndOpenReadme(self):
@@ -206,6 +210,8 @@ class Pack(object):
             self.generateTarball(tar_file)
             tar_file.seek(0)
             with self.findAndOpenReadme() as readme_file_wrapper:
+                if not readme_file_wrapper:
+                    logger.warning("no readme.md file detected")
                 with open(self.getDescriptionFile(), 'r') as description_file:
                     return registry_access.publish(
                         self.getRegistryNamespace(),

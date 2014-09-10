@@ -5,6 +5,9 @@ import unittest
 import os
 import subprocess
 from collections import namedtuple
+
+# hgapi, pip install hgapi, python api to hg command, "Do whatever you want,
+# but don't blame me"
 import hgapi
 
 # hg_access, , access to components available from hg repositories, internal

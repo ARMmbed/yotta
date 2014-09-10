@@ -37,8 +37,7 @@ Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
-# !!! FIXME: change /package to /component
-Registry_Namespace = 'package' 
+Registry_Namespace = 'component' 
 
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8

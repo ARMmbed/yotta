@@ -17,7 +17,7 @@ from yotta.lib import access_common
 # !!! TODO unit-ify this
 def main():
 
-    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    url = 'https://blobs.yottabuild.org/targets/stk3700-0.0.0.tar.gz'
     print 'get:', url
     resource = Resource(url)
     response = resource.get()
@@ -26,7 +26,7 @@ def main():
     print 'body len:', len(response.body_string())
 
 
-    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    url = 'https://blobs.yottabuild.org/targets/stk3700-0.0.0.tar.gz'
     headers = { }
     print 'get:', url
     resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
@@ -37,7 +37,7 @@ def main():
     print 'headers:', dict(response.headers.items())
     print 'body len:', len(response.body_string())
 
-    url = 'https://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz'
+    url = 'https://blobs.yottabuild.org/targets/stk3700-0.0.0.tar.gz'
     headers = { }
     print 'get:', url
     resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)

@@ -24,9 +24,8 @@ import ordered_json
 import github_access
 
 
-# !!! FIXME get SSL cert for main domain
-#Registry_Base_URL = 'https://registry.yottos.org' 
-Registry_Base_URL = 'https://pure-earth-8670.herokuapp.com'
+# !!! FIXME get SSL cert for main domain, then use HTTPS
+Registry_Base_URL = 'http://registry.yottabuild.org' 
 
 
 # Internal functions
@@ -114,10 +113,6 @@ class RegistryThing(access_common.RemoteComponent):
     def __init__(self, name, version_spec, namespace):
         self.name = name
         self.spec = version.Spec(version_spec)
-        # !!! FIXME: switch the /package namespace to /component to be
-        # consistent, and remove this
-        if namespace == 'component':
-            namespace = 'package'
         self.namespace = namespace
     
     @classmethod
