@@ -5,10 +5,17 @@ from collections import OrderedDict
 import uuid
 import functools
 import json
+import binascii
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
 from restkit.forms import multipart_form_encode
+
+# PyJWT, MIT, Jason Web Tokens, pip install PyJWT
+import jwt
+# pycrypto, Public Domain, Python Crypto Library, pip install pyCRypto
+import Crypto
+from Crypto.PublicKey import RSA
 
 # settings, , load and save settings, internal
 import settings
@@ -23,9 +30,8 @@ import ordered_json
 # Github Access, , access repositories on github, internal
 import github_access
 
-
 # !!! FIXME get SSL cert for main domain, then use HTTPS
-Registry_Base_URL = 'http://registry.yottabuild.org' 
+Registry_Base_URL = 'http://registry.yottabuild.org'
 
 
 # Internal functions
@@ -192,3 +198,24 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
 
     return None
 
+def deauthorize():
+    pass
+
+def getPublicKey():
+    ''' Return the user's public key (generating and saving a new key pair if necessary) '''
+    khex = settings.getProperty('keys', 'public')
+    if not khex:
+        k = RSA.generate(2048)
+        settings.setProperty('keys', 'private', binascii.hexlify(k.exportKey('DER')))
+        khex = binascii.hexlify(k.publickey().exportKey('DER'))
+        settings.setProperty('keys', 'public', khex)
+    return khex
+
+def getAuthDataForKey(public_key):
+    ''' Poll the registry to get the result of a completed authentication
+        (which, depending on the authentication the user chose or was directed
+        to, will include a github access token, or other access token, and
+        their registry user ID)
+    '''
+    # TODO
+    return {}

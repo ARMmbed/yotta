@@ -5,6 +5,9 @@ import getpass
 import os
 import re
 import functools
+import webbrowser
+import datetime
+import time
 
 # settings, , load and save settings, internal
 import settings
@@ -14,6 +17,8 @@ import version
 import access_common
 # connection_pool, , shared connection pool, internal
 import connection_pool
+# Registry Access, , access packages in the registry, internal
+import registry_access
 
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, Connection, request
@@ -56,6 +61,7 @@ def _handleAuth(fn):
             # but for now we assume that if the user is logged in then a 404
             # really is a 404
             if not _userAuthorized():
+                logger.info('failed to fetch Github object, re-trying with authentication...')
                 authorizeUser()
                 return fn(*args, **kwargs)
             else:
@@ -93,51 +99,33 @@ def _getTarball(url, into_directory):
 
 
 # API
-def authorizeUser(as_user=None):
+def authorizeUser():
     # using basic auth request an access token, then save it so that we don't
     # have to repeatedly ask for basic authentication credentials
 
-    # !!! FIXME: if we already have a github authtoken, but it isn't working,
-    # then we should try to delete it before creating a new one (we're limited
-    # to 5 concurrent tokens per app), just in case the error wasn't that the
-    # authorisation had been revoked/expired
-    # !!! FIXME-also: could just get /authorizations, and re-use an existing
-    # token
+    raw_input('''
+You need to log in with Github. Press enter to continue
+(A browser will open automatically to complete login.)''')
+
+    pubkey = registry_access.getPublicKey()
+
+    webbrowser.open('http://yottabuild.org:1234/#login/' + pubkey + '?provider=github')
     
-    if as_user:
-        user = as_user
-        # !!! FIXME: if we already have an authtoken and the authtoken is for a
-        # different user, then revoke that authtoken with github before
-        # deleting it, as the number of tokens is limited
-    else:
-        user = settings.getProperty('github', 'user')
-        if not user:
-            user = raw_input('enter your github username:')
-            settings.setProperty('github', 'user', user)
+    poll_start = datetime.datetime.utcnow()
+    while True:
+        time.sleep(15)
+        if datetime.datetime.utcnow() - poll_start > datetime.timedelta(minutes=5):
+            raise Exception('Login timed out: please try again.')
+        
+        tokens = registry_access.getAuthDataForKey(pubkey)
+        if 'github' in tokens:
+            break
 
-    auth = BasicAuth(user, getpass.getpass('Enter the password for github user %s:' % user))
+    settings.setProperty('github', 'authtoken', tokens['github'])
 
-    request_data = {
-        'scopes': ['repo'],
-          'note': 'yotta'
-    }
-    resource = Resource(_github_url + '/authorizations', pool=connection_pool.getPool(), filters=[auth])
-    response = resource.post(
-        headers = {'Content-Type': 'application/json'}, 
-        payload = json.dumps(request_data)
-    )
-    token = json.loads(response.body_string())['token']
-    settings.setProperty('github', 'authtoken', token)
-
-def deauthorizeUser():
-    # !!! FIXME should revoke token with github, number of tokens is limited
-    user = settings.getProperty('github', 'user')
-    if user:
-        # FIXME: if token is set system-wide this will add a property that
-        # masks it rather than removing the actual token
+def deauthorize():
+    if settings.getProperty('github', 'authtoken'):
         settings.setProperty('github', 'authtoken', '')
-        settings.setProperty('github', 'user', '')
-    
 
 class GithubComponentVersion(access_common.RemoteVersion):
     def unpackInto(self, directory):

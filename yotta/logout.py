@@ -5,5 +5,6 @@ def addOptions(parser):
     pass
 
 def execCommand(args):
-    github_access.deauthorizeUser()
+    github_access.deauthorize()
+    registry_access.deauthorize()
 

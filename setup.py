@@ -29,5 +29,5 @@ setup(
         ],
     },
     test_suite = 'yotta.test',
-    install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama', 'hgapi', 'cheetah']
+    install_requires=['semantic_version', 'restkit', 'PyGithub', 'colorama', 'hgapi', 'cheetah', 'PyCrypto', 'PyJWT']
 )
