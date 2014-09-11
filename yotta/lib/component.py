@@ -37,7 +37,7 @@ Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
-Registry_Namespace = 'component' 
+Registry_Namespace = 'module' 
 
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8
