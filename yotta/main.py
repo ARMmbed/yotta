@@ -30,7 +30,7 @@ def logLevelFromVerbosity(v):
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout}')
+    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout, list, uninstall}')
 
     parser.add_argument('--version', dest='show_version', action='version',
             version=pkg_resources.require("yotta")[0].version,
