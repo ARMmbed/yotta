@@ -10,6 +10,8 @@ import calendar
 import datetime
 import hashlib
 import itertools
+import urllib
+import base64
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
@@ -36,6 +38,7 @@ import github_access
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org:3000'
+_OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
 
@@ -45,27 +48,29 @@ class _BearerJWTFilter(object):
     def __init__(self, private_key):
         super(_BearerJWTFilter, self).__init__()
         expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
-        iss = _fingerprint(private_key.publickey())
-        logger.info('fingerprint: %s' % iss)
+        prn = _fingerprint(private_key.publickey())
+        logger.debug('fingerprint: %s' % prn)
         token_fields = {
-            "iss": iss,
-            "aud": "http://registry.yottabuild.org",
-            "prn": 'yotta',
+            "iss": 'yotta',
+            "aud": "http://localhost:3000",
+            "prn": prn,
             "exp": str(expires)
         }
-        logger.info('token fields: %s' % token_fields)
+        logger.debug('token fields: %s' % token_fields)
         self.token = jwt.encode(token_fields, private_key, 'RS256')
-        logger.info('encoded token: %s' % self.token)
+        logger.debug('encoded token: %s' % self.token)
 
     def on_request(self, request):
-        request.headers['Authorization'] = self.token
+        request.headers['Authorization'] = 'Bearer ' + self.token
+
 
 def _pubkeyWireFormat(pubkey):
-    openssh_keyfile_strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
-    return openssh_keyfile_strip.sub('', pubkey.exportKey('OpenSSH'))
+    return urllib.quote(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
 
 def _fingerprint(pubkey):
-    khash = hashlib.md5(_pubkeyWireFormat(pubkey)).hexdigest()
+    stripped = _OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH'))
+    decoded  = base64.b64decode(stripped)
+    khash    = hashlib.md5(decoded).hexdigest()
     return ':'.join([khash[i:i+2] for i in xrange(0, len(khash), 2)])
 
 
@@ -261,11 +266,24 @@ def getPublicKey():
         pubkey_hex, privatekey_hex = _generateAndSaveKeys()
     return _pubkeyWireFormat(RSA.importKey(binascii.unhexlify(pubkey_hex)))
 
+def testLogin():
+    url = '%s/users/me' % (
+        Registry_Base_URL
+    )
+    headers = { }
+    auth = _registryAuthFilter()
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+    logger.debug('test login...')
+    response = resource.get(
+        headers = headers
+    )
+
 def getAuthDataForKey(pubkey_wireformat):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
         to, will include a github or other access token)
     '''
+    testLogin()
     url = '%s/tokens/%s' % (
         Registry_Base_URL,
         pubkey_wireformat
@@ -285,12 +303,10 @@ def getAuthDataForKey(pubkey_wireformat):
         logger.debug(str(e))
         return None
     body = response.body_string()
-    logger.info('body: ' + body)
     r = {}
     for token in ordered_json.loads(body):
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
-    logger.info(r)
     return r
 
