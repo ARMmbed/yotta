@@ -6,6 +6,10 @@ import uuid
 import functools
 import json
 import binascii
+import calendar
+import datetime
+import hashlib
+import itertools
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
@@ -31,19 +35,45 @@ import ordered_json
 import github_access
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
-Registry_Base_URL = 'http://registry.yottabuild.org'
+Registry_Base_URL = 'http://registry.yottabuild.org:3000'
 
+logger = logging.getLogger('access')
 
 # Internal functions
+
+class _BearerJWTFilter(object):
+    def __init__(self, private_key, user_id):
+        super(_BearerJWTFilter, self).__init__()
+        expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
+        iss = _fingerprint(private_key.publickey())
+        logger.info('fingerprint: %s' % iss)
+        token_fields = {
+            "iss": iss,
+            "aud": "http://registry.yottabuild.org",
+            "prn": user_id,
+            "exp": str(expires)
+        }
+        logger.info('token fields: %s' % token_fields)
+        self.token = jwt.encode(token_fields, private_key, 'RS256')
+        logger.info('encoded token: %s' % self.token)
+
+    def on_request(self, request):
+        request.headers['Authorization'] = self.token
+
+def _fingerprint(pubkey):
+    openssh_keyfile_strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
+    khash = hashlib.md5(openssh_keyfile_strip.sub('', pubkey.exportKey('OpenSSH'))).hexdigest()
+    return ':'.join([khash[i:i+2] for i in xrange(0, len(khash), 2)])
+
 
 def _registryAuthFilter():
     # basic auth until we release publicly, to prevent outside registry access,
     # after that this will be removed
-    return  BasicAuth('yotta','h297fb08625rixmzw7s9')
+    return  _BearerJWTFilter(_getPrivateKeyObject(), _getUserID())
 
 def _returnRequestError(fn):
     ''' Decorator that captures un-caught restkit_errors.RequestFailed errors
-        and returns them as an error message. If no error occurs the return
+        and returns them as an error message. If no error occurs the reture
         value of the wrapped function is returned (normally None). '''
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
@@ -61,7 +91,7 @@ def _handleAuth(fn):
             return fn(*args, **kwargs)
         except restkit_errors.Unauthorized as e:
             github_access.authorizeUser()
-            logging.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+            logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
             return fn(*args, **kwargs)
     return wrapped
 
@@ -77,7 +107,7 @@ def _listVersions(namespace, name):
     auth = _registryAuthFilter()
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
     try:
-        logging.info('get versions for ' + name)
+        logger.info('get versions for ' + name)
         response = resource.get(
             headers = headers
         )
@@ -95,7 +125,7 @@ def _tarballURL(namespace, name, version):
 
 def _getTarball(url, directory):
     auth = _registryAuthFilter()
-    logging.debug('registry: get: %s' % url)
+    logger.debug('registry: get: %s' % url)
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
     #resource = Resource('http://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz', pool=connection_pool.getPool(), follow_redirect=True)
     response = resource.get()
@@ -103,11 +133,27 @@ def _getTarball(url, directory):
     # follow redirect manually
     if response.status_int == 302 and 'Location' in response.headers:
         redirect_url = response.headers['Location']
-        logging.debug('registry: redirect to: %s' % redirect_url)
+        logger.debug('registry: redirect to: %s' % redirect_url)
         resource = Resource(redirect_url, pool=connection_pool.getPool())
         response = resource.get()
     return access_common.unpackTarballStream(response.body_stream(), directory)
 
+def _generateAndSaveKeys():
+    k = RSA.generate(2048)
+    privatekey_hex = binascii.hexlify(k.exportKey('DER'))
+    settings.setProperty('keys', 'private', privatekey_hex)
+    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
+    settings.setProperty('keys', 'public', pubkey_hex)
+    return pubkey_hex, privatekey_hex
+
+def _getPrivateKeyObject():
+    privatekey_hex =  settings.getProperty('keys', 'private')
+    if not privatekey_hex:
+        pubkey_hex, privatekey_hex = _generateAndSaveKeys()
+    return RSA.importKey(binascii.unhexlify(privatekey_hex))
+
+def _getUserID():
+    return settings.getProperty('keys', 'user')
 
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
@@ -133,7 +179,7 @@ class RegistryThing(access_common.RemoteComponent):
         # the user fix it
         name_match = re.match('^([a-z0-9-]+)$', name)
         if not name_match:
-            logging.warning(
+            logger.warning(
                 'Dependency name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name
             )
             return None
@@ -199,23 +245,64 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     return None
 
 def deauthorize():
-    pass
+    if settings.getProperty('keys', 'private'):
+        settings.setProperty('keys', 'private', '')
+    if settings.getProperty('keys', 'public'):
+        settings.setProperty('keys', 'public', '')
 
 def getPublicKey():
     ''' Return the user's public key (generating and saving a new key pair if necessary) '''
-    khex = settings.getProperty('keys', 'public')
-    if not khex:
+    pubkey_hex = settings.getProperty('keys', 'public')
+    if not pubkey_hex:
         k = RSA.generate(2048)
         settings.setProperty('keys', 'private', binascii.hexlify(k.exportKey('DER')))
-        khex = binascii.hexlify(k.publickey().exportKey('DER'))
-        settings.setProperty('keys', 'public', khex)
-    return khex
+        pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
+        settings.setProperty('keys', 'public', pubkey_hex)
+        pubkey_hex, privatekey_hex = _generateAndSaveKeys()
+    return pubkey_hex
 
-def getAuthDataForKey(public_key):
+def getAuthDataForKey(pubkey_hex):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
         to, will include a github access token, or other access token, and
         their registry user ID)
     '''
-    # TODO
-    return {}
+    # !!! TODO: not /tokens/ any more?
+    url = '%s/tokens/%s' % (
+        Registry_Base_URL,
+        pubkey_hex
+    )
+    headers = { }
+    auth = _registryAuthFilter()
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+    try:
+        logger.debug('poll for tokens...')
+        response = resource.get(
+            headers = headers
+        )
+    except restkit_errors.ResourceNotFound as e:
+        logger.debug(str(e))
+        return None    
+    except restkit_errors.RequestFailed as e:
+        logger.debug(str(e))
+        return None
+    body = response.body_string()
+    logger.info(body)
+    # !!! FIXME: data format returned by registry for this request:
+    r = {}
+    for token in ordered_json.loads(body):
+        if token['provider'] == 'github':
+            r['github'] = token['accessToken']
+            break
+
+    # !!! FIXME: should save the userID returned from the server. The way that
+    # the server works the userID returned should never change
+    user_id = 'MOO'
+    existing_user_id = _getUserID()
+    if existing_user_id and not existing_user_id == user_id:
+        logger.error('server returned invalid user ID "%s"' % user_id)
+    elif not existing_user_id:
+        settings.setProperty('keys', 'user', user_id)
+    logger.info(r)
+    return r
+

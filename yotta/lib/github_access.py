@@ -8,6 +8,7 @@ import functools
 import webbrowser
 import datetime
 import time
+import sys
 
 # settings, , load and save settings, internal
 import settings
@@ -97,31 +98,42 @@ def _getTarball(url, into_directory):
     # TODO: there's an MD5 in the response headers, verify it
     access_common.unpackTarballStream(response.body_stream(), into_directory)
 
+def _pollForAuth(with_key):
+    tokens = registry_access.getAuthDataForKey(with_key)
+    if tokens and 'github' in tokens:
+        settings.setProperty('github', 'authtoken', tokens['github'])
+        return True
+    return False
+
 
 # API
 def authorizeUser():
-    # using basic auth request an access token, then save it so that we don't
-    # have to repeatedly ask for basic authentication credentials
-
-    raw_input('''
-You need to log in with Github. Press enter to continue
-(A browser will open automatically to complete login.)''')
-
+    # poll once with any existing public key, just in case a previous login
+    # attempt was interrupted after it completed
     pubkey = registry_access.getPublicKey()
 
-    webbrowser.open('http://yottabuild.org:1234/#login/' + pubkey + '?provider=github')
-    
-    poll_start = datetime.datetime.utcnow()
-    while True:
-        time.sleep(15)
-        if datetime.datetime.utcnow() - poll_start > datetime.timedelta(minutes=5):
-            raise Exception('Login timed out: please try again.')
-        
-        tokens = registry_access.getAuthDataForKey(pubkey)
-        if 'github' in tokens:
-            break
+    if _pollForAuth(pubkey):
+        return
 
-    settings.setProperty('github', 'authtoken', tokens['github'])
+    raw_input('''
+You need to log in with Github. Press enter to continue.
+
+(Your browser will open to complete login.)''')
+
+    webbrowser.open('http://yottabuild.org:1234/#login/' + pubkey + '?provider=github')
+
+    sys.stdout.write('waiting for response...')
+    sys.stdout.flush()
+
+    poll_start = datetime.datetime.utcnow()
+    while datetime.datetime.utcnow() - poll_start < datetime.timedelta(minutes=5):
+        time.sleep(5)
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        if _pollForAuth(pubkey):
+            return
+
+    raise Exception('Login timed out: please try again.')
 
 def deauthorize():
     if settings.getProperty('github', 'authtoken'):
