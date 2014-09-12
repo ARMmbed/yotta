@@ -42,7 +42,7 @@ logger = logging.getLogger('access')
 # Internal functions
 
 class _BearerJWTFilter(object):
-    def __init__(self, private_key, user_id):
+    def __init__(self, private_key):
         super(_BearerJWTFilter, self).__init__()
         expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
         iss = _fingerprint(private_key.publickey())
@@ -50,7 +50,7 @@ class _BearerJWTFilter(object):
         token_fields = {
             "iss": iss,
             "aud": "http://registry.yottabuild.org",
-            "prn": user_id,
+            "prn": 'yotta',
             "exp": str(expires)
         }
         logger.info('token fields: %s' % token_fields)
@@ -60,16 +60,19 @@ class _BearerJWTFilter(object):
     def on_request(self, request):
         request.headers['Authorization'] = self.token
 
-def _fingerprint(pubkey):
+def _pubkeyWireFormat(pubkey):
     openssh_keyfile_strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
-    khash = hashlib.md5(openssh_keyfile_strip.sub('', pubkey.exportKey('OpenSSH'))).hexdigest()
+    return openssh_keyfile_strip.sub('', pubkey.exportKey('OpenSSH'))
+
+def _fingerprint(pubkey):
+    khash = hashlib.md5(_pubkeyWireFormat(pubkey)).hexdigest()
     return ':'.join([khash[i:i+2] for i in xrange(0, len(khash), 2)])
 
 
 def _registryAuthFilter():
     # basic auth until we release publicly, to prevent outside registry access,
     # after that this will be removed
-    return  _BearerJWTFilter(_getPrivateKeyObject(), _getUserID())
+    return  _BearerJWTFilter(_getPrivateKeyObject())
 
 def _returnRequestError(fn):
     ''' Decorator that captures un-caught restkit_errors.RequestFailed errors
@@ -151,9 +154,6 @@ def _getPrivateKeyObject():
     if not privatekey_hex:
         pubkey_hex, privatekey_hex = _generateAndSaveKeys()
     return RSA.importKey(binascii.unhexlify(privatekey_hex))
-
-def _getUserID():
-    return settings.getProperty('keys', 'user')
 
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
@@ -259,18 +259,16 @@ def getPublicKey():
         pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
         settings.setProperty('keys', 'public', pubkey_hex)
         pubkey_hex, privatekey_hex = _generateAndSaveKeys()
-    return pubkey_hex
+    return _pubkeyWireFormat(RSA.importKey(binascii.unhexlify(pubkey_hex)))
 
-def getAuthDataForKey(pubkey_hex):
+def getAuthDataForKey(pubkey_wireformat):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
-        to, will include a github access token, or other access token, and
-        their registry user ID)
+        to, will include a github or other access token)
     '''
-    # !!! TODO: not /tokens/ any more?
     url = '%s/tokens/%s' % (
         Registry_Base_URL,
-        pubkey_hex
+        pubkey_wireformat
     )
     headers = { }
     auth = _registryAuthFilter()
@@ -287,22 +285,12 @@ def getAuthDataForKey(pubkey_hex):
         logger.debug(str(e))
         return None
     body = response.body_string()
-    logger.info(body)
-    # !!! FIXME: data format returned by registry for this request:
+    logger.info('body: ' + body)
     r = {}
     for token in ordered_json.loads(body):
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
-
-    # !!! FIXME: should save the userID returned from the server. The way that
-    # the server works the userID returned should never change
-    user_id = 'MOO'
-    existing_user_id = _getUserID()
-    if existing_user_id and not existing_user_id == user_id:
-        logger.error('server returned invalid user ID "%s"' % user_id)
-    elif not existing_user_id:
-        settings.setProperty('keys', 'user', user_id)
     logger.info(r)
     return r
 
