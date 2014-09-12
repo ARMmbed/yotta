@@ -13,7 +13,7 @@ import version
 import pack
 
 Target_Description_File = 'target.json'
-Registry_Namespace = 'target'
+Registry_Namespace = 'targets'
 
 def _ignoreSignal(signum, frame):
     logging.debug('ignoring signal %s, traceback:\n%s' % (
