@@ -219,12 +219,11 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
         returns None)
     '''
 
-    url = '%s/%s/%s/%s?access_token=%s' % (
+    url = '%s/%s/%s/%s' % (
         Registry_Base_URL,
         namespace,
         name,
-        version,
-        settings.getProperty('github', 'authtoken')
+        version
     )
 
     if readme_file_ext == '.md':
