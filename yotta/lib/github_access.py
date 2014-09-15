@@ -98,8 +98,8 @@ def _getTarball(url, into_directory):
     # TODO: there's an MD5 in the response headers, verify it
     access_common.unpackTarballStream(response.body_stream(), into_directory)
 
-def _pollForAuth(with_key):
-    tokens = registry_access.getAuthDataForKey(with_key)
+def _pollForAuth():
+    tokens = registry_access.getAuthData()
     if tokens and 'github' in tokens:
         settings.setProperty('github', 'authtoken', tokens['github'])
         return True
@@ -112,7 +112,7 @@ def authorizeUser():
     # attempt was interrupted after it completed
     pubkey = registry_access.getPublicKey()
 
-    if _pollForAuth(pubkey):
+    if _pollForAuth():
         return
 
     raw_input('''
@@ -130,7 +130,7 @@ You need to log in with Github. Press enter to continue.
         time.sleep(5)
         sys.stdout.write('.')
         sys.stdout.flush()
-        if _pollForAuth(pubkey):
+        if _pollForAuth():
             return
 
     raise Exception('Login timed out: please try again.')

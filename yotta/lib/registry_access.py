@@ -278,15 +278,13 @@ def testLogin():
         headers = headers
     )
 
-def getAuthDataForKey(pubkey_wireformat):
+def getAuthData():
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
         to, will include a github or other access token)
     '''
-    testLogin()
-    url = '%s/tokens/%s' % (
-        Registry_Base_URL,
-        pubkey_wireformat
+    url = '%s/tokens' % (
+        Registry_Base_URL
     )
     headers = { }
     auth = _registryAuthFilter()
