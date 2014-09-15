@@ -31,6 +31,15 @@ def getUserInput(question, default = None, type_class=str):
             print '"%s" isn\'t a valid "%s" value' % (value, type_class.__name__)
     return typed_value
 
+def yesNo(string):
+    if string.strip().lower() in ('yes', 'y'):
+        return True
+    elif string.strip().lower() in ('no', 'n'):
+        return False
+    else:
+        raise ValueError()
+yesNo.__name__ = "Yes/No"
+
 def addOptions(parser):
     pass
 
@@ -49,7 +58,7 @@ def execCommand(args):
     if not default_name:
         default_name = validate.componentNameCoerced(os.path.split(cwd)[1])
     
-    c.setName(getUserInput("Enter the package name:", default_name))
+    c.setName(getUserInput("Enter the module name:", default_name))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
     def current(x):
@@ -71,6 +80,10 @@ def execCommand(args):
 
     c.description['dependencies']       = current('dependencies') or {}
     c.description['targetDependencies'] = current('targetDependencies') or {}
+
+    isexe = getUserInput("Is this module an executable?", "no", yesNo)
+    if isexe:
+        c.description['bin'] = './source'
 
 
     # Create folders while initing
