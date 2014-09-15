@@ -5,3 +5,8 @@ def globalInstallDirectory():
     # that yotta binary is installed under
     return '/usr/local/lib/yotta_modules'
 
+def globalTargetInstallDirectory():
+    # !!! FIXME: windows support: we should really install to the same prefix
+    # that yotta binary is installed under
+    return '/usr/local/lib/yotta_targets'
+

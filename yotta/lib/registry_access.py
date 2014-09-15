@@ -52,7 +52,7 @@ class _BearerJWTFilter(object):
         logger.debug('fingerprint: %s' % prn)
         token_fields = {
             "iss": 'yotta',
-            "aud": "http://localhost:3000",
+            "aud": Registry_Base_URL,
             "prn": prn,
             "exp": str(expires)
         }
