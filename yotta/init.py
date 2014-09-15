@@ -6,10 +6,14 @@ import logging
 from lib import component
 # version, , represent versions and specifications, internal
 from lib import version
+# validate, , validate various things, internal
+from lib import validate
 
 Known_Licenses = {
-    'mit' : 'https://spdx.org/licenses/MIT',
-    'bsd-3-clause' : 'https://spdx.org/licenses/BSD-3-Clause'
+             'isc': 'https://spdx.org/licenses/ISC',
+      'apache-2.0': 'https://spdx.org/licenses/Apache-2.0',
+             'mit': 'https://spdx.org/licenses/MIT',
+    'bsd-3-clause': 'https://spdx.org/licenses/BSD-3-Clause'
 }
 
 def getUserInput(question, default = None, type_class=str):
@@ -40,33 +44,38 @@ def execCommand(args):
         logging.error('A component description exists but could not be loaded:')
         logging.error(c.error)
         return 1
+
+    default_name = c.getName()
+    if not default_name:
+        default_name = validate.componentNameCoerced(os.path.split(cwd)[1])
     
-    c.setName(getUserInput("Enter the package name:", c.getName()))
+    c.setName(getUserInput("Enter the package name:", default_name))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
     def current(x):
         return c.description[x] if x in c.description else None
 
     c.description['description'] = getUserInput("Short description: ", current('description'))
-    c.description['author'] = getUserInput("Author: ", current('author'))
-    c.description['homepage'] = getUserInput("Homepage: ", current('homepage'))
+    c.description['author']      = getUserInput("Author: ", current('author'))
+    c.description['repository']  = getUserInput("Repository url: ", current('repository'))
+    c.description['homepage']    = getUserInput("Homepage: ", current('homepage'))
 
     if not current('licenses') or current('license'):
-        license = getUserInput('What is the license for this project (MIT, BSD-3-Clause, etc.)? ')
-        license_url = 'about:blank'
+        license = getUserInput('What is the license for this project (ISC, MIT, Apache-2 etc.)? ', 'ISC')
+        license_url = None
         if license.lower().strip() in Known_Licenses:
             license_url = Known_Licenses[license.lower().strip()]
-        c.description['licenses'] = [{'type':license, 'url':license_url}]
+            c.description['licenses'] = [{'type':license, 'url':license_url}]
+        else:
+            c.description['license'] = license
 
-    c.description['dependencies'] = current('dependencies') or {}
+    c.description['dependencies']       = current('dependencies') or {}
     c.description['targetDependencies'] = current('targetDependencies') or {}
 
-    # TODO: more questions ( bugs url,...), check that the name is available in
-    # the registry...
 
     # Create folders while initing
-    folders_to_creat = ["./source", "./test", "./" + c.getName()]
-    for folder_name in folders_to_creat:
+    folders_to_create = ["./source", "./test", "./" + c.getName()]
+    for folder_name in folders_to_create:
         if not os.path.exists(folder_name):
             os.mkdir(folder_name)
 

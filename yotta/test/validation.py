@@ -27,6 +27,10 @@ class TestValidation(unittest.TestCase):
         self.assertTrue('source' in validate.sourceDirValidationError('src', 'testcomponent'))
         self.assertTrue('test' in validate.sourceDirValidationError('Test', 'testcomponent'))
 
+    def test_componentNameCoerced(self):
+        self.assertTrue('some-name' == validate.componentNameCoerced('Some Name'))
+        self.assertTrue('some-name' == validate.componentNameCoerced('Some  Name'))
+        self.assertTrue('moo-moo-moo' == validate.componentNameCoerced('MOO!!!!MOO-----Moo'))
 
 if __name__ == '__main__':
     unittest.main()

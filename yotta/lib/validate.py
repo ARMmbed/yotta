@@ -4,6 +4,7 @@ import re
 Source_Dir_Regex = re.compile('^[a-z0-9_-]*$')
 Source_Dir_Invalid_Regex = re.compile('[^a-z0-9_-]*')
 Component_Name_Regex = re.compile('^[a-z0-9-]*$')
+Component_Name_Replace_With_Dash = re.compile('[^a-z0-9]+')
 
 # return an error string describing the validation failure, or None if there is
 # no error
@@ -27,3 +28,6 @@ def componentNameValidationError(component_name):
     if not Component_Name_Regex.match(component_name):
         return 'Component name "%s" is invalid - must contain only lowercase a-z, 0-9 and hyphen, with no spaces.'
     return None
+
+def componentNameCoerced(component_name):
+    return Component_Name_Replace_With_Dash.sub('-', component_name.lower())
