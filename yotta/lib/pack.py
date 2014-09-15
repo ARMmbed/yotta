@@ -50,10 +50,11 @@ class OptionalFileWrapper(object):
     def __enter__(self):
         if self.fname:
             self.file = open(self.fname, self.mode)
+        else:
+            self.file = open(os.devnull)
         return self
     def __exit__(self, type, value, traceback):
-        if self.fname:
-            self.file.close()
+        self.file.close()
     def contents(self):
         if self.fname:
             return self.file.read()
@@ -219,7 +220,7 @@ class Pack(object):
                         self.getVersion(),
                         description_file,
                         tar_file,
-                        readme_file_wrapper.contents(),
+                        readme_file_wrapper.file,
                         readme_file_wrapper.extension().lower()
                     )
 
