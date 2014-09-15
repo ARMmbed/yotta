@@ -37,7 +37,7 @@ import ordered_json
 import github_access
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
-Registry_Base_URL = 'http://registry.yottabuild.org:3000'
+Registry_Base_URL = 'http://registry.yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')

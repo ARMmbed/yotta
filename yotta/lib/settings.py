@@ -62,7 +62,7 @@ def setProperty(section, name, value):
         # exclusively, and making sure to set the right permissions
         if e.errno == errno.ENOENT:
             fd = os.open(full_ini_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0600)
-            with open(fd, 'w+') as f:
+            with os.fdopen(fd, 'w+') as f:
                 saveTofile(f)
         else: 
             raise

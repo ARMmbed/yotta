@@ -2,6 +2,7 @@
 import argparse
 import logging
 import sys
+import platform
 import pkg_resources
 
 # subcommand modules, , add subcommands, internal
@@ -28,6 +29,27 @@ from lib import settings
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) / 5)
 
+def defaultTarget():
+    set_target = settings.getProperty('build', 'target')
+    if set_target:
+        return set_target
+
+    machine = platform.machine()
+
+    x86 = machine.find('86') != -1
+    arm = machine.find('arm') != -1 or machine.find('aarch') != -1
+
+    prefix = "x86-" if x86 else "arm-" if arm else ""
+    platf = 'unknown'
+
+    if sys.platform == 'linux':
+        platf = 'linux-native'
+    elif sys.platform == 'darwin':
+        platf = 'osx-native'
+    elif sys.platform.find('win') != -1:
+        platf = 'win'
+    return prefix + platf + ','
+
 def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout, list, uninstall}')
@@ -45,8 +67,9 @@ def main():
         help='specify subsystems to debug: use in conjunction with -v to '+
              'increase the verbosity only for specified subsystems'
     )
+
     parser.add_argument('-t', '--target', dest='target',
-        default=settings.getProperty('build', 'target'),
+        default=defaultTarget(),
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 

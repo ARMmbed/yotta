@@ -24,7 +24,7 @@ def addOptions(parser):
 def execCommand(args):
     if args.target:
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_targets'))
-        src = os.path.join(folders.globalInstallDirectory(), args.target)
+        src = os.path.join(folders.globalTargetInstallDirectory(), args.target)
         dst = os.path.join(os.getcwd(), 'yotta_targets', args.target)
         # if the target is already installed, rm it
         fsutils.rmRf(dst)
@@ -34,9 +34,9 @@ def execCommand(args):
             logging.debug(str(c.error))
             logging.error('The current directory does not contain a valid target.')
             return 1
-        fsutils.mkDirP(folders.globalInstallDirectory())
+        fsutils.mkDirP(folders.globalTargetInstallDirectory())
         src = os.getcwd()
-        dst = os.path.join(folders.globalInstallDirectory(), c.getName())
+        dst = os.path.join(folders.globalTargetInstallDirectory(), c.getName())
 
     if args.target:
         realsrc = os.path.realpath(src)

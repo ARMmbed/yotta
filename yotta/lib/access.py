@@ -329,7 +329,7 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
         # must rm the old target before continuing
         fsutils.rmRf(target_path)
 
-    if not v and update_installed is None:
+    if not v and update_installed is not None:
         v = latestSuitableVersion(name, version_required, registry='target')
 
     if not v:

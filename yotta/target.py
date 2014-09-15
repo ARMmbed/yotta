@@ -16,7 +16,7 @@ Target_RE = re.compile('^('+
 
 
 def addOptions(parser):
-    parser.add_argument('target', default=None, nargs='?',
+    parser.add_argument('set_target', default=None, nargs='?',
         help='set the build target to this (targetname[,versionspec_or_url])'
     )
 
@@ -34,15 +34,11 @@ def addOptions(parser):
 
 
 def execCommand(args):
-    if args.target is None:
-        saved = settings.getProperty('build', 'target')
-        if saved is not None:
-            print '%s version: %s' % tuple(saved.split(',', 1))
-        else:
-            print None
+    if args.set_target is None:
+        print args.target
     else:
-        if not Target_RE.match(args.target):
-            logging.error('''Invalid target: "%s"''' % args.target)#, targets must be one of:
+        if not Target_RE.match(args.set_target):
+            logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:
             #
             #    a valid name (lowercase letters, numbers, and hyphen)
             #    a github ref (owner/project)
@@ -59,8 +55,8 @@ def execCommand(args):
             #
             #''')
         else:
-            if args.target.find(',') == -1:
-                target = args.target + ',*'
+            if args.set_target.find(',') == -1:
+                target = args.set_target + ',*'
             else:
-                target = args.target
+                target = args.set_target
             settings.setProperty('build', 'target', target)
