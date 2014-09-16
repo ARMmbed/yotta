@@ -12,6 +12,9 @@ from lib import access
 # folders, , get places to install things, internal
 from . import folders
 
+GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
+
+
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
         help='If specified, install this component instead of installing '+
@@ -95,18 +98,29 @@ def installComponentAsDependency(args, current_component):
         for error in errors:
             logging.error(error)
         return 1
+    modules_dir = os.path.join(os.getcwd(), 'node_modules')
     #!!! FIXME: non-registry component spec support (see also installComponent
     # below), for these the original source should be included in the version
     # spec, too
-    component_name = args.component
-    modules_dir = os.path.join(os.getcwd(), 'node_modules')
-    installed = access.satisfyVersion(
-            component_name,
-                       '*',
-                 available = {current_component.getName():current_component},
-              search_paths = [modules_dir],
-         working_directory = modules_dir
-    )
+    github_ref_match = GitHub_Ref_RE.match(args.component)
+    if github_ref_match:
+        component_name = github_ref_match.group(1)
+        installed = access.satisfyVersion(
+                component_name,
+                args.component,
+                     available = {current_component.getName():current_component},
+                  search_paths = [modules_dir],
+             working_directory = modules_dir
+        )
+    else:
+        component_name = args.component
+        installed = access.satisfyVersion(
+                component_name,
+                           '*',
+                     available = {current_component.getName():current_component},
+                  search_paths = [modules_dir],
+             working_directory = modules_dir
+        )
     # always add the component to the dependencies of the current component
     # - but don't write the dependency file back to disk if we're not meant to
     # save it
@@ -141,7 +155,7 @@ def installComponent(args):
     
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module
-    github_ref_match = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)').match(args.component)
+    github_ref_match = GitHub_Ref_RE.match(args.component)
     if github_ref_match:
         component_name = github_ref_match.group(1)
         access.satisfyVersion(

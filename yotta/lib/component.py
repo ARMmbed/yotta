@@ -449,6 +449,7 @@ class Component(pack.Pack):
             github ref or URL) is installed in the targets directory of the
             current component
         '''
+        logger.debug('satisfy target: %s' % target_name_and_version);
         errors = []
         targets_path = self.targetsPath()
         target = None

@@ -44,13 +44,13 @@ import fsutils
 logger = logging.getLogger('access')
 
 
-def remoteComponentFor(name, version_required, registry='component'):
+def remoteComponentFor(name, version_required, registry='modules'):
     ''' Return a RemoteComponent sublclass for the specified component and
         version specification.
         Raises an exception if any arguments are invalid.
     '''
 
-    if registry in ('component', 'target'):
+    if registry in ('modules', 'targets'):
         # If the name/spec looks like a reference to a component in the registry
         # then that takes precedence
         remote_component = registry_access.RegistryThing.createFromNameAndSpec(
@@ -79,7 +79,7 @@ def remoteComponentFor(name, version_required, registry='component'):
 
     raise Exception('unsupported component req: %s' % version_required)
 
-def latestSuitableVersion(name, version_required, registry='component'):
+def latestSuitableVersion(name, version_required, registry='modules'):
     ''' Return a RemoteVersion object representing the latest suitable
         version of the named component or target.
 
@@ -171,7 +171,7 @@ def satisfyVersionFromAvailble(name, version_required, available):
         logger.debug('satisfy %s from already installed components' % name)
         # we still need to check the version specification - which the remote
         # components know how to parse:
-        remote_component = remoteComponentFor(name, version_required, 'component')
+        remote_component = remoteComponentFor(name, version_required, 'modules')
         if not remote_component.versionSpec().match(available[name].version):
             raise access_common.SpecificationNotMet(
                 "Installed component %s doesn't match specification %s" % (name, remote_component.versionSpec())
@@ -316,9 +316,9 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
     # if we need to check for latest versions, get the latest available version
     # before checking for a local target so that we can create the local
     # target with a handle to its latest available version
-    if update_installed is not None:
+    if update_installed is None:
         logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-        v = latestSuitableVersion(name, version_required, registry='target')
+        v = latestSuitableVersion(name, version_required, registry='targets')
     elif local_target and local_target.outdated():
         logger.info('%soutdated: %s@%s -> %s' % (
             ('update ' if update_installed == 'Update' else ''),
@@ -330,7 +330,7 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
         fsutils.rmRf(target_path)
 
     if not v and update_installed is not None:
-        v = latestSuitableVersion(name, version_required, registry='target')
+        v = latestSuitableVersion(name, version_required, registry='targets')
 
     if not v:
         raise access_common.TargetUnavailable(

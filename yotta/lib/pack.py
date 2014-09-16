@@ -88,6 +88,9 @@ class Pack(object):
             self.description = OrderedDict()
             self.error = e
         self.vcs = vcs.getVCS(path)
+
+    def exists(self):
+        return os.path.exists(self.description_filename)
     
     def getError(self):
         ''' If this isn't a valid component/target, return some sort of
