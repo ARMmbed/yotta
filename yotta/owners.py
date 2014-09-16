@@ -60,9 +60,13 @@ def execCommand(args):
     cwd = os.getcwd()
     c = component.Component(cwd)
     t = target.Target(cwd)
-    p = c
-    if t and not c:
-        p = t
+
+    if args.module:
+        p = None
+    else:
+        p = c
+        if t and not c:
+            p = t
 
     if not p and not args.module:
         logging.error('a module must be specified (the current directory does not contain a valid module)')
