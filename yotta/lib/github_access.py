@@ -5,7 +5,6 @@ import getpass
 import os
 import re
 import functools
-import webbrowser
 import datetime
 import time
 import sys
@@ -110,8 +109,6 @@ def _pollForAuth():
 def authorizeUser():
     # poll once with any existing public key, just in case a previous login
     # attempt was interrupted after it completed
-    pubkey = registry_access.getPublicKey()
-
     if _pollForAuth():
         return
 
@@ -120,7 +117,7 @@ You need to log in with Github. Press enter to continue.
 
 (Your browser will open to complete login.)''')
 
-    webbrowser.open('http://yottabuild.org:1234/#login/' + pubkey + '?provider=github')
+    registry_access.openBrowserLogin(provider='github')
 
     sys.stdout.write('waiting for response...')
     sys.stdout.flush()

@@ -20,6 +20,7 @@ from . import login
 from . import logout
 from . import list
 from . import uninstall
+from . import owners
 
 from lib import logging_setup
 
@@ -52,7 +53,7 @@ def defaultTarget():
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout, list, uninstall}')
+    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout, list, uninstall, owners}')
 
     parser.add_argument('--version', dest='show_version', action='version',
             version=pkg_resources.require("yotta")[0].version,
@@ -92,6 +93,7 @@ def main():
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
     addParser('list', list, 'List the dependencies of the current module.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
+    addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -102,7 +104,8 @@ def main():
              'v':subparser.choices['version'],
             'ls':subparser.choices['list'],
         'unlink':subparser.choices['uninstall'],
-            'rm':subparser.choices['uninstall']
+            'rm':subparser.choices['uninstall'],
+         'owner':subparser.choices['owners']
     })
 
     args = parser.parse_args() 

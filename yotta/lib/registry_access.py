@@ -12,6 +12,7 @@ import hashlib
 import itertools
 import urllib
 import base64
+import webbrowser
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
@@ -38,6 +39,7 @@ import github_access
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org'
+Website_Base_URL  = 'http://yottabuild.org:1234'
 _OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
@@ -103,6 +105,18 @@ def _handleAuth(fn):
             return fn(*args, **kwargs)
     return wrapped
 
+def _friendlyAuthError(fn):
+    ''' Decorator to print a friendly you-are-not-authorised message. Use
+        **outside** the _handleAuth decorator to only print the message after
+        the user has been given a chance to login. '''
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except restkit_errors.Unauthorized as e:
+            logger.error('insufficient permission')
+            return None
+    return wrapped
 
 def _listVersions(namespace, name):
     # list versions of the package:
@@ -248,6 +262,65 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
 
     return None
 
+@_friendlyAuthError
+@_handleAuth
+def listOwners(namespace, name):
+    ''' List the owners of a module or target (owners are the people with
+        permission to publish versions and add/remove the owners). 
+    '''
+    url = '%s/%s/%s/owners' % (
+        Registry_Base_URL,
+        namespace,
+        name
+    )
+    auth = _registryAuthFilter()
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+
+    response = resource.get()
+    # !!! TODO: parse response, return None and print error for 404 errors
+    return response
+
+@_friendlyAuthError
+@_handleAuth
+def addOwner(namespace, name, owner):
+    ''' Add an owner for a module or target (owners are the people with
+        permission to publish versions and add/remove the owners). 
+    '''
+    url = '%s/%s/%s/owners/%s' % (
+        Registry_Base_URL,
+        namespace,
+        name,
+        owner
+    )
+    auth = _registryAuthFilter()
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+
+    try:
+        response = resource.put()
+    except restkit_errors.ResourceNotFound as e:
+        logger.error('no such %s, "%s"' % (namespace, name))
+
+@_friendlyAuthError
+@_handleAuth
+def removeOwner(namespace, name, owner):
+    ''' Remove an owner for a module or target (owners are the people with
+        permission to publish versions and add/remove the owners). 
+    '''
+    url = '%s/%s/%s/owners/%s' % (
+        Registry_Base_URL,
+        namespace,
+        name,
+        owner
+    )
+    auth = _registryAuthFilter()
+    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+    
+    try:
+        response = resource.delete()
+    except restkit_errors.ResourceNotFound as e:
+        logger.error('no such %s, "%s"' % (namespace, name))
+
+
 def deauthorize():
     if settings.getProperty('keys', 'private'):
         settings.setProperty('keys', 'private', '')
@@ -293,6 +366,9 @@ def getAuthData():
         response = resource.get(
             headers = headers
         )
+    except restkit_errors.Unauthorized as e:
+        logger.debug(str(e))
+        return None
     except restkit_errors.ResourceNotFound as e:
         logger.debug(str(e))
         return None    
@@ -307,3 +383,9 @@ def getAuthData():
             break
     return r
 
+def openBrowserLogin(provider=None):
+    if provider:
+        query = '?provider=github'
+    else:
+        query = ''
+    webbrowser.open(Website_Base_URL + '/#login/' + getPublicKey() + query)

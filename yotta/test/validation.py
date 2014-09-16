@@ -32,6 +32,16 @@ class TestValidation(unittest.TestCase):
         self.assertTrue('some-name' == validate.componentNameCoerced('Some  Name'))
         self.assertTrue('moo-moo-moo' == validate.componentNameCoerced('MOO!!!!MOO-----Moo'))
 
+    def test_looksLikeAnEmail(self):
+        self.assertTrue(validate.looksLikeAnEmail('test@example.com'))
+        self.assertTrue(validate.looksLikeAnEmail('test.testytest@test.com'))
+        self.assertFalse(validate.looksLikeAnEmail('@.com'))
+        self.assertFalse(validate.looksLikeAnEmail('moo.moo'))
+        self.assertFalse(validate.looksLikeAnEmail('thingy'))
+        self.assertFalse(validate.looksLikeAnEmail('thingy@thingy'))
+        self.assertFalse(validate.looksLikeAnEmail(''))
+
+
 if __name__ == '__main__':
     unittest.main()
 

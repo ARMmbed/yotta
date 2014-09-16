@@ -5,6 +5,7 @@ Source_Dir_Regex = re.compile('^[a-z0-9_-]*$')
 Source_Dir_Invalid_Regex = re.compile('[^a-z0-9_-]*')
 Component_Name_Regex = re.compile('^[a-z0-9-]*$')
 Component_Name_Replace_With_Dash = re.compile('[^a-z0-9]+')
+Looks_Like_An_Email = re.compile('^[^@]+@[^@]+\.[^@]+$')
 
 # return an error string describing the validation failure, or None if there is
 # no error
@@ -31,3 +32,9 @@ def componentNameValidationError(component_name):
 
 def componentNameCoerced(component_name):
     return Component_Name_Replace_With_Dash.sub('-', component_name.lower())
+
+def looksLikeAnEmail(email):
+    if Looks_Like_An_Email.match(email):
+        return True
+    else:
+        return False
