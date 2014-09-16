@@ -275,10 +275,12 @@ def listOwners(namespace, name):
     )
     auth = _registryAuthFilter()
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-
-    response = resource.get()
-    # !!! TODO: parse response, return None and print error for 404 errors
-    return response
+    try:
+        response = resource.get()
+    except restkit_errors.ResourceNotFound as e:
+        logger.error('no such %s, "%s"' % (namespace, name))
+        return None
+    return ordered_json.loads(response.body_string())
 
 @_friendlyAuthError
 @_handleAuth

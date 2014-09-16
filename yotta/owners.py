@@ -54,7 +54,6 @@ def addOptions(parser):
 
 
 def execCommand(args):
-    print args
     sc = args.subsubcommand
 
     # if the current directory contains a component or a target, get it
@@ -79,22 +78,29 @@ def execCommand(args):
 
 def listOwners(args, p):
     if p:
-        registry_access.listOwners(p.getRegistryNamespace(), p.getName)
+        print '%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(
+            registry_access.listOwners(p.getRegistryNamespace(), p.getName())
+        )
     else:
-        # !!! FIXME: capture does-not-exist messages into single line errors
-        registry_access.listOwners(component.Registry_Namespace, args.module)
-        registry_access.listOwners(target.Registry_Namespace, args.module)
+        module_owners = registry_access.listOwners(component.Registry_Namespace, args.module)
+        target_owners = registry_access.listOwners(target.Registry_Namespace, args.module)
+        if module_owners:
+            print 'module "%s" owners:' % args.module, ', '.join(module_owners)
+        if target_owners:
+            print 'target "%s" owners:' % args.module, ', '.join(target_owners)
+        if not module_owners or target_owners:
+            logging.error('no such module or target')
 
 def removeOwner(args, p):
     if p:
-        registry_access.removeOwner(p.getRegistryNamespace(), p.getName, args.email)
+        registry_access.removeOwner(p.getRegistryNamespace(), p.getName(), args.email)
     else:
         # !!! FIXME: test which of target/component exist first
         registry_access.removeOwner(component.Registry_Namespace, args.module, args.email)
 
 def addOwner(args, p):
     if p:
-        registry_access.addOwner(p.getRegistryNamespace(), p.getName, args.email)
+        registry_access.addOwner(p.getRegistryNamespace(), p.getName(), args.email)
     else:
         # !!! FIXME: test which of target/component exist first
         registry_access.addOwner(component.Registry_Namespace, args.module, args.email)

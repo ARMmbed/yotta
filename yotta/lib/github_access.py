@@ -128,6 +128,7 @@ You need to log in with Github. Press enter to continue.
         sys.stdout.write('.')
         sys.stdout.flush()
         if _pollForAuth():
+            sys.stdout.write('\n')
             return
 
     raise Exception('Login timed out: please try again.')
