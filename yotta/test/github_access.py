@@ -24,7 +24,6 @@ def ensureGithubConfig():
     # ensure we have authentication for the test github account
     if not settings.getProperty('github', 'authtoken'):
         settings.setProperty('github', 'authtoken', Test_Access_Token)
-        settings.setProperty('github', 'user', Test_Username)
 
 
 class TestGitHubAccess(unittest.TestCase):

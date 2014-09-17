@@ -138,16 +138,18 @@ def _listVersions(namespace, name):
             '%s does not exist in the %s registry' % (name, namespace)
         )
     body_s = response.body_string()
-    return [x['version'] for x in ordered_json.loads(body_s)]
+    return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(body_s)]
 
 def _tarballURL(namespace, name, version):
     return '%s/%s/%s/%s/tarball' % (
         Registry_Base_URL, namespace, name, version
     )
 
-def _getTarball(url, directory):
+def _getTarball(url, directory, sha256):
     auth = _registryAuthFilter()
     logger.debug('registry: get: %s' % url)
+    if not sha256:
+        logger.warn('tarball %s has no hash to check' % url)
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
     #resource = Resource('http://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz', pool=connection_pool.getPool(), follow_redirect=True)
     response = resource.get()
@@ -158,7 +160,7 @@ def _getTarball(url, directory):
         logger.debug('registry: redirect to: %s' % redirect_url)
         resource = Resource(redirect_url, pool=connection_pool.getPool())
         response = resource.get()
-    return access_common.unpackTarballStream(response.body_stream(), directory)
+    return access_common.unpackTarballStream(response.body_stream(), directory, ('sha256', sha256))
 
 def _generateAndSaveKeys():
     k = RSA.generate(2048)
@@ -176,9 +178,20 @@ def _getPrivateKeyObject():
 
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
+    def __init__(self, data, namespace, name):
+        version = data['version']
+        self.namespace = namespace
+        self.name = name
+        if 'hash' in data and 'sha256' in data['hash']:
+            self.sha256 = data['hash']['sha256']
+        else:
+            self.sha256 = None
+        url = _tarballURL(self.namespace, self.name, version)
+        super(RegistryThingVersion, self).__init__(version, url)
+
     def unpackInto(self, directory):
         assert(self.url)
-        _getTarball(self.url, directory)
+        _getTarball(self.url, directory, self.sha256)
 
 class RegistryThing(access_common.RemoteComponent):
     def __init__(self, name, version_spec, namespace):
@@ -214,8 +227,7 @@ class RegistryThing(access_common.RemoteComponent):
 
     def availableVersions(self):
         ''' return a list of Version objects, each able to retrieve a tarball '''
-        version_strings = _listVersions(self.namespace, self.name)
-        return [RegistryThingVersion(s, _tarballURL(self.namespace, self.name, s)) for s in version_strings]
+        return _listVersions(self.namespace, self.name)
 
     def tipVersion(self):
         raise NotImplementedError()

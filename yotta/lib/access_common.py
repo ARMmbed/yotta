@@ -2,6 +2,7 @@
 import tarfile
 import logging
 import os
+import hashlib
 
 # version, , represent versions and specifications, internal
 import version
@@ -42,9 +43,13 @@ class RemoteComponent(object):
     def remoteType(cls):
         raise NotImplementedError
 
-def unpackTarballStream(stream, into_directory):
+def unpackTarballStream(stream, into_directory, hash=(None, None)):
     ''' Unpack a stream-like object that contains a tarball into a directory
     '''
+    hash_name = hash[0]
+    hash_value = hash[1]
+    if hash_name:
+        m = getattr(hashlib, hash_name)()
     chunk = 1024 * 32
     fsutils.mkDirP(into_directory)
     download_fname = os.path.join(into_directory, 'download.tar.gz')
@@ -60,7 +65,14 @@ def unpackTarballStream(stream, into_directory):
         while True:
             data = stream.read(chunk)
             if not data: break
+            if hash_name:
+                m.update(data)
             f.write(data)
+        if hash_name:
+            calculated_hash = m.hexdigest()
+            logging.debug('calculated hash: %s check against: %s' % (calculated_hash, hash_value))
+            if hash_value and (hash_value != calculated_hash):
+                raise Exception('Hash verification failed.')
         f.truncate()
         logging.debug('got file, extract into %s', into_directory)
         # head back to the start of the file and untar (without closing the

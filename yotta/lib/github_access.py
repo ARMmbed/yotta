@@ -41,8 +41,7 @@ logger = logging.getLogger('access')
 # Internal functions
 
 def _userAuthorized():
-    return settings.getProperty('github', 'user') and \
-           settings.getProperty('github', 'authtoken')
+    return settings.getProperty('github', 'authtoken')
  
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
@@ -72,7 +71,6 @@ def _handleAuth(fn):
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
-    #print 'get repo:', repo
     logger.info('get versions for ' + repo)
     repo = g.get_repo(repo)
     tags = repo.get_tags()
