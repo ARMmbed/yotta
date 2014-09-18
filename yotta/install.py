@@ -98,7 +98,7 @@ def installComponentAsDependency(args, current_component):
         for error in errors:
             logging.error(error)
         return 1
-    modules_dir = os.path.join(os.getcwd(), 'node_modules')
+    modules_dir = current_component.modulesPath()
     #!!! FIXME: non-registry component spec support (see also installComponent
     # below), for these the original source should be included in the version
     # spec, too

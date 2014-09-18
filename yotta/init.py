@@ -25,7 +25,7 @@ def getUserInput(question, default=None, type_class=str):
     while True:
         default_descr = ''
         if default is not None:
-            default_descr = ' <%s>' % str(default)
+            default_descr = ' <%s> ' % str(default)
         value = raw_input(question + default_descr)
         if default is not None and not value:
             if type_class:
