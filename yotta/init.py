@@ -16,14 +16,17 @@ Known_Licenses = {
     'bsd-3-clause': 'https://spdx.org/licenses/BSD-3-Clause'
 }
 
-def getUserInput(question, default = None, type_class=str):
+def getUserInput(question, default=None, type_class=str):
     while True:
         default_descr = ''
         if default is not None:
             default_descr = ' <%s>' % str(default)
         value = raw_input(question + default_descr)
         if default is not None and not value:
-            return default
+            if type_class:
+                return type_class(default)
+            else:
+                return default
         try:
             typed_value = type_class(value)
             break
