@@ -246,7 +246,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
         returns None)
     '''
 
-    url = '%s/%s/%s/%s' % (
+    url = '%s/%s/%s/versions/%s' % (
         Registry_Base_URL,
         namespace,
         name,
