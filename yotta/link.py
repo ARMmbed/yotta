@@ -7,10 +7,10 @@ import os
 # colorama, BSD 3-Clause license, color terminal output, pip install colorama
 import colorama
 
-# Component, , represents an installed component, internal
-from lib import component
 # fsutils, , misc filesystem utils, internal
 from lib import fsutils
+# validate, , validate things, internal
+from lib import validate
 # folders, , get places to install things, internal
 from . import folders
 # install, , install subcommand, internal
@@ -18,9 +18,9 @@ from . import install
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
-        help='Link a globally installed (or globally linked) component into'+
-             'the current component\'s dependencies. If ommited, globally'+
-             'link the current component.'
+        help='Link a globally installed (or globally linked) module into'+
+             'the current module\'s dependencies. If ommited, globally'+
+             'link the current module.'
     )
 
 def dropSudoPrivs(fn):
@@ -33,10 +33,8 @@ def dropSudoPrivs(fn):
     return r
 
 def execCommand(args):
-    c = component.Component(os.getcwd())
+    c = validate.currentDirectoryModule()
     if not c:
-        logging.debug(str(c.error))
-        logging.error('The current directory does not contain a valid component.')
         return 1
     if args.component:
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_modules'))

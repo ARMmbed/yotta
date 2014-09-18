@@ -4,8 +4,6 @@ import logging
 import os
 import re
 
-# Component, , represents an installed component, internal
-from lib import component
 # fsutils, , misc filesystem utils, internal
 from lib import fsutils
 # validate, , validate things, internal
@@ -22,10 +20,8 @@ def execCommand(args):
     if err:
         logger.error(err)
         return 1
-    c = component.Component(os.getcwd())
+    c = validate.currentDirectoryModule()
     if not c:
-        logging.debug(str(c.error))
-        logging.error('The current directory does not contain a valid component.')
         return 1
     fsutils.rmF(os.path.join(c.modulesPath(), args.component))
 

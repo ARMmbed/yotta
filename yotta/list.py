@@ -6,8 +6,8 @@ import os
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
 import colorama
 
-# Component, , represents an installed component, internal
-from lib import component
+# validate, , validate things, internal
+from lib import validate
 # Target, , represents an installed target, internal
 from lib import target
 # access, , get components (and check versions), internal
@@ -21,11 +21,9 @@ def addOptions(parser):
 
 def execCommand(args):
     wd = os.getcwd()
-    c = component.Component(wd)
 
+    c = validate.currentDirectoryModule()
     if not c:
-        logging.debug(str(c.getError()))
-        logging.error('The current directory does not contain a valid component.')
         return 1
 
     if not args.target:
@@ -89,7 +87,7 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
         if not dep:
             putln(indent + tee + name + u' ' + specs[name] + colorama.Style.BRIGHT + colorama.Fore.RED + ' missing' + colorama.Style.RESET_ALL)
         else:
-            spec = access.remoteComponentFor(name, specs[name], 'component').versionSpec()
+            spec = access.remoteComponentFor(name, specs[name], 'modules').versionSpec()
             if not spec:
                 spec_descr = u''
             elif spec.match(dep.getVersion()):

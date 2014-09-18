@@ -2,8 +2,8 @@
 import os
 import logging
 
-# Component, , represents an installed component, internal
-from lib import component
+# validate, , validate things, internal
+from lib import validate
 # CMakeGen, , generate build files, internal
 from lib import cmakegen
 
@@ -16,10 +16,9 @@ def addOptions(parser):
 
 def execCommand(args):
     cwd = os.getcwd()
-    c = component.Component(cwd)
+
+    c = validate.currentDirectoryModule()
     if not c:
-        logging.debug(str(c.error))
-        logging.error('The current directory does not contain a valid component.')
         return 1
 
     target, errors = c.satisfyTarget(args.target)

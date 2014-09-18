@@ -78,9 +78,9 @@ def execCommand(args):
     cwd = os.getcwd()
     c = component.Component(cwd)
     if c:
-        logging.info('The current directory already a contains a component: existing description will be modified')
+        logging.info('The current directory already a contains a module: existing description will be modified')
     elif os.path.isfile(c.getDescriptionFile()):
-        logging.error('A component description exists but could not be loaded:')
+        logging.error('A module description exists but could not be loaded:')
         logging.error(c.error)
         return 1
 

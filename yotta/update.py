@@ -3,18 +3,17 @@ import argparse
 import logging
 import os
 
-# Component, , represents an installed component, internal
-from lib import component
-
+# validate, , validate things, internal
+from lib import validate
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
-        help='If specified, update (and if necessary install) this component '+
-             'instead of updating the dependencies of the current component.'
+        help='If specified, update (and if necessary install) this module '+
+             'instead of updating the dependencies of the current module.'
     )
     parser.add_argument('-l', '--update-linked', dest='update_linked',
         action='store_true', default=False,
-        help='Traverse linked components, and update dependencies found there too.'
+        help='Traverse linked modules, and update dependencies found there too.'
     )
     
 
@@ -27,10 +26,8 @@ def execCommand(args):
 
 
 def updateDeps(args):
-    c = component.Component(os.getcwd())
+    c = validate.currentDirectoryModule()
     if not c:
-        logging.debug(str(c.error))
-        logging.error('The current directory does not contain a valid component.')
         return 1
     logging.debug('update for %s' % c)
     if not args.target:

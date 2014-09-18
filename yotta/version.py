@@ -32,7 +32,7 @@ def execCommand(args):
     if not (c or t):
         logging.debug(str(c.getError()))
         logging.debug(str(t.getError()))
-        logging.error('The current directory does not contain a valid component or target.')
+        logging.error('The current directory does not contain a valid module or target.')
         return 1
     else:
         # only needed separate objects in order to display errors

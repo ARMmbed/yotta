@@ -17,12 +17,12 @@ GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
-        help='If specified, install this component instead of installing '+
-             'the dependencies of the current component.'
+        help='If specified, install this module instead of installing '+
+             'the dependencies of the current module.'
     )
     parser.add_argument('-l', '--install-linked', dest='install_linked',
         action='store_true', default=False,
-        help='Traverse linked components, and install dependencies needed there too.'
+        help='Traverse linked modules, and install dependencies needed there too.'
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
@@ -30,11 +30,11 @@ def addOptions(parser):
     )
     group.add_argument('--save', dest='save', action='store_true',
         default=False,
-        help='Add the specified component to dependencies in module.json'
+        help='Add the specified module to dependencies in module.json'
     )
     group.add_argument('--save-target', dest='save_target',
         action='store_true', default=False,
-        help='Add the specified component to targetDependencies in module.json'
+        help='Add the specified module to targetDependencies in module.json'
     )
 
 
@@ -52,14 +52,14 @@ def execCommand(args):
 def installDeps(args, current_component):
     logging.debug('install deps for %s' % current_component)
     if args.save:
-        logging.error('must specify a component name when using --save')
+        logging.error('must specify a module name when using --save')
         return 1
     if args.save_target:
-        logging.error('must specify a component name when using --save-target')
+        logging.error('must specify a module name when using --save-target')
         return 1
     if not current_component:
         logging.debug(str(current_component.getError()))
-        logging.error('The current directory does not contain a valid component.')
+        logging.error('The current directory does not contain a valid module.')
         return 1
     if not args.target:
         logging.error('No target has been set, use "yotta target" to set one.')
@@ -91,7 +91,7 @@ def installComponentAsDependency(args, current_component):
     logging.debug('install component %s as dependency of %s' % (args.component, current_component))
     if not current_component:
         logging.debug(str(current_component.getError()))
-        logging.error('The current directory does not contain a valid component.')
+        logging.error('The current directory does not contain a valid module.')
         return -1
     target, errors = current_component.satisfyTarget(args.target)
     if errors:
@@ -147,10 +147,10 @@ def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
     if args.save:
-        logging.error('cannot --save unless the current directory is a component')
+        logging.error('cannot --save unless the current directory is a module')
         return 1
     if args.save_target:
-        logging.error('cannot --save-target unless the current directory is a component')
+        logging.error('cannot --save-target unless the current directory is a module')
         return 1
     
     # !!! FIXME: should support other URL specs, spec matching should be in
