@@ -65,9 +65,14 @@ def repoObject(string):
         raise ValueError()
     return {'type':repo_type, 'url':url}
 
+def listOfWords(string):
+    if isinstance(string, list):
+        return string
+    else:
+        return string.split()
+
 def addOptions(parser):
     pass
-
 
 def execCommand(args):
     cwd = os.getcwd()
@@ -90,7 +95,9 @@ def execCommand(args):
         return c.description[x] if x in c.description else None
 
     c.description['description'] = getUserInput("Short description: ", current('description'))
+    c.description['keywords']    = getUserInput("Keywords: ", ' '.join(current('keywords') or []), listOfWords)
     c.description['author']      = getUserInput("Author: ", current('author'))
+
     current_repo_url = current('repository')
     if isinstance(current_repo_url, dict):
         current_repo_url = current_repo_url['url']
