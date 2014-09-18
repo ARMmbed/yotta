@@ -50,7 +50,9 @@ yesNo.__name__ = "Yes/No"
 
 def repoObject(string):
     string = string.strip()
-    if Git_Repo_RE.match(string):
+    if not string:
+        return None
+    elif Git_Repo_RE.match(string):
         repo_type = 'git'
         url = Git_Repo_RE.match(string).group(0)
     elif HG_Repo_RE.match(string):
@@ -59,6 +61,8 @@ def repoObject(string):
     elif SVN_Repo_RE.match(string):
         repo_type = 'svn'
         url = SVN_Repo_RE.match(string).group(0)
+    else:
+        raise ValueError()
     return {'type':repo_type, 'url':url}
 
 def addOptions(parser):
@@ -90,7 +94,9 @@ def execCommand(args):
     current_repo_url = current('repository')
     if isinstance(current_repo_url, dict):
         current_repo_url = current_repo_url['url']
-    c.description['repository']  = getUserInput("Repository url: ", current_repo_url, repoObject)
+    new_repo_url = getUserInput("Repository url: ", current_repo_url, repoObject)
+    if new_repo_url:
+        c.description['repository'] = new_repo_url
     c.description['homepage']    = getUserInput("Homepage: ", current('homepage'))
 
     if not current('licenses') or current('license'):
