@@ -39,7 +39,7 @@ import github_access
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org'
-Website_Base_URL  = 'http://yottabuild.org:1234'
+Website_Base_URL  = 'http://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
@@ -120,7 +120,7 @@ def _friendlyAuthError(fn):
 
 def _listVersions(namespace, name):
     # list versions of the package:
-    url = '%s/%s/%s' % (
+    url = '%s/%s/%s/versions' % (
         Registry_Base_URL,
         namespace,
         name
@@ -141,7 +141,7 @@ def _listVersions(namespace, name):
     return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(body_s)]
 
 def _tarballURL(namespace, name, version):
-    return '%s/%s/%s/%s/tarball' % (
+    return '%s/%s/%s/versions/%s/tarball' % (
         Registry_Base_URL, namespace, name, version
     )
 
@@ -179,6 +179,7 @@ def _getPrivateKeyObject():
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
     def __init__(self, data, namespace, name):
+        logger.debug('RegistryThingVersion %s/%s data: %s' % (namespace, name, data))
         version = data['version']
         self.namespace = namespace
         self.name = name
@@ -390,11 +391,13 @@ def getAuthData():
         logger.debug(str(e))
         return None
     body = response.body_string()
+    logger.debug('auth data response: %s' % body);
     r = {}
     for token in ordered_json.loads(body):
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
+    logger.debug('parsed auth tokens %s' % r);
     return r
 
 def openBrowserLogin(provider=None):
