@@ -1,6 +1,7 @@
 # standard library modules, , ,
 import os
 import logging
+import re
 
 # Component, , represents an installed component, internal
 from lib import component
@@ -15,6 +16,10 @@ Known_Licenses = {
              'mit': 'https://spdx.org/licenses/MIT',
     'bsd-3-clause': 'https://spdx.org/licenses/BSD-3-Clause'
 }
+
+Git_Repo_RE = re.compile("^(git[+a-zA-Z-]*:.*|.*\.git|.*git@.*github\.com.*)$")
+HG_Repo_RE  = re.compile("^(hg[+a-zA-Z-]*:.*|.*\.hg)$")
+SVN_Repo_RE = re.compile("^svn[+a-zA-Z-]*:.*$")
 
 def getUserInput(question, default=None, type_class=str):
     while True:
@@ -43,6 +48,19 @@ def yesNo(string):
         raise ValueError()
 yesNo.__name__ = "Yes/No"
 
+def repoObject(string):
+    string = string.strip()
+    if Git_Repo_RE.match(string):
+        repo_type = 'git'
+        url = Git_Repo_RE.match(string).group(0)
+    elif HG_Repo_RE.match(string):
+        repo_type = 'hg'
+        url = HG_Repo_RE.match(string).group(0)
+    elif SVN_Repo_RE.match(string):
+        repo_type = 'svn'
+        url = SVN_Repo_RE.match(string).group(0)
+    return {'type':repo_type, 'url':url}
+
 def addOptions(parser):
     pass
 
@@ -69,7 +87,10 @@ def execCommand(args):
 
     c.description['description'] = getUserInput("Short description: ", current('description'))
     c.description['author']      = getUserInput("Author: ", current('author'))
-    c.description['repository']  = getUserInput("Repository url: ", current('repository'))
+    current_repo_url = current('repository')
+    if isinstance(current_repo_url, dict):
+        current_repo_url = current_repo_url['url']
+    c.description['repository']  = getUserInput("Repository url: ", current_repo_url, repoObject)
     c.description['homepage']    = getUserInput("Homepage: ", current('homepage'))
 
     if not current('licenses') or current('license'):
