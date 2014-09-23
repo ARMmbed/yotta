@@ -51,10 +51,10 @@ def execCommand(args):
 
 def installDeps(args, current_component):
     logging.debug('install deps for %s' % current_component)
-    if args.save:
+    if hasattr(args, 'save') and args.save:
         logging.error('must specify a module name when using --save')
         return 1
-    if args.save_target:
+    if hasattr(args, 'save_target') and args.save_target:
         logging.error('must specify a module name when using --save-target')
         return 1
     if not current_component:
