@@ -23,5 +23,9 @@ def execCommand(args):
     c = validate.currentDirectoryModule()
     if not c:
         return 1
-    fsutils.rmF(os.path.join(c.modulesPath(), args.component))
+    path = os.path.join(c.modulesPath(), args.component)
+    if fsutils.isLink(path):
+        fsutils.rmF(path)
+    else:
+        fsutils.rmRf(path)
 
