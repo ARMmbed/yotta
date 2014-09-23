@@ -198,6 +198,14 @@ Transfer rate: 16536 KB/sec, 15240 bytes/write.
 Resetting target
 > continue
 ```
+### Generating projects for other IDEs
+Use the following command to generate an Xcode project with yotta. Run it in your project root and find the output in your target build folder.
+
+```
+yotta build -G "Xcode"
+```
+
+Other IDEs are available: Unix Makefiles, Ninja, Xcode, Sublime Text 2 - Ninja, Sublime Text 2 - Unix Makefiles
 
 ### Secret Tips
 Congratulations for reading to the end of the readme, unless you skipped straight here, in which case, naughty you. In either case, here's some helpful tips:
