@@ -1,6 +1,8 @@
 ## yotta: Build Software with Reusable Components
 [![Build Status](https://magnum.travis-ci.com/ARMmbed/yotta.svg?token=XG7YezaYG4fZCZqqBSsP)](https://magnum.travis-ci.com/ARMmbed/yotta)
 
+Yotta is a tool that we're building at [mbed](https://mbed.org), to make it easier to build better software written in C, C++ or other C-family languages. It's still early in development, so if you have questions/feedback or issues, please report them on our  issue tracker.
+
 ### Installation
 First download the latest [release tarball](https://github.com/ARMmbed/yotta/releases), then:
 ``` bash
