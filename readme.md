@@ -1,6 +1,5 @@
 ## yotta: Build Software with Reusable Components
-> TODO add build status back here
-
+[![Build Status](https://magnum.travis-ci.com/ARMmbed/yotta.svg?token=XG7YezaYG4fZCZqqBSsP)](https://magnum.travis-ci.com/ARMmbed/yotta)
 
 ### Installation
 First download the latest [release tarball](https://github.com/ARMmbed/yotta/releases), then:
