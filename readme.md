@@ -8,8 +8,9 @@ First download the latest [release tarball](https://github.com/ARMmbed/yotta/rel
 sudo pip install -U setuptools
 sudo pip install ./path/to/yotta-a.b.c.tar.gz
 ```
-(If you don't have `pip` installed, you may need to install that first using `easy_install pip`)  
-(If you get an unknown argument error from Clang, it means some of the components have not been updated to support Apple LLVM in XCode 5.1. Insert 'ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future' between 'sudo' and 'pip' above.)
+You may need to [install pip](http://pip.readthedocs.org/en/latest/installing.html), if you do not already have it.
+ 
+On OS X, if you get an unknown argument error from Clang, it means some of yotta's dependencies have not yet been updated to support XCode 5.1. Insert `ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future` between `sudo` and `pip` above.
 
 Yotta also requires:
 
