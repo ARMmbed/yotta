@@ -6,3 +6,6 @@ yotta.egg-info
 .*.swp
 .*.swo
 .*.swn
+MANIFEST.in
+_site
+.DS_Store
