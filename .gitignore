@@ -1,5 +1,4 @@
 build
-dist
 yotta.egg-info
 *.pyc
 *.pyo
