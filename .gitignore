@@ -8,3 +8,6 @@ yotta.egg-info
 MANIFEST.in
 _site
 .DS_Store
+dist
+git-access-testing
+github-access-testing
