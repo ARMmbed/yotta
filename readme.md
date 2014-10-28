@@ -20,7 +20,7 @@ Yotta also requires:
 
 
 ### Further Documentation
-For further documentation see the [yotta docs](http://armmbed.github.io/yotta-docs/) website.
+For further documentation see the [yotta docs](http://armmbed.github.io/yotta/) website.
 
 
 ### Tips

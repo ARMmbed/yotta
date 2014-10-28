@@ -1,8 +1,10 @@
 build
-dist
 yotta.egg-info
 *.pyc
 *.pyo
 .*.swp
 .*.swo
 .*.swn
+MANIFEST.in
+_site
+.DS_Store

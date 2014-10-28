@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Yotta Docs{% if page.title }%} - {{page.title}}{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link href='https://fonts.googleapis.com/css?family=Lato:100,400' rel='stylesheet' type='text/css'>
+    <link href="//yottabuild.org/style/css/style.css" rel="stylesheet" type="text/css">
+    <link href="{{ site.github.url }}/bower_components/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <link href="{{ site.github.url }}/assets/css/docs.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js">
+      </script>
+    <![endif]-->
+    <link rel="shortcut icon" href="{{ site.github.url }}/assets/img/yt.png">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ site.github.url }}/assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{ site.github.url }}/assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{ site.github.url }}/assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="{{ site.github.url }}/assets/ico/apple-touch-icon-57-precomposed.png">
+    <style>
+    </style>
+  </head>
+  <body>
+    <splash class='minimised'></splash>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-3">
+          <ul id="menu" class="nav nav-list" data-spy="affix">
+            <li class="nav-header">Using Yotta</li>
+            <li data-section="yotta/introduction"><a href="{{ site.github.url }}/yotta/introduction.html">Introduction</a></li>
+            <li data-section="yotta/installing"><a href="{{ site.github.url }}/yotta/installing.html">Installing</a></li>
+            <li data-section="yotta/gettingstarted"><a href="{{ site.github.url }}/yotta/gettingstarted.html">Getting Started</a></li>
+            <li class="nav-header">Tutorial</li>
+            <li data-section="tutorial/module"><a href="{{ site.github.url }}/tutorial/tutorial.html">Creating a Module</a></li>
+            <li data-section="tutorial/executable"><a href="{{ site.github.url }}/tutorial/tutorial.html#Creating%20an%20Executable">Creating an Executable</a></li>
+            <li data-section="tutorial/reuse"><a href="{{ site.github.url }}/tutorial/reuse.html">Writing Re-usable Software</a></li>
+            <li data-section="tutorial/privaterepos"><a href="{{ site.github.url }}/tutorial/privaterepos.html">Working with Private Repositories</a></li>
+            <li class="nav-header">Reference</li>
+            <li data-section="reference/commands"><a href="{{ site.github.url }}/reference/commands.html">Command Reference</a></li>
+            <li data-section="reference/module"><a href="{{ site.github.url }}/reference/module.html">module.json</a></li>
+            <li data-section="reference/target"><a href="{{ site.github.url }}/reference/target.html">target.json</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-9">
+{{content}}
+        </div>
+      </div>
+    </div>
+
+    <style>
+      
+    </style>
+    <script src="{{ site.github.url }}/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="{{ site.github.url }}/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script>
+      $('#menu [data-section="{{page.section}}"]').addClass('active');
+    </script>
+
+    <script type="text/javascript">
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-55282605-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+  </body>
+</html>
+

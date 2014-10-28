@@ -1,0 +1,15 @@
+{
+  "name": "yotta-docs",
+  "version": "0.0.0",
+  "homepage": "http://docs.yottabuild.org",
+  "authors": [
+    "Andy Pritchard <andy.pritchard@arm.com>"
+  ],
+  "description": "Yotta documentation",
+  "main": "index.html",
+  "license": "Apache 2",
+  "dependencies": {
+    "bootstrap": "~3.2.0",
+    "jquery": "~2.1.1"
+  }
+}
