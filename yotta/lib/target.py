@@ -6,6 +6,7 @@ import subprocess
 import logging
 import string
 import traceback
+import errno
 
 # version, , represent versions and specifications, internal
 import version
@@ -111,10 +112,19 @@ class Target(pack.Pack):
         else:
             commands.append(['cmake', '--build', builddir])
         for cmd in commands:
-            child = subprocess.Popen(
-                cmd, cwd=builddir
-            )
-            child.wait()
+            try:
+                child = subprocess.Popen(
+                    cmd, cwd=builddir
+                )
+                child.wait()
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    if cmd[0] == 'cmake':
+                        yield 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/yotta/installing'
+                    else:
+                        yield '%s is not installed' % (cmd[0])
+                else:
+                    yield 'command %s failed' % (cmd)
             if child.returncode:
                 yield 'command %s failed' % (cmd)
         hint = self.hintForCMakeGenerator(args.cmake_generator, component)
