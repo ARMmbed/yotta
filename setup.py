@@ -16,7 +16,7 @@ setup(
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
-    license = "Proprietary",
+    license = "Apache-2",
     keywords = "embedded package module dependency management",
     url = "about:blank",
     packages=find_packages(),
