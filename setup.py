@@ -1,3 +1,8 @@
+# Copyright 2014 ARM Limited
+#
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 import os
 from setuptools import setup, find_packages
 
@@ -19,7 +24,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-        "License :: Proprietary",
+        "License :: Apache-2",
         "Environment :: Console",
     ],
     entry_points={
