@@ -7,7 +7,6 @@
 import argparse
 import logging
 import sys
-import platform
 import pkg_resources
 
 # subcommand modules, , add subcommands, internal
@@ -27,34 +26,14 @@ from . import list
 from . import uninstall
 from . import owners
 
+# logging setup, , setup the logging system, internal
 from lib import logging_setup
-
-# settings, , load and save settings, internal
-from lib import settings
+# detect, , detect things about the system, internal
+from lib import detect
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) / 5)
 
-def defaultTarget():
-    set_target = settings.getProperty('build', 'target')
-    if set_target:
-        return set_target
-
-    machine = platform.machine()
-
-    x86 = machine.find('86') != -1
-    arm = machine.find('arm') != -1 or machine.find('aarch') != -1
-
-    prefix = "x86-" if x86 else "arm-" if arm else ""
-    platf = 'unknown'
-
-    if sys.platform == 'linux':
-        platf = 'linux-native'
-    elif sys.platform == 'darwin':
-        platf = 'osx-native'
-    elif sys.platform.find('win') != -1:
-        platf = 'win'
-    return prefix + platf + ','
 
 def main():
     parser = argparse.ArgumentParser()
@@ -75,7 +54,7 @@ def main():
     )
 
     parser.add_argument('-t', '--target', dest='target',
-        default=defaultTarget(),
+        default=detect.defaultTarget(),
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
