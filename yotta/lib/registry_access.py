@@ -75,6 +75,9 @@ def _pubkeyWireFormat(pubkey):
     return urllib.quote(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
 
 def _fingerprint(pubkey):
+    logger.debug("calculate fingerprint for pubkey: %s" % pubkey)
+    exported_pubkey = pubkey.exportKey('OpenSSH')
+    logger.debug("exported pubkey: %s:%s" % (type(exported_pubkey), exported_pubkey))
     stripped = _OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH'))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
@@ -177,8 +180,11 @@ def _generateAndSaveKeys():
 
 def _getPrivateKeyObject():
     privatekey_hex =  settings.getProperty('keys', 'private')
+    logger.debug("read private key hex: %s" % type(privatekey_hex))
     if not privatekey_hex:
+        logger.debug("no private key in settings, generating new...")
         pubkey_hex, privatekey_hex = _generateAndSaveKeys()
+        logger.debug("new public key: %s:%s" % (type(pubkey_hex), pubkey_hex))
     return RSA.importKey(binascii.unhexlify(privatekey_hex))
 
 # API
