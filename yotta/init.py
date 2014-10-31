@@ -112,7 +112,7 @@ def execCommand(args):
     c.description['homepage']    = getUserInput("Homepage: ", current('homepage'))
 
     if not current('licenses') or current('license'):
-        license = getUserInput('What is the license for this project (ISC, MIT, Apache-2 etc.)? ', 'ISC')
+        license = getUserInput('What is the license for this project (Apache-2.0, ISC, MIT etc.)? ', 'Apache-2.0')
         license_url = None
         if license.lower().strip() in Known_Licenses:
             license_url = Known_Licenses[license.lower().strip()]
