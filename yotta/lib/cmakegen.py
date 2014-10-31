@@ -152,6 +152,10 @@ Dummy_CMakeLists_Template = '''
 
 add_library($libname $cfile_name)
 
+target_link_libraries($libname
+    #echo '    ' + '\\n    '.join($link_dependencies) + '\\n'
+)
+
 '''
 
 logger = logging.getLogger('cmakegen')
@@ -387,7 +391,9 @@ class CMakeGen(object):
         # generate a dummy library so that this component can still be linked
         # against
         if len(add_own_subdirs) <= test_dirs:
-            add_own_subdirs.append(self.createDummyLib(component, builddir))
+            add_own_subdirs.append(self.createDummyLib(
+                component, builddir, [x for x in immediate_dependencies]
+            ))
         
         
         target_definitions = '-DTARGET=' + self._sanitizeTarget(self.target.getName())  + ' '
@@ -416,14 +422,15 @@ class CMakeGen(object):
         }]))
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
 
-    def createDummyLib(self, component, builddir):
+    def createDummyLib(self, component, builddir, link_dependencies):
         safe_name        = self._sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name
         dummy_cfile_name = 'dummy.c'
         logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
         dummy_cmakelists = str(Cheetah.Template.Template(Dummy_CMakeLists_Template, searchList=[{
-            "cfile_name": dummy_cfile_name,
-               "libname": component.getName()
+                   "cfile_name": dummy_cfile_name,
+                      "libname": component.getName(),
+            "link_dependencies": link_dependencies
         }]))
         self._writeFile(os.path.join(builddir, dummy_dirname, "CMakeLists.txt"), dummy_cmakelists)
         dummy_cfile = "void __yotta_dummy_lib_symbol_%s(){}\n" % safe_name
