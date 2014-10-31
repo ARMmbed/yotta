@@ -420,7 +420,7 @@ class CMakeGen(object):
         safe_name        = self._sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name
         dummy_cfile_name = 'dummy.c'
-        logger.info("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
+        logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
         dummy_cmakelists = str(Cheetah.Template.Template(Dummy_CMakeLists_Template, searchList=[{
             "cfile_name": dummy_cfile_name,
                "libname": component.getName()
