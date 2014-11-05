@@ -73,7 +73,7 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
 
     line = indent[:-2] + tee + component.getName() + ' ' + colorama.Style.DIM + str(component.getVersion()) + colorama.Style.RESET_ALL
     if component.installedLinked():
-        line += colorama.Style.BRIGHT + colorama.Fore.GREEN + ' -> ' + colorama.Style.DIM + component.path + colorama.Style.RESET_ALL 
+        line += colorama.Style.BRIGHT + colorama.Fore.GREEN + ' -> ' + colorama.Style.DIM + os.path.realpath(component.path) + colorama.Style.RESET_ALL 
 
     putln(line)
     
