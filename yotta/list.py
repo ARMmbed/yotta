@@ -45,7 +45,7 @@ def execCommand(args):
                       target = target,
         available_components = [(c.getName(), c)]
     )
-    printComponentDepsRecursive(c, dependencies, target, args.show_all)
+    printComponentDepsRecursive(c, dependencies, [c.getName()], target, args.show_all)
 
 
 
@@ -63,7 +63,29 @@ def islast(generator):
 def putln(x):
     print x.encode('utf-8')
 
-def printComponentDepsRecursive(component, all_components, target, all, indent=u'', tee=u''):
+def relpathIfSubdir(path):
+    relpath = os.path.relpath(path)
+    if relpath.startswith('..'):
+        return path
+    else:
+        return relpath
+
+def printComponentDepsRecursive(
+        component,
+        all_components,
+        processed,
+        target,
+        list_all,
+        indent=u'',
+        tee=u'',
+        installed_at=u''
+):
+    DIM    = colorama.Style.DIM
+    BRIGHT = colorama.Style.BRIGHT
+    GREEN  = colorama.Fore.GREEN
+    RED    = colorama.Fore.RED
+    RESET  = colorama.Style.RESET_ALL
+
     mods_path = component.modulesPath()
     deps = component.getDependencies(
             available_components = all_components,
@@ -71,14 +93,27 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
     )
     specs = dict(component.getDependencySpecs(target=target))
 
-    line = indent[:-2] + tee + component.getName() + ' ' + colorama.Style.DIM + str(component.getVersion()) + colorama.Style.RESET_ALL
+    line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
+
+    if len(installed_at):
+        line += u' ' + DIM + installed_at + RESET
     if component.installedLinked():
-        line += colorama.Style.BRIGHT + colorama.Fore.GREEN + ' -> ' + colorama.Style.DIM + os.path.realpath(component.path) + colorama.Style.RESET_ALL 
+        line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + os.path.realpath(component.path) + RESET 
 
     putln(line)
     
-
-    print_deps = filter(lambda x: all or (not x[1]) or x[1].path == os.path.join(mods_path, x[0]) or x[1].installedLinked(), deps.items())
+    deps_here  = filter(lambda x: (x not in processed), deps.keys())
+    print_deps = filter(
+        lambda x:
+            list_all or
+            (not x[1]) or
+            (x[1].path == os.path.join(mods_path, x[0])) or
+            (x[0] in deps_here),
+        deps.items()
+    )
+    
+    processed += [x[0] for x in print_deps]
+    
 
     for (name, dep), last in islast(print_deps):
         if last:
@@ -90,7 +125,7 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
             tee = u'\u2523\u2500 '
             next_tee = u'\u2520\u2500 '
         if not dep:
-            putln(indent + tee + name + u' ' + specs[name] + colorama.Style.BRIGHT + colorama.Fore.RED + ' missing' + colorama.Style.RESET_ALL)
+            putln(indent + tee + name + u' ' + specs[name] + BRIGHT + RED + ' missing' + RESET)
         else:
             spec = access.remoteComponentFor(name, specs[name], 'modules').versionSpec()
             if not spec:
@@ -98,10 +133,16 @@ def printComponentDepsRecursive(component, all_components, target, all, indent=u
             elif spec.match(dep.getVersion()):
                 spec_descr = u' ' + str(spec)
             else:
-                spec_descr = u' ' + colorama.Style.RESET_ALL + colorama.Style.BRIGHT + colorama.Fore.RED + str(spec)
+                spec_descr = u' ' + RESET + BRIGHT + RED + str(spec)
 
-            if dep.path == os.path.join(mods_path, name):
-                printComponentDepsRecursive(dep, all_components, target, all, next_indent, next_tee)
+            if name in deps_here:
+                # dependencies that are first used here may actually be
+                # installed higher up our dependency tree, if they are,
+                # illustrate that:
+                if dep.path == os.path.join(mods_path, name):
+                    printComponentDepsRecursive(dep, all_components, processed, target, list_all, next_indent, next_tee)
+                else:
+                    printComponentDepsRecursive(dep, all_components, processed, target, list_all, next_indent, next_tee, relpathIfSubdir(dep.path))
             else:
-                putln(indent + tee + colorama.Style.DIM + name + spec_descr + colorama.Style.RESET_ALL)
+                putln(indent + tee + DIM + name + spec_descr + RESET)
 
