@@ -258,6 +258,9 @@ class CMakeGen(object):
         for f in os.listdir(component.path):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
+            # tests only supported in the `test` directory for now
+            if f in ('test',):
+                test_subdirs.append(f)
             if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
                 self.checkStandardSourceDir(f, component)
                 # if the subdirectory has a CMakeLists.txt in it, then use that
@@ -271,8 +274,6 @@ class CMakeGen(object):
                 sources = self.containsSourceFiles(os.path.join(component.path, f))
                 if sources:
                     auto_subdirs.append((f, sources))
-                    if f == 'test':
-                        test_subdirs.append(f)
             elif f.lower() in ('source', 'src', 'test'):
                 self.checkStandardSourceDir(f, component)
         return {
@@ -360,7 +361,6 @@ class CMakeGen(object):
         # names of all directories at this level with stuff in: used to figure
         # out what to link automatically
         all_subdirs = manual_subdirs + [x[0] for x in autogen_subdirs]
-        test_dirs = 0
         for f, source_files in autogen_subdirs:
             if f in binary_subdirs:
                 exe_name = binary_subdirs[f]
@@ -369,7 +369,6 @@ class CMakeGen(object):
             is_test = False
             if f in test_subdirs:
                 is_test = True
-                test_dirs += 1
             self.generateSubDirList(
                 builddir, f, source_files, component, all_subdirs,
                 immediate_dependencies, exe_name, is_test
@@ -381,7 +380,7 @@ class CMakeGen(object):
         # if we're not building anything other than tests, then we need to
         # generate a dummy library so that this component can still be linked
         # against
-        if len(add_own_subdirs) <= test_dirs:
+        if len(add_own_subdirs) <= len(test_subdirs):
             add_own_subdirs.append(self.createDummyLib(
                 component, builddir, [x for x in immediate_dependencies]
             ))
