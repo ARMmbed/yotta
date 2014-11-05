@@ -60,15 +60,6 @@ $include_other_dirs
 # specified by any depended-on objc runtime using secret package properties...
 set(CMAKE_OBJC_FLAGS "$set_objc_flags")
 
-# Components may defined additional preprocessor definitions: use this at your
-# peril, this support WILL go away! (it's here to bridge toolchain component ->
-# target package switchover)
-get_property(EXTRA_DEFINITIONS GLOBAL PROPERTY YOTTA_GLOBAL_DEFINITIONS)
-#raw
-add_definitions($${EXTRA_DEFINITIONS})
-#end raw
-
-
 # !!! FIXME: maybe the target can just add these to the toolchain, no need
 # for repetition in every single cmake list
 # Build targets may define additional preprocessor definitions for all
@@ -238,7 +229,7 @@ class CMakeGen(object):
 
         processed_components.update(new_dependencies)
         for name, c in new_dependencies.items():
-            for error in self.generateRecursive(c, all_components, os.path.join(builddir, name), processed_components):
+            for error in self.generateRecursive(c, all_components, os.path.join(builddir, 'ym', name), processed_components):
                 yield error
 
     def checkStandardSourceDir(self, dirname, component):
@@ -347,7 +338,7 @@ class CMakeGen(object):
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
             add_depend_subdirs += string.Template(
-                'add_subdirectory("$working_dir/$component_name")\n'
+                'add_subdirectory("$working_dir/ym/$component_name")\n'
             ).substitute(
                 working_dir=builddir,
                 component_name=name

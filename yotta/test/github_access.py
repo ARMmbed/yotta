@@ -21,7 +21,7 @@ from yotta import install
 
 Test_Name = 'testing-dummy'
 Test_Deps_Name = "autopulated/github-access-testing"
-Test_Deps_Target = "x86-osx,*"
+Test_Deps_Target = "x86-osx-native,*"
 Test_Username = 'yottatest'
 Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
 
