@@ -258,13 +258,13 @@ class CMakeGen(object):
         for f in os.listdir(component.path):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
-            # tests only supported in the `test` directory for now
-            if f in ('test',):
-                test_subdirs.append(f)
             if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
                 self.checkStandardSourceDir(f, component)
                 # if the subdirectory has a CMakeLists.txt in it, then use that
                 manual_subdirs.append(f)
+                # tests only supported in the `test` directory for now
+                if f in ('test',):
+                    test_subdirs.append(f)
             elif f in ('source', 'test') or os.path.normpath(f) in bin_subdirs:
                 # otherwise, if the directory has source files, generate a
                 # CMakeLists in the corresponding temporary directory, and add
@@ -274,6 +274,9 @@ class CMakeGen(object):
                 sources = self.containsSourceFiles(os.path.join(component.path, f))
                 if sources:
                     auto_subdirs.append((f, sources))
+                    # tests only supported in the `test` directory for now
+                    if f in ('test',):
+                        test_subdirs.append(f)
             elif f.lower() in ('source', 'src', 'test'):
                 self.checkStandardSourceDir(f, component)
         return {
