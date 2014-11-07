@@ -10,6 +10,8 @@ from collections import OrderedDict
 import tarfile
 import re
 import logging
+import fnmatch
+import errno
 
 # version, , represent versions and specifications, internal
 import version
@@ -22,9 +24,8 @@ import fsutils
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
-
-# TODO: .xxx_ignore file support for overriding the defaults, use glob syntax
-# instead of regexes...
+# These patterns are used in addition to any glob expressions defined by the
+# .yotta_ignore file
 Default_Publish_Ignore = [
     '^upload\.tar\.(gz|bz)$',
     '^\.git$',
@@ -43,6 +44,8 @@ Default_Publish_Ignore = [
 ]
 
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
+
+Ignore_List_Fname = '.yotta_ignore'
 
 logger = logging.getLogger('components')
 
@@ -86,12 +89,20 @@ class Pack(object):
         self.latest_suitable_version = latest_suitable_version
         self.version = None
         self.description_filename = description_filename
+        self.ignore_list_fname = Ignore_List_Fname
+        self.ignore_patterns = [re.compile('|'.join(Default_Publish_Ignore))]
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
             self.version = version.Version(self.description['version'])
         except Exception, e:
             self.description = OrderedDict()
             self.error = e
+        try:
+            with open(os.path.join(path, self.ignore_list_fname), 'r') as ignorefile:
+                self.ignore_patterns += self._parseIgnoreFile(ignorefile)
+        except IOError as e: 
+            if e.errno != errno.ENOENT:
+                raise
         self.vcs = vcs.getVCS(path)
 
     def exists(self):
@@ -156,6 +167,22 @@ class Pack(object):
         else:
             return None
     
+    def _parseIgnoreFile(self, f):
+        r = []
+        for l in f:
+            l = l.rstrip('\n\r')
+            if not l.startswith('#'):
+                r.append(re.compile(fnmatch.translate(l)))
+        return r
+
+    def ignores(self, path):
+        ''' Test if this module ignores the file at "path" '''
+        for exp in self.ignore_patterns:
+            if exp.match(path):
+                logger.debug('"%s" ignored' % path)
+                return True
+        return False
+
     def setVersion(self, version):
         self.version = version
         self.description['version'] = str(self.version)
@@ -176,13 +203,12 @@ class Pack(object):
             "file_object", which must already be open for writing at position 0
         '''
         archive_name = '%s-%s' % (self.getName(), self.getVersion())
-        filter_pattern = re.compile('|'.join(Default_Publish_Ignore))
         def filterArchive(tarinfo):
             if tarinfo.name.find(archive_name) == 0 :
                 unprefixed_name = tarinfo.name[len(archive_name)+1:]
             else:
                 unprefixed_name = tarinfo.name
-            if filter_pattern.search(unprefixed_name):
+            if self.ignores(unprefixed_name):
                 return None
             else:
                 return tarinfo

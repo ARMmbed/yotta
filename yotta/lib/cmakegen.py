@@ -272,7 +272,7 @@ class CMakeGen(object):
                 # that.
                 # For now we only do this for the source and test directories -
                 # in theory we could do others
-                sources = self.containsSourceFiles(os.path.join(component.path, f))
+                sources = self.containsSourceFiles(os.path.join(component.path, f), component)
                 if sources:
                     auto_subdirs.append((f, sources))
                     # tests only supported in the `test` directory for now
@@ -491,7 +491,7 @@ class CMakeGen(object):
         self._writeFile(fname, file_contents)
 
 
-    def containsSourceFiles(self, directory):
+    def containsSourceFiles(self, directory, component):
         c_exts    = set(('.c',))
         cpp_exts  = set(('.cpp','.cc','.cxx'))
         objc_exts = set(('.m', '.mm'))
@@ -501,10 +501,13 @@ class CMakeGen(object):
             for f in files:
                 name, ext = os.path.splitext(f)
                 ext = ext.lower()
+                fullpath = os.path.join(root, f)
+                if component.ignores(os.path.relpath(fullpath, component.path)):
+                    continue
                 if ext in c_exts:
-                    sources.append(SourceFile(os.path.join(root, f), 'c'))
+                    sources.append(SourceFile(fullpath, 'c'))
                 elif ext in cpp_exts:
-                    sources.append(SourceFile(os.path.join(root, f), 'cpp'))
+                    sources.append(SourceFile(fullpath, 'cpp'))
                 elif ext in objc_exts:
-                    sources.append(SourceFile(os.path.join(root, f), 'objc'))
+                    sources.append(SourceFile(fullpath, 'objc'))
         return sources
