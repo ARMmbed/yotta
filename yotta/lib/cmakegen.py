@@ -8,6 +8,7 @@ import string
 import os
 import logging
 import re
+import itertools
 
 # Cheetah, pip install cheetah, string templating, MIT
 import Cheetah.Template
@@ -35,33 +36,33 @@ $set_targets_like
 
 project($component_name)
 
-# include own root directory
-#echo $include_own_dir
-
 # include root directories of all components we depend on (directly and
-# indirectly)
+# indirectly, including ourself)
 $include_root_dirs
 
 # recurse into dependencies that aren't built elsewhere
 $add_depend_subdirs
 
-
+#if $include_sys_dirs
 # Some components (I'm looking at you, libc), need to export system header
 # files with no prefix, these directories are listed in the component
 # description files:
 $include_sys_dirs
+#end if
 
+#if $include_other_dirs
 # And others (typically CMSIS implementations) need to export non-system header
 # files. Please don't use this facility. Please. It's much, much better to fix
 # implementations that import these headers to import them using the full path.
 $include_other_dirs
+#end if
 
+#if $set_objc_flags
 # CMake doesn't have native support for Objective-C specific flags, these are
 # specified by any depended-on objc runtime using secret package properties...
 set(CMAKE_OBJC_FLAGS "$set_objc_flags")
+#end if
 
-# !!! FIXME: maybe the target can just add these to the toolchain, no need
-# for repetition in every single cmake list
 # Build targets may define additional preprocessor definitions for all
 # components to use (such as chip variant information)
 add_definitions($yotta_target_definitions)
@@ -301,7 +302,7 @@ class CMakeGen(object):
         include_other_dirs = ''
         objc_flags_set = {}
         objc_flags = []
-        for name, c in all_dependencies.items():
+        for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
             include_root_dirs += string.Template(
                 'include_directories("$path")\n'
             ).substitute(path=c.path)
