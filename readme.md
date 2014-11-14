@@ -3,6 +3,11 @@
 
 Yotta is a tool that we're building at [mbed](https://mbed.org), to make it easier to build better software written in C, C++ or other C-family languages. It's still early in development, so if you have questions/feedback or issues, please [report them](https://github.com/ARMmbed/yotta/issues).
 
+### What `yotta` does
+yotta downloads the software components that your program depends on (it's similar in concept to npm, pip or gem). To install a new module, you run `yotta install <modulename>`, and yotta will install both the module you've specified and any of its dependencies that you don't already have installed.
+
+To really understand how yotta works, you should [follow the tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
+
 ### Installation
 First download the latest [release tarball](https://github.com/ARMmbed/yotta/releases), then:
 ``` bash
