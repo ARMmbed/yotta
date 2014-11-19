@@ -9,6 +9,7 @@ import os
 import logging
 import re
 import itertools
+from collections import defaultdict
 
 # Cheetah, pip install cheetah, string templating, MIT
 import Cheetah.Template
@@ -156,12 +157,13 @@ Ignore_Subdirs = set(('build','yotta_modules', 'yotta_targets', 'CMake'))
 
 
 class SourceFile(object):
-    def __init__(self, fname, lang):
+    def __init__(self, fullpath, relpath, lang):
         super(SourceFile, self).__init__()
-        self.fname = fname
+        self.fullpath = fullpath
+        self.relpath = relpath
         self.lang = lang
     def __repr__(self):
-        return self.fname
+        return self.fullpath
     def lang(self):
         return self.lang
 
@@ -370,13 +372,15 @@ class CMakeGen(object):
                 exe_name = binary_subdirs[f]
             else:
                 exe_name = None
-            is_test = False
             if f in test_subdirs:
-                is_test = True
-            self.generateSubDirList(
-                builddir, f, source_files, component, all_subdirs,
-                immediate_dependencies, exe_name, is_test
-            )
+                self.generateTestDirList(
+                    builddir, f, source_files, component, immediate_dependencies
+                )
+            else:
+                self.generateSubDirList(
+                    builddir, f, source_files, component, all_subdirs,
+                    immediate_dependencies, exe_name
+                )
             add_own_subdirs.append(
                 (os.path.join(builddir, f), os.path.join(builddir, f))
             )
@@ -443,30 +447,54 @@ class CMakeGen(object):
         except IOError:
             with open(fname, "w") as f:
                 f.write(contents)
-
-
-    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name, is_test):
+    
+    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
-        fname = os.path.join(builddir, dirname, 'CMakeLists.txt')          
+        fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
+        
+        # group the list of source files by subdirectory: generate one test for
+        # each subdirectory, and one test for each file at the top level
+        subdirs = defaultdict(list)
+        toplevel_srcs = []
+        for f in source_files:
+            subrelpath = os.path.relpath(f.relpath, dirname)
+            subdir = os.path.split(subrelpath)[0]
+            if subdir:
+                subdirs[subdir].append(f)
+            else:
+                toplevel_srcs.append(f)
+        
+        tests = []
+        for f in toplevel_srcs:
+            object_name = '%s-test-%s' % (
+                component.getName(), os.path.basename(os.path.splitext(str(f))[0]).lower()
+            )
+            tests.append([[str(f)], object_name, [f.lang]])
+        for subdirname, sources in subdirs.items():
+            object_name = '%s-test-%s' % (
+                component.getName(), subdirname.lower()
+            )
+            tests.append([[str(f) for f in sources], object_name, [f.lang for f in sources]])
 
-        # if the directory name is 'test' then, then generate multiple
-        # independent executable targets:
-        if is_test:
-            tests = []
-            for f in source_files:
-                object_name = component.getName() + '-' + os.path.basename(os.path.splitext(str(f))[0]).lower()
-                tests.append([[str(f)], object_name, [f.lang]])
+        # link tests against the main executable
+        link_dependencies.append(component.getName())
+        file_contents = str(Cheetah.Template.Template(Test_CMakeLists_Template, searchList=[{
+             'source_directory':os.path.join(component.path, dirname),
+                        'tests':tests,
+            'link_dependencies':link_dependencies
+        }]))
 
-            # link tests against the main executable
-            link_dependencies.append(component.getName())
-            file_contents = str(Cheetah.Template.Template(Test_CMakeLists_Template, searchList=[{
-                 'source_directory':os.path.join(component.path, dirname),
-                            'tests':tests,
-                'link_dependencies':link_dependencies
-            }]))
-        elif dirname == 'source' or executable_name:
+        self._writeFile(fname, file_contents)
+
+    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name):
+        logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
+
+        link_dependencies = [x for x in immediate_dependencies]
+        fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
+
+        if dirname == 'source' or executable_name:
             if executable_name:
                 object_name = executable_name
                 executable  = True
@@ -502,12 +530,13 @@ class CMakeGen(object):
                 name, ext = os.path.splitext(f)
                 ext = ext.lower()
                 fullpath = os.path.join(root, f)
-                if component.ignores(os.path.relpath(fullpath, component.path)):
+                relpath  = os.path.relpath(fullpath, component.path)
+                if component.ignores(relpath):
                     continue
                 if ext in c_exts:
-                    sources.append(SourceFile(fullpath, 'c'))
+                    sources.append(SourceFile(fullpath, relpath, 'c'))
                 elif ext in cpp_exts:
-                    sources.append(SourceFile(fullpath, 'cpp'))
+                    sources.append(SourceFile(fullpath, relpath, 'cpp'))
                 elif ext in objc_exts:
-                    sources.append(SourceFile(fullpath, 'objc'))
+                    sources.append(SourceFile(fullpath, relpath, 'objc'))
         return sources
