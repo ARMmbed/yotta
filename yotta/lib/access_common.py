@@ -69,7 +69,7 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
     # overwriting our tar archive with something that unpacks to an absolute
     # path when we might be running sudo'd
     try:
-        fd = os.open(download_fname, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        fd = os.open(download_fname, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_BINARY)
         with os.fdopen(fd, 'rb+') as f:
             f.seek(0)
             while True:
