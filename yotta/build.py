@@ -55,9 +55,14 @@ def execCommand(args):
                       target = target,
         available_components = [(c.getName(), c)]
     )
+    errors = 0
     for d in all_components.values():
         if not d:
-            logging.error('    %s not available' % os.path.split(d.path)[1])
+            logging.error('%s not available' % os.path.split(d.path)[1])
+            errors += 1
+    if errors:
+        logging.error('Missing dependencies prevent build. Use `yotta ls` to list them.')
+        return 1
 
     generator = cmakegen.CMakeGen(builddir, target)
     errcode = None
