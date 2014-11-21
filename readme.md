@@ -34,8 +34,8 @@ For further documentation see the [yotta docs](http://armmbed.github.io/yotta/) 
 
 
 ### mbed Internal Users
-
 For additional instructions on setting up internal toolchains, see [the internal docs](https://github.com/arm-rd/target-stk3700) for the stk3700 target.
 
-
+### License
+yotta is licensed under Apache-2.0
 
