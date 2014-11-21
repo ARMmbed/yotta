@@ -30,7 +30,7 @@ cmake_minimum_required(VERSION 2.8)
 cmake_policy(SET CMP0017 OLD)
 
 # toolchain file for $target_name
-set(CMAKE_TOOLCHAIN_FILE $toolchain_file)
+set(CMAKE_TOOLCHAIN_FILE "$toolchain_file")
 
 $set_targets_like
 #end if

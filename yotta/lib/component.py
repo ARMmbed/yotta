@@ -505,7 +505,7 @@ class Component(pack.Pack):
             it, but support is provided as a concession to compatibility.
         '''
         if 'extraIncludes' in self.description:
-            return self.description['extraIncludes']
+            return [os.path.normpath(x) for x in self.description['extraIncludes']]
         else:
             return []
     
@@ -517,7 +517,7 @@ class Component(pack.Pack):
             (or an empty list), if it doesn't exist.
         '''
         if 'extraSysIncludes' in self.description:
-            return self.description['extraSysIncludes']
+            return [os.path.normpath(x) for x in self.description['extraSysIncludes']]
         else:
             return []
 
