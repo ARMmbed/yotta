@@ -9,6 +9,12 @@ import logging
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
 import colorama
 
+
+# colorama replaces stdout and stderr with objects that do switch colour
+# sequences to the appropriate windows ones, we do most of our stdout through
+# logging, so setup that proxying here:
+colorama.init()
+
 class Formatter(logging.Formatter):
     def __init__(self):
         super(Formatter, self).__init__()
