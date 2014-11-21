@@ -187,13 +187,14 @@ class Component(pack.Pack):
             except access_common.ComponentUnavailable, e:
                 errors.append(e)
                 self.dependencies_failed = True
+        specs = self.getDependencySpecs(target)
         #dependencies = pool.map(
         dependencies = map(
-            satisfyDep, self.getDependencySpecs(target)
+            satisfyDep, specs
         )
         self.installed_dependencies = True
         # stable order is important!
-        return (OrderedDict([(d.description['name'], d) for d in dependencies if d]), errors)
+        return (OrderedDict([(d.getName() or specs[i][0], d) for i, d in enumerate(dependencies)]), errors)
 
 
     def __getDependenciesRecursiveWithProvider(self,
@@ -340,7 +341,7 @@ class Component(pack.Pack):
             # return an in invalid component, so that it's possible to use
             # getDependenciesRecursive to find a list of failed dependencies,
             # as well as just available ones
-            r = Component(os.path.join(self.path, name))
+            r = Component(os.path.join(self.modulesPath(), name))
             assert(not r)
             return r
 
