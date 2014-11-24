@@ -7,6 +7,7 @@
 import os
 import errno
 import shutil
+import platform
 
 def mkDirP(path):
     try:
@@ -46,24 +47,18 @@ def fullySplitPath(path):
     components.reverse()
     return components
 
-def isLink(path):
-    # !!! FIXME: when windows symlinks are supported this check needs to
-    # support them too
-    return os.path.islink(path)
+# The link-related functions are platform-dependent
+links = __import__("fsutils_win" if os.name == 'nt' else "fsutils_posix", globals(), locals(), ['*'])
+isLink = links.isLink
+tryReadLink = links.tryReadLink
+_symlink = links._symlink
 
-def tryReadLink(path):
-    try:
-        return os.readlink(path)
-    except OSError as e:
-        return None
-
+# !!! FIXME: the logic in the "except" block below probably doesn't work in Windows
 def symlink(source, link_name):
-    # !!! FIXME: recent windowses do support symlinks, but os.symlink doesn't
-    # work on windows, so use something else
     try:
         # os.symlink doesn't update existing links, so need to rm first
         rmF(link_name)
-        os.symlink(source, link_name)
+        _symlink(source, link_name)
     except OSError as exception:
         if exception.errno != errno.EEXIST and (tryReadLink(link_name) != source):
             raise
