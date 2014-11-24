@@ -92,7 +92,7 @@ cmake_minimum_required(VERSION 2.8.11)
 include_directories("${escapeBackslash($source_directory)}")
 
 #for $lang in $languages
-set(YOTTA_AUTO_${lang.upper}_FILES
+set(YOTTA_AUTO_${object_name.upper}_${lang.upper}_FILES
 #for $file_name, $language in $source_files
 #if $language in $lang
     "${escapeBackslash($file_name)}"
@@ -102,7 +102,7 @@ set(YOTTA_AUTO_${lang.upper}_FILES
 
 #end for
 #if $resource_files
-set(YOTTA_AUTO_RESOURCE_FILES
+set(YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES
     #echo '    ' + '\\n    '.join('"'+$escapeBackslash(x)+'"' for x in $resource_files) + '\\n'
 )
 #end if
@@ -110,19 +110,19 @@ set(YOTTA_AUTO_RESOURCE_FILES
 #if $executable
 add_executable($object_name
 #for $lang in $languages
-    \${YOTTA_AUTO_${lang.upper}_FILES}
+    \${YOTTA_AUTO_${object_name.upper}_${lang.upper}_FILES}
 #end for
 #if $resource_files
-    \${YOTTA_AUTO_RESOURCE_FILES}
+    \${YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES}
 #end if
 )
 #else
 add_library($object_name
 #for $lang in $languages
-    \${YOTTA_AUTO_${lang.upper}_FILES}
+    \${YOTTA_AUTO_${object_name.upper}_${lang.upper}_FILES}
 #end for
 #if $resource_files
-    \${YOTTA_AUTO_RESOURCE_FILES}
+    \${YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES}
 #end if
 )
 #end if
@@ -130,7 +130,7 @@ add_library($object_name
 #if $resource_files
 set_target_properties($object_name
     PROPERTIES
-    RESOURCE "\${YOTTA_AUTO_RESOURCE_FILES}"
+    RESOURCE "\${YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES}"
 )
 #end if
 
