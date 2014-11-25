@@ -29,6 +29,9 @@ def addOptions(parser):
     )
 
 def dropSudoPrivs(fn):
+    # !!! FIXME: what should this actually do under Windows?
+    if os.name == 'nt':
+        return fn()
     running_as_root = (os.geteuid() == 0)
     if running_as_root and os.environ['SUDO_UID']:
         os.seteuid(int(os.environ['SUDO_UID']))

@@ -10,6 +10,8 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+platform_deps = ['ntfsutils'] if os.name == 'nt' else []
+
 setup(
     name = "yotta",
     version = "0.0.29",
@@ -34,5 +36,5 @@ setup(
         ],
     },
     test_suite = 'yotta.test',
-    install_requires=['semantic_version>=2.3.1,<3', 'restkit>=4.2,<5', 'PyGithub>1.25,<2', 'colorama>=0.3,<0.4', 'hgapi>=1.7,<2', 'cheetah>=2.4,<3', 'PyCrypto>=2.5,<3', 'PyJWT>=0.3,<0.4']
+    install_requires=['semantic_version>=2.3.1,<3', 'restkit>=4.2,<5', 'PyGithub>1.25,<2', 'colorama>=0.3,<0.4', 'hgapi>=1.7,<2', 'cheetah>=2.4,<3', 'PyCrypto>=2.5,<3', 'PyJWT>=0.3,<0.4'] + platform_deps
 )
