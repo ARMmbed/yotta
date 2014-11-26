@@ -49,7 +49,13 @@ class GitWorkingCopy(object):
 
     def availableVersions(self):
         # return a list of GitCloneVersion objects
-        return [GitCloneVersion(t, self) for t in self.vcs.tags()]
+        r = []
+        for t in self.vcs.tags():
+            try:
+                r.append(GitCloneVersion(t, self))
+            except ValueError:
+                logger.debug('invalid version tag: %s', t)
+        return r
 
     def tipVersion(self):
         raise NotImplementedError
