@@ -71,6 +71,7 @@ add_definitions($yotta_target_definitions)
 # Provide the version of the component being built, in case components want to
 # embed this into compiled libraries
 set(YOTTA_COMPONENT_VERSION "$component_version")
+add_definitions(-DYOTTA_COMPONENT_VERSION="$component_version")
 
 # recurse into subdirectories for this component, using the two-argument
 # add_subdirectory because the directories referred to here exist in the source
