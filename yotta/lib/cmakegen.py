@@ -207,8 +207,6 @@ class SourceFile(object):
         self.lang = lang
     def __repr__(self):
         return self.fullpath
-    def lang(self):
-        return self.lang
 
 class CMakeGen(object):
     def __init__(self, directory, target):
@@ -508,12 +506,13 @@ class CMakeGen(object):
         subdirs = defaultdict(list)
         toplevel_srcs = []
         for f in source_files:
-            subrelpath = os.path.relpath(f.relpath, dirname)
-            subdir = os.path.split(subrelpath)[0]
-            if subdir:
-                subdirs[subdir].append(f)
-            else:
-                toplevel_srcs.append(f)
+            if f.lang in ('c', 'cxx', 'objc'):
+                subrelpath = os.path.relpath(f.relpath, dirname)
+                subdir = os.path.split(subrelpath)[0]
+                if subdir:
+                    subdirs[subdir].append(f)
+                else:
+                    toplevel_srcs.append(f)
         
         tests = []
         for f in toplevel_srcs:
@@ -523,7 +522,7 @@ class CMakeGen(object):
             tests.append([[str(f)], object_name, [f.lang]])
         for subdirname, sources in subdirs.items():
             object_name = '%s-test-%s' % (
-                component.getName(), subdirname.lower()
+                component.getName(), fsutils.fullySplitPath(subdirname)[0].lower()
             )
             tests.append([[str(f) for f in sources], object_name, [f.lang for f in sources]])
 
