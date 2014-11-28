@@ -76,7 +76,7 @@ class GitComponent(access_common.RemoteComponent):
             tagged version.
         '''
         # git+ssh://anything#tag or anything.git#tag formats
-        m = re.match('(git\+ssh://.*|.*\.git)#?([><=.0-9a-zA-Z\*-]*)', url)
+        m = re.match('(git\+ssh://.*|.*\.git)#?([~^><=.0-9a-zA-Z\*-]*)', url)
         if m:
             return GitComponent(*m.groups())
         return None

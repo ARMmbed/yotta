@@ -73,7 +73,7 @@ class HGComponent(access_common.RemoteComponent):
         if url.find('#') == -1:
             m = re.match('hg\+(ssh|https?)(://.*$)', url)
         else:
-            m = re.match('hg\+(ssh|https?)(://.*)#([><=.0-9a-zA-Z\*-]*)', url)
+            m = re.match('hg\+(ssh|https?)(://.*)#([~^><=.0-9a-zA-Z\*-]*)', url)
         if m and m.groups():
             l = m.groups()
             return HGComponent(l[0] + l[1], l[2] if len(l) == 3 else '')
