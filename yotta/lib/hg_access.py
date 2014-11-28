@@ -32,6 +32,7 @@ class HGCloneVersion(version.Version):
             tag = None
         else:
             tag = self.tag
+        fsutils.rmRf(directory)
         vcs.HG.cloneToDirectory(self.working_copy.directory, directory, tag)
 
         # remove temporary files created by the HGWorkingCopy clone

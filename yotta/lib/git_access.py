@@ -13,6 +13,8 @@ import version
 import access_common
 # vcs, , represent version controlled directories, internal
 import vcs
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 logger = logging.getLogger('access')
 
@@ -32,6 +34,7 @@ class GitCloneVersion(version.Version):
             tag = None
         else:
             tag = self.tag
+        fsutils.rmRf(directory)
         vcs.Git.cloneToDirectory(self.working_copy.directory, directory, tag)
 
         # remove temporary files created by the GitWorkingCopy clone
@@ -51,6 +54,7 @@ class GitWorkingCopy(object):
         # return a list of GitCloneVersion objects
         r = []
         for t in self.vcs.tags():
+            logger.debug("available version tag: %s", t)
             try:
                 r.append(GitCloneVersion(t, self))
             except ValueError:
@@ -78,6 +82,7 @@ class GitComponent(access_common.RemoteComponent):
         # git+ssh://anything#tag or anything.git#tag formats
         m = re.match('(git\+ssh://.*|.*\.git)#?([~^><=.0-9a-zA-Z\*-]*)', url)
         if m:
+            logger.debug("parsed git spec: %s", m.groups())
             return GitComponent(*m.groups())
         return None
 

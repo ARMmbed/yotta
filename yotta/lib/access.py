@@ -98,6 +98,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         vers = remote_component.availableVersions()
         spec = remote_component.versionSpec()
         v = spec.select(vers)
+        logger.debug("%s selected %s from %s", spec, v, vers)
         if not v:
             raise Exception(
                 'The %s registry does not provide a version of "%s" matching "%s"' % (
@@ -117,6 +118,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             vers = [remote_component.tipVersion()]
         spec = remote_component.versionSpec()
         v = spec.select(vers)
+        logger.debug("%s selected %s from %s", spec, v, vers)
         if not v:
             raise Exception(
                 'Github repository "%s" does not provide a version matching "%s"' % (
@@ -141,6 +143,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             vers = [local_clone.tipVersion()]
         spec = remote_component.versionSpec()
         v = spec.select(vers)
+        logger.debug("%s selected %s from %s", spec, v, vers)
         if not v:
             raise Exception(
                 '%s repository "%s" does not provide a version matching "%s"' % (
