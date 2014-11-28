@@ -49,8 +49,17 @@ class HGWorkingCopy(object):
         self.directory = None
 
     def availableVersions(self):
-        # return a list of HGCloneVersion objects
-        return [HGCloneVersion(t, self) for t in self.vcs.tags()]
+        r = []
+        for t in self.vcs.tags():
+            logger.debug("available version tag: %s", t)
+            # ignore empty tags:
+            if not len(t.strip()):
+                continue
+            try:
+                r.append(HGCloneVersion(t, self))
+            except ValueError:
+                logger.debug('invalid version tag: %s', t)
+        return r
 
     def tipVersion(self):
         raise NotImplementedError

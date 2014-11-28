@@ -55,6 +55,9 @@ class GitWorkingCopy(object):
         r = []
         for t in self.vcs.tags():
             logger.debug("available version tag: %s", t)
+            # ignore empty tags:
+            if not len(t.strip()):
+                continue
             try:
                 r.append(GitCloneVersion(t, self))
             except ValueError:
