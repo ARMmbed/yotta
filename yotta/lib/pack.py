@@ -10,8 +10,11 @@ from collections import OrderedDict
 import tarfile
 import re
 import logging
-import fnmatch
 import errno
+
+# PyPi/standard library > 3.4
+# it has to be PurePath
+from pathlib import PurePath
 
 # version, , represent versions and specifications, internal
 import version
@@ -27,20 +30,19 @@ import registry_access
 # These patterns are used in addition to any glob expressions defined by the
 # .yotta_ignore file
 Default_Publish_Ignore = [
-    '^upload\.tar\.(gz|bz)$',
-    '^\.git$',
-    '^\.hg$',
-    '^\.svn$',
-    '^yotta_modules$',
-    '^yotta_targets$',
-    '^build$',
-    '^\.DS_Store$',
-    '^\.[^\/]*\.sw[ponml]$',
-    '^\._.*$',
-    '~$',
-    '[/\\\\]\.DS_Store$',
-    '[/\\\\]\.[^\/]*\.sw[ponml]$',
-    '[/\\\\]\._.*$',
+    'upload.tar.[gb]z',
+    '.git',
+    '.hg',
+    '.svn',
+    'yotta_modules',
+    'yotta_targets',
+    'build',
+    '.DS_Store',
+    '.sw[ponml]',
+    '._.*',
+    '~',
+    '.DS_Store',
+    '._.*',
 ]
 
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
@@ -172,14 +174,15 @@ class Pack(object):
         for l in f:
             l = l.rstrip('\n\r')
             if not l.startswith('#'):
-                r.append(re.compile(fnmatch.translate(l)))
+                r.append(l)
         return r
 
     def ignores(self, path):
-        path = path.replace("\\", '/')
         ''' Test if this module ignores the file at "path" '''
+        test_path = PurePath(path)
+
         for exp in self.ignore_patterns:
-            if exp.match(path):
+            if test_path.match(exp):
                 logger.debug('"%s" ignored' % path)
                 return True
         return False
