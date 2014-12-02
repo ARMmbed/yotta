@@ -176,6 +176,7 @@ class Pack(object):
         return r
 
     def ignores(self, path):
+        path = path.replace("\\", '/')
         ''' Test if this module ignores the file at "path" '''
         for exp in self.ignore_patterns:
             if exp.match(path):
