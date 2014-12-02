@@ -39,7 +39,6 @@ Default_Publish_Ignore = [
     'build',
     '.DS_Store',
     '.sw[ponml]',
-    '._.*',
     '~',
     '.DS_Store',
     '._.*',
