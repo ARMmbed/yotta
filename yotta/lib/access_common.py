@@ -88,6 +88,8 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
             # head back to the start of the file and untar (without closing the
             # file)
             f.seek(0)
+            f.flush()
+            os.fsync(f)
             with tarfile.open(fileobj=f) as tf:
                 to_extract = []
                 # modify members to change where they extract to!

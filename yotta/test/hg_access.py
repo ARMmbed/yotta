@@ -27,7 +27,7 @@ from yotta import install
 
 Test_Name = 'hg-testing-dummy'
 Test_Repo = "hg+ssh://hg@bitbucket.org/autopulated/hg-testing-dummy"
-Test_Repo_With_Spec = "hg+ssh://hg@bitbucket.org/autopulated/hg-testing-dummy#0.0.1"
+Test_Repo_With_Spec = "hg+ssh://hg@bitbucket.org/autopulated/hg-testing-dummy#0.0.2"
 Test_Deps_Name = 'hg-access-testing'
 Test_Deps_Target = 'x86-osx-native,*'
 

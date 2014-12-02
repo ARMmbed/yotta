@@ -13,6 +13,8 @@ import version
 import access_common
 # vcs, , represent version controlled directories, internal
 import vcs
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 logger = logging.getLogger('access')
 

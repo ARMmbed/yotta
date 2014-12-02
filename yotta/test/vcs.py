@@ -44,13 +44,13 @@ class TestGit(unittest.TestCase):
 
     def test_isClean(self):
         self.assertTrue(self.working_copy.isClean())
-        fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'package.json'))
+        fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'module.json'))
         self.assertFalse(self.working_copy.isClean())
     
     def test_commit(self):
-        with open(os.path.join(self.working_copy.workingDirectory(), 'package.json'), "a") as f:
+        with open(os.path.join(self.working_copy.workingDirectory(), 'module.json'), "a") as f:
             f.write("\n")
-        self.working_copy.markForCommit('package.json')
+        self.working_copy.markForCommit('module.json')
         self.working_copy.commit('test commit: DO NOT PUSH')
         self.assertTrue(self.working_copy.isClean())
 
@@ -71,13 +71,13 @@ class TestHg(unittest.TestCase):
 
     def test_isClean(self):
         self.assertTrue(self.working_copy.isClean())
-        fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'package.json'))
+        fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'module.json'))
         self.assertFalse(self.working_copy.isClean())
 
     def test_commit(self):
-        with open(os.path.join(self.working_copy.workingDirectory(), 'package.json'), "a") as f:
+        with open(os.path.join(self.working_copy.workingDirectory(), 'module.json'), "a") as f:
             f.write("\n")
-        self.working_copy.markForCommit('package.json')
+        self.working_copy.markForCommit('module.json')
         self.working_copy.commit('test commit: DO NOT PUSH')
         self.assertTrue(self.working_copy.isClean())
 
