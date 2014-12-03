@@ -11,6 +11,7 @@ import tarfile
 import re
 import logging
 import errno
+import copy
 
 # PyPi/standard library > 3.4
 # it has to be PurePath
@@ -91,7 +92,7 @@ class Pack(object):
         self.version = None
         self.description_filename = description_filename
         self.ignore_list_fname = Ignore_List_Fname
-        self.ignore_patterns = [re.compile('|'.join(Default_Publish_Ignore))]
+        self.ignore_patterns = copy.copy(Default_Publish_Ignore)
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
             self.version = version.Version(self.description['version'])
@@ -172,7 +173,7 @@ class Pack(object):
         r = []
         for l in f:
             l = l.rstrip('\n\r')
-            if not l.startswith('#'):
+            if not l.startswith('#') and len(l):
                 r.append(l)
         return r
 
