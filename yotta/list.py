@@ -24,7 +24,7 @@ def addOptions(parser):
         help='Show all dependencies (including repeats)'
     )
 
-def execCommand(args):
+def execCommand(args, following_args):
     wd = os.getcwd()
 
     c = validate.currentDirectoryModule()

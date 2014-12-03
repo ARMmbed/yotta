@@ -21,7 +21,7 @@ def addOptions(parser):
     pass
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     wd = os.getcwd()
     c = component.Component(wd)
     # skip testing for target if we already found a component

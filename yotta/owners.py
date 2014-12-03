@@ -58,7 +58,7 @@ def addOptions(parser):
     })
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     sc = args.subsubcommand
 
     # if the current directory contains a component or a target, get it

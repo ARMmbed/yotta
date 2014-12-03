@@ -79,7 +79,7 @@ def listOfWords(string):
 def addOptions(parser):
     pass
 
-def execCommand(args):
+def execCommand(args, following_args):
     cwd = os.getcwd()
     c = component.Component(cwd)
     if c:

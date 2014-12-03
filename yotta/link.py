@@ -40,7 +40,7 @@ def dropSudoPrivs(fn):
         os.seteuid(0)
     return r
 
-def execCommand(args):
+def execCommand(args, following_args):
     c = validate.currentDirectoryModule()
     if not c:
         return 1

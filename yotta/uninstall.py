@@ -20,7 +20,7 @@ def addOptions(parser):
         help='Name of the dependency to remove'
     )
 
-def execCommand(args):
+def execCommand(args, following_args):
     err = validate.componentNameValidationError(args.component)
     if err:
         logger.error(err)

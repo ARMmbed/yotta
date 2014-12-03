@@ -43,7 +43,7 @@ def addOptions(parser):
     )
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     cwd = os.getcwd()
     c = component.Component(cwd)
     if args.component is None:

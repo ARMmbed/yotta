@@ -38,7 +38,7 @@ def addOptions(parser):
     #)
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     if args.set_target is None:
         print args.target
     else:
