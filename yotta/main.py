@@ -22,7 +22,7 @@ from . import publish
 from . import debug
 from . import login
 from . import logout
-from . import list
+from . import list as list_command
 from . import uninstall
 from . import owners
 
@@ -34,10 +34,19 @@ from lib import detect
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) / 5)
 
+def splitList(l, at_value):
+    r = [[]]
+    for x in l:
+        if x == at_value:
+            r.append(list())
+        else:
+            r[-1].append(x)
+    return r
+
 
 def main():
     parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(metavar='{install, update, version, link, link-target, target, build, init, publish, login, logout, list, uninstall, owners}')
+    subparser = parser.add_subparsers(metavar='<subcommand>')
 
     parser.add_argument('--version', dest='show_version', action='version',
             version=pkg_resources.require("yotta")[0].version,
@@ -58,8 +67,10 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
-    def addParser(name, module, description):
-        parser = subparser.add_parser(name, description=description)
+    def addParser(name, module, description, help=None):
+        if help is None:
+            help = description
+        parser = subparser.add_parser(name, description=description, help=help)
         module.addOptions(parser)
         parser.set_defaults(command=module.execCommand)
 
@@ -69,13 +80,18 @@ def main():
     addParser('install', install, 'Install dependencies for the current module, or a specific module.')
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
-    addParser('build', build, 'Build the current module.')
+    addParser('build', build,
+        'Build the current module. Options can be passed to the underlying '+\
+        'build tool by passing them after --, e.g. to do a parallel build '+\
+        'when make is the build tool, run `yotta build -- -j`',
+        'Build the current module.'
+    )
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
     addParser('init', init, 'Create a new module.')
     addParser('publish', publish, 'Publish a module or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
-    addParser('list', list, 'List the dependencies of the current module.')
+    addParser('list', list_command, 'List the dependencies of the current module.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
 
@@ -91,14 +107,22 @@ def main():
             'rm':subparser.choices['uninstall'],
          'owner':subparser.choices['owners']
     })
+    
+    # split the args into those before and after any '--'
+    # argument – subcommands get raw access to arguments following '--', and
+    # may pass them on to (for example) the build tool being used
+    split_args = splitList(sys.argv, '--')
+    following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
 
-    args = parser.parse_args() 
+    # when args are passed directly we need to strip off the program name
+    # (hence [:1])
+    args = parser.parse_args(split_args[0][1:])
 
     loglevel = logLevelFromVerbosity(args.verbosity)
     logging_setup.init(level=loglevel, enable_subsystems=args.debug)
     
     # finally, do stuff!
-    status = args.command(args)
+    status = args.command(args, following_args)
 
     sys.exit(status or 0)
 
