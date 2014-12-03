@@ -23,7 +23,7 @@ def addOptions(parser):
     
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     if args.component is None:
         updateDeps(args)
     else:

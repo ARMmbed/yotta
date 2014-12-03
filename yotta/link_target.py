@@ -26,7 +26,7 @@ def addOptions(parser):
              'link the current target.'
     )
 
-def execCommand(args):
+def execCommand(args, following_args):
     if args.target:
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_targets'))
         src = os.path.join(folders.globalTargetInstallDirectory(), args.target)

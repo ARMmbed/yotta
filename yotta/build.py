@@ -46,7 +46,7 @@ def execCommand(args, following_args):
     vars(args)['act_globally'] = False
     vars(args)['save'] = False
     vars(args)['save_target'] = False
-    install.execCommand(args)
+    install.execCommand(args, [])
 
     builddir = os.path.join(cwd, 'build', target.getName())
 

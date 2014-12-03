@@ -29,7 +29,7 @@ def addOptions(parser):
     parser.add_argument('action', type=patchType, nargs='?', help='[patch | minor | major | <version>]')
 
 
-def execCommand(args):
+def execCommand(args, following_args):
     wd = os.getcwd()
     c = component.Component(wd)
     # skip testing for target if we already found a component

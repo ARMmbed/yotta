@@ -9,6 +9,6 @@ from lib import github_access
 def addOptions(parser):
     pass
 
-def execCommand(args):
+def execCommand(args, following_args):
     github_access.authorizeUser()
 
