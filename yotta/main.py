@@ -109,7 +109,7 @@ def main():
     })
     
     # split the args into those before and after any '--'
-    # argument – subcommands get raw access to arguments following '--', and
+    # argument - subcommands get raw access to arguments following '--', and
     # may pass them on to (for example) the build tool being used
     split_args = splitList(sys.argv, '--')
     following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
