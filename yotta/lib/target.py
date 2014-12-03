@@ -100,9 +100,11 @@ class Target(pack.Pack):
         except KeyError:
             return None
 
-    def build(self, builddir, component, args, release_build=False):
+    def build(self, builddir, component, args, release_build=False, build_args=None):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
+        if build_args is None:
+            build_args = []
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
         commands = []
@@ -117,9 +119,9 @@ class Target(pack.Pack):
         if args.cmake_generator == "Ninja" and os.name == 'nt':
             commands.append(["sed", "-i", "-e", "s#\\\\#/#g", "build.ninja"])
         if build_command:
-            commands.append(build_command)
+            commands.append(build_command + build_args)
         else:
-            commands.append(['cmake', '--build', builddir])
+            commands.append(['cmake', '--build', builddir] + build_args)
         for cmd in commands:
             try:
                 child = subprocess.Popen(
