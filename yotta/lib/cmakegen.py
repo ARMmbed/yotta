@@ -128,6 +128,19 @@ add_library($object_name
 )
 #end if
 
+#if $executable
+# if the target has defined a post-processing step, perform it:
+if(YOTTA_POSTPROCESS_COMMAND)
+    string(REPLACE YOTTA_CURRENT_EXE_NAME "$object_name" LOCAL_POSTPROCESS_COMMAND "\${YOTTA_POSTPROCESS_COMMAND}")
+    separate_arguments(LOCAL_POSTPROCESS_COMMAND_SEPARATED UNIX_COMMAND \${LOCAL_POSTPROCESS_COMMAND})
+    add_custom_command(
+        TARGET $object_name
+        POST_BUILD
+        COMMAND \${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
+    )
+endif()
+#end if
+
 #if $resource_files
 set_target_properties($object_name
     PROPERTIES
@@ -176,6 +189,16 @@ set_target_properties($object_name PROPERTIES
 target_link_libraries($object_name
     #echo '    ' + '\\n    '.join($link_dependencies) + '\\n'
 )
+# if the target has defined a post-processing step, perform it:
+if(YOTTA_POSTPROCESS_COMMAND)
+    string(REPLACE YOTTA_CURRENT_EXE_NAME "$object_name" LOCAL_POSTPROCESS_COMMAND "\${YOTTA_POSTPROCESS_COMMAND}")
+    separate_arguments(LOCAL_POSTPROCESS_COMMAND_SEPARATED UNIX_COMMAND \${LOCAL_POSTPROCESS_COMMAND})
+    add_custom_command(
+        TARGET $object_name
+        POST_BUILD
+        COMMAND \${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
+    )
+endif()
 add_test($object_name $object_name)
 
 #end for
