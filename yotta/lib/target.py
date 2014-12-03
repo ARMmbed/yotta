@@ -112,6 +112,8 @@ class Target(pack.Pack):
         else:
             commands.append(['cmake', '-G', args.cmake_generator, '.'])
         build_command = self.overrideBuildCommand(args.cmake_generator)
+        if args.cmake_generator == "Ninja":
+            commands.append(["sed", "-i", "-e", "s#\\\\#/#g", "build.ninja"])
         if build_command:
             commands.append(build_command)
         else:
