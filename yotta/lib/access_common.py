@@ -34,7 +34,7 @@ class RemoteVersion(version.Version):
 
 class RemoteComponent(object):
     @classmethod
-    def createFromNameAndSpec(cls, url, name=None):
+    def createFromSource(cls, url, name=None):
         raise NotImplementedError
 
     def versionSpec(self):

@@ -146,13 +146,14 @@ class GithubComponentVersion(access_common.RemoteVersion):
         _getTarball(self.url, directory)
 
 class GithubComponent(access_common.RemoteComponent):
-    def __init__(self, repo, version_spec=''):
+    def __init__(self, repo, version_spec='', semantic_sec=None):
         logging.debug('create Github component for repo:%s version spec:%s' % (repo, version_spec))
+        # !!! TODO: handle non-semantic spec
         self.repo = repo
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromNameAndSpec(cls, url, name=None):    
+    def createFromSource(cls, vs, name=None):    
         ''' returns a github component for any github url (including
             git+ssh:// git+http:// etc. or None if this is not a Github URL.
             For all of these we use the github api to grab a tarball, because
@@ -162,24 +163,10 @@ class GithubComponent(access_common.RemoteComponent):
             form: 'owner/repo @version' or 'url://...#version', which can be used
             to grab a particular tagged version.
 
-            (Note that for github components we ignore the package name, and
-             just test to see if the "spec" looks like one of the supported URI
-             schemes)
+            (Note that for github components we ignore the component name - it
+             doesn't have to match the github module name)
         '''
-        # owner/package [@1.2.3] format
-        url = url.strip()
-        m = re.match('([^:/\s]*/[^:/\s]*) *@?([><=.0-9a-zA-Z\*-]*)', url)
-        if m:
-            return GithubComponent(*m.groups())
-        # something://[anything.|anything@]github.com/owner/package[#1.2.3] format
-        m = re.match('(?:[^:/]*://)?(?:[^:/]*\.|[^:/]*@)?github\.com[:/]([^/]*/[^/#]*)#?([><=.0-9a-zA-Z\*-]*)', url)
-        if m:
-            repo = m.group(1)
-            spec = m.group(2)
-            if repo.endswith('.git'):
-                repo = repo[:-4]
-            return GithubComponent(repo, spec)
-        return None
+        return GithubComponent(vs.location, vs.spec, vs.semantic_spec)
 
     def versionSpec(self):
         return self.spec

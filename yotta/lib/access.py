@@ -25,6 +25,8 @@ import hg_access
 import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
+# sourceparse, , parse version source urls, internal
+import sourceparse
 
 # Version requirement strings we want to support:
 #
@@ -50,39 +52,29 @@ logger = logging.getLogger('access')
 
 
 def remoteComponentFor(name, version_required, registry='modules'):
-    ''' Return a RemoteComponent sublclass for the specified component and
-        version specification.
+    ''' Return a RemoteComponent sublclass for the specified component name and
+        source url (or version specification)
         Raises an exception if any arguments are invalid.
     '''
 
-    if registry in ('modules', 'targets'):
-        # If the name/spec looks like a reference to a component in the registry
-        # then that takes precedence
-        remote_component = registry_access.RegistryThing.createFromNameAndSpec(
-            version_required, name, registry=registry
+    vs = sourceparse.parseSourceURL(version_required)
+    
+    if vs.source_type == 'registry':
+        if registry not in ('modules', 'targets'):
+            raise Exception('no known registry namespace "%s"' % registry)
+        return registry_access.RegistryThing.createFromSource(
+            vs, name, registry=registry
         )
-        if remote_component:
-            return remote_component
+    elif vs.source_type == 'github':
+        return github_access.GithubComponent.createFromSource(vs, name)
+    elif vs.source_type == 'git':
+        return git_access.GitComponent.createFromSource(vs, name)
+    elif vs.source_type == 'hg':
+        return hg_access.HGComponent.createFromSource(vs, name)
     else:
-        raise Exception('no known registry namespace "%s"' % registry)
-
-    # if it doesn't look like a registered component, then other schemes have a
-    # go at matching the name/spec
-    remote_component = github_access.GithubComponent.createFromNameAndSpec(version_required, name)
-    if remote_component is not None:
-        return remote_component
-
-    remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
-    if remote_component:
-        return remote_component
-
-    remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
-    if remote_component:
-        return remote_component
-
+        raise Exception('unsupported module source: "%s"' % vs.source_type)
     # !!! FIXME: next: generic http urls to tarballs
 
-    raise Exception('unsupported component req: %s' % version_required)
 
 def latestSuitableVersion(name, version_required, registry='modules'):
     ''' Return a RemoteVersion object representing the latest suitable

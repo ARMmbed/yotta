@@ -73,23 +73,20 @@ class HGComponent(access_common.RemoteComponent):
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromNameAndSpec(cls, url, name=None):    
+    def createFromSource(cls, vs, name=None):
         ''' returns a hg component for any hg:// url, or None if this is not
             a hg component.
 
             Normally version will be empty, unless the original url was of the
-            form 'hg://...#version', which can be used to grab a particular
+            form 'hg+ssh://...#version', which can be used to grab a particular
             tagged version.
         '''
-        # hg+ssh://anything#tag or anything.hg#tag formats
-        if url.find('#') == -1:
-            m = re.match('hg\+(ssh|https?)(://.*$)', url)
+        # strip hg of the url scheme:
+        if vs.location.startswith('hg+'):
+            location = vs.location[3:]
         else:
-            m = re.match('hg\+(ssh|https?)(://.*)#([~^><=.0-9a-zA-Z\*-]*)', url)
-        if m and m.groups():
-            l = m.groups()
-            return HGComponent(l[0] + l[1], l[2] if len(l) == 3 else '')
-        return None
+            location = vs.location
+        return HGComponent(location, vs.spec)
 
     def versionSpec(self):
         return self.spec

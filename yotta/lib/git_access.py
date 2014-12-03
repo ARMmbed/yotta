@@ -69,25 +69,22 @@ class GitWorkingCopy(object):
 
 
 class GitComponent(access_common.RemoteComponent):
-    def __init__(self, url, version_spec=''):
+    def __init__(self, url, version_spec='', semantic_spec=None):
         self.url = url
+        # !!! TODO: handle non-semantic spec
         self.spec = version.Spec(version_spec)
     
     @classmethod
-    def createFromNameAndSpec(cls, url, name=None):    
+    def createFromSource(cls, vs, name=None):    
         ''' returns a git component for any git:// url, or None if this is not
             a git component.
 
             Normally version will be empty, unless the original url was of the
             form 'git://...#version', which can be used to grab a particular
-            tagged version.
+            tag or branch, or ...#>=1.2.3, which can be used to specify
+            semantic version specifications on tags.
         '''
-        # git+ssh://anything#tag or anything.git#tag formats
-        m = re.match('(git\+ssh://.*|.*\.git)#?([~^><=.0-9a-zA-Z\*-]*)', url)
-        if m:
-            logger.debug("parsed git spec: %s", m.groups())
-            return GitComponent(*m.groups())
-        return None
+        return GitComponent(vs.location, vs.spec, vs.semantic_spec)
 
     def versionSpec(self):
         return self.spec
