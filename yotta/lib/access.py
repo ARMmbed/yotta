@@ -76,6 +76,19 @@ def remoteComponentFor(name, version_required, registry='modules'):
     # !!! FIXME: next: generic http urls to tarballs
 
 
+def tagOrBranchVersion(spec, tags, branches, diagnostic_name):
+    for i, v in enumerate(tags + branches):
+        if spec == v.tag:
+            if i >= len(tags):
+                logger.warning(
+                    'Using head of "%s" branch for "%s", not a tagged version' % (
+                        v.tag,
+                        diagnostic_name
+                    )
+                )
+            return v
+    return None
+
 def latestSuitableVersion(name, version_required, registry='modules'):
     ''' Return a RemoteVersion object representing the latest suitable
         version of the named component or target.
@@ -102,25 +115,42 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         return v
     elif remote_component.remoteType() == 'github': 
         logger.debug('satisfy %s from github url' % name)
-        vers = remote_component.availableVersions()
-        if not len(vers):
-            logger.warning(
-                'Github repository "%s" has no tagged versions, default branch will be used' % (
-                    remote_component.repo
-                )
-            )
-            vers = [remote_component.tipVersion()]
         spec = remote_component.versionSpec()
-        v = spec.select(vers)
-        logger.debug("%s selected %s from %s", spec, v, vers)
-        if not v:
+        if spec:
+            vers = remote_component.availableVersions()
+            if not len(vers):
+                logger.warning(
+                    'Github repository "%s" has no tagged versions, default branch will be used' % (
+                        remote_component.repo
+                    )
+                )
+                vers = [remote_component.tipVersion()]
+            v = spec.select(vers)
+            logger.debug("%s selected %s from %s", spec, v, vers)
+            if not v:
+                raise Exception(
+                    'Github repository "%s" does not provide a version matching "%s"' % (
+                        remote_component.repo,
+                        remote_component.spec
+                    )
+                )
+            return v
+        else:
+            # we're fetching a specific tag, or the head of a branch:
+            v = tagOrBranchVersion(
+                remote_component.tagOrBranchSpec(),
+                remote_component.availableTags(),
+                remote_component.availableBranches(),
+                name
+            )
+            if v:
+                return v
             raise Exception(
-                'Github repository "%s" does not provide a version matching "%s"' % (
-                    remote_component.repo,
-                    remote_component.spec
+                'Github repository "%s" does not have any tags or branches matching "%s"' % (
+                    version_required, spec
                 )
             )
-        return v
+
     elif remote_component.remoteType() in ('git', 'hg'):
         clone_type = remote_component.remoteType()
         logger.debug('satisfy %s from %s url' % (name, clone_type))
@@ -149,12 +179,14 @@ def latestSuitableVersion(name, version_required, registry='modules'):
                 )
             return v
         elif remote_component.remoteType() == 'git':
-            spec = remote_component.tagOrBranchSpec()
-            tags = local_clone.availableTags()
-            branches = local_clone.availableBranches()
-            for v in tags + branches:
-                if spec == v:
-                    return v
+            v = tagOrBranchVersion(
+                remote_component.tagOrBranchSpec(),
+                local_clone.availableTags(),
+                local_clone.availableBranches(),
+                name
+            )
+            if v:
+                return v
             raise Exception(
                 '%s repository "%s" does not have any tags or branches matching "%s"' % (
                     clone_type, version_required, spec

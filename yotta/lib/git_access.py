@@ -39,9 +39,6 @@ class GitCloneVersion(version.Version):
 
         # remove temporary files created by the GitWorkingCopy clone
         self.working_copy.remove()
-    
-    def __eq__(self, other):
-        return self.tag == other
 
 class GitWorkingCopy(object):
     def __init__(self, vcs):
