@@ -3,23 +3,22 @@
 
 Yotta is a tool that we're building at [mbed](https://mbed.org), to make it easier to build better software written in C, C++ or other C-family languages. It's still early in development, so if you have questions/feedback or issues, please [report them](https://github.com/ARMmbed/yotta/issues).
 
-### Quick Installation
+### Installation
 To use yotta, you need:
 
  * yotta itself (yotta is written in [python](https://www.python.org/downloads/release/python-278/), and installed using [pip](http://pip.readthedocs.org/en/latest/installing.html))
  * [CMake](http://www.cmake.org/download/)
  * a compiler
 
-**To install yotta itself**, download the latest [release tarball](https://github.com/ARMmbed/yotta/releases), then run:
+**To install yotta itself**, run:
 ``` bash
-sudo pip install -U setuptools
-sudo pip install ./path/to/yotta-a.b.c.tar.gz
+pip install yotta
 ```
-You may need to first install [Python 2.7](https://www.python.org/downloads/release/python-278/) and [pip](http://pip.readthedocs.org/en/latest/installing.html), if you do not already have them.
+If permission is denied, you may need to run `sudo pip install yotta`, and you may need to first install [Python 2.7](https://www.python.org/downloads/release/python-278/) and [pip](http://pip.readthedocs.org/en/latest/installing.html), if you do not already have them.
 
 **Install CMake** from the [CMake download page](http://www.cmake.org/download/), or using your system's package manager. Make sure to check the option in the installer to add it to your path. 
 
-Which compiler you need depends on whether you're building programs for your host system, or cross-compiling them run on an embedded device:
+**Which compiler** you need depends on whether you're building programs for your host system, or cross-compiling them run on an embedded device:
 
  * to cross-compile, install [arm-none-eabi-gcc](https://launchpad.net/gcc-arm-embedded/+download).
  * to compile natively on OS X, [install Xcode](https://developer.apple.com/xcode/downloads/), including the command-line tools.
