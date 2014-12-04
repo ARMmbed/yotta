@@ -134,7 +134,6 @@ def _listVersions(namespace, name):
     auth = _registryAuthFilter()
     resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
     try:
-        logger.info('get versions for ' + name)
         response = resource.get(
             headers = headers
         )
@@ -202,11 +201,11 @@ class RegistryThingVersion(access_common.RemoteVersion):
 class RegistryThing(access_common.RemoteComponent):
     def __init__(self, name, version_spec, namespace):
         self.name = name
-        self.spec = version.Spec(version_spec)
+        self.spec = version_spec
         self.namespace = namespace
     
     @classmethod
-    def createFromNameAndSpec(cls, version_spec, name, registry):
+    def createFromSource(cls, vs, name, registry):
         ''' returns a registry component for anything that's a valid package
             name (this does not guarantee that the component actually exists in
             the registry: use availableVersions() for that).
@@ -218,15 +217,11 @@ class RegistryThing(access_common.RemoteComponent):
         name_match = re.match('^([a-z0-9-]+)$', name)
         if not name_match:
             logger.warning(
-                'Dependency name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name
+                
             )
-            return None
-        try:
-            spec = version.Spec(version_spec)
-            return RegistryThing(name, version_spec, registry)
-        except ValueError, e:
-            pass
-        return None
+            raise ValueError('Dependency name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name)
+        assert(vs.semantic_spec)
+        return RegistryThing(name, vs.semantic_spec, registry)
 
     def versionSpec(self):
         return self.spec

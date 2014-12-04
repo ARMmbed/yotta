@@ -25,6 +25,8 @@ import hg_access
 import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
+# sourceparse, , parse version source urls, internal
+import sourceparse
 
 # Version requirement strings we want to support:
 #
@@ -50,39 +52,42 @@ logger = logging.getLogger('access')
 
 
 def remoteComponentFor(name, version_required, registry='modules'):
-    ''' Return a RemoteComponent sublclass for the specified component and
-        version specification.
+    ''' Return a RemoteComponent sublclass for the specified component name and
+        source url (or version specification)
         Raises an exception if any arguments are invalid.
     '''
 
-    if registry in ('modules', 'targets'):
-        # If the name/spec looks like a reference to a component in the registry
-        # then that takes precedence
-        remote_component = registry_access.RegistryThing.createFromNameAndSpec(
-            version_required, name, registry=registry
+    vs = sourceparse.parseSourceURL(version_required)
+    
+    if vs.source_type == 'registry':
+        if registry not in ('modules', 'targets'):
+            raise Exception('no known registry namespace "%s"' % registry)
+        return registry_access.RegistryThing.createFromSource(
+            vs, name, registry=registry
         )
-        if remote_component:
-            return remote_component
+    elif vs.source_type == 'github':
+        return github_access.GithubComponent.createFromSource(vs, name)
+    elif vs.source_type == 'git':
+        return git_access.GitComponent.createFromSource(vs, name)
+    elif vs.source_type == 'hg':
+        return hg_access.HGComponent.createFromSource(vs, name)
     else:
-        raise Exception('no known registry namespace "%s"' % registry)
-
-    # if it doesn't look like a registered component, then other schemes have a
-    # go at matching the name/spec
-    remote_component = github_access.GithubComponent.createFromNameAndSpec(version_required, name)
-    if remote_component is not None:
-        return remote_component
-
-    remote_component = git_access.GitComponent.createFromNameAndSpec(version_required, name)
-    if remote_component:
-        return remote_component
-
-    remote_component = hg_access.HGComponent.createFromNameAndSpec(version_required, name)
-    if remote_component:
-        return remote_component
-
+        raise Exception('unsupported module source: "%s"' % vs.source_type)
     # !!! FIXME: next: generic http urls to tarballs
 
-    raise Exception('unsupported component req: %s' % version_required)
+
+def tagOrBranchVersion(spec, tags, branches, diagnostic_name):
+    for i, v in enumerate(tags + branches):
+        if spec == v.tag:
+            if i >= len(tags):
+                logger.warning(
+                    'Using head of "%s" branch for "%s", not a tagged version' % (
+                        v.tag,
+                        diagnostic_name
+                    )
+                )
+            return v
+    return None
 
 def latestSuitableVersion(name, version_required, registry='modules'):
     ''' Return a RemoteVersion object representing the latest suitable
@@ -92,6 +97,8 @@ def latestSuitableVersion(name, version_required, registry='modules'):
     '''
 
     remote_component = remoteComponentFor(name, version_required, registry)
+
+    logger.info('get versions for ' + name)
 
     if remote_component.remoteType() == 'registry':
         logger.debug('satisfy %s from %s registry' % (name, registry))
@@ -108,25 +115,42 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         return v
     elif remote_component.remoteType() == 'github': 
         logger.debug('satisfy %s from github url' % name)
-        vers = remote_component.availableVersions()
-        if not len(vers):
-            logger.warning(
-                'Github repository "%s" has no tagged versions, master branch will be used' % (
-                    remote_component.repo
-                )
-            )
-            vers = [remote_component.tipVersion()]
         spec = remote_component.versionSpec()
-        v = spec.select(vers)
-        logger.debug("%s selected %s from %s", spec, v, vers)
-        if not v:
+        if spec:
+            vers = remote_component.availableVersions()
+            if not len(vers):
+                logger.warning(
+                    'Github repository "%s" has no tagged versions, default branch will be used' % (
+                        remote_component.repo
+                    )
+                )
+                vers = [remote_component.tipVersion()]
+            v = spec.select(vers)
+            logger.debug("%s selected %s from %s", spec, v, vers)
+            if not v:
+                raise Exception(
+                    'Github repository "%s" does not provide a version matching "%s"' % (
+                        remote_component.repo,
+                        remote_component.spec
+                    )
+                )
+            return v
+        else:
+            # we're fetching a specific tag, or the head of a branch:
+            v = tagOrBranchVersion(
+                remote_component.tagOrBranchSpec(),
+                remote_component.availableTags(),
+                remote_component.availableBranches(),
+                name
+            )
+            if v:
+                return v
             raise Exception(
-                'Github repository "%s" does not provide a version matching "%s"' % (
-                    remote_component.repo,
-                    remote_component.spec
+                'Github repository "%s" does not have any tags or branches matching "%s"' % (
+                    version_required, spec
                 )
             )
-        return v
+
     elif remote_component.remoteType() in ('git', 'hg'):
         clone_type = remote_component.remoteType()
         logger.debug('satisfy %s from %s url' % (name, clone_type))
@@ -135,24 +159,41 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             raise Exception(
                 'Failed to clone %s URL %s to satisfy dependency %s' % (clone_type, version_required, name)
             )
-        vers = local_clone.availableVersions()
-        if not len(vers):
-            logger.warning(
-                '%s repository "%s" has no tagged versions, master branch will be used' % (clone_type, version_required)
-            )
-            vers = [local_clone.tipVersion()]
         spec = remote_component.versionSpec()
-        v = spec.select(vers)
-        logger.debug("%s selected %s from %s", spec, v, vers)
-        if not v:
+        if spec:
+            vers = local_clone.availableVersions()
+            if not len(vers):
+                logger.warning(
+                    '%s repository "%s" has no tagged versions, default branch will be used' % (clone_type, version_required)
+                )
+                vers = [local_clone.tipVersion()]
+            v = spec.select(vers)
+            logger.debug("%s selected %s from %s", spec, v, vers)
+            if not v:
+                raise Exception(
+                    '%s repository "%s" does not provide a version matching "%s"' % (
+                        clone_type,
+                        version_required,
+                        remote_component.spec
+                    )
+                )
+            return v
+        elif remote_component.remoteType() == 'git':
+            v = tagOrBranchVersion(
+                remote_component.tagOrBranchSpec(),
+                local_clone.availableTags(),
+                local_clone.availableBranches(),
+                name
+            )
+            if v:
+                return v
             raise Exception(
-                '%s repository "%s" does not provide a version matching "%s"' % (
-                    clone_type,
-                    version_required,
-                    remote_component.spec
+                '%s repository "%s" does not have any tags or branches matching "%s"' % (
+                    clone_type, version_required, spec
                 )
             )
-        return v
+        else:
+            raise Exception("invalid spec for hg source: tags/branches are not supported yet!")
     
     # !!! FIXME: next: generic http urls to tarballs
     

@@ -76,10 +76,32 @@ def _handleAuth(fn):
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
-    logger.info('get versions for ' + repo)
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
+
+def _tarballUrlForBranch(master_tarball_url, branchname):
+    branchname_regex = '/[^/?]+(\?.*|)$'
+    replace_value = '/%s\g<1>' % branchname
+    if not re.search(branchname_regex, master_tarball_url):
+        raise Exception(
+            "Don't know how to get archive URL for branch from '%s' master url." % master_tarball_url
+        )
+    return re.sub(branchname_regex, replace_value, master_tarball_url)
+
+@_handleAuth
+def _getBranchHeads(repo):
+    g = Github(settings.getProperty('github', 'authtoken'))
+    repo = g.get_repo(repo)
+    branches = repo.get_branches()
+
+    # branch tarball URLs aren't supported by the API, so have to munge the
+    # master tarball URL. Fetch the master tarball URL once (since that
+    # involves a network request), then mumge it for each branch we want:
+    master_tarball_url = repo.get_archive_link('tarball')
+
+    return {b.name:_tarballUrlForBranch(master_tarball_url, b.name) for b in branches}
+
 
 @_handleAuth
 def _getTipArchiveURL(repo):
@@ -141,18 +163,24 @@ def deauthorize():
         settings.setProperty('github', 'authtoken', '')
 
 class GithubComponentVersion(access_common.RemoteVersion):
+    def __init__(self, semver, tag, url):
+        self.tag = tag
+        super(GithubComponentVersion, self).__init__(semver, url)
+    
     def unpackInto(self, directory):
         assert(self.url)
         _getTarball(self.url, directory)
 
 class GithubComponent(access_common.RemoteComponent):
-    def __init__(self, repo, version_spec=''):
-        logging.debug('create Github component for repo:%s version spec:%s' % (repo, version_spec))
+    def __init__(self, repo, tag_or_branch=None, semantic_spec=None):
+        logging.debug('create Github component for repo:%s version spec:%s' % (repo, semantic_spec or tag_or_branch))
         self.repo = repo
-        self.spec = version.Spec(version_spec)
+        self.spec = semantic_spec
+        self.tag_or_branch = tag_or_branch
+        self.tags = None
     
     @classmethod
-    def createFromNameAndSpec(cls, url, name=None):    
+    def createFromSource(cls, vs, name=None):    
         ''' returns a github component for any github url (including
             git+ssh:// git+http:// etc. or None if this is not a Github URL.
             For all of these we use the github api to grab a tarball, because
@@ -162,39 +190,56 @@ class GithubComponent(access_common.RemoteComponent):
             form: 'owner/repo @version' or 'url://...#version', which can be used
             to grab a particular tagged version.
 
-            (Note that for github components we ignore the package name, and
-             just test to see if the "spec" looks like one of the supported URI
-             schemes)
+            (Note that for github components we ignore the component name - it
+             doesn't have to match the github module name)
         '''
-        # owner/package [@1.2.3] format
-        url = url.strip()
-        m = re.match('([^:/\s]*/[^:/\s]*) *@?([><=.0-9a-zA-Z\*-]*)', url)
-        if m:
-            return GithubComponent(*m.groups())
-        # something://[anything.|anything@]github.com/owner/package[#1.2.3] format
-        m = re.match('(?:[^:/]*://)?(?:[^:/]*\.|[^:/]*@)?github\.com[:/]([^/]*/[^/#]*)#?([><=.0-9a-zA-Z\*-]*)', url)
-        if m:
-            repo = m.group(1)
-            spec = m.group(2)
-            if repo.endswith('.git'):
-                repo = repo[:-4]
-            return GithubComponent(repo, spec)
-        return None
+        return GithubComponent(vs.location, vs.spec, vs.semantic_spec)
 
     def versionSpec(self):
         return self.spec
 
+    def tagOrBranchSpec(self):
+        return self.tag_or_branch
+
+    def _getTags(self):
+        if self.tags is None:
+            try:
+                self.tags = _getTags(self.repo).iteritems()
+            except github.UnknownObjectException, e:
+                raise access_common.ComponentUnavailable(
+                    'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
+                )
+        return self.tags
+
     def availableVersions(self):
         ''' return a list of Version objects, each with a tarball URL set '''
-        try:
-            return [GithubComponentVersion(t[0], url=t[1]) for t in _getTags(self.repo).iteritems()]
-        except github.UnknownObjectException, e:
-            raise access_common.ComponentUnavailable(
-                'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
-            )
+        r = []
+        for t in self._getTags():
+            logger.debug("available version tag: %s", t)
+            # ignore empty tags:
+            if not len(t[0].strip()):
+                continue
+            try:
+                r.append(GithubComponentVersion(t[0], t[0], url=t[1]))
+            except ValueError:
+                logger.debug('invalid version tag: %s', t)
+
+        return r
+
+    def availableTags(self):
+        ''' return a list of GithubComponentVersion objects for all tags
+        '''
+        return [GithubComponentVersion('', t[0], t[1]) for t in self._getTags()]
+
+    def availableBranches(self):
+        ''' return a list of GithubComponentVersion objects for the tip of each branch
+        '''
+        return [
+            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).iteritems()
+        ]
 
     def tipVersion(self):
-        return GithubComponentVersion('', _getTipArchiveURL(self.repo))
+        return GithubComponentVersion('', '', _getTipArchiveURL(self.repo))
     
     @classmethod
     def remoteType(cls):

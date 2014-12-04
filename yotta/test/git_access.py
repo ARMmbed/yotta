@@ -17,6 +17,8 @@ from yotta.lib import git_access
 from yotta.lib import fsutils
 # version, , represent versions and specifications, internal
 from yotta.lib import version
+# sourceparse, , parse version source urls, internal
+from yotta.lib import sourceparse
 # install, , install components, internal
 from yotta import install
 
@@ -48,7 +50,8 @@ def ensureGitConfig():
 class TestGitAccess(unittest.TestCase):
     def setUp(self):
         ensureGitConfig()
-        self.remote_component = git_access.GitComponent.createFromNameAndSpec(Test_Repo, Test_Name)
+        vs = sourceparse.parseSourceURL(Test_Repo)
+        self.remote_component = git_access.GitComponent.createFromSource(vs, Test_Name)
         self.assertTrue(self.remote_component)
         self.working_copy = self.remote_component.clone()
         self.assertTrue(self.working_copy)
@@ -61,7 +64,8 @@ class TestGitAccess(unittest.TestCase):
         self.assertIn(version.Version('v0.0.1'), versions)
 
     def test_versionSpec(self):
-        spec = git_access.GitComponent.createFromNameAndSpec(Test_Repo_With_Spec, Test_Name).versionSpec()
+        vs = sourceparse.parseSourceURL(Test_Repo_With_Spec)
+        spec = git_access.GitComponent.createFromSource(vs, Test_Name).versionSpec()
         v = spec.select(self.working_copy.availableVersions())
         self.assertTrue(v)
 

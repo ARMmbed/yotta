@@ -21,6 +21,7 @@ from yotta import install
 
 Test_Name = 'testing-dummy'
 Test_Deps_Name = "autopulated/github-access-testing"
+Test_Branch_Name = "autopulated/github-access-testing#master"
 Test_Deps_Target = "x86-osx-native,*"
 Test_Username = 'yottatest'
 Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
@@ -41,6 +42,10 @@ class TestGitHubAccess(unittest.TestCase):
     def test_installDeps(self):
         Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
         install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False))
+
+    def test_branchAccess(self):
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
+        install.installComponent(Args(Test_Branch_Name, Test_Deps_Target, False, False, False, False))
 
 
 if __name__ == '__main__':
