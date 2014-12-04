@@ -81,7 +81,7 @@ def _getTags(repo):
     return {t.name: t.tarball_url for t in tags}
 
 def _tarballUrlForBranch(master_tarball_url, branchname):
-    branchname_regex = '/[^/?]+(\?.*)?$'
+    branchname_regex = '/[^/?]+(\?.*|)$'
     replace_value = '/%s\g<1>' % branchname
     if not re.search(branchname_regex, master_tarball_url):
         raise Exception(
