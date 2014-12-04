@@ -54,7 +54,7 @@ def execCommand(args, following_args):
         # run the install command first, if we're being run sudo'd, drop sudo
         # privileges for this
         args.act_globally = False
-        dropSudoPrivs(lambda: install.execCommand(args))
+        dropSudoPrivs(lambda: install.execCommand(args, following_args))
         fsutils.mkDirP(folders.globalInstallDirectory())
 
         src = os.getcwd()
