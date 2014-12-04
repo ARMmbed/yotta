@@ -55,10 +55,12 @@ def _handleAuth(fn):
         try:
             return fn(*args, **kwargs)
         except github.BadCredentialsException:
+            logger.debug("github: bad credentials")
             authorizeUser()
             logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
             return fn(*args, **kwargs)
         except github.UnknownObjectException:
+            logger.debug("github: unknown object")
             # some endpoints return 404 if the user doesn't have access, maybe
             # it would be better to prompt for another username and password,
             # and store multiple tokens that we can try for each request....
@@ -75,9 +77,11 @@ def _handleAuth(fn):
 @_handleAuth
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
+    logger.debug('get tags for %s', repo)
     g = Github(settings.getProperty('github', 'authtoken'))
     repo = g.get_repo(repo)
     tags = repo.get_tags()
+    logger.debug('tags for %s: %s', repo, [t.name for t in tags])
     return {t.name: t.tarball_url for t in tags}
 
 def _tarballUrlForBranch(master_tarball_url, branchname):

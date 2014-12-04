@@ -194,7 +194,7 @@ class Component(pack.Pack):
         )
         self.installed_dependencies = True
         # stable order is important!
-        return (OrderedDict([(d.getName() or specs[i][0], d) for i, d in enumerate(dependencies)]), errors)
+        return (OrderedDict([((d and d.getName()) or specs[i][0], d) for i, d in enumerate(dependencies)]), errors)
 
 
     def __getDependenciesRecursiveWithProvider(self,

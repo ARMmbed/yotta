@@ -221,10 +221,11 @@ def satisfyVersionFromAvailble(name, version_required, available):
         # we still need to check the version specification - which the remote
         # components know how to parse:
         remote_component = remoteComponentFor(name, version_required, 'modules')
-        if not remote_component.versionSpec().match(available[name].version):
-            raise access_common.SpecificationNotMet(
-                "Installed component %s doesn't match specification %s" % (name, remote_component.versionSpec())
-            ) 
+        if remote_component.versionSpec():
+            if not remote_component.versionSpec().match(available[name].version):
+                raise access_common.SpecificationNotMet(
+                    "Installed component %s doesn't match specification %s" % (name, remote_component.versionSpec())
+                ) 
         r = available[name]
         if spec and not spec.match(r.getVersion()):
             raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
