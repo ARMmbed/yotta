@@ -26,7 +26,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-        "License :: Apache-2.0",
+        "License :: OSI Approved :: Apache Software License",
         "Environment :: Console",
     ],
     entry_points={
