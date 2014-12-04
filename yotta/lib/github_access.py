@@ -76,7 +76,6 @@ def _handleAuth(fn):
 def _getTags(repo):
     ''' return a dictionary of {tag: tarball_url}'''
     g = Github(settings.getProperty('github', 'authtoken'))
-    logger.info('get versions for ' + repo)
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     return {t.name: t.tarball_url for t in tags}
@@ -146,11 +145,11 @@ class GithubComponentVersion(access_common.RemoteVersion):
         _getTarball(self.url, directory)
 
 class GithubComponent(access_common.RemoteComponent):
-    def __init__(self, repo, version_spec='', semantic_sec=None):
-        logging.debug('create Github component for repo:%s version spec:%s' % (repo, version_spec))
-        # !!! TODO: handle non-semantic spec
+    def __init__(self, repo, tag_or_branch=None, semantic_spec=None):
+        logging.debug('create Github component for repo:%s version spec:%s' % (repo, semantic_spec or tag_or_branch))
         self.repo = repo
-        self.spec = version.Spec(version_spec)
+        self.spec = semantic_spec
+        self.tag_or_branch = tag_or_branch
     
     @classmethod
     def createFromSource(cls, vs, name=None):    

@@ -23,10 +23,10 @@ logger = logging.getLogger('access')
 # different from the checked out version in the working_copy, but should be a
 # version that exists as a tag in the working_copy)
 class GitCloneVersion(version.Version):
-    def __init__(self, tag, working_copy):
+    def __init__(self, semver, tag, working_copy):
         self.working_copy = working_copy
         self.tag = tag
-        return super(GitCloneVersion, self).__init__(tag)
+        return super(GitCloneVersion, self).__init__(semver)
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))
@@ -39,7 +39,9 @@ class GitCloneVersion(version.Version):
 
         # remove temporary files created by the GitWorkingCopy clone
         self.working_copy.remove()
-        
+    
+    def __eq__(self, other):
+        return self.tag == other
 
 class GitWorkingCopy(object):
     def __init__(self, vcs):
@@ -51,7 +53,9 @@ class GitWorkingCopy(object):
         self.directory = None
 
     def availableVersions(self):
-        # return a list of GitCloneVersion objects
+        ''' return a list of GitCloneVersion objects for tags which are valid
+            semantic version idenfitifiers.
+        '''
         r = []
         for t in self.vcs.tags():
             logger.debug("available version tag: %s", t)
@@ -59,20 +63,33 @@ class GitWorkingCopy(object):
             if not len(t.strip()):
                 continue
             try:
-                r.append(GitCloneVersion(t, self))
+                r.append(GitCloneVersion(t, t, self))
             except ValueError:
                 logger.debug('invalid version tag: %s', t)
         return r
+
+    def availableTags(self):
+        ''' return a list of GitCloneVersion objects for all tags
+        '''
+        return [GitCloneVersion('', t, self) for t in self.vcs.tags()]
+
+    def availableBranches(self):
+        ''' return a list of GitCloneVersion objects for the tip of each branch
+        '''
+        return [GitCloneVersion('', b, self) for b in self.vcs.branches()]
+
 
     def tipVersion(self):
         raise NotImplementedError
 
 
 class GitComponent(access_common.RemoteComponent):
-    def __init__(self, url, version_spec='', semantic_spec=None):
+    def __init__(self, url, tag_or_branch=None, semantic_spec=None):
+        logging.debug('create git component for url:%s version spec:%s' % (url, semantic_spec or tag_or_branch))
         self.url = url
         # !!! TODO: handle non-semantic spec
-        self.spec = version.Spec(version_spec)
+        self.spec = semantic_spec
+        self.tag_or_branch = tag_or_branch
     
     @classmethod
     def createFromSource(cls, vs, name=None):    
@@ -89,6 +106,9 @@ class GitComponent(access_common.RemoteComponent):
     def versionSpec(self):
         return self.spec
 
+    def tagOrBranchSpec(self):
+        return self.tag_or_branch
+
     # clone the remote repository: this is necessary to find out what tagged
     # versions are available.
     # The clone is created in /tmp, and is not automatically deleted, but the
@@ -97,6 +117,7 @@ class GitComponent(access_common.RemoteComponent):
     # instead of from the remote origin.
     def clone(self):
         clone = vcs.Git.cloneToTemporaryDir(self.url)
+        clone.fetchAllBranches()
         return GitWorkingCopy(clone)
 
     @classmethod

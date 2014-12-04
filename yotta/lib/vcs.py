@@ -55,7 +55,7 @@ class Git(VCS):
     @classmethod
     def cloneToDirectory(cls, remote, directory, tag=None):
         commands = [
-            ['git', 'clone', remote, directory]
+            ['git', 'clone',  remote, directory]
         ]
         for cmd in commands:
             git_logger.debug('will clone %s into %s', remote, directory)
@@ -68,7 +68,45 @@ class Git(VCS):
         if tag is not None:
             r.updateToTag(tag)
         return r
+    
+    def fetchAllBranches(self):
+        remote_branches = []
+        local_branches = []
+        
+        # list remote branches
+        cmd = self._gitCmd('branch', '-r')
+        child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = child.communicate()
+        if child.returncode:
+            raise Exception('command failed: %s:%s', cmd, err or out)
 
+        for line in out.split('\n'):
+            branch_info = line.split(' -> ')
+            # skip HEAD:
+            if len(branch_info) > 1:
+                continue
+            remote_branch = branch_info[0].strip()
+            branch = '/'.join(remote_branch.split('/')[1:])
+            remote_branches.append((remote_branch, branch))
+        
+        # list already-existing local branches
+        cmd = self._gitCmd('branch')
+        child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = child.communicate()
+        if child.returncode:
+            raise Exception('command failed: %s:%s', cmd, err or out)
+        for line in out.split('\n'):
+            local_branches.append(line.strip(' *'))
+
+        for remote, branchname in remote_branches:
+            # don't try to replace existing local branches
+            if branchname in local_branches:
+                continue
+            cmd = self._gitCmd('checkout', '-b', branchname, remote)
+            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = child.communicate()
+            if child.returncode:
+                raise Exception('failed to fetch remote branches %s:%s', cmd, err or out)
 
     def remove(self):
         fsutils.rmRf(self.worktree)
@@ -119,6 +157,13 @@ class Git(VCS):
         ]
         out, err = self._execCommands(commands)
         return out.split('\n')
+
+    def branches(self):
+        commands = [
+            self._gitCmd('branch', '--list')
+        ]
+        out, err = self._execCommands(commands)
+        return [x.lstrip(' *') for x in out.split('\n')]
 
     def commit(self, message, tag=None):
         commands = [
