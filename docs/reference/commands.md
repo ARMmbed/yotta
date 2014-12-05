@@ -9,7 +9,7 @@ section: reference/commands
 ## yotta
 Synonyms: `yt`
 
-The yotta command is always run with a subcommand in order to do something, `yotta` with no subcommand will only display help and version information with the `--help` and `--version` options.
+The `yotta` command is always run with a subcommand in order to do something, `yotta` with no subcommand will only display help and version information with the `--help` and `--version` options.
 `yt` can be used as a shortcut for `yotta` in all commands.
 
 Options:
@@ -40,19 +40,19 @@ yotta build [--generate-only / -g] [--release-build / -r] [--cmake-generator / -
 #### Description
 Build the current module and its dependencies. Missing dependencies will be automatically installed first.
 
-yotta uses [CMake](http://www.cmake.org) to control the build, the basic process is:
+`yotta` uses [CMake](http://www.cmake.org) to control the build, the basic process is:
 
- 1) yotta installs the target description for the build target
- 2) yotta installs all module dependencies (which may depend on which target is being built for)
- 3) yotta generates CMakeLists.txt describing the libraries and executables to build
- 4) yotta instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
- 5) yotta instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
+ 1. `yotta` installs the target description for the build target
+ 2. `yotta` installs all module dependencies (which may depend on which target is being built for)
+ 3. `yotta` generates CMakeLists.txt describing the libraries and executables to build
+ 4. `yotta` instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
+ 5. `yotta` instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
 
 Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
  * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
- * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by yotta targets without additional plugins. The available generators depend on whether yotta is running on OS X, Linux, or Windows.
+ * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by `yotta` targets without additional plugins. The available generators depend on whether `yotta` is running on OS X, Linux, or Windows.
 
 #### Examples
 
@@ -90,11 +90,11 @@ yotta target <targetname>[,url-or-version-spec]
 ```
 
 #### Description
-Display or set the current target. Yotta will look for and install a target description from the yotta registry when building or installing dependencies.
+Display or set the current target. `yotta` will look for and install a target description from the `yotta` registry when building or installing dependencies.
 
-Targets define the options and commands that yotta uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
+Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
 
-A target must define a CMake Toolchain file describing all of the rules that yotta uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
+A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
 
 <a name="yotta-install"></a>
 ## yotta install
@@ -185,11 +185,11 @@ yotta login
 ```
 
 #### Description
-Authenticate with the yotta registry. yotta will open a browser to an OAuth login page on the yotta registry, where you can then log in with either GitHub or mbed. This process generates a secret access token that is saved in your yotta configuration file, and which yotta can use to pull from private repositories that you have access to on GitHub or mbed.
+Authenticate with the `yotta` registry. `yotta` will open a browser to an OAuth login page on the `yotta` registry, where you can then log in with either GitHub or mbed. This process generates a secret access token that is saved in your `yotta` configuration file, and which `yotta` can use to pull from private repositories that you have access to on GitHub or mbed.
 
 You must log in before you can publish modules. Access control for publishing is based on email addresses verified by GitHub/mbed, you can see the email address of the owners with permission to publish a given module using the `yotta owners` command.
 
-No information other than your email address, and a public key generated by your yotta client, is stored by the yotta registry. Even someone with access to the yotta registry's database would not be able to publish modules in your name without stealing information that never leaves your computer!
+No information other than your email address, and a public key generated by your `yotta` client, is stored by the `yotta` registry. Even someone with access to the `yotta` registry's database would not be able to publish modules in your name without stealing information that never leaves your computer!
 
 
 <a name="yotta-logout"></a>
@@ -201,7 +201,7 @@ yotta logout
 ```
 
 #### Description
-Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into yotta on. If you wish to revoke access tokens you can do so on your GitHub account page.
+Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into `yotta` on. If you wish to revoke access tokens you can do so on your GitHub account page.
 
 
 <a name="yotta-publish"></a>
@@ -213,7 +213,7 @@ yotta publish
 ```
 
 #### Description
-Publish the current module or target to the public yotta registry, where other people will be able to search for and install it.
+Publish the current module or target to the public `yotta` registry, where other people will be able to search for and install it.
 
 
 <a name="yotta-link"></a>
