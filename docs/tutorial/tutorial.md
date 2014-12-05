@@ -54,7 +54,7 @@ Any source files placed in the `source` directory will be compiled automatically
 
 Headers that define the interface to your module should be placed in the directory with the same name as your module (`simplelog` in this case). This pattern forces headers to be included with their full paths e.g. `#include "simplelog/log.h"`, instead of just `#include "log.h"`, which might be a header name that multiple different modules use.
 
-### implement!
+### Implement!
 The implementation of our logging module is just three files, a header file, an implementation file and a test:
 
 The header file, `./simplelog/log.h`, declares the public interface to our module. It’s important to keep the public interface to the bare minimum (avoid including unnecessary headers, for example), as all users of your module (direct and indirect) will be exposed to the contents of your public header files.
