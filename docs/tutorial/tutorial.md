@@ -5,7 +5,7 @@ section: tutorial/tutorial
 ---
 
 # Tutorial
-There are two sorts of things that yotta builds: modules, and executables. Modules are re-usable, and the source code for them is distributed in the yotta registry. Executables are stand-alone programs that depend on modules, and which are not normally published themselves.
+There are two sorts of things that `yotta` builds: modules, and executables. Modules are re-usable, and the source code for them is distributed in the `yotta` registry. Executables are stand-alone programs that depend on modules, and which are not normally published themselves.
 
 We’ll look at creating and publishing a module, then using that module in a simple command line executable.
 
@@ -193,12 +193,12 @@ simplelog james$ ./build/x86-osx-native/test/simplelog-basic
 
 Looks like things are working! Now, more on that path. It’s made up of three parts:
 
- * **`./build/`**: the build directory, everything that yotta generates when building is placed in here.
- * `./build/`**`x86-osx-native`**: this is the *target* that yotta was building for. If you don’t explicitly set the target, then yotta builds to run on the current computer. (If you built on a linux or windows computer `x86-osx-native` would be different.)
+ * **`./build/`**: the build directory, everything that `yotta` generates when building is placed in here.
+ * `./build/`**`x86-osx-native`**: this is the *target* that `yotta` was building for. If you don’t explicitly set the target, then yotta builds to run on the current computer. (If you built on a linux or windows computer `x86-osx-native` would be different.)
  * `./build/x86-osx-native/`**`test/simplelog-basic`**: the path to the test. The test name is automatically prefixed with `<modulename>-` as executable names must be globally unique.
 
 ### A Few Words About Targets
-In ARM we use yotta to build software for embedded devices – not just desktop computers. When you’re compiling the same software for lots of different devices you need a mechanism to do different things, and often to include different dependencies, for each of the different devices.
+In ARM we use `yotta` to build software for embedded devices – not just desktop computers. When you’re compiling the same software for lots of different devices you need a mechanism to do different things, and often to include different dependencies, for each of the different devices.
 
 The `yotta target` command lets you do this. It defaults to the system you’re building on (`x86-osx-native` on mac, `x86-linux-native` on linux, etc.) You can display the current target by running `yotta target` with no arguments:`
 
@@ -207,10 +207,10 @@ simplelog james$ yotta target
 x86-osx-native
 ```
 
-If you set a different target, by running `yotta target <targetname>`, then yotta will build code for that target instead.
+If you set a different target, by running `yotta target <targetname>`, then `yotta` will build code for that target instead.
 
 ### yotta publish
-The most important part of yotta is the ability to publish our module so other can use it. Now that we’ve tested our module, lets do that!
+The most important part of `yotta` is the ability to publish our module so other can use it. Now that we’ve tested our module, lets do that!
 
 ```
 simplelog james$ yotta publish
@@ -227,10 +227,10 @@ Note that if you also created a module called simplelog you won't be able to pub
 
 <a name="Creating an Executable"></a>
 ## Creating an Executable
-Executables are runnable programs that depend on any number of other modules, and add their own code to build a program that does something useful. Yotta isn’t designed for *distributing* executables, so they shouldn’t normally be published to the public registry, but it works great for building them.
+Executables are runnable programs that depend on any number of other modules, and add their own code to build a program that does something useful. `yotta` isn’t designed for *distributing* executables, so they shouldn’t normally be published to the public registry, but it works great for building them.
 
 ### yotta init
-Let’s start by creating a new directory for our executable, and running yotta init again, if you previously created the `simplelog` module, then cd up one directory first: `cd ..`
+Let’s start by creating a new directory for our executable, and running `yotta init` again, if you previously created the `simplelog` module, then cd up one directory first: `cd ..`
 
 ```sh
 projects james$ mkdir helloyotta
@@ -241,7 +241,7 @@ Enter the module name: <helloyotta>
 Is this module an executable? <no> yes
 ```
 
-Note that this time we answered **yes** to the last question. This makes yotta add a `"bin"` property in the `module.json` module description file that it generates. If we open this file in a text editor, we'll see that it says to create a binary executable out of the contents of the `./source` directory:
+Note that this time we answered **yes** to the last question. This makes `yotta` add a `"bin"` property in the `module.json` module description file that it generates. If we open this file in a text editor, we'll see that it says to create a binary executable out of the contents of the `./source` directory:
 
 ```json
 {
@@ -252,7 +252,7 @@ Note that this time we answered **yes** to the last question. This makes yotta a
 ```
 
 ### Add Dependencies!
-Now we can tell yotta that we want to use the module we created earlier, `simplelog`.
+Now we can tell `yotta` that we want to use the module we created earlier, `simplelog`.
 
 ```sh
 helloyotta james$ yotta install --save simplelog
@@ -269,10 +269,10 @@ This has saved `simplelog` as a dependency in the `module.json` file, specifying
   },
 ```
 
-`yotta install` also creates a `yotta_modules` directory in the module's directory, which it uses to store your dependencies. This, along with a corresponding `yotta_targets directory`, and the `build` directory, may be overwritten by yotta at any time, so generally shouldn't be modified, and you should not create files in them.
+`yotta install` also creates a `yotta_modules` directory in the module's directory, which it uses to store your dependencies. This, along with a corresponding `yotta_targets directory`, and the `build` directory, may be overwritten by `yotta` at any time, so generally shouldn't be modified, and you should not create files in them.
 
 ### Implement
-When yotta builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable:
+When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable:
 
 ```C
 #include "simplelog/log.h"
@@ -298,7 +298,7 @@ Linking C executable helloyotta
 [100%] Built target helloyotta
 ```
 
-Notice that yotta also built simplelog's library: as yotta modules are distributed as source, they need to be compiled too.
+Notice that `yotta` also built simplelog's library: as modules are distributed as source, they need to be compiled too.
 
 Our executable will have been placed in `./build/x86-osx-native/source`, (or `./build/<targetname>/source` if you're compiling for a different target.). Let's run it:
 
@@ -308,5 +308,5 @@ helloyotta james$ ./build/x86-osx-native/source/helloyotta
 ```
 
 ### That's it!
-That's all of the basic principles of using yotta, for more information check out the full [command reference](/../reference/commands.html).
+That's all of the basic principles of using `yotta`, for more information check out the full [command reference](/../reference/commands.html).
 
