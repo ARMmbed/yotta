@@ -15,13 +15,23 @@ h1 {
 }
 
 h2 {
-  margin-top: 25px;
-  margin-bottom: 15px;
+  margin-top: 28px;
+  margin-bottom: 16px;
 }
 
 h3 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+h4 {
   margin-top: 20px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+h5 {
+  margin-top: 16px;
+  margin-bottom: 4px;
 }
 
 p{
