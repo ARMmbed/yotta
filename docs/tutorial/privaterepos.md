@@ -28,7 +28,7 @@ You can specify a particular branch or tag to use by providing it in the URL. Th
 
 ```
 username/reponame
-username/reponame#<[versionspec](versionspec)>
+username/reponame#<versionspec>
 username/reponame#<branchname>
 username/reponame#<tagname>
 ```
@@ -53,7 +53,7 @@ Git URLs support branch, version and tags specifications:
 git+ssh://example.com/path/to/repo
 git+ssh://example.com/path/to/repo#<versionspec, branch or tag>
 anything://example.com/path/to/repo.git
-anything://example.com/path/to/repo.git<versionspec branch or tag>
+anything://example.com/path/to/repo.git#<versionspec, branch or tag>
 ```
 
 Currently, mercurial URLs only support a version specification:
@@ -62,6 +62,6 @@ Currently, mercurial URLs only support a version specification:
 hg+ssh://example.com/path/to/repo
 hg+ssh://example.com/path/to/repo#<versionspec>
 anything://example.com/path/to/repo.hg
-anything://example.com/path/to/repo.hg<versionspec>
+anything://example.com/path/to/repo.hg#<versionspec>
 ```
 
