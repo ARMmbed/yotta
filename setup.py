@@ -14,7 +14,7 @@ platform_deps = ['ntfsutils'] if os.name == 'nt' else []
 
 setup(
     name = "yotta",
-    version = "0.0.34",
+    version = "0.0.35",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
