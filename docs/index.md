@@ -30,7 +30,7 @@ Because yotta is used to build software, you will also need a working
 development environment for compiling software, including:
 
  * **[CMake](http://www.cmake.org)**, the build system that yotta uses.
- * a **compiler**, to actually compile the code into working problems.
+ * a **compiler**, to actually compile the code into working programs.
 
 yotta supports compiling with different compilers by specifying different
 [targets](../tutorial/targets.html) for the compilation.

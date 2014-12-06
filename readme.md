@@ -30,7 +30,7 @@ Further information on installing yotta for different platforms can be found on 
 The best way to get started is to [follow the tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
 
 ### What `yotta` does
-yotta downloads the software components that your program depends on (it's similar in concept to npm, pip or gem). To install a new module, you run `yotta install <modulename>`, and yotta will install both the module you've specified and any of its dependencies that you don't already have installed.
+yotta downloads the software components that your program depends on (it's similar in concept to npm, pip or gem). To install a new module, you run `yotta install --save <modulename>`, and yotta will install both the module you've specified and any of its dependencies that you don't already have installed, and save the fact that you depend on that module into your module's description file.
 
 To really understand how yotta works, you should install yotta (see above), then [follow the tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
 
