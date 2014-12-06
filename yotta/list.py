@@ -12,12 +12,12 @@ import os
 import colorama
 
 # validate, , validate things, internal
-from lib import validate
+from .lib import validate
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # access, , get components (and check versions), internal
-from lib import access
-from lib import access_common
+from .lib import access
+from .lib import access_common
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',

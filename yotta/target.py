@@ -8,7 +8,7 @@ import re
 import logging
 
 # settings, , load and save settings, internal
-from lib import settings
+from .lib import settings
 
 
 # OK this is a pretty terrible validation regex... should find a proper module

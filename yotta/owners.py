@@ -9,15 +9,15 @@ import logging
 import os
 
 # version, , represent versions and specifications, internal
-from lib import version
+from .lib import version
 # Component, , represents an installed component, internal
-from lib import component
+from .lib import component
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # Registry Access, , access packages in the registry, internal
-from lib import registry_access
+from .lib import registry_access
 # Validate, , validate various things, internal
-from lib import validate
+from .lib import validate
 
 def checkEmail(email):
     if validate.looksLikeAnEmail(email):

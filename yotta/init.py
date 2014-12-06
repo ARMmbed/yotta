@@ -9,11 +9,11 @@ import logging
 import re
 
 # Component, , represents an installed component, internal
-from lib import component
+from .lib import component
 # version, , represent versions and specifications, internal
-from lib import version
+from .lib import version
 # validate, , validate various things, internal
-from lib import validate
+from .lib import validate
 
 Known_Licenses = {
              'isc': 'https://spdx.org/licenses/ISC',

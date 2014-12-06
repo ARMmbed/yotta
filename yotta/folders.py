@@ -16,7 +16,7 @@
 # standard library modules, , ,
 import os
 # fsutils, , misc filesystem utils, internal
-from lib import fsutils
+from .lib import fsutils
 
 def globalInstallDirectory():
     if os.name == 'nt':

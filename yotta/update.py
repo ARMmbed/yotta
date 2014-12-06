@@ -9,7 +9,7 @@ import logging
 import os
 
 # validate, , validate things, internal
-from lib import validate
+from .lib import validate
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',

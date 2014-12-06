@@ -13,9 +13,9 @@ import os
 import colorama
 
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # fsutils, , misc filesystem utils, internal
-from lib import fsutils
+from .lib import fsutils
 # folders, , get places to install things, internal
 from . import folders
 
