@@ -40,13 +40,11 @@ yotta supports compiling with different compilers by specifying different
 ## Installing On OS X
 
 First install [homebrew](brew.sh), a package manager for OS X that we'll use to
-install all of yotta's dependencies:
+install all of yotta's dependencies.
 
-```sh
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Next, tap the ARMmbed [brew formulae](https://github.com/armmbed/homebrew-formulae):
+Next, tap the ARMmbed [brew
+formulae](https://github.com/armmbed/homebrew-formulae), which lets brew
+install packages from the mbed team:
 
 ```sh
 brew tap ARMmbed/homebrew-formulae
@@ -92,6 +90,15 @@ repository](https://github.com/armmbed/homebrew-formulae).
 ```sh
 brew install arm-none-eabi-gcc
 ```
+
+To use this compiler, you'll need to select a supported cross-compilation
+target, such as [frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running:
+
+```sh
+yotta target frdm-k64f-gcc
+```
+
+before building.
 
 
 ### Solving Common OS X installation problems
