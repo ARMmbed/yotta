@@ -15,9 +15,12 @@ import calendar
 import datetime
 import hashlib
 import itertools
-import urllib
 import base64
 import webbrowser
+try:
+    from urllib import quote as quoteURL
+except ImportError:
+    from urllib.parse import quote as quoteURL
     
 # restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
 from restkit import Resource, BasicAuth, errors as restkit_errors
@@ -72,13 +75,13 @@ class _BearerJWTFilter(object):
 
 
 def _pubkeyWireFormat(pubkey):
-    return urllib.quote(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
+    return quoteURL(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
 
 def _fingerprint(pubkey):
     stripped = _OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH'))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
-    return ':'.join([khash[i:i+2] for i in xrange(0, len(khash), 2)])
+    return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
 
 
 def _registryAuthFilter():

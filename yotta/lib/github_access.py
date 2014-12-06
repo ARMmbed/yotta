@@ -208,8 +208,8 @@ class GithubComponent(access_common.RemoteComponent):
     def _getTags(self):
         if self.tags is None:
             try:
-                self.tags = _getTags(self.repo).iteritems()
-            except github.UnknownObjectException, e:
+                self.tags = _getTags(self.repo).items()
+            except github.UnknownObjectException as e:
                 raise access_common.ComponentUnavailable(
                     'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
                 )
@@ -239,7 +239,7 @@ class GithubComponent(access_common.RemoteComponent):
         ''' return a list of GithubComponentVersion objects for the tip of each branch
         '''
         return [
-            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).iteritems()
+            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).items()
         ]
 
     def tipVersion(self):

@@ -13,9 +13,9 @@ import os
 import colorama
 
 # fsutils, , misc filesystem utils, internal
-from lib import fsutils
+from .lib import fsutils
 # validate, , validate things, internal
-from lib import validate
+from .lib import validate
 # folders, , get places to install things, internal
 from . import folders
 # install, , install subcommand, internal

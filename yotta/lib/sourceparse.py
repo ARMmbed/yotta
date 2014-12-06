@@ -7,7 +7,10 @@
 # specified version should be fetched.
 
 # standard library modules, , ,
-import urlparse
+try:
+    from urlparse import urlsplit
+except ImportError:
+    from urllib.parse import urlsplit
 import re
 
 # version, , represent versions and specifications, internal
@@ -37,7 +40,7 @@ def parseSourceURL(source_url):
     ''' Parse the specified version source URL (or version spec), and return an
         instance of VersionSource
     '''
-    parsed = urlparse.urlsplit(source_url)
+    parsed = urlsplit(source_url)
 
     if '#' in source_url:
         without_fragment = source_url[:source_url.index('#')]

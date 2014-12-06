@@ -78,6 +78,9 @@ class OptionalFileWrapper(object):
     
     def __nonzero__(self):
         return bool(self.fname)
+    # python 3 truthiness
+    def __bool__(self):
+        return bool(self.fname)
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
@@ -96,7 +99,7 @@ class Pack(object):
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
             self.version = version.Version(self.description['version'])
-        except Exception, e:
+        except Exception as e:
             self.description = OrderedDict()
             self.error = e
         try:
@@ -222,7 +225,7 @@ class Pack(object):
     
     def findAndOpenReadme(self):
         files = os.listdir(self.path)
-        readme_files = filter(lambda x: Readme_Regex.match(x), files)
+        readme_files = [x for x in files if Readme_Regex.match(x)]
         reamde_file_if_found = None
         for f in readme_files:
             if f.endswith('.md'):
@@ -282,4 +285,7 @@ class Pack(object):
     # provided for truthiness testing, we test true only if we successfully
     # read a package file
     def __nonzero__(self):
+        return bool(self.description)
+    # python 3 truthiness
+    def __bool__(self):
         return bool(self.description)

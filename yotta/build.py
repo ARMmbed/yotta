@@ -9,11 +9,11 @@ import logging
 
 
 # validate, , validate things, internal
-from lib import validate
+from .lib import validate
 # CMakeGen, , generate build files, internal
-from lib import cmakegen
+from .lib import cmakegen
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # install, , install subcommand, internal
 from . import install
 

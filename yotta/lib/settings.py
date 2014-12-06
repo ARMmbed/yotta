@@ -7,8 +7,11 @@
 import logging
 import os
 import errno
-import ConfigParser
 import threading
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 # fsutils, , misc filesystem utils, internal
 import fsutils
@@ -62,11 +65,11 @@ def setProperty(section, name, value):
     try:
         with open(full_ini_path, 'r+') as f:
             saveTofile(f)
-    except IOError, e:
+    except IOError as e:
         # if the file didn't exist we can't open in r+, so open with w,
         # exclusively, and making sure to set the right permissions
         if e.errno == errno.ENOENT:
-            fd = os.open(full_ini_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0600)
+            fd = os.open(full_ini_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o0600)
             with os.fdopen(fd, 'w+') as f:
                 saveTofile(f)
         else: 

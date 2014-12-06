@@ -10,9 +10,9 @@ import os
 import re
 
 # Component, , represents an installed component, internal
-from lib import component
+from .lib import component
 # access, , get components, internal
-from lib import access
+from .lib import access
 
 # folders, , get places to install things, internal
 from . import folders
