@@ -174,7 +174,8 @@ class Component(pack.Pack):
         '''
         errors = []
         modules_path = self.modulesPath()
-        def satisfyDep((name, ver_req)):
+        def satisfyDep(name_and_ver_req):
+            (name, ver_req) = name_and_ver_req
             try:
                 return provider(
                   name,
@@ -184,7 +185,7 @@ class Component(pack.Pack):
                   modules_path,
                   update_installed
                 )
-            except access_common.ComponentUnavailable, e:
+            except access_common.ComponentUnavailable as e:
                 errors.append(e)
                 self.dependencies_failed = True
         specs = self.getDependencySpecs(target)
@@ -467,7 +468,7 @@ class Component(pack.Pack):
                 targets_path,
                 update_installed=('Update' if update_installed else None)
             )
-        except access_common.TargetUnavailable, e:
+        except access_common.TargetUnavailable as e:
             errors.append(e)
         return (target, errors)
 

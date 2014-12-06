@@ -4,6 +4,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
+from __future__ import print_function
 import argparse
 import logging
 import os
@@ -87,16 +88,16 @@ def execCommand(args, following_args):
 
 def listOwners(args, p):
     if p:
-        print '%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(
+        print('%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(
             registry_access.listOwners(p.getRegistryNamespace(), p.getName())
-        )
+        ))
     else:
         module_owners = registry_access.listOwners(component.Registry_Namespace, args.module)
         target_owners = registry_access.listOwners(target.Registry_Namespace, args.module)
         if module_owners:
-            print 'module "%s" owners:' % args.module, ', '.join(module_owners)
+            print('module "%s" owners:' % args.module, ', '.join(module_owners))
         if target_owners:
-            print 'target "%s" owners:' % args.module, ', '.join(target_owners)
+            print('target "%s" owners:' % args.module, ', '.join(target_owners))
         if not module_owners or target_owners:
             logging.error('no such module or target')
 

@@ -41,6 +41,9 @@ class VCS(object):
         raise NotImplementedError()
     def __nonzero__(self):
         raise NotImplementedError()
+    # python 3 truthiness
+    def __bool__(self):
+        return self.__nonzero__()
     
 
 class Git(VCS):

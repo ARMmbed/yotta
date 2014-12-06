@@ -40,7 +40,7 @@ def addOptions(parser):
 
 def execCommand(args, following_args):
     if args.set_target is None:
-        print args.target
+        print(args.target)
     else:
         if not Target_RE.match(args.set_target):
             logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:

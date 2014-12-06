@@ -253,7 +253,7 @@ class CMakeGen(object):
             produced, so the correct use is:
 
             for error in gen.generateRecursive(...):
-                print error
+                print(error)
         '''
         if builddir is None:
             builddir = self.buildroot

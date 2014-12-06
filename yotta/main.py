@@ -8,6 +8,7 @@ import argparse
 import logging
 import sys
 import pkg_resources
+from functools import reduce
 
 # subcommand modules, , add subcommands, internal
 from . import version

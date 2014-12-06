@@ -4,6 +4,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
+from __future__ import print_function
 import os
 import logging
 import re
@@ -26,12 +27,19 @@ Git_Repo_RE = re.compile("^(git[+a-zA-Z-]*:.*|.*\.git|.*git@.*github\.com.*)$")
 HG_Repo_RE  = re.compile("^(hg[+a-zA-Z-]*:.*|.*\.hg)$")
 SVN_Repo_RE = re.compile("^svn[+a-zA-Z-]*:.*$")
 
+
+
 def getUserInput(question, default=None, type_class=str):
+    # python 2 + 3 compatibility
+    try:
+        input = raw_input
+    except NameError:
+        pass
     while True:
         default_descr = ''
         if default is not None:
             default_descr = ' <%s> ' % str(default)
-        value = raw_input(question + default_descr)
+        value = input(question + default_descr)
         if default is not None and not value:
             if type_class:
                 return type_class(default)
@@ -41,7 +49,7 @@ def getUserInput(question, default=None, type_class=str):
             typed_value = type_class(value)
             break
         except:
-            print '"%s" isn\'t a valid "%s" value' % (value, type_class.__name__)
+            print('"%s" isn\'t a valid "%s" value' % (value, type_class.__name__))
     return typed_value
 
 def yesNo(string):
