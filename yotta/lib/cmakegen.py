@@ -388,7 +388,7 @@ class CMakeGen(object):
             dep_extra_include_dirs = c.getExtraIncludes()
             for d in dep_extra_include_dirs:
                 include_other_dirs += 'include_directories("%s")\n' % replaceBackslashes(os.path.join(c.path, d))
-        for name, c in all_dependencies.items() + [(component.getName(), component)]:
+        for name, c in list(all_dependencies.items()) + [(component.getName(), component)]:
             dep_extra_objc_flags = c.getExtraObjcFlags()
             # Try to warn Geraint when flags are clobbered. This will probably
             # miss some obscure flag forms, but it tries pretty hard
