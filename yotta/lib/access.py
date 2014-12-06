@@ -216,7 +216,7 @@ def searchPathsForComponent(name, version_required, search_paths):
 
 def satisfyVersionFromAvailble(name, version_required, available):
     spec = None
-    if name in available:
+    if name in available and available[name]:
         logger.debug('satisfy %s from already installed components' % name)
         # we still need to check the version specification - which the remote
         # components know how to parse:
