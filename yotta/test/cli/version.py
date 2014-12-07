@@ -48,8 +48,30 @@ class TestCLIVersion(unittest.TestCase):
         rmRf(Test_Dir)
 
     def test_displayVersion(self):
-        stdout, stderr, statuscode = cli.run(['version'], cwd=Test_Dir)
+        stdout = self.runCheckCommand(['version'])
         self.assertTrue(stdout.find('0.0.0'))
+
+    def test_bumpVersion(self):
+        stdout = self.runCheckCommand(['version', 'patch'])
+        stdout = self.runCheckCommand(['version'])
+        self.assertTrue(stdout.find('0.0.1'))
+
+        stdout = self.runCheckCommand(['version', 'major'])
+        stdout = self.runCheckCommand(['version'])
+        self.assertTrue(stdout.find('1.0.0'))
+
+        stdout = self.runCheckCommand(['version', 'minor'])
+        stdout = self.runCheckCommand(['version'])
+        self.assertTrue(stdout.find('1.1.0'))
+
+        stdout = self.runCheckCommand(['version', '1.2.3-alpha1'])
+        stdout = self.runCheckCommand(['version'])
+        self.assertTrue(stdout.find('1.2.3-alpha1'))
+
+    def runCheckCommand(self, args):
+        stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
+        self.assertEqual(statuscode, 0)
+        return stdout
 
 
 if __name__ == '__main__':
