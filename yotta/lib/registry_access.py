@@ -33,8 +33,6 @@ from Crypto.PublicKey import RSA
 
 # settings, , load and save settings, internal
 import settings
-# connection_pool, , shared connection pool, internal
-import connection_pool
 # access_common, , things shared between different component access modules, internal
 import access_common
 # version, , represent versions and specifications, internal
@@ -47,7 +45,7 @@ import github_access
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
-_OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
+_OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
 
@@ -70,10 +68,10 @@ def generate_jwt_token(private_key):
     return token
 
 def _pubkeyWireFormat(pubkey):
-    return quoteURL(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
+    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', pubkey.exportKey('OpenSSH')))
 
 def _fingerprint(pubkey):
-    stripped = _OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH'))
+    stripped = _OpenSSH_Keyfile_Strip.sub(b'', pubkey.exportKey('OpenSSH'))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
     return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
@@ -163,9 +161,9 @@ def _getTarball(url, directory, sha256):
         'Authorization': 'Bearer %s' % auth_token
     }
 
-    response = requests.get(url, headers=request_headers, allow_redirects=True)
+    response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
 
-    return access_common.unpackTarballStream(response.raw, directory, ('sha256', sha256))
+    return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
 
 def _generateAndSaveKeys():
     k = RSA.generate(2048)
