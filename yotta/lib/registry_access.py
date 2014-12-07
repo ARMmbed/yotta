@@ -131,12 +131,12 @@ def _listVersions(namespace, name):
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     response = requests.get(url, headers=request_headers)
     
-    if response.status_code == 404
+    if response.status_code == 404:
         raise access_common.ComponentUnavailable(
             '%s does not exist in the %s registry' % (name, namespace)
         )
@@ -160,7 +160,7 @@ def _getTarball(url, directory, sha256):
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     response = requests.get(url, headers=request_headers, allow_redirects=True)
@@ -286,7 +286,7 @@ def listOwners(namespace, name):
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     response = requests.get(url, headers=request_headers)
@@ -313,7 +313,7 @@ def addOwner(namespace, name, owner):
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     response = requests.put(url, headers=request_headers)
@@ -337,7 +337,7 @@ def removeOwner(namespace, name, owner):
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     response = requests.delete(url, headers=request_headers)
@@ -370,7 +370,7 @@ def testLogin():
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     logger.debug('test login...')
@@ -389,7 +389,7 @@ def getAuthData():
     auth_token = generate_jwt_token(_getPrivateKeyObject())
 
     request_headers = {
-        'Authorization' = 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token
     }
 
     logger.debug('poll for tokens...')
@@ -406,7 +406,6 @@ def getAuthData():
     elif response.status_code == requests.codes.not_found:
         logger.debug('Not Found')
         return None
-    elif response.status_code == requests.codes.
 
     body = response.text
     logger.debug('auth data response: %s' % body);
