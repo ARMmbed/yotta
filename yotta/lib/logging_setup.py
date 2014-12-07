@@ -57,6 +57,7 @@ class Formatter(logging.Formatter):
         return s
 
 def init(level=0, enable_subsystems=[]):
+    level = int(round(level))
     # once logging.something has been called you have to remove all logging
     # handlers before re-configing...
     root = logging.getLogger()
