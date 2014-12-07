@@ -86,6 +86,8 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
             
             for chunk in stream.iter_content(1024):
                 f.write(chunk)
+                if hash_name:
+                    m.update(chunk)
 
             if hash_name:
                 calculated_hash = m.hexdigest()
