@@ -20,13 +20,11 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
-# connection_pool, , shared connection pool, internal
-import connection_pool
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
-# restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
-from restkit import Resource, BasicAuth, Connection, request
+# requests, apache2
+import requests
 
 # PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
 import github
@@ -118,13 +116,14 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
-    response = resource.get(
-        headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
-    )
+    headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}
+
+    response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
+
     logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
-    access_common.unpackTarballStream(response.body_stream(), into_directory)
+
+    access_common.unpackTarballStream(response, into_directory)
 
 def _pollForAuth():
     tokens = registry_access.getAuthData()

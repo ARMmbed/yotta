@@ -84,7 +84,7 @@ class ComponentTestCase(unittest.TestCase):
         self.assertEqual(str(c.getVersion()), '0.0.7')
 
         deps = c.getDependencies()
-        self.assertEqual(deps.keys(), self.deps_in_order)
+        self.assertEqual(list(deps.keys()), self.deps_in_order)
 
 if __name__ == '__main__':
     unittest.main()
