@@ -86,15 +86,15 @@ def _registryAuthFilter():
     return  _BearerJWTFilter(_getPrivateKeyObject())
 
 def _returnRequestError(fn):
-    ''' Decorator that captures un-caught restkit_errors.RequestFailed errors
+    ''' Decorator that captures requests.exceptions.RequestException errors
         and returns them as an error message. If no error occurs the reture
         value of the wrapped function is returned (normally None). '''
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.RequestFailed as e:
-            return "sever returned status %s: %s" % (e.status_int, e.message)
+        except requests.exceptions.RequestException as e:
+            return "sever returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
  
 def _handleAuth(fn):
@@ -103,10 +103,13 @@ def _handleAuth(fn):
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.Unauthorized as e:
-            github_access.authorizeUser()
-            logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
-            return fn(*args, **kwargs)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == requests.codes.unauthorized:
+                github_access.authorizeUser()
+                logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+                return fn(*args, **kwargs)
+            else:
+                raise
     return wrapped
 
 def _friendlyAuthError(fn):
@@ -117,9 +120,12 @@ def _friendlyAuthError(fn):
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.Unauthorized as e:
-            logger.error('insufficient permission')
-            return None
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == requests.codes.unauthorized:
+                logger.error('insufficient permission')
+                return None
+            else:
+                raise
     return wrapped
 
 def _listVersions(namespace, name):
@@ -165,6 +171,7 @@ def _getTarball(url, directory, sha256):
     }
 
     response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
+    response.raise_for_status()
 
     return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
 
@@ -239,7 +246,6 @@ class RegistryThing(access_common.RemoteComponent):
     def remoteType(cls):
         return 'registry'
 
-@_returnRequestError
 @_handleAuth
 def publish(namespace, name, version, description_file, tar_file, readme_file, readme_file_ext):
     ''' Publish a tarblob to the registry, if the request fails, an exception
@@ -270,7 +276,11 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     headers['Authorization'] = 'Bearer %s' % generate_jwt_token(_getPrivateKeyObject())
     response = requests.put(headers=headers, data=body)
 
+    if not response.ok:
+        return "sever returned status %s: %s" % (response.status_code, e.reason)
+
     return None
+
 
 @_friendlyAuthError
 @_handleAuth
@@ -295,8 +305,13 @@ def listOwners(namespace, name):
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
         return None
+    
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
 
     return ordered_json.loads(response.text)
+
 
 @_friendlyAuthError
 @_handleAuth
@@ -322,6 +337,11 @@ def addOwner(namespace, name, owner):
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
 
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
+
+
 @_friendlyAuthError
 @_handleAuth
 def removeOwner(namespace, name, owner):
@@ -345,6 +365,11 @@ def removeOwner(namespace, name, owner):
 
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
+
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
+
 
 def deauthorize():
     if settings.getProperty('keys', 'private'):
@@ -376,6 +401,7 @@ def testLogin():
 
     logger.debug('test login...')
     response = requests.get(url, headers=request_headers)
+    response.raise_for_status()
 
 def getAuthData():
     ''' Poll the registry to get the result of a completed authentication
