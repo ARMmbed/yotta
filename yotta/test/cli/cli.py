@@ -24,7 +24,7 @@ def run(arguments, cwd='.'):
          stdin = subprocess.PIPE
     )
     out, err = child.communicate()
-    return out, err, child.returncode
+    return out.decode('utf-8'), err.decode('utf-8'), child.returncode
 
 
 

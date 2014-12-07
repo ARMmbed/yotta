@@ -227,7 +227,7 @@ class HG(VCS):
         self.repo.hg_update(tag)
 
     def tags(self):
-        l = self.repo.hg_tags().keys()
+        l = list(self.repo.hg_tags().keys())
         l.remove('tip')
         return l
 
