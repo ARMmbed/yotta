@@ -14,17 +14,9 @@ import logging
 from yotta.lib import access
 from yotta.lib import component
 from yotta.lib.pool import pool
+from yotta.lib.fsutils import mkDirP
 
 testdir = '/tmp/ytcomponenttest'
-
-def mkDirP(path):
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 # !!! currently: discard all log messages. maybe we want to use a more
 # sophisticated logging handler that stores the messages so we can inspect them
