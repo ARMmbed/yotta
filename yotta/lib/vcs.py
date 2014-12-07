@@ -83,13 +83,13 @@ class Git(VCS):
         if child.returncode:
             raise Exception('command failed: %s:%s', cmd, err or out)
 
-        for line in out.split('\n'):
-            branch_info = line.split(' -> ')
+        for line in out.split(b'\n'):
+            branch_info = line.split(b' -> ')
             # skip HEAD:
             if len(branch_info) > 1:
                 continue
             remote_branch = branch_info[0].strip()
-            branch = '/'.join(remote_branch.split('/')[1:])
+            branch = b'/'.join(remote_branch.split(b'/')[1:])
             remote_branches.append((remote_branch, branch))
         
         # list already-existing local branches
@@ -98,8 +98,8 @@ class Git(VCS):
         out, err = child.communicate()
         if child.returncode:
             raise Exception('command failed: %s:%s', cmd, err or out)
-        for line in out.split('\n'):
-            local_branches.append(line.strip(' *'))
+        for line in out.split(b'\n'):
+            local_branches.append(line.strip(b' *'))
 
         for remote, branchname in remote_branches:
             # don't try to replace existing local branches
@@ -159,7 +159,7 @@ class Git(VCS):
             self._gitCmd('tag', '-l')
         ]
         out, err = self._execCommands(commands)
-        return out.split('\n')
+        return out.split(b'\n')
 
     def branches(self):
         commands = [

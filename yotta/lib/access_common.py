@@ -16,23 +16,31 @@ import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
 
+
 class AccessException(Exception):
     pass
+
 
 class ComponentUnavailable(AccessException):
     pass
 
+
 class TargetUnavailable(AccessException):
     pass
+
 
 class SpecificationNotMet(AccessException):
     pass
 
+
 class RemoteVersion(version.Version):
+
     def unpackInto(self, directory):
         raise NotImplementedError
 
+
 class RemoteComponent(object):
+
     @classmethod
     def createFromSource(cls, url, name=None):
         raise NotImplementedError
@@ -50,14 +58,16 @@ class RemoteComponent(object):
     def remoteType(cls):
         raise NotImplementedError
 
+
 def unpackTarballStream(stream, into_directory, hash=(None, None)):
     ''' Unpack a stream-like object that contains a tarball into a directory
     '''
     hash_name = hash[0]
     hash_value = hash[1]
+
     if hash_name:
         m = getattr(hashlib, hash_name)()
-    chunk = 1024 * 32
+
     into_parent_dir = os.path.dirname(into_directory)
     fsutils.mkDirP(into_parent_dir)
     temp_directory = tempfile.mkdtemp(dir=into_parent_dir)
@@ -69,22 +79,25 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
     # overwriting our tar archive with something that unpacks to an absolute
     # path when we might be running sudo'd
     try:
-        fd = os.open(download_fname, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))
+        fd = os.open(download_fname, os.O_CREAT | os.O_EXCL |
+                                     os.O_RDWR | getattr(os, "O_BINARY", 0))
         with os.fdopen(fd, 'rb+') as f:
             f.seek(0)
-            while True:
-                data = stream.read(chunk)
-                if not data: break
+            
+            for chunk in stream.iter_content(1024):
+                f.write(chunk)
                 if hash_name:
-                    m.update(data)
-                f.write(data)
+                    m.update(chunk)
+
             if hash_name:
                 calculated_hash = m.hexdigest()
-                logging.debug('calculated hash: %s check against: %s' % (calculated_hash, hash_value))
+                logging.debug(
+                    'calculated hash: %s check against: %s' % (calculated_hash, hash_value))
                 if hash_value and (hash_value != calculated_hash):
                     raise Exception('Hash verification failed.')
             f.truncate()
-            logging.debug('got file, extract into %s (for %s)', temp_directory, into_directory)
+            logging.debug(
+                'got file, extract into %s (for %s)', temp_directory, into_directory)
             # head back to the start of the file and untar (without closing the
             # file)
             f.seek(0)
@@ -99,7 +112,7 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
                         m.name = os.path.join(*(split_path[1:]))
                         to_extract.append(m)
                 tf.extractall(path=temp_directory, members=to_extract)
-        
+
         # remove the temporary download file, maybe in the future we will cache
         # these somewhere
         fsutils.rmRf(os.path.join(into_directory, 'download.tar.gz'))

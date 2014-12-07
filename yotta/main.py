@@ -33,7 +33,7 @@ from .lib import logging_setup
 from .lib import detect
 
 def logLevelFromVerbosity(v):
-    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) / 5)
+    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
 
 def splitList(l, at_value):
     r = [[]]
@@ -123,6 +123,10 @@ def main():
     logging_setup.init(level=loglevel, enable_subsystems=args.debug)
     
     # finally, do stuff!
+    if 'command' not in args:
+        parser.print_usage()
+        sys.exit(0)
+
     status = args.command(args, following_args)
 
     sys.exit(status or 0)
