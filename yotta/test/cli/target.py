@@ -38,7 +38,7 @@ Test_Module_JSON = '''{
 }
 '''
 
-class TestCLIVersion(unittest.TestCase):
+class TestCLITarget(unittest.TestCase):
     def setUp(self):
         mkDirP(Test_Dir)
         with open(os.path.join(Test_Dir, 'module.json'), 'w') as f:
@@ -47,26 +47,11 @@ class TestCLIVersion(unittest.TestCase):
     def tearDown(self):
         rmRf(Test_Dir)
 
-    def test_displayVersion(self):
-        stdout = self.runCheckCommand(['version'])
-        self.assertTrue(stdout.find('0.0.0') != -1)
-
-    def test_bumpVersion(self):
-        stdout = self.runCheckCommand(['version', 'patch'])
-        stdout = self.runCheckCommand(['version'])
-        self.assertTrue(stdout.find('0.0.1') != -1)
-
-        stdout = self.runCheckCommand(['version', 'major'])
-        stdout = self.runCheckCommand(['version'])
-        self.assertTrue(stdout.find('1.0.0') != -1)
-
-        stdout = self.runCheckCommand(['version', 'minor'])
-        stdout = self.runCheckCommand(['version'])
-        self.assertTrue(stdout.find('1.1.0') != -1)
-
-        stdout = self.runCheckCommand(['version', '1.2.3-alpha1'])
-        stdout = self.runCheckCommand(['version'])
-        self.assertTrue(stdout.find('1.2.3-alpha1') != -1)
+    def test_setTarget(self):
+        stdout = self.runCheckCommand(['target', 'testtarget'])
+        stdout = self.runCheckCommand(['target'])
+        self.assertTrue(stdout.find('testtarget') != -1)
+        stdout = self.runCheckCommand(['target', 'x86-linux-native'])
 
     def runCheckCommand(self, args):
         stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
@@ -76,4 +61,5 @@ class TestCLIVersion(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
 
