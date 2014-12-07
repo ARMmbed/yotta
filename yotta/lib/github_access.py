@@ -120,8 +120,6 @@ def _getTarball(url, into_directory):
 
     response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
 
-    raise Exception(str(response))
-
     logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
 
