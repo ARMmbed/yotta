@@ -62,7 +62,7 @@ def islast(generator):
         yield (next_x, True)
 
 def putln(x):
-    print(x.encode('utf-8'))
+    print(x)
 
 def relpathIfSubdir(path):
     relpath = os.path.relpath(path)
