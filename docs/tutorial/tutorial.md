@@ -19,14 +19,16 @@ Let’s create a module that provides a really simple logging framework:
 First create a directory with the name we want, and `cd` into it.
 
 ```sh
-mkdir simplelog
-cd simplelog
+# in these code examples, lines that you type have "> " at the beginning, other
+# lines are output from the running program:
+> mkdir simplelog
+> cd simplelog
 ```
 
 [yotta init](/../reference/commands.html#yotta-init), will create the module description for us, after asking a few questions. It’ll provide some helpful defaults, too.
 
 ```sh
-simplelog james$ yotta init
+> yotta init
 Enter the module name: <simplelog>
 Enter the initial version: <0.0.0>
 Short description: Really simple logging.
@@ -36,14 +38,14 @@ Repository url: ssh://git@github.com/ARM-RD/simplelog
 Homepage: http://github.com/ARM-RD/simplelog
 What is the license for this project (ISC, MIT, Apache-2 etc.)?  <ISC>
 Is this module an executable? <no>
-simplelog james$
+> 
 ```
 
 ### Module Structure
 `yotta init` also creates some directories for us to put things in:
 
 ```sh
-simplelog james$ ls -l
+> ls -l
 total 4
 -rw-r--r--  1 james  staff   420B 15 Sep 16:55 module.json
 drwxr-xr-x  4 james  staff   136B 15 Sep 16:35 simplelog
@@ -141,7 +143,7 @@ void simpleLogDebug(const char* msg){
 Now we have a header and implementation file, we can build our module!
 
 ```sh
-simplelog james$ yotta build
+> yotta build
 info: generate for target: x86-osx-native 0.0.3 at /Dev/simplelog/yotta_targets/x86-osx-native
 -- Configuring done
 -- Generating done
@@ -171,8 +173,7 @@ int main(){
 Now, when we run `yotta build`, yotta will also build our test:
 
 ```sh
-yotta build
-simplelog james$ yotta build
+> yotta build
 info: generate for target: x86-osx-native 0.0.3 at /Dev/simplelog/yotta_targets/x86-osx-native
 -- Configuring done
 -- Generating done
@@ -187,7 +188,7 @@ Linking C executable simplelog-basic
 Now let’s run our test, you’ll find it at `./build/x86-osx-native/test/simplelog-basic` (more on that path name later):
 
 ```sh
-simplelog james$ ./build/x86-osx-native/test/simplelog-basic
+> ./build/x86-osx-native/test/simplelog-basic
 [debug] hello simplelog!
 ```
 
@@ -203,7 +204,7 @@ In ARM we use `yotta` to build software for embedded devices – not just deskto
 The `yotta target` command lets you do this. It defaults to the system you’re building on (`x86-osx-native` on mac, `x86-linux-native` on linux, etc.) You can display the current target by running `yotta target` with no arguments:`
 
 ```sh
-simplelog james$ yotta target
+> yotta target
 x86-osx-native
 ```
 
@@ -213,7 +214,7 @@ If you set a different target, by running `yotta target <targetname>`, then `yot
 The most important part of `yotta` is the ability to publish our module so other can use it. Now that we’ve tested our module, lets do that!
 
 ```
-simplelog james$ yotta publish
+> yotta publish
 info: generate archive extracting to "simplelog-0.0.0"
 warning: no readme.md file detected
 info: published latest version: 0.0.0
@@ -233,8 +234,8 @@ Executables are runnable programs that depend on any number of other modules, an
 Let’s start by creating a new directory for our executable, and running `yotta init` again, if you previously created the `simplelog` module, then cd up one directory first: `cd ..`
 
 ```sh
-projects james$ mkdir helloyotta
-projects james$ cd helloyotta
+> mkdir helloyotta
+> cd helloyotta
 helloyotta james$ yotta init
 Enter the module name: <helloyotta>
 ...
@@ -255,7 +256,7 @@ Note that this time we answered **yes** to the last question. This makes `yotta`
 Now we can tell `yotta` that we want to use the module we created earlier, `simplelog`.
 
 ```sh
-helloyotta james$ yotta install --save simplelog
+> yotta install --save simplelog
 info: get versions for x86-osx-native
 info: get versions for simplelog
 info: download simplelog
@@ -287,6 +288,7 @@ int main(){
 Just like building a module, when we run `yotta build` yotta will arrange for everything necessary to be compiled, and produce a result:
 
 ```sh
+> yotta build
 info: generate for target: x86-osx-native 0.0.3 at /Dev/helloyotta/yotta_targets/x86-osx-native
 -- Configuring done
 -- Generating done
@@ -303,7 +305,7 @@ Notice that `yotta` also built simplelog's library: as modules are distributed a
 Our executable will have been placed in `./build/x86-osx-native/source`, (or `./build/<targetname>/source` if you're compiling for a different target.). Let's run it:
 
 ```sh
-helloyotta james$ ./build/x86-osx-native/source/helloyotta
+> ./build/x86-osx-native/source/helloyotta
 [info] Hello yotta!
 ```
 
