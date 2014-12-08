@@ -167,10 +167,15 @@ class Target(pack.Pack):
             daemon = None
             child = None
             try:
-                if 'debug-server' in self.description:
+                # debug-server is the old name, debugServer is the new name
+                debug_server_prop = 'debugServer'
+                if not debug_server_prop in self.description:
+                    debug_server_prop = 'debug-server'
+
+                if debug_server_prop in self.description:
                     logging.debug('starting debug server...')
                     daemon = subprocess.Popen(
-                                   self.description['debug-server'],
+                                   self.description[debug_server_prop],
                              cwd = builddir,
                           stdout = dev_null,
                           stderr = dev_null,

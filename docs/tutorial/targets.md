@@ -122,7 +122,7 @@ program in the background before running the debugger itself, use the
 `debugServer` property to define this command, for example:
 
 ```json
-  "debug-server": [
+  "debugServer": [
     "JLinkGDBServer", "-if", "SWD", "-speed", "4000"
   ],
 ```
