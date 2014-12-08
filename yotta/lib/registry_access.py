@@ -41,6 +41,8 @@ import version
 import ordered_json
 # Github Access, , access repositories on github, internal
 import github_access
+# export key, , export pycrypto keys, internal
+import exportkey
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org'
@@ -50,7 +52,7 @@ _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MU
 logger = logging.getLogger('access')
 
 # suppress logging from the requests library
-logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logger.WARNING)
 
 # Internal functions
 
@@ -65,16 +67,16 @@ def generate_jwt_token(private_key):
         "exp": str(expires)
     }
     logger.debug('token fields: %s' % token_fields)
-    token = jwt.encode(token_fields, private_key, 'RS256')
+    token = jwt.encode(token_fields, private_key, 'RS256').decode('ascii')
     logger.debug('encoded token: %s' % token)
 
     return token
 
 def _pubkeyWireFormat(pubkey):
-    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', pubkey.exportKey('OpenSSH')))
+    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey)))
 
 def _fingerprint(pubkey):
-    stripped = _OpenSSH_Keyfile_Strip.sub(b'', pubkey.exportKey('OpenSSH'))
+    stripped = _OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
     return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
@@ -177,9 +179,9 @@ def _getTarball(url, directory, sha256):
 
 def _generateAndSaveKeys():
     k = RSA.generate(2048)
-    privatekey_hex = binascii.hexlify(k.exportKey('DER'))
+    privatekey_hex = binascii.hexlify(k.exportKey('DER')).decode('ascii')
     settings.setProperty('keys', 'private', privatekey_hex)
-    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
+    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER')).decode('ascii')
     settings.setProperty('keys', 'public', pubkey_hex)
     return pubkey_hex, privatekey_hex
 

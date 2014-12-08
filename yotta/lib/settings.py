@@ -48,6 +48,7 @@ def getProperty(section, name):
         return None
 
 def setProperty(section, name, value):
+    logging.debug('setProperty: %s:%s %s:%s', type(name), name, type(value), value)
     # use a local parser instance so that we don't copy system-wide settings
     # into the user config file
     p = ConfigParser.SafeConfigParser()
