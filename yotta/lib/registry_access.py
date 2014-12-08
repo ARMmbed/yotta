@@ -52,7 +52,7 @@ _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MU
 logger = logging.getLogger('access')
 
 # suppress logging from the requests library
-logging.getLogger("requests").setLevel(logger.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 # Internal functions
 

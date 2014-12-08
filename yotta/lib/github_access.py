@@ -140,7 +140,14 @@ def authorizeUser():
     if _pollForAuth():
         return
 
-    raw_input('''
+    # python 2 + 3 compatibility
+    try:
+        global input
+        input = raw_input
+    except NameError:
+        pass
+
+    input('''
 You need to log in with Github. Press enter to continue.
 
 (Your browser will open to complete login.)''')
