@@ -159,7 +159,9 @@ class Git(VCS):
             self._gitCmd('tag', '-l')
         ]
         out, err = self._execCommands(commands)
-        return out.split(b'\n')
+        # I think utf-8 is the right encoding? commit messages are utf-8
+        # encoded, couldn't find any documentation on tag names.
+        return out.decode('utf-8').split(u'\n')
 
     def branches(self):
         commands = [
