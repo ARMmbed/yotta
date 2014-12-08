@@ -33,7 +33,7 @@ def _ensureParser():
     global parser
     with parser_lock:
         if not parser:
-            parser = ConfigParser.SafeConfigParser()
+            parser = ConfigParser.RawConfigParser()
             parser.read(_iniFiles())
 
 # public API
@@ -51,7 +51,7 @@ def setProperty(section, name, value):
     logging.debug('setProperty: %s:%s %s:%s', type(name), name, type(value), value)
     # use a local parser instance so that we don't copy system-wide settings
     # into the user config file
-    p = ConfigParser.SafeConfigParser()
+    p = ConfigParser.RawConfigParser()
     full_ini_path = os.path.expanduser(user_ini_file)
     ini_directory = os.path.dirname(full_ini_path)
     fsutils.mkDirP(ini_directory)

@@ -168,7 +168,7 @@ class Git(VCS):
             self._gitCmd('branch', '--list')
         ]
         out, err = self._execCommands(commands)
-        return [x.lstrip(' *') for x in out.split('\n')]
+        return [x.lstrip(' *') for x in out.decode('utf-8').split('\n')]
 
     def commit(self, message, tag=None):
         commands = [
