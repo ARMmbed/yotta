@@ -32,6 +32,7 @@ SVN_Repo_RE = re.compile("^svn[+a-zA-Z-]*:.*$")
 def getUserInput(question, default=None, type_class=str):
     # python 2 + 3 compatibility
     try:
+        global input
         input = raw_input
     except NameError:
         pass
