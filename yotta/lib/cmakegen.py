@@ -94,7 +94,6 @@ include_directories("{{ source_directory | replaceBackslashes }}")
 
 {% for lang in languages %}
 set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
-
   {% for file_name, language in source_files %}
     {% if language in lang %}
     "{{ file_name | replaceBackslashes }}"
@@ -178,7 +177,7 @@ include_directories("{{ source_directory | replaceBackslashes }}")
 
 {% for file_names, object_name, languages in tests %}
 add_executable({{ object_name }}
-    {{ file_names | join('\n    ') }}
+    {{ file_names | join('\n    ') | replaceBackslashes }}
 )
 {% if 'objc' in languages %}
 # no proper CMake support for objective-c flags :(
@@ -199,7 +198,7 @@ if(YOTTA_POSTPROCESS_COMMAND)
         COMMAND ${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
     )
 endif()
-add_test({ object_name }} {{ object_name }})
+add_test({{ object_name }} {{ object_name }})
 
 {% endfor %}
 '''
@@ -225,7 +224,7 @@ templates = {
     'subdir': Subdir_CMakeLists_Template,
     'test': Test_CMakeLists_Template
 }
-jinja_environment = Environment(loader=DictLoader(templates))
+jinja_environment = Environment(loader=DictLoader(templates), trim_blocks=True, lstrip_blocks=True)
 
 def replaceBackslashes(s):
     return s.replace('\\', '/')
