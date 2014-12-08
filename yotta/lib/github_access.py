@@ -20,13 +20,11 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
-# connection_pool, , shared connection pool, internal
-import connection_pool
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
-# restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
-from restkit import Resource, BasicAuth, Connection, request
+# requests, apache2
+import requests
 
 # PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
 import github
@@ -118,13 +116,14 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
-    response = resource.get(
-        headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
-    )
+    headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}
+
+    response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
+
     logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
-    access_common.unpackTarballStream(response.body_stream(), into_directory)
+
+    access_common.unpackTarballStream(response, into_directory)
 
 def _pollForAuth():
     tokens = registry_access.getAuthData()
@@ -141,7 +140,14 @@ def authorizeUser():
     if _pollForAuth():
         return
 
-    raw_input('''
+    # python 2 + 3 compatibility
+    try:
+        global input
+        input = raw_input
+    except NameError:
+        pass
+
+    input('''
 You need to log in with Github. Press enter to continue.
 
 (Your browser will open to complete login.)''')
@@ -208,8 +214,8 @@ class GithubComponent(access_common.RemoteComponent):
     def _getTags(self):
         if self.tags is None:
             try:
-                self.tags = _getTags(self.repo).iteritems()
-            except github.UnknownObjectException, e:
+                self.tags = _getTags(self.repo).items()
+            except github.UnknownObjectException as e:
                 raise access_common.ComponentUnavailable(
                     'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
                 )
@@ -239,7 +245,7 @@ class GithubComponent(access_common.RemoteComponent):
         ''' return a list of GithubComponentVersion objects for the tip of each branch
         '''
         return [
-            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).iteritems()
+            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).items()
         ]
 
     def tipVersion(self):

@@ -14,7 +14,7 @@ platform_deps = ['ntfsutils'] if os.name == 'nt' else []
 
 setup(
     name = "yotta",
-    version = "0.0.35",
+    version = "0.0.36",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -36,5 +36,5 @@ setup(
         ],
     },
     test_suite = 'yotta.test',
-    install_requires=['semantic_version>=2.3.1,<3', 'restkit>=4.2,<5', 'PyGithub>1.25,<2', 'colorama>=0.3,<0.4', 'hgapi>=1.7,<2', 'cheetah>=2.4,<3', 'PyCrypto>=2.5,<3', 'PyJWT>=0.3,<0.4', 'pathlib>=1.0.1'] + platform_deps
+    install_requires=['semantic_version>=2.3.1,<3', 'requests>=2.5', 'PyGithub>1.25,<2', 'colorama>=0.3,<0.4', 'hgapi>=1.7,<2', 'Jinja2>2.7.0', 'PyCrypto>=2.5,<3', 'PyJWT>=0.3,<0.4', 'pathlib>=1.0.1'] + platform_deps
 )

@@ -13,9 +13,9 @@ import os
 import colorama
 
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # fsutils, , misc filesystem utils, internal
-from lib import fsutils
+from .lib import fsutils
 # folders, , get places to install things, internal
 from . import folders
 
@@ -44,7 +44,7 @@ def execCommand(args, following_args):
         dst = os.path.join(folders.globalTargetInstallDirectory(), c.getName())
 
     if args.target:
-        realsrc = os.path.realpath(src)
+        realsrc = fsutils.realpath(src)
         if src == realsrc:
             logging.warning(
               ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET

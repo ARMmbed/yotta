@@ -4,11 +4,12 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
+from __future__ import print_function
 import re
 import logging
 
 # settings, , load and save settings, internal
-from lib import settings
+from .lib import settings
 
 
 # OK this is a pretty terrible validation regex... should find a proper module
@@ -40,7 +41,7 @@ def addOptions(parser):
 
 def execCommand(args, following_args):
     if args.set_target is None:
-        print args.target
+        print(args.target)
     else:
         if not Target_RE.match(args.set_target):
             logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:

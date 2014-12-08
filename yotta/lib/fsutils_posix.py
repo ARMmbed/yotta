@@ -18,3 +18,5 @@ def tryReadLink(path):
 def _symlink(source, link_name):
     os.symlink(source, link_name)
 
+def realpath(path):
+    return os.path.realpath(path)

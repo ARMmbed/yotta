@@ -9,11 +9,11 @@ import logging
 import os
 
 # version, , represent versions and specifications, internal
-from lib import version
+from .lib import version
 # Component, , represents an installed component, internal
-from lib import component
+from .lib import component
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 
 
 def addOptions(parser):
