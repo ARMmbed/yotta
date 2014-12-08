@@ -52,6 +52,7 @@ links = __import__("fsutils_win" if os.name == 'nt' else "fsutils_posix", global
 isLink = links.isLink
 tryReadLink = links.tryReadLink
 _symlink = links._symlink
+realpath = links.realpath
 
 # !!! FIXME: the logic in the "except" block below probably doesn't work in Windows
 def symlink(source, link_name):
