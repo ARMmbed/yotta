@@ -139,6 +139,18 @@ void simpleLogDebug(const char* msg){
 }
 ```
 
+After implementing these files, our module's structure should look something
+like this:
+
+```sh
+├── module.json
+├── simplelog
+│   └── log.h
+├── source
+│   └── simplelog.c
+└── test
+```
+
 ### yotta build
 Now we have a header and implementation file, we can build our module!
 
