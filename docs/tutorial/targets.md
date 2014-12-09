@@ -70,6 +70,7 @@ Though the path is actually specified in the `toolchain` property in target.json
   "toolchain": "CMake/toolchain.cmake"
 ```
 
+<a name="similarto"></a>
 ### The similarTo List and Target Specific Dependencies
 The most important part of the target description is the list of targets that
 the target should be considered "similar to". This is defined by target.json:
