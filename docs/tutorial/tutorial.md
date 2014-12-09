@@ -273,7 +273,7 @@ This has saved `simplelog` as a dependency in the `module.json` file, specifying
 `yotta install` also creates a `yotta_modules` directory in the module's directory, which it uses to store your dependencies. This, along with a corresponding `yotta_targets directory`, and the `build` directory, may be overwritten by `yotta` at any time, so generally shouldn't be modified, and you should not create files in them.
 
 ### Implement
-When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable:
+When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable. For this example, use a file called `./source/hello.c`:
 
 ```C
 #include "simplelog/log.h"
