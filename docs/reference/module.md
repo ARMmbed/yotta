@@ -9,7 +9,10 @@ The `module.json` is used to describe all yotta modules and executables, it
 lists the dependencies, specifies the license under which the module can be
 used, and provides other information about the module.
 
-## Example File
+To create a new module, you can either write a module.json file manually, or
+use `yotta init` to populate the file by answering a sequence of questions.
+
+### Example File
 ```json
 {
   "name": "helloyotta",
@@ -139,24 +142,16 @@ in the public yotta registry. (To publish a module to the registry use
 
 Version specifications can take any of the following forms:
 
- * `1.2.3`:
-    an exact version number. Use only this exact version (not recommended)
-
- * `^1.2.3`:
-    any compatible version (exact version for `0.x.x` versions, or any
-    version greater than the specified version with the same major version
-    number for versions > 1.
-
- * `~1.2.3`:
-    any version with the same major and minor versions, and an equal
-    or greater patch version.
-
- * `>1.2.3`:
-    any version greater than `1.2.3`. `>=`, `<`, and `<=` are also
-    possible.
-
- * `*`:
-    any version (useful for development)
+ * `1.2.3`: an exact version number. Use only this exact version (not
+   recommended)
+ * `^1.2.3`: any compatible version (exact version for `0.x.x` versions, or any
+   version greater than the specified version with the same major version
+   number for versions > 1. 
+ * `~1.2.3`: any version with the same major and minor versions, and an equal
+   or greater patch version. 
+ * `>1.2.3`: any version greater than `1.2.3`. `>=`, `<`, and `<=` are also
+   possible.
+ * `*`: any version (useful for development)
   
 The `^` and `~` specifiers are recommended, as these provide some guarantee of
 compatibility without rigidly constraining the version (which would cause
@@ -267,7 +262,7 @@ their own copy and suggest improvements.
 
 
 ### `bugs`
-**type: Object `{"url":"<url of bug reporting system>", "email": "<optional email to report bugs>"}` **
+**type: Object `{"url":"<url>", "email": "<optional email>"}`**
 
 Including a bugs section helps people who use your module to report problems,
 and suggest fixes.
@@ -283,7 +278,7 @@ Example:
 
 
 ### `bin`
-type: String (path relative to module root)
+**type: String (path relative to module root)**
 
 If present, the `bin` property specifies a subdirectory that should be built
 into an executable. Published modules should not normally use this property.
@@ -296,7 +291,7 @@ of the contents of the source directory, set:
 ```
 
 ### `extraIncludes`
-type: Array of String (paths relative to module root)
+**type: Array of String (paths relative to module root)**
 
 **WARNING** do not use this property in released modules. It exists only to
 simplify the porting of existing software modules to yotta.
