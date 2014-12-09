@@ -124,7 +124,7 @@ pip install -U yotta
 Install a native compiler, such as clang:
 
 ```sh
-sudo apt-get install clang-3.5 
+sudo apt-get install clang-3.5
 ```
 
 To use this compiler to build a module, you should run `yotta target
@@ -138,7 +138,7 @@ First install the [`arm-none-eabi-gcc`
 compiler](https://launchpad.net/gcc-arm-embedded):
 
 ```sh
-sudo apt-get install gcc-arm-none-eabi 
+sudo apt-get install gcc-arm-none-eabi
 ```
 
 To use this compiler, you'll need to select a supported cross-compilation
@@ -150,7 +150,38 @@ target, such as
 <br>
 <a name="installing-on-windows"></a>
 ## Installing On Windows
-...
+Before installing yotta in Windows, you need to have a working installation of Python and pip
+(a Python package manager) . There are a number of places that provide installers for Python on
+Windows, including:
+
+- [python.org](https://www.python.org/downloads/). If you use this, you'll also need to [install pip manually](https://pip.pypa.io/en/latest/installing.html).
+- [ActivePython](http://www.activestate.com/activepython/downloads). This distribution already includes pip and other useful modules.
+
+Choose an installer for the latest available Python 2.7 version.
+
+During installation, make sure to check the "add to path" option in the installer. After the installation,
+you should be able to open cmd.exe and run `python`. If that doesn't work, the most likely cause
+is that the Python installation directory (typically **c:\Python2.7**) is not in your PATH, so make sure
+you add it (following, for example, [this guide](http://superuser.com/questions/317631/setting-path-in-windows-7-command-prompt)).
+You also need to add the "scripts" subdirectory of your Python installation (typically **c:\Python2.7\Scripts**)
+to your PATH. If the "scripts" subdirectory is properly added to your PATH, you should be able to
+execute `pip` from the command prompt.
+
+With Python and pip properly installed, follow these steps to install yotta:
+
+- install PyCrypto 2.6 for Python 2.7 from [Voidspace](http://www.voidspace.org.uk/python/modules.shtml#pycrypto).
+Make sure that you use the installer that matches your Python installation (32 or 64 bit).
+- open cmd.exe and run `pip install -U yotta`
+- [cmake](http://www.cmake.org/) is a makefile generator, used by yotta internally. Download and install
+it from [here](http://www.cmake.org/download/). yotta on Windows was tested mostly with version 3.1.0-rc2
+of cmake, but 3.0.2 (the latest stable version at the time of writing this) should work too. Make sure to
+check the "add cmake to the path for current user" option during installation.
+- [ninja](http://martine.github.io/ninja/) is a fast and small build system that works well in Windows.
+Download the release archive from [here](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip)
+and extract 'ninja.exe' to **c:\ninja** or any other directory. Add that directory to your PATH.
+- [sed](https://www.gnu.org/software/sed/) is another tool used by yotta in Windows. A binary installer can be
+found [here](http://gnuwin32.sourceforge.net/packages/sed.htm). After installing sed, add the directory with
+'sed.exe' to your PATH.
 
 ### Building natively for windows
 Building natively for windows isn't yet supported. If you're adventurous and
@@ -158,7 +189,15 @@ get it working, submit a [pull request](https://github.com/armmbed/yotta/pulls)
 to update these docs.
 
 ### Cross-compiling from Windows
-...
+First install the [`arm-none-eabi-gcc` compiler](https://launchpad.net/gcc-arm-embedded). At the
+time of writing this, the latest version used for cross-compiling with yotta is
+[gcc 4.8](https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe).
+Download and install it, then add the bin/ subdirectory of the installation directory to your PATH.
+After you do that, you should be able to open cmd.exe and run `arm-none-eabi-gcc` from
+the command prompt. If that doesn't work, make sure that your PATH is properly set.
 
-
+To use this compiler, you'll need to select a supported cross-compilation
+target, such as
+[frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
+`yotta target frdm-k64f-gcc` before building.
 
