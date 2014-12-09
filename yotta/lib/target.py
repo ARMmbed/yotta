@@ -62,7 +62,8 @@ class Target(pack.Pack):
     
     @classmethod
     def addBuildOptions(cls, parser):
-        parser.add_argument('-G', '--cmake-generator', dest='cmake_generator', default='Unix Makefiles',
+        parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
+           default=('Unix Makefiles', 'Ninja')[os.name == 'nt'],
            choices=(
                'Unix Makefiles',
                'Ninja',
