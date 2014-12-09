@@ -118,7 +118,6 @@ class Component(pack.Pack):
                         (target, t, self.getName())
                     )
                     deps += self.description['targetDependencies'][t].items()
-                    break
         return deps
 
     def getDependencies(self,
