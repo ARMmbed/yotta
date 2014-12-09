@@ -72,14 +72,9 @@ the Mac app store, then run:
 xcode-select --install
 ```
 
-To use this compiler to build a module, you should run
-
-```sh
-yotta target x86-osx-native
-```
-
-before building. This selects the yotta target
-description for the native compiler.
+To use this compiler to build a module, you should run `yotta target
+x86-osx-native` before building. This selects the yotta target description for
+the native compiler.
 
 
 ### Cross-compiling from OS X
@@ -92,13 +87,9 @@ brew install arm-none-eabi-gcc
 ```
 
 To use this compiler, you'll need to select a supported cross-compilation
-target, such as [frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running:
-
-```sh
-yotta target frdm-k64f-gcc
-```
-
-before building.
+target, such as
+[frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
+`yotta target frdm-k64f-gcc` before building.
 
 
 ### Solving Common OS X installation problems
@@ -113,13 +104,48 @@ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip insta
 <br>
 <a name="installing-on-linux"></a>
 ## Installing On Linux
-...
+First install yotta's dependencies using your system's package manager, for
+example on Debian and Ubuntu:
+
+```sh
+sudo apt-get install python-pip cmake build-essential ninja-build
+```
+
+Then install yotta itself (you may need to use `sudo` for this, depending on
+your configuration):
+
+```sh
+pip install -U yotta
+```
+
+
 
 ### Using clang to build natively for Linux
-...
+Install a native compiler, such as clang:
+
+```sh
+sudo apt-get install clang-3.5 
+```
+
+To use this compiler to build a module, you should run `yotta target
+x86-linux-native` before building. This selects the yotta target description for
+the native compiler.
+
 
 ### Cross-compiling from Linux
-...
+
+First install the [`arm-none-eabi-gcc`
+compiler](https://launchpad.net/gcc-arm-embedded):
+
+```sh
+sudo apt-get install gcc-arm-none-eabi 
+```
+
+To use this compiler, you'll need to select a supported cross-compilation
+target, such as
+[frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
+`yotta target frdm-k64f-gcc` before building.
+
 
 <br>
 <a name="installing-on-windows"></a>
