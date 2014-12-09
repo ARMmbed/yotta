@@ -161,9 +161,9 @@ Choose an installer for the latest available Python 2.7 version.
 
 During installation, make sure to check the "add to path" option in the installer. After the installation,
 you should be able to open cmd.exe and run `python`. If that doesn't work, the most likely cause
-is that the Python installation directory (typically **c:\Python2.7**) is not in your PATH, so make sure
+is that the Python installation directory (typically **c:\Python27**) is not in your PATH, so make sure
 you add it (following, for example, [this guide](http://superuser.com/questions/317631/setting-path-in-windows-7-command-prompt)).
-You also need to add the "scripts" subdirectory of your Python installation (typically **c:\Python2.7\Scripts**)
+You also need to add the "scripts" subdirectory of your Python installation (typically **c:\Python27\Scripts**)
 to your PATH. If the "scripts" subdirectory is properly added to your PATH, you should be able to
 execute `pip` from the command prompt.
 
