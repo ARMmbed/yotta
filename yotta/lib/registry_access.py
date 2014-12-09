@@ -271,15 +271,16 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
         raise ValueError('unsupported readme type: "%s"' % readne_file_ext)
     
     # description file is in place as text (so read it), tar file is a file
-    body = OrderedDict([('metadata',description_file.read()), ('tarball',tar_file), (readme_section_name, readme_file)])
+    body = OrderedDict([('metadata', (None, description_file.read(),'application/json')),
+                        ('tarball',('tarball', tar_file)),
+                        (readme_section_name, (readme_section_name, readme_file))])
     headers = {}
-    body, headers = multipart_form_encode(body, headers, uuid.uuid4().hex)
-
+    
     headers['Authorization'] = 'Bearer %s' % generate_jwt_token(_getPrivateKeyObject())
-    response = requests.put(headers=headers, data=body)
+    response = requests.put(url, headers=headers, files=body)
 
     if not response.ok:
-        return "sever returned status %s: %s" % (response.status_code, e.reason)
+        return "sever returned status %s: %s" % (response.status_code, response.text)
 
     return None
 
