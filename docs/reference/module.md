@@ -5,8 +5,8 @@ section: reference/module
 ---
 
 # module.json Reference
-The `module.json` is used to describe all yotta modules and executables, it
-lists the dependencies, specifies the license under which the module can be
+The `module.json` file is used to describe all yotta modules and executables,
+it lists the dependencies, specifies the license under which the module can be
 used, and provides other information about the module.
 
 To create a new module, you can either write a module.json file manually, or
@@ -205,7 +205,7 @@ a hg URL:
 **Note that modules depending on github, ssh, or hg repositories cannot be
 published: they will be rejected by the yotta registry.**
 
-
+<a name="targetDependencies"></a>
 ### `targetDependencies`
 **type: Object `{"<target-identifier>": <dependencies object>}`**
 
