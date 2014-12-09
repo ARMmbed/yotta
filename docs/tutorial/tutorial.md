@@ -179,16 +179,16 @@ info: generate for target: x86-osx-native 0.0.3 at /Dev/simplelog/yotta_targets/
 -- Generating done
 -- Build files have been written to: /Dev/simplelog/build/x86-osx-native
 [ 50%] Built target simplelog
-Scanning dependencies of target simplelog-basic
+Scanning dependencies of target simplelog-test-basic
 [100%] Building C object test/CMakeFiles/simplelog-basic.dir/Dev/simplelog/test/basic.c.o
-Linking C executable simplelog-basic
-[100%] Built target simplelog-basic
+Linking C executable simplelog-test-basic
+[100%] Built target simplelog-test-basic
 ```
 
-Now let’s run our test, you’ll find it at `./build/x86-osx-native/test/simplelog-basic` (more on that path name later):
+Now let’s run our test, you’ll find it at `./build/x86-osx-native/test/simplelog-test-basic` (more on that path name later):
 
 ```sh
-> ./build/x86-osx-native/test/simplelog-basic
+> ./build/x86-osx-native/test/simplelog-test-basic
 [debug] hello simplelog!
 ```
 
@@ -196,7 +196,7 @@ Looks like things are working! Now, more on that path. It’s made up of three p
 
  * **`./build/`**: the build directory, everything that `yotta` generates when building is placed in here.
  * `./build/`**`x86-osx-native`**: this is the *target* that `yotta` was building for. If you don’t explicitly set the target, then yotta builds to run on the current computer. (If you built on a linux or windows computer `x86-osx-native` would be different.)
- * `./build/x86-osx-native/`**`test/simplelog-basic`**: the path to the test. The test name is automatically prefixed with `<modulename>-` as executable names must be globally unique.
+ * `./build/x86-osx-native/`**`test/simplelog-test-basic`**: the path to the test. The test name is automatically prefixed with `<modulename>-test-` as executable names must be globally unique.
 
 ### A Few Words About Targets
 In ARM we use `yotta` to build software for embedded devices – not just desktop computers. When you’re compiling the same software for lots of different devices you need a mechanism to do different things, and often to include different dependencies, for each of the different devices.
