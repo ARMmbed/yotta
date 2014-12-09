@@ -41,7 +41,18 @@ drwxr-xr-x   3 jamcro01  staff   102B 18 Sep 18:37 source
 
 ## Build!
 
-To build the module, all we need to do is run `yotta build`:
+To build the module, all we need to do is run `yotta build`. yotta will read
+the module.json file, which describes what this module depends on, download its
+dependencies into a directory called `yotta_modules`, then generate build files
+and build.
+
+yotta has a registry of publicly available modules. In the future it will be
+possible to search this registry to find open-source components to re-use, or,
+to build non-open-source software you can also depend on modules from private
+Github repositories, or from authenticated hg and git repositories, for more
+information about specifying the source of dependencies see the [module.json
+reference](../reference/module.html#dependencies).
+
 
 ```sh
 > cd path/to/downloaded/helloyotta
