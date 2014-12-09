@@ -32,7 +32,6 @@ All software that builds with yotta has a `module.json` file that describes it:
 ```sh
 > cd path/to/downloaded/helloyotta
 > ls -l
-```
 -rw-r--r--   1 jamcro01  staff   8.9K  9 Dec 11:59 LICENSE
 drwxr-xr-x   2 jamcro01  staff    68B 18 Sep 17:07 helloyotta
 -rw-r--r--   1 jamcro01  staff   621B  9 Dec 12:02 module.json
