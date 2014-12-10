@@ -243,7 +243,7 @@ class HG(VCS):
 
 def getVCS(path):
     # crude heuristic, does the job...
-    if os.path.isdir(os.path.join(path, '.git')):
+    if os.path.exists(os.path.join(path, '.git')):
         return Git(path)
     if os.path.isdir(os.path.join(path, '.hg')):
         return HG(path)
