@@ -39,7 +39,7 @@ yotta supports compiling with different compilers by specifying different
 <a name="installing-on-osx"></a>
 ## Installing On OS X
 
-First install [homebrew](brew.sh), a package manager for OS X that we'll use to
+First install [homebrew](http://brew.sh), a package manager for OS X that we'll use to
 install all of yotta's dependencies.
 
 Next, tap the ARMmbed [brew
