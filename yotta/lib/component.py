@@ -436,7 +436,7 @@ class Component(pack.Pack):
             r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
             if r:
                 return r
-            r = access.satisfyVersionByInstalling(name, version_req, working_directory)
+            r = access.satisfyVersionByInstalling(name, version_req, self.modulesPath())
             if not r:
                 logger.error('could not install %s' % name)
             return r
