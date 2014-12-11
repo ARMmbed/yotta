@@ -118,7 +118,7 @@ class Target(pack.Pack):
         # cmake error: the generated Ninja build file will not work on windows when arguments are read from
         # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
         if args.cmake_generator == "Ninja" and os.name == 'nt':
-            commands.append(["sed", "-i", "-e", "s#\\\\#/#g", "build.ninja"])
+            commands.append(["sed", "-i", "-e", "s#\\\\#/#g", "-e", "'s#/\"#\\\\\"#g'", "build.ninja"])
         if build_command:
             commands.append(build_command + build_args)
         else:
