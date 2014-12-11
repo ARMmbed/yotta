@@ -132,7 +132,7 @@ class Target(pack.Pack):
             except OSError as e:
                 if e.errno == errno.ENOENT:
                     if cmd[0] == 'cmake':
-                        yield 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/yotta/installing'
+                        yield 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
                     else:
                         yield '%s is not installed' % (cmd[0])
                 else:

@@ -187,6 +187,9 @@ class Component(pack.Pack):
             except access_common.ComponentUnavailable as e:
                 errors.append(e)
                 self.dependencies_failed = True
+            except vcs.VCSError as e:
+                errors.append(e)
+                self.dependencies_failed = True
         specs = self.getDependencySpecs(target)
         #dependencies = pool.map(
         dependencies = map(
