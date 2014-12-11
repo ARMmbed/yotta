@@ -14,7 +14,8 @@ from .lib import version
 from .lib import component
 # Target, , represents an installed target, internal
 from .lib import target
-
+# vcs, , represent version controlled directories, internal
+from .lib import vcs
 
 def addOptions(parser):
     def patchType(s):
@@ -44,21 +45,24 @@ def execCommand(args, following_args):
         p = (c or t)
     
     if args.action:
-        if not p.vcsIsClean():
-            logging.error('The working directory is not clean')
-            return 1
+        try:
+            if not p.vcsIsClean():
+                logging.error('The working directory is not clean')
+                return 1
 
-        v = p.getVersion()
-        if args.action in ('major', 'minor', 'patch'):
-            v.bump(args.action)
-        else:
-            v = args.action
-        logging.info('@%s' % v)
-        p.setVersion(v)
+            v = p.getVersion()
+            if args.action in ('major', 'minor', 'patch'):
+                v.bump(args.action)
+            else:
+                v = args.action
+            logging.info('@%s' % v)
+            p.setVersion(v)
 
-        p.writeDescription()
+            p.writeDescription()
 
-        p.commitVCS(tag='v'+str(v))
+            p.commitVCS(tag='v'+str(v))
+        except vcs.VCSError as e:
+            logging.error(e)
     else:
         logging.info(str(p.getVersion()))
 
