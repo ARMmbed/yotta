@@ -135,7 +135,6 @@ def _pollForAuth():
         return True
     return False
 
-
 # API
 def authorizeUser():
     # poll once with any existing public key, just in case a previous login
@@ -150,27 +149,40 @@ def authorizeUser():
     except NameError:
         pass
 
-    input(
-        '\nYou need to log in with Github.\n'+
-        colorama.Style.BRIGHT+
-        'Press enter to continue.\n'+
-        colorama.Style.DIM+
-        'Your browser will open to complete login.'+
-        colorama.Style.NORMAL+'\n'
-    )
-
-    registry_access.openBrowserLogin(provider='github')
-    
-
-    sys.stdout.write('waiting for response...')
     sys.stdout.write(
-        colorama.Style.DIM+
-        '\nIf you are unable to use a browser on this machine, please copy and '+
-        'paste this URL into a browser:\n'+
-        registry_access.getLoginURL()+'\n'+
-        colorama.Style.NORMAL
+        '\nYou need to log in with Github.\n'
     )
-    sys.stdout.flush()
+    
+    if os.name == 'nt' or os.environ.get('DISPLAY'):
+        input(
+            colorama.Style.BRIGHT+
+            'Press enter to continue.\n'+
+            colorama.Style.DIM+
+            'Your browser will open to complete login.'+
+            colorama.Style.NORMAL+'\n'
+        )
+
+        registry_access.openBrowserLogin(provider='github')
+        
+
+        sys.stdout.write('waiting for response...')
+        sys.stdout.write(
+            colorama.Style.DIM+
+            '\nIf you are unable to use a browser on this machine, please copy and '+
+            'paste this URL into a browser:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'+
+            colorama.Style.NORMAL
+        )
+        sys.stdout.flush()
+    else:
+        sys.stdout.write(
+            '\nyotta is unable to open a browser for you to complete login '+
+            'on this machine. Please copy and paste this URL into a '
+            'browser to complete login:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'
+        )
+        sys.stdout.write('waiting for response...')
+        sys.stdout.flush()
 
     poll_start = datetime.datetime.utcnow()
     while datetime.datetime.utcnow() - poll_start < datetime.timedelta(minutes=5):
