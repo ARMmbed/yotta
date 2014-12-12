@@ -16,6 +16,9 @@ import copy
 # PyPi/standard library > 3.4
 # it has to be PurePath
 from pathlib import PurePath
+ 
+# JSON Schema, pip install jsonschema, Verify JSON Schemas, MIT
+import jsonschema
 
 # version, , represent versions and specifications, internal
 import version
@@ -83,7 +86,14 @@ class OptionalFileWrapper(object):
 # VCS, etc.)
 
 class Pack(object):
-    def __init__(self, path, description_filename, installed_linked, latest_suitable_version=None):
+    def __init__(
+            self,
+            path,
+            description_filename,
+            installed_linked,
+            schema_filename = None,
+            latest_suitable_version = None
+        ):
         self.path = path
         self.installed_linked = installed_linked
         self.vcs = None
@@ -105,6 +115,23 @@ class Pack(object):
         except IOError as e: 
             if e.errno != errno.ENOENT:
                 raise
+        if schema_filename:
+            have_errors = False
+            with open(schema_filename, 'r') as schema_file:
+                schema = json.load(schema_file)
+                validator = jsonschema.Draft4Validator(schema)
+                for error in validator.iter_errors(self.description):
+                    if not have_errors:
+                        logger.warning('%s has invalid %s:' % (
+                            os.path.split(self.path.rstrip('/'))[1],
+                            description_filename
+                        ))
+                        have_errors = True
+                    logger.warning("%s value %s", '.'.join(error.path), error.message)
+            # for now schema validation errors aren't fatal... will be soon
+            # though!
+            #if have_errors:
+            #    raise Exception('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
     def exists(self):

@@ -37,10 +37,10 @@ class Target(pack.Pack):
             false, and will contain an error property containing the failure.
         '''
         super(Target, self).__init__(
-            path,
-            description_filename=Target_Description_File,
-            installed_linked=installed_linked,
-            latest_suitable_version=latest_suitable_version
+                                      path,
+               description_filename = Target_Description_File,
+                   installed_linked = installed_linked,
+            latest_suitable_version = latest_suitable_version
         )
         # !!! TODO: validate self.description, possibly add a
         # description_schema class variable used when loading...

@@ -22,6 +22,9 @@ setup(
     keywords = "embedded package module dependency management",
     url = "about:blank",
     packages=find_packages(),
+    package_data={
+        'yotta': ['lib/schema/*.json']
+    },
     long_description=read('readme.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
