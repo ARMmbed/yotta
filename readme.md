@@ -4,13 +4,15 @@
 yotta is a tool that we're building at [mbed](https://mbed.org), to make it easier to build better software written in C, C++ or other C-family languages. It's still early in development, so if you have questions/feedback or issues, please [report them](https://github.com/ARMmbed/yotta/issues).
 
 ### Installation
-To use yotta, you need:
+Detailed instructions can be found on the [documentation
+site](http://docs.yottabuild.org/#installing), in summary, to use yotta you
+need:
 
  * yotta itself (yotta is written in [python](https://www.python.org/downloads/release/python-278/), and installed using [pip](http://pip.readthedocs.org/en/latest/installing.html))
  * [CMake](http://www.cmake.org/download/)
  * a compiler
 
-**To install yotta itself**, run:
+**To install yotta itself**, open a terminal, then run:
 ``` bash
 pip install yotta
 ```
@@ -24,7 +26,7 @@ If permission is denied, you may need to run `sudo pip install yotta`, and you m
  * to compile natively on OS X, [install Xcode](https://developer.apple.com/xcode/downloads/), including the command-line tools.
  * to compile natively on Linux, install clang with your system's package manager.
 
-Further information on installing yotta for different platforms can be found on the [documentation site](http://docs.yottabuild.org/yotta/installing.html).
+Further information on installing yotta for different platforms can be found on the [documentation site](http://docs.yottabuild.org/#installing).
 
 ### Get Started!
 The best way to get started is to [follow the tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
