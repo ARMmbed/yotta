@@ -449,9 +449,12 @@ def getAuthData():
     logger.debug('parsed auth tokens %s' % r);
     return r
 
-def openBrowserLogin(provider=None):
+def getLoginURL(provider=None):
     if provider:
         query = '?provider=github'
     else:
         query = ''
-    webbrowser.open(Website_Base_URL + '/#login/' + getPublicKey() + query)
+    return  Website_Base_URL + '/#login/' + getPublicKey() + query
+
+def openBrowserLogin(provider=None):
+    webbrowser.open(getLoginURL(provider=provider))

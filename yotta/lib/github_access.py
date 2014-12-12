@@ -23,6 +23,9 @@ import access_common
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
 # requests, apache2
 import requests
 
@@ -147,14 +150,26 @@ def authorizeUser():
     except NameError:
         pass
 
-    input('''
-You need to log in with Github. Press enter to continue.
-
-(Your browser will open to complete login.)''')
+    input(
+        '\nYou need to log in with Github.\n'+
+        colorama.Style.BRIGHT+
+        'Press enter to continue.\n'+
+        colorama.Style.DIM+
+        'Your browser will open to complete login.'+
+        colorama.Style.NORMAL+'\n'
+    )
 
     registry_access.openBrowserLogin(provider='github')
+    
 
     sys.stdout.write('waiting for response...')
+    sys.stdout.write(
+        colorama.Style.DIM+
+        '\nIf you are unable to use a browser on this machine, please copy and '+
+        'paste this URL into a browser:\n'+
+        registry_access.getLoginURL()+'\n'+
+        colorama.Style.NORMAL
+    )
     sys.stdout.flush()
 
     poll_start = datetime.datetime.utcnow()
