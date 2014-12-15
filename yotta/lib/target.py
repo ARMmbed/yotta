@@ -101,6 +101,23 @@ class Target(pack.Pack):
         except KeyError:
             return None
 
+    def exec_helper(self, cmd, builddir):
+        ''' Execute the given command, returning an error message if an error occured
+            or None if the command was succesful.'''
+        try:
+            child = subprocess.Popen(cmd, cwd=builddir)
+            child.wait()
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                if cmd[0] == 'cmake':
+                    return 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                else:
+                    return '%s is not installed' % (cmd[0])
+            else:
+                return 'command %s failed' % (cmd)
+        if child.returncode:
+            return 'command %s failed' % (cmd)
+
     def build(self, builddir, component, args, release_build=False, build_args=None):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
@@ -108,37 +125,43 @@ class Target(pack.Pack):
             build_args = []
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
-        commands = []
         build_type = ('Debug', 'RelWithDebInfo')[release_build]
         if build_type:
-            commands.append(['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.'])
+            cmd = ['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.']
         else:
-            commands.append(['cmake', '-G', args.cmake_generator, '.'])
-        build_command = self.overrideBuildCommand(args.cmake_generator)
+            cmd = ['cmake', '-G', args.cmake_generator, '.']
+        res = self.exec_helper(cmd, builddir)
+        if res is not None:
+            yield res
         # cmake error: the generated Ninja build file will not work on windows when arguments are read from
         # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
+        # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
         if args.cmake_generator == "Ninja" and os.name == 'nt':
-            commands.append(["sed", "-i", "-e", "s#\\\\#/#g", "-e", "'s#/\"#\\\\\"#g'", "build.ninja"])
-        if build_command:
-            commands.append(build_command + build_args)
-        else:
-            commands.append(['cmake', '--build', builddir] + build_args)
-        for cmd in commands:
+            logging.debug("Converting back-slashes in build.ninja to forward-slashes")
+            build_file = os.path.join(builddir, "build.ninja")
+            # We want to convert back-slashes to forward-slashes, except in macro definitions, such as
+            # -DYOTTA_COMPONENT_VERSION = \"0.0.1\". So we use a little trick: first we change all \"
+            # strings to an unprintable ASCII char that can't appear in build.ninja (in this case \1),
+            # then we convert all the back-slashed to forward-slashes, then we convert '\1' back to \".
             try:
-                child = subprocess.Popen(
-                    cmd, cwd=builddir
-                )
-                child.wait()
-            except OSError as e:
-                if e.errno == errno.ENOENT:
-                    if cmd[0] == 'cmake':
-                        yield 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
-                    else:
-                        yield '%s is not installed' % (cmd[0])
-                else:
-                    yield 'command %s failed' % (cmd)
-            if child.returncode:
-                yield 'command %s failed' % (cmd)
+                f = open(build_file, "r+t")
+                data = f.read()
+                data = data.replace('\\"', '\1')
+                data = data.replace('\\', '/')
+                data = data.replace('\1', '\\"')
+                f.seek(0)
+                f.write(data)
+                f.close()
+            except:
+                yield 'Unable to update "%s", aborting' % build_file
+        build_command = self.overrideBuildCommand(args.cmake_generator)
+        if build_command:
+            cmd = build_command + build_args
+        else:
+            cmd = ['cmake', '--build', builddir] + build_args
+        res = self.exec_helper(cmd, builddir)
+        if res is not None:
+            yield res
         hint = self.hintForCMakeGenerator(args.cmake_generator, component)
         if hint:
             logging.info(hint)
