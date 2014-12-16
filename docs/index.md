@@ -220,13 +220,31 @@ target, such as
 [frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
 `yotta target frdm-k64f-gcc` before building.
 
+<a name="windows-common-issues"></a>
+### Solving Common Windows Installation Problems
+
+#### `error: command ['ninja'] failed`
+If you get an error when running `yotta build` which looks something like this:
+
+```sh
+':' is not recognized as an internal or external command,
+operable program or batch file.
+...
+ninja: build stopped: subcommand failed.
+error: command ['ninja'] failed
+```
+This is caused by re-trying a `yotta build` after fixing a missing
+[cross-compiler installation](#windows-cross-compile). After completing the
+installation of the compiler, you'll need to **delete the `./build` directory**
+before running build again.
+
 <a name="windows-path"></a>
 ### Adding things to your PATH in windows
 Your PATH environment variable holds the location of programs that can be
 easily executed by other programs. If yotta fails to find one of its
 dependencies (such as cmake.exe) the first thing to check is that you have
 added the directory that contains the dependencies executable to the PATH. To
-add things to your path, 
+add things to your path:
 
  1. Right click on Computer, select `Properties`
  2. Select `Advanced System Settings`
