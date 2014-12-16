@@ -195,11 +195,15 @@ target, such as
     and extract it to a directory (for example `C:\ninja`. Add this directory
     to [your path](#windows-path).
 
+ 6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
+    order to build software to run on embedded devices.
+
 ### Building programs natively to run on windows
 yotta does not yet allow compiling programs to run on windows. If you are
 adventurous and get it working, submit a [pull
 request](https://github.com/armmbed/yotta/pulls) to update these docs.
 
+<a name="windows-cross-compile"></a>
 ### Cross-compiling from Windows
 To use yotta to cross-compile binaries to run on embedded hardware, you need to
 first install the [`arm-none-eabi-gcc`
