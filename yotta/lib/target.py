@@ -52,7 +52,11 @@ class Target(pack.Pack):
         return [self.description['name']] + self.description['similarTo']
 
     def getToolchainFile(self):
-        return os.path.join(self.path, self.description['toolchain'])
+        try:
+            toolchain_file = self.description['toolchain']
+        except KeyError:
+            toolchain_file = 'SConscript'
+        return os.path.join(self.path, toolchain_file)
 
     #def getLinkScriptFile(self):
     #    return os.path.join(self.path, self.description['linkscript'])
@@ -60,46 +64,20 @@ class Target(pack.Pack):
     def getRegistryNamespace(self):
         return Registry_Namespace
     
+    # TODO: change this for scons (add options for release/debug, verbose/not verbose...)
     @classmethod
     def addBuildOptions(cls, parser):
-        parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
-           default=('Unix Makefiles', 'Ninja')[os.name == 'nt'],
-           choices=(
-               'Unix Makefiles',
-               'Ninja',
-               'Xcode',
-               'Sublime Text 2 - Ninja',
-               'Sublime Text 2 - Unix Makefiles'
-           )
-        )
-
-    @classmethod
-    def overrideBuildCommand(cls, generator_name):
-        # when we build using cmake --build, the nice colourised output is lost
-        # - so override with the actual build command for command-line
-        # generators where people will care:
-        try:
-            return {
-                'Unix Makefiles': ['make'],
-                'Ninja': ['ninja']
-            }[generator_name]
-        except KeyError:
-            return None
-
-    def hintForCMakeGenerator(self, generator_name, component):
-        try:
-            name = self.getName()
-            component_name = component.getName()
-            return {
-                'Xcode':
-                    'to open the built project, run:\nopen ./build/%s/%s.xcodeproj' % (name, component_name),
-                'Sublime Text 2 - Ninja':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name),
-                'Sublime Text 2 - Unix Makefiles':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name)
-            }[generator_name]
-        except KeyError:
-            return None
+#        parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
+#           default=('Unix Makefiles', 'Ninja')[os.name == 'nt'],
+#           choices=(
+#               'Unix Makefiles',
+#               'Ninja',
+#               'Xcode',
+#               'Sublime Text 2 - Ninja',
+#               'Sublime Text 2 - Unix Makefiles'
+#           )
+#        )
+        pass
 
     def exec_helper(self, cmd, builddir):
         ''' Execute the given command, returning an error message if an error occured
@@ -121,50 +99,30 @@ class Target(pack.Pack):
     def build(self, builddir, component, args, release_build=False, build_args=None):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
+        # TODO: handle build type here
         if build_args is None:
             build_args = []
-        # in the future this may be specified in the target description, but
-        # for now we only support cmake, so everything is simple:
-        build_type = ('Debug', 'RelWithDebInfo')[release_build]
-        if build_type:
-            cmd = ['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.']
-        else:
-            cmd = ['cmake', '-G', args.cmake_generator, '.']
-        res = self.exec_helper(cmd, builddir)
-        if res is not None:
-            yield res
-        # cmake error: the generated Ninja build file will not work on windows when arguments are read from
-        # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
-        # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
-        if args.cmake_generator == "Ninja" and os.name == 'nt':
-            logging.debug("Converting back-slashes in build.ninja to forward-slashes")
-            build_file = os.path.join(builddir, "build.ninja")
-            # We want to convert back-slashes to forward-slashes, except in macro definitions, such as
-            # -DYOTTA_COMPONENT_VERSION = \"0.0.1\". So we use a little trick: first we change all \"
-            # strings to an unprintable ASCII char that can't appear in build.ninja (in this case \1),
-            # then we convert all the back-slashed to forward-slashes, then we convert '\1' back to \".
+        # scons is written in Python, so it would make a lot of sense to start the build
+        # directly from yotta (SCons.Script.Main()), without running another process.
+        # Unfortunately, figuring out where the scons Python package is located so that it
+        # can be imported seems to be quite difficult, so we go for the conservative option.
+        commands = [['scons'] + build_args]
+        for cmd in commands:
             try:
-                f = open(build_file, "r+t")
-                data = f.read()
-                data = data.replace('\\"', '\1')
-                data = data.replace('\\', '/')
-                data = data.replace('\1', '\\"')
-                f.seek(0)
-                f.write(data)
-                f.close()
-            except:
-                yield 'Unable to update "%s", aborting' % build_file
-        build_command = self.overrideBuildCommand(args.cmake_generator)
-        if build_command:
-            cmd = build_command + build_args
-        else:
-            cmd = ['cmake', '--build', builddir] + build_args
-        res = self.exec_helper(cmd, builddir)
-        if res is not None:
-            yield res
-        hint = self.hintForCMakeGenerator(args.cmake_generator, component)
-        if hint:
-            logging.info(hint)
+                child = subprocess.Popen(
+                    cmd, cwd=builddir
+                )
+                child.wait()
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    if cmd[0] == 'scons':
+                        yield 'scons is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                    else:
+                        yield '%s is not installed' % (cmd[0])
+                else:
+                    yield 'command %s failed' % (cmd)
+            if child.returncode:
+                yield 'command %s failed' % (cmd)
     
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. '''

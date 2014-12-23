@@ -491,7 +491,7 @@ class Component(pack.Pack):
 
     def getBinaries(self):
         ''' Return a dictionary of binaries to compile: {"dirname":"exename"},
-            this is used when automatically generating CMakeLists '''
+            this is used when automatically generating SConscript '''
         # the module.json syntax is a subset of the package.json syntax: a
         # single string that defines the source directory to use to build an
         # executable with the same name as the component. This may be extended

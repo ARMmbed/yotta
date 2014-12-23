@@ -10,8 +10,8 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
+# sconsgen, , generate build files, internal
+from .lib import sconsgen
 # Target, , represents an installed target, internal
 from .lib import target
 # install, , install subcommand, internal
@@ -20,7 +20,7 @@ from . import install
 def addOptions(parser):
     parser.add_argument('-g', '--generate-only', dest='generate_only',
         action='store_true', default=False,
-        help='Only generate CMakeLists, don\'t run CMake or build'
+        help='Only generate scons build files, don\'t run scons or build'
     )
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=False)
     # the target class adds its own build-system specific options. In the
@@ -63,7 +63,7 @@ def execCommand(args, following_args):
         logging.error('Missing dependencies prevent build. Use `yotta ls` to list them.')
         return 1
 
-    generator = cmakegen.CMakeGen(builddir, target)
+    generator = sconsgen.SConsGen(builddir, target)
     errcode = None
     for error in generator.generateRecursive(c, all_components, builddir):
         logging.error(error)
