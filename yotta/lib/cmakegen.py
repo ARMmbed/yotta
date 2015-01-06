@@ -103,7 +103,7 @@ set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
 {% endfor %}
 
 {% if resource_files %}
-set(YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES
+set(YOTTA_AUTO_{{ object_name.upper() }}_RESOURCE_FILES
     {{ resource_files | join('\n    ') }}
 )
 {% endif %}
