@@ -501,7 +501,15 @@ class Component(pack.Pack):
             return {self.description['bin']: self.getName()}
         else:
             return {}
-
+    
+    def licenses(self):
+        ''' Return a list of licenses that apply to this module. (Strings,
+            which may be SPDX identifiers)
+        '''
+        if 'license' in self.description:
+            return [self.description['license']]
+        else:
+            return [x['type'] for x in self.description['licenses']]
 
     def getExtraIncludes(self):
         ''' Some components must export whole directories full of headers into
