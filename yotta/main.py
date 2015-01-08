@@ -26,6 +26,7 @@ from . import logout
 from . import list as list_command
 from . import uninstall
 from . import owners
+from . import licenses
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -95,6 +96,7 @@ def main():
     addParser('list', list_command, 'List the dependencies of the current module.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
+    addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -106,7 +108,8 @@ def main():
             'ls':subparser.choices['list'],
         'unlink':subparser.choices['uninstall'],
             'rm':subparser.choices['uninstall'],
-         'owner':subparser.choices['owners']
+         'owner':subparser.choices['owners'],
+          'lics':subparser.choices['licenses']
     })
     
     # split the args into those before and after any '--'

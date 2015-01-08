@@ -28,8 +28,6 @@ def addOptions(parser):
     )
 
 def execCommand(args, following_args):
-    wd = os.getcwd()
-
     c = validate.currentDirectoryModule()
     if not c:
         return 1
