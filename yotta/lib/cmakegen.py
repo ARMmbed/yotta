@@ -152,7 +152,6 @@ set_target_properties({{ object_name }}
 # no proper CMake support for objective-c flags :(
 set_target_properties({{ object_name }} PROPERTIES
     COMPILE_FLAGS "${CMAKE_OBJC_FLAGS}"
-    LINK_FLAGS "-Wl,-ObjC"
 )
 {% endif %}
 {% for file_name, language in source_files %}
