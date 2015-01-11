@@ -590,7 +590,7 @@ class CMakeGen(object):
             resource_files = []
             for f in resource_subdirs:
                 for root, dires, files in os.walk(f):
-                    if (root.endswith(".xcassets")):
+                    if root.endswith(".xcassets"):
                         resource_files.append(root)
                         break;
                     for f in files:
