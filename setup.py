@@ -56,6 +56,7 @@ setup(
         'Jinja2>=2.7.0,<3',
         pycrypto_dep,
         'PyJWT>=0.3,<0.4',
-        'pathlib>=1.0.1,<1.1'
+        'pathlib>=1.0.1,<1.1',
+        'jsonschema>=2.4.0,<3.0'
     ] + platform_deps
 )
