@@ -120,7 +120,7 @@ class Pack(object):
         except IOError as e: 
             if e.errno != errno.ENOENT:
                 raise
-        if schema_filename and not self.path in self.schema_errors_displayed:
+        if self.description and schema_filename and not self.path in self.schema_errors_displayed:
             self.schema_errors_displayed.add(self.path)
             have_errors = False
             with open(schema_filename, 'r') as schema_file:
