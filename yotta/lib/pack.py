@@ -128,12 +128,12 @@ class Pack(object):
                 validator = jsonschema.Draft4Validator(schema)
                 for error in validator.iter_errors(self.description):
                     if not have_errors:
-                        logger.warning('%s has invalid %s:' % (
+                        logger.warning(u'%s has invalid %s:' % (
                             os.path.split(self.path.rstrip('/'))[1],
                             description_filename
                         ))
                         have_errors = True
-                    logger.warning("  %s value %s", '.'.join(error.path), error.message)
+                    logger.warning(u"  %s value %s" % (u'.'.join([str(x) for x in error.path]), error.message))
             # for now schema validation errors aren't fatal... will be soon
             # though!
             #if have_errors:
