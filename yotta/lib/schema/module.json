@@ -78,7 +78,10 @@
             "required": ["type", "url"]
         },
         "bugs": {
-            "$ref": "#/definitions/httpURL"
+            "oneOf": [
+                {"$ref": "#/definitions/httpURL"},
+                {"$ref": "#/definitions/bugsObject"}
+            ]
         },
         "bin": {
             "$ref": "#/definitions/path"
@@ -89,7 +92,7 @@
         "targetDependencies": {
             "type": "object",
             "patternProperties": {
-                "^[a-z]+[a-z0-9-]*$": {
+                "(^[a-z]+[a-z0-9-]*$)|(^[*]$)": {
                     "$ref": "#/definitions/dependencyMap"
                 }
             },
@@ -188,10 +191,18 @@
            ]
         },
         "spdxIdentifier": {
+              "comment": "This is meant to be a SPDX identifier for the license, but might also be the text of a proprietary license.",
                  "type": "string",
             "minLength": 3,
-            "maxLength": 50,
-              "pattern": "^[a-zA-Z0-9.-]*$"
+            "maxLength": 5000
+        },
+        "bugsObject": {
+            "type": "object",
+            "properties": {
+                  "url": {"$ref": "#/definitions/httpURL"},
+                "email": {"$ref": "#/definitions/email"}
+            },
+           "minProperties": 1
         },
         "path": {
                   "type": "string",
