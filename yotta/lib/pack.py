@@ -89,6 +89,8 @@ class OptionalFileWrapper(object):
 # VCS, etc.)
 
 class Pack(object):
+    schema_errors_displayed = set()
+
     def __init__(
             self,
             path,
@@ -118,7 +120,8 @@ class Pack(object):
         except IOError as e: 
             if e.errno != errno.ENOENT:
                 raise
-        if schema_filename:
+        if schema_filename and not self.path in self.schema_errors_displayed:
+            self.schema_errors_displayed.add(self.path)
             have_errors = False
             with open(schema_filename, 'r') as schema_file:
                 schema = json.load(schema_file)
@@ -130,7 +133,7 @@ class Pack(object):
                             description_filename
                         ))
                         have_errors = True
-                    logger.warning("%s value %s", '.'.join(error.path), error.message)
+                    logger.warning("  %s value %s", '.'.join(error.path), error.message)
             # for now schema validation errors aren't fatal... will be soon
             # though!
             #if have_errors:
