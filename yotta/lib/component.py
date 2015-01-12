@@ -25,12 +25,6 @@ import fsutils
 # Pack, , common parts of Components/Targets, internal
 import pack
 
-# NOTE: at the moment this module provides very little validation of the
-# contents of the description file: indeed if you replace the name of your
-# component with an object it won't matter. We should probably at least check
-# the type and format of the name (check for path-illegal characters) & version
-# (check it's a valid version)
-
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
 # another process (or in the worst case replaced by a symlink) after it has
@@ -43,6 +37,7 @@ Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
 Registry_Namespace = 'modules' 
+Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'module.json')
 
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8
@@ -77,10 +72,11 @@ class Component(pack.Pack):
         else:
             description_filename = Component_Description_File
         super(Component, self).__init__(
-            path,
-            description_filename=description_filename,
-            installed_linked=installed_linked,
-            latest_suitable_version=latest_suitable_version
+                                      path,
+               description_filename = description_filename,
+                   installed_linked = installed_linked,
+                    schema_filename = Schema_File,
+            latest_suitable_version = latest_suitable_version
         )
         if warn_deprecated_filename:
             logger.warning(
@@ -93,8 +89,6 @@ class Component(pack.Pack):
         self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
-        # !!! TODO: validate self.description, possibly add a
-        # description_schema class variable used when loading...
 
     def getDependencySpecs(self, target=None):
         ''' Returns [(component name, version requirement)]

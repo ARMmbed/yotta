@@ -36,14 +36,14 @@ class Target(pack.Pack):
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
+        # !!! TODO: implement a target.json schema, and pass schema_filename
+        # here:
         super(Target, self).__init__(
-            path,
-            description_filename=Target_Description_File,
-            installed_linked=installed_linked,
-            latest_suitable_version=latest_suitable_version
+                                      path,
+               description_filename = Target_Description_File,
+                   installed_linked = installed_linked,
+            latest_suitable_version = latest_suitable_version
         )
-        # !!! TODO: validate self.description, possibly add a
-        # description_schema class variable used when loading...
     
     def dependencyResolutionOrder(self):
         ''' Return a sequence of names that should be used when resolving
