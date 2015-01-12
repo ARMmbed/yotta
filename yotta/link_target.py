@@ -44,7 +44,7 @@ def execCommand(args, following_args):
         dst = os.path.join(folders.globalTargetInstallDirectory(), c.getName())
 
     if args.target:
-        realsrc = os.path.realpath(src)
+        realsrc = fsutils.realpath(src)
         if src == realsrc:
             logging.warning(
               ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET

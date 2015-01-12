@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import logging
 import hgapi
+import errno
 
 # fsutils, , misc filesystem utils, internal
 import fsutils
@@ -16,7 +17,10 @@ import fsutils
 git_logger = logging.getLogger('git')
 hg_logger = logging.getLogger('hg')
 
-
+class VCSError(Exception):
+    def __init__(self, message, returncode=None):
+        super(VCSError, self).__init__(message)
+        self.returncode = returncode
 
 class VCS(object):
     @classmethod
@@ -60,13 +64,7 @@ class Git(VCS):
         commands = [
             ['git', 'clone',  remote, directory]
         ]
-        for cmd in commands:
-            git_logger.debug('will clone %s into %s', remote, directory)
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = child.communicate()
-            git_logger.debug('clone %s into %s: %s', remote, directory, out or err)
-            if child.returncode:
-                raise Exception('failed to clone repository %s: %s', remote, err or out)
+        cls._execCommands(commands)
         r = Git(directory)
         if tag is not None:
             r.updateToTag(tag)
@@ -77,11 +75,7 @@ class Git(VCS):
         local_branches = []
         
         # list remote branches
-        cmd = self._gitCmd('branch', '-r')
-        child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = child.communicate()
-        if child.returncode:
-            raise Exception('command failed: %s:%s', cmd, err or out)
+        out, err = self._execCommands([self._gitCmd('branch', '-r')])
 
         for line in out.split(b'\n'):
             branch_info = line.split(b' -> ')
@@ -93,11 +87,7 @@ class Git(VCS):
             remote_branches.append((remote_branch, branch))
         
         # list already-existing local branches
-        cmd = self._gitCmd('branch')
-        child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = child.communicate()
-        if child.returncode:
-            raise Exception('command failed: %s:%s', cmd, err or out)
+        out, err = self._execCommands([self._gitCmd('branch')])
         for line in out.split(b'\n'):
             local_branches.append(line.strip(b' *'))
 
@@ -105,11 +95,13 @@ class Git(VCS):
             # don't try to replace existing local branches
             if branchname in local_branches:
                 continue
-            cmd = self._gitCmd('checkout', '-b', branchname, remote)
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = child.communicate()
-            if child.returncode:
-                raise Exception('failed to fetch remote branches %s:%s', cmd, err or out)
+            try:
+                out, err = self._execCommands([
+                    self._gitCmd('checkout', '-b', branchname, remote)
+                ])
+            except VCSError as e:
+                git_logger.error('failed to fetch remote branch %s %s' % (remote, branchname))
+                raise
 
     def remove(self):
         fsutils.rmRf(self.worktree)
@@ -119,14 +111,27 @@ class Git(VCS):
 
     def _gitCmd(self, *args):
         return ['git','--work-tree=%s' % self.worktree,'--git-dir=%s'%self.gitdir] + list(args);
-
-    def _execCommands(self, commands):
+    
+    @classmethod
+    def _execCommands(cls, commands):
         out, err = None, None
         for cmd in commands:
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    if cmd[0] == 'git':
+                        raise VCSError(
+                            'git is not installed, or not in your path. Please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                        )
+                    else:
+                        raise VCSError('%s is not installed' % (cmd[0]))
+                else:
+                    raise VCSError('command %s failed' % (cmd))
             out, err = child.communicate()
-            if child.returncode:
-                raise Exception('command failed: %s:%s', cmd, err or out)
+            returncode = child.returncode
+            if returncode:
+                raise VCSError("command failed: %s:%s" % (cmd, err or out), returncode=returncode)
         return out, err
 
     def isClean(self):
@@ -134,11 +139,13 @@ class Git(VCS):
             self._gitCmd('diff', '--quiet', '--exit-code'),
             self._gitCmd('diff', '--cached', '--quiet', '--exit-code'),
         ]
-        for cmd in commands:
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = child.communicate()
-            if child.returncode:
+        try:
+            out, err = self._execCommands(commands)
+        except VCSError as e:
+            if e.returncode:
                 return False
+            else:
+                raise
         return True
 
     def markForCommit(self, relative_path):
@@ -178,11 +185,7 @@ class Git(VCS):
             commands.append(
                 self._gitCmd('tag', tag),
             )
-        for cmd in commands:
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = child.communicate()
-            if child.returncode:
-                raise Exception('command failed: %s:%s', cmd, err or out)
+        self._execCommands(commands)
 
     def __nonzero__(self):
         return True
@@ -243,7 +246,7 @@ class HG(VCS):
 
 def getVCS(path):
     # crude heuristic, does the job...
-    if os.path.isdir(os.path.join(path, '.git')):
+    if os.path.exists(os.path.join(path, '.git')):
         return Git(path)
     if os.path.isdir(os.path.join(path, '.hg')):
         return HG(path)

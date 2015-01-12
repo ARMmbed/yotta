@@ -246,7 +246,7 @@ class Pack(object):
         '''
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
         fsutils.rmF(upload_archive)
-        fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))
         with os.fdopen(fd, 'rb+') as tar_file:
             tar_file.truncate()
             self.generateTarball(tar_file)

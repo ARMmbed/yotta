@@ -103,7 +103,7 @@ set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
 {% endfor %}
 
 {% if resource_files %}
-set(YOTTA_AUTO_${object_name.upper}_RESOURCE_FILES
+set(YOTTA_AUTO_{{ object_name.upper() }}_RESOURCE_FILES
     {{ resource_files | join('\n    ') }}
 )
 {% endif %}
@@ -251,7 +251,7 @@ class CMakeGen(object):
         fsutils.mkDirP(dirname)
         self.writeIfDifferent(path, contents)
 
-    def generateRecursive(self, component, all_components, builddir=None, processed_components=None):
+    def generateRecursive(self, component, all_components, builddir=None, modbuilddir=None, processed_components=None):
         ''' generate top-level CMakeLists for this component and its
             dependencies: the CMakeLists are all generated in self.buildroot,
             which MUST be out-of-source
@@ -265,6 +265,8 @@ class CMakeGen(object):
         '''
         if builddir is None:
             builddir = self.buildroot
+        if modbuilddir is None:
+            modbuilddir = os.path.join(builddir, 'ym')
         if processed_components is None:
             processed_components = dict()
         if not self.target:
@@ -296,7 +298,7 @@ class CMakeGen(object):
         # itself
         processed_components[component.getName()] = component
         new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
-        self.generate(builddir, component, new_dependencies, dependencies, recursive_deps, toplevel)
+        self.generate(builddir, modbuilddir, component, new_dependencies, dependencies, recursive_deps, toplevel)
 
         logger.debug('recursive deps of %s:' % component)
         for d in recursive_deps.values():
@@ -304,7 +306,9 @@ class CMakeGen(object):
 
         processed_components.update(new_dependencies)
         for name, c in new_dependencies.items():
-            for error in self.generateRecursive(c, all_components, os.path.join(builddir, 'ym', name), processed_components):
+            for error in self.generateRecursive(
+                c, all_components, os.path.join(modbuilddir, name), modbuilddir, processed_components
+            ):
                 yield error
 
     def checkStandardSourceDir(self, dirname, component):
@@ -366,7 +370,7 @@ class CMakeGen(object):
           "resource": resource_subdirs
         }
 
-    def generate(self, builddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel):
+    def generate(self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel):
         ''' active_dependencies is the dictionary of components that need to be
             built for this component, but will not already have been built for
             another component.
@@ -413,7 +417,10 @@ class CMakeGen(object):
 
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
-            add_depend_subdirs += 'add_subdirectory("%s")\n' % replaceBackslashes(os.path.join(builddir, 'ym', name))
+            depend_subdir = replaceBackslashes(os.path.join(modbuilddir, name))
+            add_depend_subdirs += 'add_subdirectory("%s" "%s")\n' % (
+                depend_subdir, depend_subdir
+            )
 
         subdirs = self._listSubDirectories(component)
         manual_subdirs      = subdirs['manual']
@@ -583,6 +590,9 @@ class CMakeGen(object):
             resource_files = []
             for f in resource_subdirs:
                 for root, dires, files in os.walk(f):
+                    if root.endswith(".xcassets"):
+                        resource_files.append(root)
+                        break;
                     for f in files:
                         resource_files.append(os.path.join(root, f))
 

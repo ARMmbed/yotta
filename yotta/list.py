@@ -19,6 +19,8 @@ from .lib import target
 # access, , get components (and check versions), internal
 from .lib import access
 from .lib import access_common
+# fsutils, , misc filesystem utils, internal
+from .lib import fsutils
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
@@ -26,8 +28,6 @@ def addOptions(parser):
     )
 
 def execCommand(args, following_args):
-    wd = os.getcwd()
-
     c = validate.currentDirectoryModule()
     if not c:
         return 1
@@ -103,7 +103,7 @@ def printComponentDepsRecursive(
     if len(installed_at):
         line += u' ' + DIM + installed_at + RESET
     if component.installedLinked():
-        line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + os.path.realpath(component.path) + RESET 
+        line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + fsutils.realpath(component.path) + RESET
 
     putln(line)
     

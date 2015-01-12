@@ -10,6 +10,7 @@
 
 # ntfsutils, 2-clause BSD, NTFS link handling, pip install ntfsutils
 import ntfsutils.junction as junction
+import os
 
 def isLink(path):
     return junction.isjunction(path)
@@ -22,3 +23,6 @@ def tryReadLink(path):
 
 def _symlink(source, link_name):
     junction.create(source, link_name)
+
+def realpath(path):
+    return os.path.abspath(tryReadLink(path) or path)

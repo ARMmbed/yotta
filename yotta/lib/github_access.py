@@ -23,6 +23,9 @@ import access_common
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
 # requests, apache2
 import requests
 
@@ -132,7 +135,6 @@ def _pollForAuth():
         return True
     return False
 
-
 # API
 def authorizeUser():
     # poll once with any existing public key, just in case a previous login
@@ -147,15 +149,40 @@ def authorizeUser():
     except NameError:
         pass
 
-    input('''
-You need to log in with Github. Press enter to continue.
+    sys.stdout.write(
+        '\nYou need to log in with Github.\n'
+    )
+    
+    if os.name == 'nt' or os.environ.get('DISPLAY'):
+        input(
+            colorama.Style.BRIGHT+
+            'Press enter to continue.\n'+
+            colorama.Style.DIM+
+            'Your browser will open to complete login.'+
+            colorama.Style.NORMAL+'\n'
+        )
 
-(Your browser will open to complete login.)''')
+        registry_access.openBrowserLogin(provider='github')
+        
 
-    registry_access.openBrowserLogin(provider='github')
-
-    sys.stdout.write('waiting for response...')
-    sys.stdout.flush()
+        sys.stdout.write('waiting for response...')
+        sys.stdout.write(
+            colorama.Style.DIM+
+            '\nIf you are unable to use a browser on this machine, please copy and '+
+            'paste this URL into a browser:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'+
+            colorama.Style.NORMAL
+        )
+        sys.stdout.flush()
+    else:
+        sys.stdout.write(
+            '\nyotta is unable to open a browser for you to complete login '+
+            'on this machine. Please copy and paste this URL into a '
+            'browser to complete login:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'
+        )
+        sys.stdout.write('waiting for response...')
+        sys.stdout.flush()
 
     poll_start = datetime.datetime.utcnow()
     while datetime.datetime.utcnow() - poll_start < datetime.timedelta(minutes=5):
