@@ -42,7 +42,7 @@ class Version(object):
         '''
         super(Version, self).__init__()
         self.url = url
-        version_string = version_string.strip()
+        version_string = str(version_string.strip())
         # strip of leading v or = characters, these are permitted in npm's
         # semver, and npm tags versions as v1.2.3
         if version_string.startswith('v') or version_string.startswith('='):
@@ -97,7 +97,7 @@ class Version(object):
         if isinstance(other, semantic_version.Version):
             other_is_specific_ver = True
             other_is_unwrapped = True
-        elif not isinstance(other, Version):
+        elif not hasattr(other, 'version'):
             return NotImplemented
         else:
             other_is_specific_ver = isinstance(other.version, semantic_version.Version)

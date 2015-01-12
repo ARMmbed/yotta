@@ -4,11 +4,12 @@ title: Yotta Command Reference
 section: reference/commands
 ---
 
-## Command Reference
+# Command Reference
 <a name="yotta"></a>
-### yotta
-synonyms: `yt`
-The yotta command is always run with a subcommand in order to do something, `yotta` with no subcommand will only display help and version information with the `--help` and `--version` options.
+## yotta
+Synonyms: `yt`
+
+The `yotta` command is always run with a subcommand in order to do something, `yotta` with no subcommand will only display help and version information with the `--help` and `--version` options.
 `yt` can be used as a shortcut for `yotta` in all commands.
 
 Options:
@@ -18,7 +19,7 @@ Options:
  * `yotta <subcommand> --help`: display help for a specific subcommand.
 
 <a name="yotta-init"></a>
-### yotta init
+## yotta init
 #### Synopsis
 
 ```
@@ -29,7 +30,7 @@ yotta init
 Create a new `module.json` module-description file based on a set of questions. If a `module.json` file already exists, the values in it will be used as defaults, and it will not delete anything from the file.
 
 <a name="yotta-build"></a>
-### yotta build
+## yotta build
 #### Synopsis
 
 ```
@@ -39,19 +40,19 @@ yotta build [--generate-only / -g] [--release-build / -r] [--cmake-generator / -
 #### Description
 Build the current module and its dependencies. Missing dependencies will be automatically installed first.
 
-yotta uses [CMake](http://www.cmake.org) to control the build, the basic process is:
+`yotta` uses [CMake](http://www.cmake.org) to control the build, the basic process is:
 
- 1) yotta installs the target description for the build target
- 2) yotta installs all module dependencies (which may depend on which target is being built for)
- 3) yotta generates CMakeLists.txt describing the libraries and executables to build
- 4) yotta instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
- 5) yotta instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
+ 1. `yotta` installs the target description for the build target
+ 2. `yotta` installs all module dependencies (which may depend on which target is being built for)
+ 3. `yotta` generates CMakeLists.txt describing the libraries and executables to build
+ 4. `yotta` instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
+ 5. `yotta` instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
 
 Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
  * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
- * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by yotta targets without additional plugins. The available generators depend on whether yotta is running on OS X, Linux, or Windows.
+ * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by `yotta` targets without additional plugins. The available generators depend on whether `yotta` is running on OS X, Linux, or Windows.
 
 #### Examples
 
@@ -61,7 +62,7 @@ yotta build -r -G "Sublime Text 2 - Ninja"
 ```
 
 <a name="yotta-debug"></a>
-### yotta debug
+## yotta debug
 #### Synopsis
 
 ```
@@ -80,7 +81,7 @@ yotta debug source/helloyotta
 ```
 
 <a name="yotta-target"></a>
-### yotta target
+## yotta target
 #### Synopsis
 
 ```
@@ -89,15 +90,15 @@ yotta target <targetname>[,url-or-version-spec]
 ```
 
 #### Description
-Display or set the current target. Yotta will look for and install a target description from the yotta registry when building or installing dependencies.
+Display or set the current target. `yotta` will look for and install a target description from the `yotta` registry when building or installing dependencies.
 
-Targets define the options and commands that yotta uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
+Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
 
-A target must define a CMake Toolchain file describing all of the rules that yotta uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
+A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
 
 <a name="yotta-install"></a>
-### yotta install
-synonyms: `yotta in`, `yotta i`
+## yotta install
+Synonyms: `yotta in`, `yotta i`
 #### Synopsis
 
 ```
@@ -147,8 +148,8 @@ yotta install ARM-RD/simplelog@0.0.0 --save
 ```
 
 <a name="yotta-update"></a>
-### yotta update
-synonyms: `yotta up`
+## yotta update
+Synonyms: `yotta up`
 #### Synopsis
 
 ```
@@ -163,8 +164,8 @@ Options:
  * `--update-linked`: update the dependencies of linked modules too.
 
 <a name="yotta-version"></a>
-### yotta version
-synonyms: `yotta v`
+## yotta version
+Synonyms: `yotta v`
 #### Synopsis
 
 ```
@@ -176,7 +177,7 @@ Bump the current module's version, set a new version, or display the current ver
 
 If the current module is version-controlled by mercurial or git, then the new version is tagged. If the module is version controlled but the working directory is not clean, then an error message is printed.
 
-### yotta login
+## yotta login
 #### Synopsis
 
 ```
@@ -184,15 +185,15 @@ yotta login
 ```
 
 #### Description
-Authenticate with the yotta registry. yotta will open a browser to an OAuth login page on the yotta registry, where you can then log in with either GitHub or mbed. This process generates a secret access token that is saved in your yotta configuration file, and which yotta can use to pull from private repositories that you have access to on GitHub or mbed.
+Authenticate with the `yotta` registry. `yotta` will open a browser to an OAuth login page on the `yotta` registry, where you can then log in with either GitHub or mbed. This process generates a secret access token that is saved in your `yotta` configuration file, and which `yotta` can use to pull from private repositories that you have access to on GitHub or mbed.
 
 You must log in before you can publish modules. Access control for publishing is based on email addresses verified by GitHub/mbed, you can see the email address of the owners with permission to publish a given module using the `yotta owners` command.
 
-No information other than your email address, and a public key generated by your yotta client, is stored by the yotta registry. Even someone with access to the yotta registry's database would not be able to publish modules in your name without stealing information that never leaves your computer!
+No information other than your email address, and a public key generated by your `yotta` client, is stored by the `yotta` registry. Even someone with access to the `yotta` registry's database would not be able to publish modules in your name without stealing information that never leaves your computer!
 
 
 <a name="yotta-logout"></a>
-### yotta logout
+## yotta logout
 #### Synopsis
 
 ```
@@ -200,11 +201,11 @@ yotta logout
 ```
 
 #### Description
-Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into yotta on. If you wish to revoke access tokens you can do so on your GitHub account page.
+Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into `yotta` on. If you wish to revoke access tokens you can do so on your GitHub account page.
 
 
 <a name="yotta-publish"></a>
-### yotta publish
+## yotta publish
 #### Synopsis
 
 ```
@@ -212,12 +213,12 @@ yotta publish
 ```
 
 #### Description
-Publish the current module or target to the public yotta registry, where other people will be able to search for and install it.
+Publish the current module or target to the public `yotta` registry, where other people will be able to search for and install it.
 
 
 <a name="yotta-link"></a>
-### yotta link
-synonyms: `yotta ln`
+## yotta link
+Synonyms: `yotta ln`
 #### Synopsis
 
 ```
@@ -248,7 +249,7 @@ This works for direct and indirect dependencies: you can link to a module that y
 
 
 <a name="yotta-link-target"></a>
-### yotta link-target
+## yotta link-target
 #### Synopsis
 
 ```
@@ -276,8 +277,8 @@ yotta link-target <targetename>
 When you run `yotta build` (provided you've set `yotta target` to `<targetname>`), the linked target description will be used.
 
 <a name="yotta-list"></a>
-### yotta list
-synonyms: `yotta ls`
+## yotta list
+Synonyms: `yotta ls`
 #### Synopsis
 
 ```
@@ -288,8 +289,8 @@ yotta list [--all]
 List the installed dependencies of the current module, including information on the installed versions. Unless `--all` is specified, dependencies are only listed under the modules that first use them, with `--all` dependencies that are used my multiple modules are listed multiple times (but all modules will use the same installed instance of the dependency).
 
 <a name="yotta-uninstall"></a>
-### yotta uninstall
-synonyms: `yotta unlink`, `yotta rm`
+## yotta uninstall
+Synonyms: `yotta unlink`, `yotta rm`
 #### Synopsis
 
 ```
@@ -300,8 +301,8 @@ yotta uninstall <module>
 Remove the specified dependency of the current module (or destroy the symlink if it was linked).
 
 <a name="yotta-owners"></a>
-### yotta owners
-synonyms: `yotta owner`
+## yotta owners
+Synonyms: `yotta owner`
 #### Synopsis
 
 ```

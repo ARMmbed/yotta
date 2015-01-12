@@ -20,13 +20,14 @@ import settings
 import version
 # access_common, , things shared between different component access modules, internal
 import access_common
-# connection_pool, , shared connection pool, internal
-import connection_pool
 # Registry Access, , access packages in the registry, internal
 import registry_access
 
-# restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
-from restkit import Resource, BasicAuth, Connection, request
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
+# requests, apache2
+import requests
 
 # PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
 import github
@@ -118,13 +119,14 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    resource = Resource(url, pool=connection_pool.getPool(), follow_redirect=True)
-    response = resource.get(
-        headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}, 
-    )
+    headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}
+
+    response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
+
     logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
-    access_common.unpackTarballStream(response.body_stream(), into_directory)
+
+    access_common.unpackTarballStream(response, into_directory)
 
 def _pollForAuth():
     tokens = registry_access.getAuthData()
@@ -133,7 +135,6 @@ def _pollForAuth():
         return True
     return False
 
-
 # API
 def authorizeUser():
     # poll once with any existing public key, just in case a previous login
@@ -141,15 +142,47 @@ def authorizeUser():
     if _pollForAuth():
         return
 
-    raw_input('''
-You need to log in with Github. Press enter to continue.
+    # python 2 + 3 compatibility
+    try:
+        global input
+        input = raw_input
+    except NameError:
+        pass
 
-(Your browser will open to complete login.)''')
+    sys.stdout.write(
+        '\nYou need to log in with Github.\n'
+    )
+    
+    if os.name == 'nt' or os.environ.get('DISPLAY'):
+        input(
+            colorama.Style.BRIGHT+
+            'Press enter to continue.\n'+
+            colorama.Style.DIM+
+            'Your browser will open to complete login.'+
+            colorama.Style.NORMAL+'\n'
+        )
 
-    registry_access.openBrowserLogin(provider='github')
+        registry_access.openBrowserLogin(provider='github')
+        
 
-    sys.stdout.write('waiting for response...')
-    sys.stdout.flush()
+        sys.stdout.write('waiting for response...')
+        sys.stdout.write(
+            colorama.Style.DIM+
+            '\nIf you are unable to use a browser on this machine, please copy and '+
+            'paste this URL into a browser:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'+
+            colorama.Style.NORMAL
+        )
+        sys.stdout.flush()
+    else:
+        sys.stdout.write(
+            '\nyotta is unable to open a browser for you to complete login '+
+            'on this machine. Please copy and paste this URL into a '
+            'browser to complete login:\n'+
+            registry_access.getLoginURL(provider='github')+'\n'
+        )
+        sys.stdout.write('waiting for response...')
+        sys.stdout.flush()
 
     poll_start = datetime.datetime.utcnow()
     while datetime.datetime.utcnow() - poll_start < datetime.timedelta(minutes=5):
@@ -208,8 +241,8 @@ class GithubComponent(access_common.RemoteComponent):
     def _getTags(self):
         if self.tags is None:
             try:
-                self.tags = _getTags(self.repo).iteritems()
-            except github.UnknownObjectException, e:
+                self.tags = _getTags(self.repo).items()
+            except github.UnknownObjectException as e:
                 raise access_common.ComponentUnavailable(
                     'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
                 )
@@ -239,7 +272,7 @@ class GithubComponent(access_common.RemoteComponent):
         ''' return a list of GithubComponentVersion objects for the tip of each branch
         '''
         return [
-            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).iteritems()
+            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).items()
         ]
 
     def tipVersion(self):

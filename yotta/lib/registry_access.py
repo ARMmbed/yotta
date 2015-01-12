@@ -15,13 +15,15 @@ import calendar
 import datetime
 import hashlib
 import itertools
-import urllib
 import base64
 import webbrowser
-    
-# restkit, MIT, HTTP client library for RESTful APIs, pip install restkit
-from restkit import Resource, BasicAuth, errors as restkit_errors
-from restkit.forms import multipart_form_encode
+try:
+    from urllib import quote as quoteURL
+except ImportError:
+    from urllib.parse import quote as quoteURL
+
+# requests, apache2
+import requests
 
 # PyJWT, MIT, Jason Web Tokens, pip install PyJWT
 import jwt
@@ -31,8 +33,6 @@ from Crypto.PublicKey import RSA
 
 # settings, , load and save settings, internal
 import settings
-# connection_pool, , shared connection pool, internal
-import connection_pool
 # access_common, , things shared between different component access modules, internal
 import access_common
 # version, , represent versions and specifications, internal
@@ -41,44 +41,45 @@ import version
 import ordered_json
 # Github Access, , access repositories on github, internal
 import github_access
+# export key, , export pycrypto keys, internal
+import exportkey
 
 # !!! FIXME get SSL cert for main domain, then use HTTPS
 Registry_Base_URL = 'http://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
-_OpenSSH_Keyfile_Strip = re.compile("^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
+_OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
 
+# suppress logging from the requests library
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 # Internal functions
 
-class _BearerJWTFilter(object):
-    def __init__(self, private_key):
-        super(_BearerJWTFilter, self).__init__()
-        expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
-        prn = _fingerprint(private_key.publickey())
-        logger.debug('fingerprint: %s' % prn)
-        token_fields = {
-            "iss": 'yotta',
-            "aud": Registry_Base_URL,
-            "prn": prn,
-            "exp": str(expires)
-        }
-        logger.debug('token fields: %s' % token_fields)
-        self.token = jwt.encode(token_fields, private_key, 'RS256')
-        logger.debug('encoded token: %s' % self.token)
+def generate_jwt_token(private_key):
+    expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
+    prn = _fingerprint(private_key.publickey())
+    logger.debug('fingerprint: %s' % prn)
+    token_fields = {
+        "iss": 'yotta',
+        "aud": Registry_Base_URL,
+        "prn": prn,
+        "exp": str(expires)
+    }
+    logger.debug('token fields: %s' % token_fields)
+    token = jwt.encode(token_fields, private_key, 'RS256').decode('ascii')
+    logger.debug('encoded token: %s' % token)
 
-    def on_request(self, request):
-        request.headers['Authorization'] = 'Bearer ' + self.token
-
+    return token
 
 def _pubkeyWireFormat(pubkey):
-    return urllib.quote(_OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH')))
+    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey)))
 
 def _fingerprint(pubkey):
-    stripped = _OpenSSH_Keyfile_Strip.sub('', pubkey.exportKey('OpenSSH'))
+    stripped = _OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
-    return ':'.join([khash[i:i+2] for i in xrange(0, len(khash), 2)])
+    return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
 
 
 def _registryAuthFilter():
@@ -87,15 +88,15 @@ def _registryAuthFilter():
     return  _BearerJWTFilter(_getPrivateKeyObject())
 
 def _returnRequestError(fn):
-    ''' Decorator that captures un-caught restkit_errors.RequestFailed errors
+    ''' Decorator that captures requests.exceptions.RequestException errors
         and returns them as an error message. If no error occurs the reture
         value of the wrapped function is returned (normally None). '''
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.RequestFailed as e:
-            return "sever returned status %s: %s" % (e.status_int, e.message)
+        except requests.exceptions.RequestException as e:
+            return "sever returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
  
 def _handleAuth(fn):
@@ -104,10 +105,13 @@ def _handleAuth(fn):
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.Unauthorized as e:
-            github_access.authorizeUser()
-            logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
-            return fn(*args, **kwargs)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == requests.codes.unauthorized:
+                github_access.authorizeUser()
+                logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+                return fn(*args, **kwargs)
+            else:
+                raise
     return wrapped
 
 def _friendlyAuthError(fn):
@@ -118,9 +122,12 @@ def _friendlyAuthError(fn):
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except restkit_errors.Unauthorized as e:
-            logger.error('insufficient permission')
-            return None
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == requests.codes.unauthorized:
+                logger.error('insufficient permission')
+                return None
+            else:
+                raise
     return wrapped
 
 def _listVersions(namespace, name):
@@ -130,19 +137,23 @@ def _listVersions(namespace, name):
         namespace,
         name
     )
-    headers = { }
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-    try:
-        response = resource.get(
-            headers = headers
-        )
-    except restkit_errors.ResourceNotFound as e:
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    response = requests.get(url, headers=request_headers)
+    
+    if response.status_code == 404:
         raise access_common.ComponentUnavailable(
             '%s does not exist in the %s registry' % (name, namespace)
         )
-    body_s = response.body_string()
-    return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(body_s)]
+
+    # raise any other HTTP errors
+    response.raise_for_status()
+
+    return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(response.text)]
 
 def _tarballURL(namespace, name, version):
     return '%s/%s/%s/versions/%s/tarball' % (
@@ -150,27 +161,27 @@ def _tarballURL(namespace, name, version):
     )
 
 def _getTarball(url, directory, sha256):
-    auth = _registryAuthFilter()
     logger.debug('registry: get: %s' % url)
+
     if not sha256:
         logger.warn('tarball %s has no hash to check' % url)
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-    #resource = Resource('http://blobs.yottos.org/targets/stk3700-0.0.0.tar.gz', pool=connection_pool.getPool(), follow_redirect=True)
-    response = resource.get()
-    # there seems to be an issue with following the redirect using restkit:
-    # follow redirect manually
-    if response.status_int == 302 and 'Location' in response.headers:
-        redirect_url = response.headers['Location']
-        logger.debug('registry: redirect to: %s' % redirect_url)
-        resource = Resource(redirect_url, pool=connection_pool.getPool())
-        response = resource.get()
-    return access_common.unpackTarballStream(response.body_stream(), directory, ('sha256', sha256))
+
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
+    response.raise_for_status()
+
+    return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
 
 def _generateAndSaveKeys():
     k = RSA.generate(2048)
-    privatekey_hex = binascii.hexlify(k.exportKey('DER'))
+    privatekey_hex = binascii.hexlify(k.exportKey('DER')).decode('ascii')
     settings.setProperty('keys', 'private', privatekey_hex)
-    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
+    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER')).decode('ascii')
     settings.setProperty('keys', 'public', pubkey_hex)
     return pubkey_hex, privatekey_hex
 
@@ -237,7 +248,6 @@ class RegistryThing(access_common.RemoteComponent):
     def remoteType(cls):
         return 'registry'
 
-@_returnRequestError
 @_handleAuth
 def publish(namespace, name, version, description_file, tar_file, readme_file, readme_file_ext):
     ''' Publish a tarblob to the registry, if the request fails, an exception
@@ -261,19 +271,19 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
         raise ValueError('unsupported readme type: "%s"' % readne_file_ext)
     
     # description file is in place as text (so read it), tar file is a file
-    body = OrderedDict([('metadata',description_file.read()), ('tarball',tar_file), (readme_section_name, readme_file)])
-    headers = { }
-    body, headers = multipart_form_encode(body, headers, uuid.uuid4().hex)
+    body = OrderedDict([('metadata', (None, description_file.read(),'application/json')),
+                        ('tarball',('tarball', tar_file)),
+                        (readme_section_name, (readme_section_name, readme_file))])
+    headers = {}
+    
+    headers['Authorization'] = 'Bearer %s' % generate_jwt_token(_getPrivateKeyObject())
+    response = requests.put(url, headers=headers, files=body)
 
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-
-    response = resource.put(
-        headers = headers,
-        payload = body
-    )
+    if not response.ok:
+        return "sever returned status %s: %s" % (response.status_code, response.text)
 
     return None
+
 
 @_friendlyAuthError
 @_handleAuth
@@ -286,14 +296,25 @@ def listOwners(namespace, name):
         namespace,
         name
     )
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-    try:
-        response = resource.get()
-    except restkit_errors.ResourceNotFound as e:
+
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    response = requests.get(url, headers=request_headers)
+
+    if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
         return None
-    return ordered_json.loads(response.body_string())
+    
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
+
+    return ordered_json.loads(response.text)
+
 
 @_friendlyAuthError
 @_handleAuth
@@ -307,13 +328,22 @@ def addOwner(namespace, name, owner):
         name,
         owner
     )
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
 
-    try:
-        response = resource.put()
-    except restkit_errors.ResourceNotFound as e:
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    response = requests.put(url, headers=request_headers)
+
+    if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
+
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
+
 
 @_friendlyAuthError
 @_handleAuth
@@ -327,13 +357,21 @@ def removeOwner(namespace, name, owner):
         name,
         owner
     )
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
-    
-    try:
-        response = resource.delete()
-    except restkit_errors.ResourceNotFound as e:
+
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    response = requests.delete(url, headers=request_headers)
+
+    if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace, name))
+
+    # raise exceptions for other errors - the auth decorators handle these and
+    # re-try if appropriate
+    response.raise_for_status()
 
 
 def deauthorize():
@@ -357,13 +395,16 @@ def testLogin():
     url = '%s/users/me' % (
         Registry_Base_URL
     )
-    headers = { }
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
     logger.debug('test login...')
-    response = resource.get(
-        headers = headers
-    )
+    response = requests.get(url, headers=request_headers)
+    response.raise_for_status()
 
 def getAuthData():
     ''' Poll the registry to get the result of a completed authentication
@@ -373,36 +414,47 @@ def getAuthData():
     url = '%s/tokens' % (
         Registry_Base_URL
     )
-    headers = { }
-    auth = _registryAuthFilter()
-    resource = Resource(url, pool=connection_pool.getPool(), filters=[auth])
+    headers = {}
+
+    auth_token = generate_jwt_token(_getPrivateKeyObject())
+
+    request_headers = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+
+    logger.debug('poll for tokens...')
+
     try:
-        logger.debug('poll for tokens...')
-        response = resource.get(
-            headers = headers
-        )
-    except restkit_errors.Unauthorized as e:
+        response = requests.get(url, headers=request_headers)
+    except requests.RequestException as e:
         logger.debug(str(e))
         return None
-    except restkit_errors.ResourceNotFound as e:
-        logger.debug(str(e))
-        return None    
-    except restkit_errors.RequestFailed as e:
-        logger.debug(str(e))
+
+    if response.status_code == requests.codes.unauthorized:
+        logger.debug('Unauthorised')
         return None
-    body = response.body_string()
+    elif response.status_code == requests.codes.not_found:
+        logger.debug('Not Found')
+        return None
+
+    body = response.text
     logger.debug('auth data response: %s' % body);
     r = {}
+
     for token in ordered_json.loads(body):
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
+
     logger.debug('parsed auth tokens %s' % r);
     return r
 
-def openBrowserLogin(provider=None):
+def getLoginURL(provider=None):
     if provider:
         query = '?provider=github'
     else:
         query = ''
-    webbrowser.open(Website_Base_URL + '/#login/' + getPublicKey() + query)
+    return  Website_Base_URL + '/#login/' + getPublicKey() + query
+
+def openBrowserLogin(provider=None):
+    webbrowser.open(getLoginURL(provider=provider))

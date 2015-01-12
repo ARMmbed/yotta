@@ -14,80 +14,9 @@ import logging
 from yotta.lib import access
 from yotta.lib import component
 from yotta.lib.pool import pool
-
-module_json = '''{
-  "name": "yottos",
-  "version": "0.0.7",
-  "description": "The core Yottos scheduler.",
-  "private": false,
-  "scripts": {
-    "test": "echo \\"Error: no test specified\\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "ssh://nadc-login2.nadc.arm.com//projects/pd/randd/git/iot/yottos/yottos"
-  },
-  "homepage": "ssh://nadc-login2.nadc.arm.com//projects/pd/randd/git/iot/yottos/yottos",
-  "bugs": {
-    "url": "about:blank",
-    "email": "project@hostname.com"
-  },
-  "author": "James Crosby <James.Crosby@arm.com>",
-  "licenses": [
-    {
-      "type": "Copyright (C) 2013 ARM Limited, all rights reserved.",
-      "url": "about:blank"
-    }
-  ],
-  "dependencies": {
-    "toolchain": "ARM-RD/toolchain",
-    "libc": "ARM-RD/libc",
-    "libobjc2": "ARM-RD/libobjc2 @>0.0.7",
-    "yottos_platform": "ARM-RD/yottos-platform @0.0.3",
-    "emlib": "ARM-RD/emlib",
-    "nsobject": "ARM-RD/nsobject",
-    "nslog": "ARM-RD/nslog",
-    "nsassert": "ARM-RD/nsassert",
-    "thisdoesnotexist": "ARM-RD/thisdoesnotexist"
-  },
-  "devDependencies": {}
-}
-'''
+from yotta.lib.fsutils import mkDirP
 
 testdir = '/tmp/ytcomponenttest'
-
-
-def mkDirP(path):
-    try:
-        os.makedirs(path)
-    except OSError, e:
-        if e.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-# !!! TODO unit-ify this
-def main():
-    try:
-        shutil.rmtree(testdir)
-    except OSError: pass
-
-    mkDirP(testdir)
-    with open(os.path.join(testdir, 'module.json'), 'w') as f:
-        f.write(module_json)
-
-    c = component.Component(testdir)
-
-    available = []
-
-    installed, errs = c.satisfyDependenciesRecursive()
-
-    for x in installed:
-        print 'installed', x
-    for e in errs:
-        print 'Error:', e
-# main()
-
 
 # !!! currently: discard all log messages. maybe we want to use a more
 # sophisticated logging handler that stores the messages so we can inspect them
@@ -155,7 +84,7 @@ class ComponentTestCase(unittest.TestCase):
         self.assertEqual(str(c.getVersion()), '0.0.7')
 
         deps = c.getDependencies()
-        self.assertEqual(deps.keys(), self.deps_in_order)
+        self.assertEqual(list(deps.keys()), self.deps_in_order)
 
 if __name__ == '__main__':
     unittest.main()

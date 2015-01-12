@@ -114,7 +114,6 @@ class Component(pack.Pack):
                         (target, t, self.getName())
                     )
                     deps += self.description['targetDependencies'][t].items()
-                    break
         return deps
 
     def getDependencies(self,
@@ -170,7 +169,8 @@ class Component(pack.Pack):
         '''
         errors = []
         modules_path = self.modulesPath()
-        def satisfyDep((name, ver_req)):
+        def satisfyDep(name_and_ver_req):
+            (name, ver_req) = name_and_ver_req
             try:
                 return provider(
                   name,
@@ -180,7 +180,10 @@ class Component(pack.Pack):
                   modules_path,
                   update_installed
                 )
-            except access_common.ComponentUnavailable, e:
+            except access_common.ComponentUnavailable as e:
+                errors.append(e)
+                self.dependencies_failed = True
+            except vcs.VCSError as e:
                 errors.append(e)
                 self.dependencies_failed = True
         specs = self.getDependencySpecs(target)
@@ -432,7 +435,7 @@ class Component(pack.Pack):
             r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
             if r:
                 return r
-            r = access.satisfyVersionByInstalling(name, version_req, working_directory)
+            r = access.satisfyVersionByInstalling(name, version_req, self.modulesPath())
             if not r:
                 logger.error('could not install %s' % name)
             return r
@@ -463,7 +466,7 @@ class Component(pack.Pack):
                 targets_path,
                 update_installed=('Update' if update_installed else None)
             )
-        except access_common.TargetUnavailable, e:
+        except access_common.TargetUnavailable as e:
             errors.append(e)
         return (target, errors)
 
@@ -494,7 +497,15 @@ class Component(pack.Pack):
             return {self.description['bin']: self.getName()}
         else:
             return {}
-
+    
+    def licenses(self):
+        ''' Return a list of licenses that apply to this module. (Strings,
+            which may be SPDX identifiers)
+        '''
+        if 'license' in self.description:
+            return [self.description['license']]
+        else:
+            return [x['type'] for x in self.description['licenses']]
 
     def getExtraIncludes(self):
         ''' Some components must export whole directories full of headers into

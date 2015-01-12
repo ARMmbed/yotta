@@ -4,6 +4,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
+from __future__ import print_function
 import argparse
 import logging
 import os
@@ -12,12 +13,14 @@ import os
 import colorama
 
 # validate, , validate things, internal
-from lib import validate
+from .lib import validate
 # Target, , represents an installed target, internal
-from lib import target
+from .lib import target
 # access, , get components (and check versions), internal
-from lib import access
-from lib import access_common
+from .lib import access
+from .lib import access_common
+# fsutils, , misc filesystem utils, internal
+from .lib import fsutils
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
@@ -25,8 +28,6 @@ def addOptions(parser):
     )
 
 def execCommand(args, following_args):
-    wd = os.getcwd()
-
     c = validate.currentDirectoryModule()
     if not c:
         return 1
@@ -61,7 +62,11 @@ def islast(generator):
         yield (next_x, True)
 
 def putln(x):
-    print x.encode('utf-8')
+    if u'unicode' in str(type(x)):
+        # python 2.7
+        print(x.encode('utf-8'))
+    else:
+        print(x)
 
 def relpathIfSubdir(path):
     relpath = os.path.relpath(path)
@@ -98,19 +103,17 @@ def printComponentDepsRecursive(
     if len(installed_at):
         line += u' ' + DIM + installed_at + RESET
     if component.installedLinked():
-        line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + os.path.realpath(component.path) + RESET 
+        line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + fsutils.realpath(component.path) + RESET
 
     putln(line)
     
-    deps_here  = filter(lambda x: (x not in processed), deps.keys())
-    print_deps = filter(
-        lambda x:
+    deps_here  = [x for x in list(deps.keys()) if (x not in processed)]
+    print_deps = [x for x in list(deps.items()) if
             list_all or
             (not x[1]) or
             (x[1].path == os.path.join(mods_path, x[0])) or
-            (x[0] in deps_here),
-        deps.items()
-    )
+            (x[0] in deps_here)
+    ]
     
     processed += [x[0] for x in print_deps]
     

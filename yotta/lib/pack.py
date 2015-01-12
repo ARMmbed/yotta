@@ -81,6 +81,9 @@ class OptionalFileWrapper(object):
     
     def __nonzero__(self):
         return bool(self.fname)
+    # python 3 truthiness
+    def __bool__(self):
+        return bool(self.fname)
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
@@ -106,7 +109,7 @@ class Pack(object):
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
             self.version = version.Version(self.description['version'])
-        except Exception, e:
+        except Exception as e:
             self.description = OrderedDict()
             self.error = e
         try:
@@ -249,7 +252,7 @@ class Pack(object):
     
     def findAndOpenReadme(self):
         files = os.listdir(self.path)
-        readme_files = filter(lambda x: Readme_Regex.match(x), files)
+        readme_files = [x for x in files if Readme_Regex.match(x)]
         reamde_file_if_found = None
         for f in readme_files:
             if f.endswith('.md'):
@@ -270,7 +273,7 @@ class Pack(object):
         '''
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
         fsutils.rmF(upload_archive)
-        fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))
         with os.fdopen(fd, 'rb+') as tar_file:
             tar_file.truncate()
             self.generateTarball(tar_file)
@@ -309,4 +312,7 @@ class Pack(object):
     # provided for truthiness testing, we test true only if we successfully
     # read a package file
     def __nonzero__(self):
+        return bool(self.description)
+    # python 3 truthiness
+    def __bool__(self):
         return bool(self.description)

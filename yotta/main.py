@@ -8,6 +8,7 @@ import argparse
 import logging
 import sys
 import pkg_resources
+from functools import reduce
 
 # subcommand modules, , add subcommands, internal
 from . import version
@@ -25,14 +26,15 @@ from . import logout
 from . import list as list_command
 from . import uninstall
 from . import owners
+from . import licenses
 
 # logging setup, , setup the logging system, internal
-from lib import logging_setup
+from .lib import logging_setup
 # detect, , detect things about the system, internal
-from lib import detect
+from .lib import detect
 
 def logLevelFromVerbosity(v):
-    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) / 5)
+    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
 
 def splitList(l, at_value):
     r = [[]]
@@ -94,6 +96,7 @@ def main():
     addParser('list', list_command, 'List the dependencies of the current module.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
+    addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -105,7 +108,8 @@ def main():
             'ls':subparser.choices['list'],
         'unlink':subparser.choices['uninstall'],
             'rm':subparser.choices['uninstall'],
-         'owner':subparser.choices['owners']
+         'owner':subparser.choices['owners'],
+          'lics':subparser.choices['licenses']
     })
     
     # split the args into those before and after any '--'
@@ -122,6 +126,10 @@ def main():
     logging_setup.init(level=loglevel, enable_subsystems=args.debug)
     
     # finally, do stuff!
+    if 'command' not in args:
+        parser.print_usage()
+        sys.exit(0)
+
     status = args.command(args, following_args)
 
     sys.exit(status or 0)
