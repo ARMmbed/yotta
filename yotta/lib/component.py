@@ -89,8 +89,6 @@ class Component(pack.Pack):
         self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
-        # !!! TODO: validate self.description, possibly add a
-        # description_schema class variable used when loading...
 
     def getDependencySpecs(self, target=None):
         ''' Returns [(component name, version requirement)]
