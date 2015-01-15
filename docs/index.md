@@ -111,7 +111,7 @@ First install yotta's dependencies using your system's package manager, for
 example on Debian and Ubuntu:
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build
+sudo apt-get install python-pip cmake build-essential ninja-build python-dev
 ```
 
 Then install yotta itself (you may need to use `sudo` for this, depending on
