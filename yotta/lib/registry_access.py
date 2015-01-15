@@ -306,7 +306,7 @@ def listOwners(namespace, name):
     response = requests.get(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
         return None
     
     # raise exceptions for other errors - the auth decorators handle these and
@@ -338,7 +338,8 @@ def addOwner(namespace, name, owner):
     response = requests.put(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
@@ -367,7 +368,8 @@ def removeOwner(namespace, name, owner):
     response = requests.delete(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate

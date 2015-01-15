@@ -98,7 +98,7 @@ def listOwners(args, p):
             print('module "%s" owners:' % args.module, ', '.join(module_owners))
         if target_owners:
             print('target "%s" owners:' % args.module, ', '.join(target_owners))
-        if not module_owners or target_owners:
+        if not module_owners and not target_owners:
             logging.error('no such module or target')
 
 def removeOwner(args, p):
