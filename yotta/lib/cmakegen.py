@@ -37,6 +37,9 @@ set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
 
 project({{ component_name }})
 
+# include module-specific cmake
+include("{{ module_directory | replaceBackslashes }}/module.cmake" OPTIONAL)
+
 # include root directories of all components we depend on (directly and
 # indirectly, including ourself)
 {{ include_root_dirs }}
@@ -56,12 +59,6 @@ project({{ component_name }})
 # files. Please don't use this facility. Please. It's much, much better to fix
 # implementations that import these headers to import them using the full path.
 {{ include_other_dirs }}
-{% endif %}
-
-{% if set_objc_flags %}
-# CMake doesn't have native support for Objective-C specific flags, these are
-# specified by any depended-on objc runtime using secret package properties...
-set(CMAKE_OBJC_FLAGS "{{ set_objc_flags }}")
 {% endif %}
 
 # Build targets may define additional preprocessor definitions for all
@@ -382,8 +379,6 @@ class CMakeGen(object):
         include_root_dirs = ''
         include_sys_dirs = ''
         include_other_dirs = ''
-        objc_flags_set = {}
-        objc_flags = []
         for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
             include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(c.path)
             dep_sys_include_dirs = c.getExtraSysIncludes()
@@ -392,29 +387,6 @@ class CMakeGen(object):
             dep_extra_include_dirs = c.getExtraIncludes()
             for d in dep_extra_include_dirs:
                 include_other_dirs += 'include_directories("%s")\n' % replaceBackslashes(os.path.join(c.path, d))
-        for name, c in list(all_dependencies.items()) + [(component.getName(), component)]:
-            dep_extra_objc_flags = c.getExtraObjcFlags()
-            # Try to warn Geraint when flags are clobbered. This will probably
-            # miss some obscure flag forms, but it tries pretty hard
-            for f in dep_extra_objc_flags:
-                flag_name = None
-                if len(f.split('=')) == 2:
-                    flag_name = f.split('=')[0]
-                elif f.startswith('-fno-'):
-                    flag_name = f[5:]
-                elif f.startswith('-fno'):
-                    flag_name = f[4:]
-                elif f.startswith('-f'):
-                    flag_name = f[2:]
-                if flag_name is not None:
-                    if flag_name in objc_flags_set and objc_flags_set[flag_name] != name:
-                        logger.warning(
-                            'component %s Objective-C flag "%s" clobbers a value earlier set by component %s' % (
-                            name, f, objc_flags_set[flag_name]
-                        ))
-                    objc_flags_set[flag_name] = name
-                objc_flags.append(f)
-        set_objc_flags = ' '.join(objc_flags)
 
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
@@ -486,11 +458,11 @@ class CMakeGen(object):
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
-                      "set_objc_flags": set_objc_flags,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
             "yotta_target_definitions": target_definitions,
-                   "component_version": component.getVersion()
+                   "component_version": component.getVersion(),
+                    "module_directory": component.path
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
 

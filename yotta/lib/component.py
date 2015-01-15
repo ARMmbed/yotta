@@ -527,16 +527,6 @@ class Component(pack.Pack):
         else:
             return []
 
-    def getExtraObjcFlags(self):
-        ''' The objc runtime must specify flags for all objective-c being
-            compiled, it does this using an extraObjcFlags: [...] parameter in
-            its package description
-        '''
-        if 'extraObjCFlags' in self.description:
-            return self.description['extraObjCFlags']
-        else:
-            return []
-
     def getRegistryNamespace(self):
         return Registry_Namespace
 
