@@ -147,7 +147,8 @@ def _listVersions(namespace, name):
     
     if response.status_code == 404:
         raise access_common.ComponentUnavailable(
-            '%s does not exist in the %s registry' % (name, namespace)
+            ('%s does not exist in the %s registry. '+
+            'Check that the name is correct, and that it has been published.') % (name, namespace)
         )
 
     # raise any other HTTP errors

@@ -464,7 +464,7 @@ class Component(pack.Pack):
                 targets_path,
                 update_installed=('Update' if update_installed else None)
             )
-        except access_common.TargetUnavailable as e:
+        except access_common.ComponentUnavailable as e:
             errors.append(e)
         return (target, errors)
 
