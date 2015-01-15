@@ -154,17 +154,14 @@ set_target_properties({{ object_name }} PROPERTIES
     COMPILE_FLAGS "${CMAKE_OBJC_FLAGS}"
 )
 {% endif %}
-{% for file_name, language in source_files %}
-{% if 'plist' in language  %}
-set_target_properties({{ object_name }} PROPERTIES
-    MACOSX_BUNDLE_INFO_PLIST {{ file_name | replaceBackslashes }}
-)
-{% endif %}
-{% endfor %}
 
 target_link_libraries({{ object_name }}
     {{ link_dependencies | join('\n    ') }}
 )
+
+{% for include in cmake_files %}
+include("{{ include | replaceBackslashes }}")
+{% endfor %}
 '''
 
 #this is a jinja2 template
@@ -200,6 +197,10 @@ if(YOTTA_POSTPROCESS_COMMAND)
 endif()
 add_test({{ object_name }} {{ object_name }})
 
+{% endfor %}
+
+{% for include in cmake_files %}
+include("{{ include | replaceBackslashes }}")
 {% endfor %}
 '''
 
@@ -558,12 +559,21 @@ class CMakeGen(object):
         # link tests against the main executable
         link_dependencies.append(component.getName())
 
+        # Find cmake files
+        cmake_files = []
+        for root, dires, files in os.walk(os.path.join(component.path, dirname)):
+            for f in files:
+                name, ext = os.path.splitext(f)
+                if ext.lower() == '.cmake':
+                    cmake_files.append(os.path.join(root, f))
+
         test_template = jinja_environment.get_template('test')
 
         file_contents = test_template.render({
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
-            'link_dependencies':link_dependencies
+            'link_dependencies':link_dependencies,
+                  'cmake_files': cmake_files
         })
 
         self._writeFile(fname, file_contents)
@@ -596,6 +606,14 @@ class CMakeGen(object):
                     for f in files:
                         resource_files.append(os.path.join(root, f))
 
+            # Find cmake files
+            cmake_files = []
+            for root, dires, files in os.walk(os.path.join(component.path, dirname)):
+                for f in files:
+                    name, ext = os.path.splitext(f)
+                    if ext.lower() == '.cmake':
+                        cmake_files.append(os.path.join(root, f))
+
             subdir_template = jinja_environment.get_template('subdir')
 
             file_contents = subdir_template.render({
@@ -606,7 +624,8 @@ class CMakeGen(object):
                    'link_dependencies': link_dependencies,
                            'languages': set(f.lang for f in source_files),
                         'source_files': set((f.fullpath, f.lang) for f in source_files),
-                      "resource_files": resource_files
+                      'resource_files': resource_files,
+                         'cmake_files': cmake_files
             })
         else:
             raise Exception('auto CMakeLists for non-source/test directories is not supported')
@@ -618,7 +637,6 @@ class CMakeGen(object):
         cpp_exts        = set(('.cpp','.cc','.cxx'))
         objc_exts       = set(('.m', '.mm'))
         header_exts     = set(('.h',))
-        plist_exts      = set(('.plist',))
 
         sources = []
         for root, dires, files in os.walk(directory):
@@ -637,6 +655,4 @@ class CMakeGen(object):
                     sources.append(SourceFile(fullpath, relpath, 'objc'))
                 elif ext in header_exts:
                     sources.append(SourceFile(fullpath, relpath, 'header'))
-                elif ext in plist_exts:
-                    sources.append(SourceFile(fullpath, relpath, 'plist'))
         return sources
