@@ -37,9 +37,6 @@ set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
 
 project({{ component_name }})
 
-# include module-specific cmake
-include("{{ module_directory | replaceBackslashes }}/module.cmake" OPTIONAL)
-
 # include root directories of all components we depend on (directly and
 # indirectly, including ourself)
 {{ include_root_dirs }}
@@ -461,8 +458,7 @@ class CMakeGen(object):
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
             "yotta_target_definitions": target_definitions,
-                   "component_version": component.getVersion(),
-                    "module_directory": component.path
+                   "component_version": component.getVersion()
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
 
