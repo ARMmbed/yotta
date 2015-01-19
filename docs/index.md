@@ -175,28 +175,30 @@ target, such as
     installer](http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win-amd64-py2.7.exe)
     matching the python version that you installed.
 
- 3. **Open cmd.exe and run `pip install -U yotta`**
-
     If pip cannot be found, you need to add the python scripts directory to
     your path. This is `C:\Python27\Scripts` unless you selected a different
     directory during python installation. [These instructions](#windows-path)
     will guide you through the process.
 
- 4. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
+ 3. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
     generate makefiles that control the build. Select the latest available
     version, currently 3.1.0-rc2. The [32-bit
     version](http://www.cmake.org/files/v3.1/cmake-3.1.0-rc3-win32-x86.exe)
     will work on all versions of windows. Be sure to check the "add cmake to
     the path for current user" option during installation.
 
- 5. **Install Ninja**, the small and extremely fast build system that yotta
+ 4. **Install Ninja**, the small and extremely fast build system that yotta
     uses. Download the release archive from the [releases
     page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
     and extract it to a directory (for example `C:\ninja`. Add this directory
     to [your path](#windows-path).
 
- 6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
+ 5. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
     order to build software to run on embedded devices.
+
+ 6. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
+    itself.
+
 
 ### Building programs natively to run on windows
 yotta does not yet allow compiling programs to run on windows. If you are
