@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -27,6 +27,7 @@ from . import list as list_command
 from . import uninstall
 from . import owners
 from . import licenses
+from . import clean
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -97,6 +98,7 @@ def main():
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
     addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
+    addParser('clean', clean, 'Remove files created by yotta and the build.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
