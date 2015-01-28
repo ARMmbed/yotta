@@ -96,7 +96,7 @@ def _returnRequestError(fn):
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.RequestException as e:
-            return "sever returned status %s: %s" % (e.response.status_code, e.message)
+            return "server returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
  
 def _handleAuth(fn):
@@ -281,7 +281,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     response = requests.put(url, headers=headers, files=body)
 
     if not response.ok:
-        return "sever returned status %s: %s" % (response.status_code, response.text)
+        return "server returned status %s: %s" % (response.status_code, response.text)
 
     return None
 
