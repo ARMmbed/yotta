@@ -83,7 +83,7 @@ def listOfWords(string):
     if isinstance(string, list):
         return string
     else:
-        return string.split()
+        return filter(bool, re.split(",|\\s", string))
 
 def addOptions(parser):
     pass
