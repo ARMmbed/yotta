@@ -110,7 +110,13 @@ class Pack(object):
         self.ignore_patterns = copy.copy(Default_Publish_Ignore)
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
-            self.version = version.Version(self.description['version'])
+            if self.description:
+                if not 'name' in self.description:
+                    raise Exception('missing "name" in module.json')
+                if 'version' in self.description:
+                    self.version = version.Version(self.description['version'])
+                else:
+                    raise Exception('missing "version" in module.json')
         except Exception as e:
             self.description = OrderedDict()
             self.error = e

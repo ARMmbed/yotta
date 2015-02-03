@@ -31,7 +31,7 @@ setup(
     url = "about:blank",
     packages=find_packages(),
     package_data={
-        'yotta': ['lib/schema/*.json']
+        'yotta': ['lib/schema/*.json', 'lib/templates/*.txt']
     },
     long_description=read('readme.md'),
     classifiers=[
