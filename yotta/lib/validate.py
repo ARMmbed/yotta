@@ -53,7 +53,7 @@ def looksLikeAnEmail(email):
 def currentDirectoryModule():
     c = component.Component(os.getcwd())
     if not c:
-        logging.debug(str(c.error))
+        logging.error(str(c.error))
         logging.error('The current directory does not contain a valid module.')
         return None
     return c
