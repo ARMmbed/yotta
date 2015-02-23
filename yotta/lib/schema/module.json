@@ -83,6 +83,12 @@
                 {"$ref": "#/definitions/bugsObject"}
             ]
         },
+        "extraIncludes": {
+             "type": "array",
+            "items": {
+                "$ref": "#/definitions/path"
+            }
+        },
         "bin": {
             "$ref": "#/definitions/path"
         },
