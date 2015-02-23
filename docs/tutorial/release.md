@@ -6,7 +6,7 @@ section: tutorial/releasing
 
 # Releasing Software With yotta
 
-At its simplest, the lifecycle of a yotta module is really simple:
+At its simplest, the lifecycle of a yotta module is three steps:
 
  1. Write some code
  2. Commit it to version control (our favourite is [Github](http://github/com))
@@ -16,11 +16,11 @@ The yotta registry, which hosts released versions of yotta modules and makes
 them searchable and accessible to other people, makes sure that every version
 of your module that you publish will be available forever. So even if you
 abandon your source code, delete your Github and run away to live in the
-mountains people who're using your code won't be left stranded.
+mountains, people who are using your code won't be left stranded.
 
 (If you want to take ownership of an abandoned yotta module, to publish fixes
 and improvements, please submit a ticket on the yotta [issue
-tracker](https://github.com/armmbed/yotta/issues).
+tracker](https://github.com/armmbed/yotta/issues).)
 
 
 ## Release Version Numbers
@@ -40,8 +40,9 @@ are some rules you must follow to play nicely with people using your module:
  * Any other changes (bugfixes, changes with no external effect) should change
    the patch version number. (`yotta version patch`)
 
-These are the basic rules of [semantic versioning](http://semver.org) (there
-are some exceptions for `0.x.x` releases during early development).
+These are the basic rules of [semantic versioning](http://semver.org), there
+are some exceptions for `0.x.x` releases during early development, but if you
+stick to the basics it's hard to go wrong.
 
 
 ## Release Branches
@@ -54,8 +55,8 @@ versions.
 For example, if you're releasing version `2.0.1` to fix a bug in the `2.0.0`
 release, and this bug is also present in the older `1.7.4` release, you should
 back-port the fix and release version `1.7.5`. Anyone using your old version
-will be able to update to a fixed version without worrying about backwards
-incompatible changes.
+will be able to update to a fixed version *without worrying about backwards
+incompatible changes*.
 
 If you're using git to manage your code, you can easily go back to an earlier
 version, and start a new branch for bugfix releases like this:
