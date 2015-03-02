@@ -75,6 +75,19 @@ def relpathIfSubdir(path):
     else:
         return relpath
 
+if os.name == 'nt':
+    # don't even try to do Unicode on windows. Even if we can encode it
+    # correctly, the default terminal fonts don't support Unicode characters :(
+    L_Char = u'\\'
+    T_Char = u'|'
+    Dash_Char = u'_'
+    Pipe_Char = u'|'
+else:
+    L_Char = u'\u2517'
+    T_Char = u'\u2523'
+    Dash_Char = u'\u2500'
+    Pipe_Char = u'\u2503'
+
 def printComponentDepsRecursive(
         component,
         all_components,
@@ -121,12 +134,12 @@ def printComponentDepsRecursive(
     for (name, dep), last in islast(print_deps):
         if last:
             next_indent = indent + u'  '
-            tee = u'\u2517\u2500 '
-            next_tee = u'\u2517\u2500 '
+            tee = L_Char + Dash_Char + u' '
+            next_tee = L_Char + Dash_Char + u' '
         else:
-            next_indent = indent + u'\u2503 '
-            tee = u'\u2523\u2500 '
-            next_tee = u'\u2520\u2500 '
+            next_indent = indent + Pipe_Char + u' '
+            tee = T_Char + Dash_Char + u' '
+            next_tee = T_Char + Dash_Char + u' '
         if not dep:
             putln(indent + tee + name + u' ' + specs[name] + BRIGHT + RED + ' missing' + RESET)
         else:
