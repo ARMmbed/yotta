@@ -32,10 +32,10 @@ def addOptions(parser):
 
 
 
-def namedAndVersionSort(x):
+def typeNameAndVersionSort(x):
     # python supports sane sorting of tuples (it doesn't just hash them like
     # objects):
-    return (x['name'], version.Version(x['version']))
+    return (x['type'], x['name'], version.Version(x['version']))
 
 def uniqueify(sorted_sequence, key=None):
     if key is None:
@@ -62,7 +62,7 @@ def execCommand(args, following_args):
     for result in uniqueify(
             sorted(
                           registry_access.search(query=args.query, keywords=args.kw),
-                    key = namedAndVersionSort,
+                    key = typeNameAndVersionSort,
                 reverse = True
             ),
             key = lambda x: x['type'] + ':' + x['name']
