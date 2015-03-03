@@ -19,7 +19,7 @@ def addOptions(parser):
         help="What to search (software modules, build targets, or both)"
     )
     parser.add_argument(
-        'query', type=str, default='',
+        'query', type=str, nargs=1, default='',
         help='Search query text. All items that contain the specified words '+
              'in their description, name, or keywords will be returned.'
     )
@@ -29,24 +29,10 @@ def addOptions(parser):
              'keywords must exist in an item\'s keywords list for it to '+
              'be returned.'
     )
-
-
-
-def typeNameAndVersionSort(x):
-    # python supports sane sorting of tuples (it doesn't just hash them like
-    # objects):
-    return (x['type'], x['name'], version.Version(x['version']))
-
-def uniqueify(sorted_sequence, key=None):
-    if key is None:
-        key = lambda x: x
-    first = True
-    prev_key = None
-    for v in sorted_sequence:
-        if first or key(v) != prev_key:
-            yield v
-            first = False
-            prev_key = key(v)
+    parser.add_argument(
+        '-l', '--limit', default=10, type=int,
+        help='Limit the number of results returned.'
+    )
 
 def lengthLimit(s, l):
     if len(s) > l:
@@ -59,14 +45,12 @@ def execCommand(args, following_args):
     # to the user (note that modules and targets may have the same name but be
     # different things, however, which is why the uniquing key includes the
     # type)
-    for result in uniqueify(
-            sorted(
-                          registry_access.search(query=args.query, keywords=args.kw),
-                    key = typeNameAndVersionSort,
-                reverse = True
-            ),
-            key = lambda x: x['type'] + ':' + x['name']
-        ):
+    count = 0
+    for result in registry_access.search(query=args.query, keywords=args.kw):
+        count += 1
+        if count > args.limit:
+            break
         if args.type == 'both' or args.type == result['type']:
-            print('%s %s: %s' % (result['name'], result['version'], lengthLimit(result['description'], 160)))
+            description = result['description'] if 'description' in result else '<no description>'
+            print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
 

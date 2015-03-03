@@ -78,9 +78,7 @@ def main():
         module.addOptions(parser)
         parser.set_defaults(command=module.execCommand)
 
-    addParser('search', search,
-            'Search for modules and targets.',
-            'Search for modules and targets')
+    addParser('search', search, 'Search for modules and targets')
     addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
     addParser('link', link, 'Symlink a module.')
     addParser('link-target', link_target, 'Symlink a target.')
