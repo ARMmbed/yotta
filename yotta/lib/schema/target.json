@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "yotta module.json schema",
+    "title": "yotta target.json schema",
     "properties": {
         "name": {
             "$ref": "#/definitions/name"
@@ -17,6 +17,15 @@
             "items": {
                 "$ref": "#/definitions/license"
             }
+        },
+        "similarTo": {
+             "type": "array",
+            "items": {
+                "$ref": "#/definitions/name"
+            }
+        },
+        "toolchain": {
+            "$ref": "#/definitions/path"
         },
         "private": {
             "type": "boolean"
@@ -89,22 +98,21 @@
                 "$ref": "#/definitions/path"
             }
         },
-        "bin": {
-            "$ref": "#/definitions/path"
-        },
-        "dependencies": {
-            "$ref": "#/definitions/dependencyMap"
-        },
-        "targetDependencies": {
+        "scripts": {
             "type": "object",
             "patternProperties": {
-                "(^[a-z]+[a-z0-9-]*$)|(^[*]$)": {
-                    "$ref": "#/definitions/dependencyMap"
+                "^(debug|test)$": {
+                    "$ref": "#/definitions/command"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": true
         },
-        "testReporter": {
+        "debug": {
+            "comment": "deprecated",
+            "$ref": "#/definitions/command"
+        },
+        "debugServer": {
+            "comment": "deprecated",
             "$ref": "#/definitions/command"
         }
     },
@@ -260,9 +268,12 @@
             "pattern": ".*"
         },
         "command":{
+            "type": "array",
+            "items": {
                 "type": "string",
-           "minLength": 1,
-           "maxLength": 3000
+                "minLength": 0,
+                "maxLength": 3000
+            }
         }
     },
     "required": ["name", "version"],
@@ -271,3 +282,4 @@
         {"required": ["licenses"]}
     ]
 }
+
