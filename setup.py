@@ -57,6 +57,7 @@ setup(
         pycrypto_dep,
         'PyJWT>=0.3,<0.4',
         'pathlib>=1.0.1,<1.1',
-        'jsonschema>=2.4.0,<3.0'
+        'jsonschema>=2.4.0,<3.0',
+        'mbed_test_wrapper>=0.0.2,<0.1.0',
     ] + platform_deps
 )

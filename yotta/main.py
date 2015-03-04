@@ -21,6 +21,7 @@ from . import build
 from . import init
 from . import publish
 from . import debug
+from . import test_subcommand as test
 from . import login
 from . import logout
 from . import list as list_command
@@ -106,6 +107,7 @@ def main():
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
+    addParser('test', test, 'Run the tests for the current module on the current target. Requires target support.')
     addParser('publish', publish, 'Publish a module or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')

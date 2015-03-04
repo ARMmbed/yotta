@@ -20,6 +20,7 @@ import pack
 
 Target_Description_File = 'target.json'
 Registry_Namespace = 'targets'
+Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'target.json')
 
 def _ignoreSignal(signum, frame):
     logging.debug('ignoring signal %s, traceback:\n%s' % (
@@ -36,12 +37,11 @@ class Target(pack.Pack):
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
-        # !!! TODO: implement a target.json schema, and pass schema_filename
-        # here:
         super(Target, self).__init__(
                                       path,
                description_filename = Target_Description_File,
                    installed_linked = installed_linked,
+                    schema_filename = Schema_File,
             latest_suitable_version = latest_suitable_version
         )
     
@@ -167,10 +167,27 @@ class Target(pack.Pack):
             logging.info(hint)
     
     def debug(self, builddir, program):
-        ''' Launch a debugger for the specified program. '''
-        if 'debug' not in self.description:
+        ''' Launch a debugger for the specified program. Uses the `debug`
+            script if specified by the target, falls back to the `debug` and
+            `debugServer` commands if not. `program` is inserted into the
+            $program variable in commands.
+        '''
+        if 'scripts' in self.description and 'debug' in self.description['scripts']:
+            for err in self._debugWithScript(builddir, program):
+                yield err
+        elif 'debug' in self.description:
+            logging.warning(
+                'target %s provides deprecated debug property. It should '+
+                'provide script.debug instead.', self.getName()
+
+            )
+            for err in self._debugDeprecated(builddir, program):
+                yield err
+        else:
             yield "Target %s does not specify debug commands" % self
-            return
+
+    
+    def _checkProgram(self, builddir, program):
         prog_path = os.path.join(builddir, program)
         if not os.path.isfile(prog_path):
             suggestion = None
@@ -185,7 +202,43 @@ class Target(pack.Pack):
             else:
                 yield "%s does not exist" % program
             return
-        
+
+    def _debugWithScript(self, builddir, program):
+        child = None
+        try:
+            for err in self._checkProgram(builddir, program):
+                yield err
+                return
+            prog_path = os.path.join(builddir, program)
+
+            signal.signal(signal.SIGINT, _ignoreSignal);
+            cmd = [
+                os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
+                for x in self.description['scripts']['debug']
+            ]
+            logging.debug('starting debugger: %s', cmd)
+            child = subprocess.Popen(
+                cmd, cwd = builddir
+            )
+            child.wait()
+            if child.returncode:
+                yield "debug process exited with status %s" % child.returncode
+            child = None
+        except:
+            # reset the terminal, in case the debugger has screwed it up
+            os.system('reset')
+            raise
+        finally:
+            if child is not None:
+                child.terminate()
+            # clear the sigint handler
+            signal.signal(signal.SIGINT, signal.SIG_DFL);
+
+    def _debugDeprecated(self, builddir, program):
+        for err in self._checkProgram(builddir, program):
+            yield err
+            return
+        prog_path = os.path.join(builddir, program)
         
         with open(os.devnull, "w") as dev_null:
             daemon = None
@@ -207,7 +260,6 @@ class Target(pack.Pack):
                     )
                 else:
                     daemon = None
-                
                 
                 signal.signal(signal.SIGINT, _ignoreSignal);
                 cmd = [
@@ -234,4 +286,33 @@ class Target(pack.Pack):
                     daemon.terminate()
                 # clear the sigint handler
                 signal.signal(signal.SIGINT, signal.SIG_DFL);
+    
+    def test(self, builddir, program):
+        if not ('scripts' in self.description and 'debug' in self.description['scripts']):
+            # !!! FIXME: should probably default to trying to run tests natively?
+            yield 'running tests is not supported by this target (no test script is specified)'
 
+        child = None
+        try:
+            prog_path = os.path.join(builddir, program)
+
+            signal.signal(signal.SIGINT, _ignoreSignal);
+            cmd = [
+                os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
+                for x in self.description['scripts']['test']
+            ]
+            logging.debug('running tests: %s', cmd)
+            child = subprocess.Popen(
+                cmd, cwd = builddir
+            )
+            child.wait()
+            if child.returncode:
+                yield "test process exited with status %s" % child.returncode
+            child = None
+        finally:
+            if child is not None:
+                child.terminate()
+            # clear the sigint handler
+            signal.signal(signal.SIGINT, signal.SIG_DFL);
+
+        return

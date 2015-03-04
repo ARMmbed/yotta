@@ -112,11 +112,11 @@ class Pack(object):
             self.description = ordered_json.load(os.path.join(path, description_filename))
             if self.description:
                 if not 'name' in self.description:
-                    raise Exception('missing "name" in module.json')
+                    raise Exception('missing "name" in %s' % os.path.basename(description_filename))
                 if 'version' in self.description:
                     self.version = version.Version(self.description['version'])
                 else:
-                    raise Exception('missing "version" in module.json')
+                    raise Exception('missing "version" in %s' % os.path.basename(description_filename))
         except Exception as e:
             self.description = OrderedDict()
             self.error = e
