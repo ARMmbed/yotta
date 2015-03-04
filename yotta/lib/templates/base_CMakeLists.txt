@@ -3,6 +3,8 @@
 {% if toplevel %}
 cmake_minimum_required(VERSION 2.8.11)
 
+enable_testing()
+
 # always use the CMAKE_MODULE_PATH-provided .cmake files, even when including
 # from system directories:
 cmake_policy(SET CMP0017 OLD)
