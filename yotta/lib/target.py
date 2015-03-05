@@ -312,8 +312,9 @@ class Target(pack.Pack):
                 test_filter = subprocess.Popen(
                     filter_command, cwd = builddir, stdin = test_child.stdout
                 )
-                test_child.stdout.close()
                 test_filter.communicate()
+                test_child.terminate()
+                test_child.stdout.close()
                 returncode = test_filter.returncode
                 test_child = None
                 test_filter = None
