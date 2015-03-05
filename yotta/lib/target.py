@@ -296,7 +296,6 @@ class Target(pack.Pack):
         try:
             prog_path = os.path.join(builddir, program)
 
-            signal.signal(signal.SIGINT, _ignoreSignal);
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['test']
@@ -312,7 +311,5 @@ class Target(pack.Pack):
         finally:
             if child is not None:
                 child.terminate()
-            # clear the sigint handler
-            signal.signal(signal.SIGINT, signal.SIG_DFL);
 
         return
