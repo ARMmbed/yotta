@@ -287,7 +287,7 @@ class Target(pack.Pack):
                 # clear the sigint handler
                 signal.signal(signal.SIGINT, signal.SIG_DFL);
     
-    def test(self, builddir, program):
+    def test(self, builddir, program, forward_args):
         if not ('scripts' in self.description and 'debug' in self.description['scripts']):
             # !!! FIXME: should probably default to trying to run tests natively?
             yield 'running tests is not supported by this target (no test script is specified)'
@@ -300,7 +300,7 @@ class Target(pack.Pack):
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['test']
-            ]
+            ] + forward_args
             logging.debug('running tests: %s', cmd)
             child = subprocess.Popen(
                 cmd, cwd = builddir

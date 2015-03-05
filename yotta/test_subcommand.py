@@ -75,7 +75,7 @@ def execCommand(args, following_args):
         # read it's testReporter command if it has one, and pipe the test
         # output for all of its tests through its test reporter
         for test in test_exes:
-            for err in target.test(dirname, test):
+            for err in target.test(dirname, test, following_args):
                 logging.error(err)
                 returncode += 1
     
