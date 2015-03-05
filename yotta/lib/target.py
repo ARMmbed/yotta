@@ -287,10 +287,11 @@ class Target(pack.Pack):
                 # clear the sigint handler
                 signal.signal(signal.SIGINT, signal.SIG_DFL);
     
-    def test(self, builddir, program, forward_args):
+    def test(self, builddir, program, filter_command, forward_args):
         if not ('scripts' in self.description and 'debug' in self.description['scripts']):
             # !!! FIXME: should probably default to trying to run tests natively?
             yield 'running tests is not supported by this target (no test script is specified)'
+            return
 
         child = None
         try:
@@ -301,13 +302,25 @@ class Target(pack.Pack):
                 for x in self.description['scripts']['test']
             ] + forward_args
             logging.debug('running tests: %s', cmd)
-            child = subprocess.Popen(
-                cmd, cwd = builddir
-            )
-            child.wait()
-            if child.returncode:
-                yield "test process exited with status %s" % child.returncode
-            child = None
+            if filter_command:
+                test_child = subprocess.Popen(
+                    cmd, cwd = builddir, stdout = subprocess.PIPE
+                )
+                test_filter = subprocess.Popen(
+                    filter_command, cwd = builddir, stdin = test_child.stdout
+                )
+                test_child.stdout.close()
+                test_filter.communicate()
+                if test_filter.returncode:
+                    yield "test filter exited with status %s" % test_filter.returncode
+            else:
+                test_child = subprocess.Popen(
+                    cmd, cwd = builddir
+                )
+                test_child.wait()
+                if test_child.returncode:
+                    yield "test process exited with status %s" % child.returncode
+                test_child = None
         finally:
             if child is not None:
                 child.terminate()

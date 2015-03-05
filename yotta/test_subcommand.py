@@ -12,6 +12,8 @@ import re
 from .lib import validate
 # CMakeGen, , generate build files, internal
 from .lib import cmakegen
+# fsutils, , misc filesystem utils, internal
+from .lib import fsutils
 
 
 def addOptions(parser):
@@ -48,6 +50,32 @@ def findCTests(builddir, recurse_yotta_modules=False):
                     tests.append((root, dir_tests))
     return tests
 
+def moduleFromDirname(build_subdir, all_modules, toplevel_module):
+    modtop = True
+    submod = False
+    module = toplevel_module
+    # <topdir> /ym/<submod>/ym/<submod2>/somedir/somedir --> submod2
+    for part in fsutils.fullySplitPath(build_subdir):
+        if submod:
+            if part in all_modules:
+                module = all_modules[part]
+            modtop = True
+            submod = False
+        else:
+            if part == 'ym' and modtop:
+                submod = True
+            else:
+                submod = False
+                modtop = False
+    return module
+
+#assert(moduleFromDirname('ym/b/ym/c/d', {'b':'b', 'c':'c'}, 'a') == 'c')
+#assert(moduleFromDirname('ym/b/q/c/d', {'b':'b', 'c':'c'}, 'a') == 'b')
+#assert(moduleFromDirname('z/b/q/c/d', {'b':'b', 'c':'c'}, 'a') == 'a')
+#assert(moduleFromDirname('ym/e/d', {'b':'b', 'c':'c'}, 'a') == 'a')
+#assert(moduleFromDirname('ym/e/d', {'b':'b', 'c':'c', 'e':'e'}, 'a') == 'e')
+
+
 def execCommand(args, following_args):
     cwd = os.getcwd()
 
@@ -61,6 +89,16 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
+    if args.all:
+        all_modules = c.getDependenciesRecursive(
+                          target = target,
+            available_components = [(c.getName(), c)]
+        )
+    else:
+        all_modules = {
+        }
+
+
     builddir = os.path.join(cwd, 'build', target.getName())
  
     # get the list of tests we need to run, if --all is specified we also run
@@ -68,14 +106,20 @@ def execCommand(args, following_args):
     # this module. 
     tests = findCTests(builddir, recurse_yotta_modules=args.all)
 
-
     returncode = 0
     for dirname, test_exes in tests:
         # !!! FIXME: find the module associated with the specified directory,
         # read it's testReporter command if it has one, and pipe the test
         # output for all of its tests through its test reporter
+        module = moduleFromDirname(os.path.relpath(dirname, builddir), all_modules, c)
+        logging.info('using filter %s for tests in %s', module.getTestFilterCommand(), dirname)
         for test in test_exes:
-            for err in target.test(dirname, test, following_args):
+            for err in target.test(
+                           builddir = dirname, 
+                            program = test,
+                     filter_command = module.getTestFilterCommand(),
+                       forward_args = following_args
+                ):
                 logging.error(err)
                 returncode += 1
     
