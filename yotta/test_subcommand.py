@@ -107,21 +107,30 @@ def execCommand(args, following_args):
     tests = findCTests(builddir, recurse_yotta_modules=args.all)
 
     returncode = 0
+    passed = 0
+    failed = 0
     for dirname, test_exes in tests:
         # !!! FIXME: find the module associated with the specified directory,
         # read it's testReporter command if it has one, and pipe the test
         # output for all of its tests through its test reporter
         module = moduleFromDirname(os.path.relpath(dirname, builddir), all_modules, c)
-        logging.info('using filter %s for tests in %s', module.getTestFilterCommand(), dirname)
+        filter_command = module.getTestFilterCommand()
+        if filter_command:
+            logging.info('using filter "%s" for tests in %s', ' '.join(filter_command), dirname)
         for test in test_exes:
-            for err in target.test(
-                           builddir = dirname, 
-                            program = test,
-                     filter_command = module.getTestFilterCommand(),
-                       forward_args = following_args
-                ):
-                logging.error(err)
-                returncode += 1
+            returncode = target.test(
+                       builddir = dirname, 
+                        program = test,
+                 filter_command = module.getTestFilterCommand(),
+                   forward_args = following_args
+            )
+            if returncode:
+                logging.error('test %s failed', test)
+                failed += 1
+            else:
+                logging.info('test %s passed', test)
+                passed += 1
+    logging.info("tests complete: %d passed, %d failed", passed, failed)
     
     return returncode
 

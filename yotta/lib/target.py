@@ -22,8 +22,10 @@ Target_Description_File = 'target.json'
 Registry_Namespace = 'targets'
 Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'target.json')
 
+logger = logging.getLogger('target')
+
 def _ignoreSignal(signum, frame):
-    logging.debug('ignoring signal %s, traceback:\n%s' % (
+    logger.debug('ignoring signal %s, traceback:\n%s' % (
         signum, ''.join(traceback.format_list(traceback.extract_stack(frame)))
     ))
 
@@ -137,7 +139,7 @@ class Target(pack.Pack):
         # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
         # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
         if args.cmake_generator == "Ninja" and os.name == 'nt':
-            logging.debug("Converting back-slashes in build.ninja to forward-slashes")
+            logger.debug("Converting back-slashes in build.ninja to forward-slashes")
             build_file = os.path.join(builddir, "build.ninja")
             # We want to convert back-slashes to forward-slashes, except in macro definitions, such as
             # -DYOTTA_COMPONENT_VERSION = \"0.0.1\". So we use a little trick: first we change all \"
@@ -164,7 +166,7 @@ class Target(pack.Pack):
             yield res
         hint = self.hintForCMakeGenerator(args.cmake_generator, component)
         if hint:
-            logging.info(hint)
+            logger.info(hint)
     
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
@@ -176,7 +178,7 @@ class Target(pack.Pack):
             for err in self._debugWithScript(builddir, program):
                 yield err
         elif 'debug' in self.description:
-            logging.warning(
+            logger.warning(
                 'target %s provides deprecated debug property. It should '+
                 'provide script.debug instead.', self.getName()
 
@@ -216,7 +218,7 @@ class Target(pack.Pack):
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['debug']
             ]
-            logging.debug('starting debugger: %s', cmd)
+            logger.debug('starting debugger: %s', cmd)
             child = subprocess.Popen(
                 cmd, cwd = builddir
             )
@@ -250,7 +252,7 @@ class Target(pack.Pack):
                     debug_server_prop = 'debug-server'
 
                 if debug_server_prop in self.description:
-                    logging.debug('starting debug server...')
+                    logger.debug('starting debug server...')
                     daemon = subprocess.Popen(
                                    self.description[debug_server_prop],
                              cwd = builddir,
@@ -266,7 +268,7 @@ class Target(pack.Pack):
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
                 ]
-                logging.debug('starting debugger: %s', cmd)
+                logger.debug('starting debugger: %s', cmd)
                 child = subprocess.Popen(
                     cmd, cwd = builddir
                 )
@@ -282,7 +284,7 @@ class Target(pack.Pack):
                 if child is not None:
                     child.terminate()
                 if daemon is not None:
-                    logging.debug('shutting down debug server...')
+                    logger.debug('shutting down debug server...')
                     daemon.terminate()
                 # clear the sigint handler
                 signal.signal(signal.SIGINT, signal.SIG_DFL);
@@ -290,10 +292,11 @@ class Target(pack.Pack):
     def test(self, builddir, program, filter_command, forward_args):
         if not ('scripts' in self.description and 'debug' in self.description['scripts']):
             # !!! FIXME: should probably default to trying to run tests natively?
-            yield 'running tests is not supported by this target (no test script is specified)'
+            logger.error('running tests is not supported by this target (no test script is specified)')
             return
 
-        child = None
+        test_child = None
+        test_filter = None
         try:
             prog_path = os.path.join(builddir, program)
 
@@ -301,7 +304,7 @@ class Target(pack.Pack):
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['test']
             ] + forward_args
-            logging.debug('running tests: %s', cmd)
+            logger.debug('running test: %s', cmd)
             if filter_command:
                 test_child = subprocess.Popen(
                     cmd, cwd = builddir, stdout = subprocess.PIPE
@@ -311,18 +314,26 @@ class Target(pack.Pack):
                 )
                 test_child.stdout.close()
                 test_filter.communicate()
-                if test_filter.returncode:
-                    yield "test filter exited with status %s" % test_filter.returncode
+                returncode = test_filter.returncode
+                test_child = None
+                test_filter = None
+                if returncode:
+                    logger.debug("test filter exited with status %s (=fail)", returncode)
+                    return 1
             else:
                 test_child = subprocess.Popen(
                     cmd, cwd = builddir
                 )
                 test_child.wait()
-                if test_child.returncode:
-                    yield "test process exited with status %s" % child.returncode
+                returncode = test_child.returncode
                 test_child = None
+                if returncode:
+                    logger.debug("test process exited with status %s (=fail)", returncode)
+                    return 1
         finally:
-            if child is not None:
-                child.terminate()
-
-        return
+            if test_child is not None:
+                test_child.terminate()
+            if test_filter is not None:
+                test_filter.terminate()
+        logger.debug("test %s passed", program)
+        return 0
