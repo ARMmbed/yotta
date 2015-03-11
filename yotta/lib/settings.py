@@ -16,6 +16,19 @@ except ImportError:
 # fsutils, , misc filesystem utils, internal
 import fsutils
 
+#
+# yotta's settings always written to ~/.yotta/config, but are read, in order
+# from:
+#
+#  1. environment variables (YOTTA_{config_section_name.upper()}_{config_variable_name.upper()})
+#  2. ~/.yotta/config
+#  3. /usr/local/etc/yottaconfig
+#  4. /etc/yottaconfig.
+#
+# As soon as a value is found for a variable, the search is stopped.
+#
+
+
 # constants
 user_ini_file = '~/.yotta/config'
 ini_files     = [user_ini_file, '/usr/local/etc/yottaconfig', '/etc/yottaconfig']
@@ -36,8 +49,19 @@ def _ensureParser():
             parser = ConfigParser.RawConfigParser()
             parser.read(_iniFiles())
 
+def _checkEnv(section, name):
+    env_key = 'YOTTA_%s_%s' % (section.upper(), name.upper())
+    try:
+        return os.environ[env_key]
+    except KeyError:
+        return None
+
 # public API
 def getProperty(section, name):
+    value = _checkEnv(section, name)
+    if value:
+        logging.debug('read property from environment: %s:%s', section, name)
+        return value
     _ensureParser()
     try:
         with parser_lock:
