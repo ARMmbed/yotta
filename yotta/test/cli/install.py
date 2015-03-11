@@ -62,7 +62,6 @@ def hasGithubConfig():
 class TestCLIInstall(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp() 
-        ensureGithubConfig()
 
     def tearDown(self):
         rmRf(self.test_dir)
