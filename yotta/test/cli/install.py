@@ -23,8 +23,6 @@ Test_Dir = '/tmp/yotta/version_cli_test'
 Test_Name = 'testing-dummy'
 Test_Github_Name = "autopulated/github-access-testing"
 Test_Target = "x86-osx-native,*"
-Test_Username = 'yottatest'
-Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
 
 Test_Module_JSON = '''{
   "name": "testmod",
@@ -58,7 +56,7 @@ Test_Module_JSON = '''{
 def ensureGithubConfig():
     # ensure we have authentication for the test github account
     if not settings.getProperty('github', 'authtoken'):
-        settings.setProperty('github', 'authtoken', Test_Access_Token)
+        raise Exception('a github authtoken must be specified in the environment (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)')
 
 class TestCLIInstall(unittest.TestCase):
     def setUp(self):
