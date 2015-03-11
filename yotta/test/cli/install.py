@@ -23,8 +23,6 @@ from yotta import install
 Test_Name = 'testing-dummy'
 Test_Github_Name = "autopulated/github-access-testing"
 Test_Target = "x86-osx-native,*"
-Test_Username = 'yottatest'
-Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
 
 Test_Module_JSON = '''{
   "name": "testmod",
@@ -55,10 +53,11 @@ Test_Module_JSON = '''{
 }
 '''
 
-def ensureGithubConfig():
-    # ensure we have authentication for the test github account
+def hasGithubConfig():
+    # can't run tests that hit github without an authn token
     if not settings.getProperty('github', 'authtoken'):
-        settings.setProperty('github', 'authtoken', Test_Access_Token)
+        return False
+    return True
 
 class TestCLIInstall(unittest.TestCase):
     def setUp(self):
@@ -67,13 +66,16 @@ class TestCLIInstall(unittest.TestCase):
 
     def tearDown(self):
         rmRf(self.test_dir)
-
+    
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installRegistryRef(self):
         stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Name])
 
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installGithubRef(self):
         stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Github_Name])
 
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
