@@ -17,7 +17,7 @@ from .lib import target
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
 # folders, , get places to install things, internal
-from . import folders
+from .lib import folders
 
 def addOptions(parser):
     parser.add_argument('target', default=None, nargs='?',

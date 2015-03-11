@@ -16,21 +16,28 @@
 # standard library modules, , ,
 import os
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+import fsutils
+
+def prefix():
+    if 'YOTTA_PREFIX' in os.environ:
+        return os.environ['YOTTA_PREFIX']
+    else:
+        if os.name == 'nt':
+            dirname = os.path.join(os.getenv("PROGRAMFILES"), "yotta")
+            fsutils.mkDirP(dirname)
+            return dirname
+        else:
+            return '/usr/local'
 
 def globalInstallDirectory():
     if os.name == 'nt':
-        dirname = os.path.join(os.getenv("PROGRAMFILES"), "yotta", "yotta_modules")
-        fsutils.mkDirP(dirname)
-        return dirname
+        return os.path.join(prefix(), 'yotta_modules')
     else:
-        return '/usr/local/lib/yotta_modules'
+        return os.path.join(prefix(), 'lib', 'yotta_modules')
 
 def globalTargetInstallDirectory():
     if os.name == 'nt':
-        dirname = os.path.join(os.getenv("PROGRAMFILES"), "yotta", "yotta_targets")
-        fsutils.mkDirP(dirname)
-        return dirname
+        return os.path.join(prefix(), 'yotta_targets')
     else:
-        return '/usr/local/lib/yotta_targets'
+        return os.path.join(prefix(), 'lib', 'yotta_targets')
 

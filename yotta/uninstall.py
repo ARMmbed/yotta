@@ -23,7 +23,7 @@ def addOptions(parser):
 def execCommand(args, following_args):
     err = validate.componentNameValidationError(args.component)
     if err:
-        logger.error(err)
+        logging.error(err)
         return 1
     c = validate.currentDirectoryModule()
     if not c:
