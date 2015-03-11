@@ -117,13 +117,33 @@ example on Debian and Ubuntu:
 sudo apt-get install python-pip cmake build-essential ninja-build python-dev
 ```
 
+and on Fedora Linux (tested on FC21):
+
+```sh
+# install development tool dependencies
+sudo yum install python-pip cmake ninja-build python-devel clang
+sudo yum groupinstall "Development Tools" "Development Libraries"
+
+# update pip to latest release
+sudo yum remove python-pip
+curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+```
+
+
 Then install yotta itself (you may need to use `sudo` for this, depending on
 your configuration):
 
 ```sh
 pip install -U yotta
 ```
+You can use the following commands for allowing your current yotta user to override module dependencies without sudo:
 
+```bash
+sudo mkdir -p /usr/local/lib/yotta_modules
+sudo chown $USER /usr/local/lib/yotta_modules
+chmod 755 /usr/local/lib/yotta_modules
+```
 
 
 ### Using clang to build natively for Linux
