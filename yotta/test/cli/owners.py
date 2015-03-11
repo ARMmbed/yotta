@@ -8,13 +8,13 @@
 # standard library modules, , ,
 import unittest
 import os
+import tempfile
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
 from . import cli
 
 
-Test_Dir = '/tmp/yotta/version_cli_test'
 Test_Module_JSON = '''{
   "name": "git-access-testing",
   "version": "0.0.2",
@@ -36,12 +36,12 @@ Test_Module_JSON = '''{
 
 class TestCLIOwners(unittest.TestCase):
     def setUp(self):
-        mkDirP(Test_Dir)
-        with open(os.path.join(Test_Dir, 'module.json'), 'w') as f:
+        self.test_dir = tempfile.mkdtemp()
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         
     def tearDown(self):
-        rmRf(Test_Dir)
+        rmRf(self.test_dir)
 
     # you have have to be authenticated to list owners, so this doesn't work
     # yet...
@@ -50,7 +50,7 @@ class TestCLIOwners(unittest.TestCase):
     #    self.assertTrue(stdout.find('autopulated@gmail.com') != -1)
 
     def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
+        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 

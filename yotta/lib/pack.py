@@ -289,6 +289,8 @@ class Pack(object):
             errors that occured, or None if successful.
             No VCS tagging is performed.
         '''
+        if 'private' in self.description and self.description['private'].lower() != 'false':
+            return "this %s is private and cannot be published" % (self.description_filename.split('.')[0])
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
         fsutils.rmF(upload_archive)
         fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))

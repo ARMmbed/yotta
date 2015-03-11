@@ -22,7 +22,8 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
     )
-    parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=False)
+    parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
+    parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
     # the target class adds its own build-system specific options. In the
     # future we probably want to load these from a target instance, rather than
     # from the class
