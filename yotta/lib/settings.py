@@ -36,9 +36,17 @@ dir_config_file = os.path.join('.','.yotta.json')
 config_files = [
     dir_config_file,
     user_config_file,
-    os.path.expanduser(os.path.join(folders.prefix(), 'etc','yottaconfig.json')),
-    '/etc/yottaconfig.json'
 ]
+if os.name == 'nt':
+    config_files += [
+        os.path.expanduser(os.path.join(folders.prefix(),'yotta.json'))
+    ]
+else:
+    config_files += [
+        os.path.expanduser(os.path.join(folders.prefix(),'etc','yotta.json')),
+        os.path.join('etc','yotta.json')
+    ]
+
 
 # private state
 parser = None
