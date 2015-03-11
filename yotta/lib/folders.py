@@ -30,8 +30,14 @@ def prefix():
             return '/usr/local'
 
 def globalInstallDirectory():
-    return os.path.join(prefix(), 'lib', 'yotta_modules')
+    if os.name == 'nt':
+        return os.path.join(prefix(), 'yotta_modules')
+    else:
+        return os.path.join(prefix(), 'lib', 'yotta_modules')
 
 def globalTargetInstallDirectory():
-    return os.path.join(prefix(), 'lib', 'yotta_targets')
+    if os.name == 'nt':
+        return os.path.join(prefix(), 'yotta_targets')
+    else:
+        return os.path.join(prefix(), 'lib', 'yotta_targets')
 
