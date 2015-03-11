@@ -6,48 +6,144 @@
 # standard library modules, , ,
 import logging
 import os
-import errno
-import threading
-try:
-    import ConfigParser
-except ImportError:
-    import configparser as ConfigParser
+import threading 
+from collections import OrderedDict
 
 # fsutils, , misc filesystem utils, internal
 import fsutils
+# Ordered JSON, , read & write json, internal
+import ordered_json
 
 #
-# yotta's settings always written to ~/.yotta/config, but are read, in order
-# from:
+# yotta's settings always written to ~/.yotta/config.json, but are read, in
+# order from:
 #
-#  1. environment variables (YOTTA_{config_section_name.upper()}_{config_variable_name.upper()})
-#  2. ~/.yotta/config
-#  3. /usr/local/etc/yottaconfig
-#  4. /etc/yottaconfig.
+#  1. environment variables (YOTTA_{section_name.upper()}_{variable_name.upper()})
+#  2. ~/.yotta/config.json
+#  3. /usr/local/etc/yottaconfig.json
+#  4. /etc/yottaconfig.json
 #
 # As soon as a value is found for a variable, the search is stopped.
 #
+#
 
+if 'YOTTA_PREFIX' in os.environ:
+    path_prefix = os.environ['YOTTA_PREFIX']
+else:
+    path_prefix = '/usr/local'
 
 # constants
-user_ini_file = '~/.yotta/config'
-ini_files     = [user_ini_file, '/usr/local/etc/yottaconfig', '/etc/yottaconfig']
+user_config_file = os.path.expanduser('~/.yotta/config.json')
+
+config_files = [
+    user_config_file,
+    os.path.expanduser(os.path.join(path_prefix, 'etc','yottaconfig.json')),
+    '/etc/yottaconfig.json'
+]
 
 # private state
 parser = None
 parser_lock = threading.Lock()
 
 # private API
-def _iniFiles():
-    for x in ini_files:
-        yield os.path.expanduser(x)
+
+# class for reading JSON config files, 
+class _JSONConfigParser(object):
+    def __init__(self):
+        self.configs = OrderedDict()
+
+    def read(self, filenames):
+        '''' Read a list of files. Their configuration values are merged, with
+             preference to values from files earlier in the list.
+        '''
+        for fn in filenames:
+            try:
+                self.configs[fn] = ordered_json.load(fn)
+            except IOError:
+                self.configs[fn] = OrderedDict()
+
+    def get(self, path):
+        ''' return a configuration value
+
+            usage:
+                get('section.property')
+
+            Note that currently array indexes are not supported. You must
+            get the whole array.
+
+            returns None if any path element or the property is missing
+        '''
+        path = self._splitPath([path])
+        for config in self.configs.values():
+            cur = config
+            for el in path:
+                if el in cur:
+                    cur = cur[el]
+                else:
+                    cur = None
+                    break
+            if cur is not None:
+                return cur
+        return None
+
+    def set(self, path, value=None, filename=None):
+        ''' Set a configuration value. If no filename is specified, the
+            property is set in the first configuration file. Note that if a
+            filename is specified and the property path is present in an
+            earlier filename then set property will be hidden.
+
+            usage:
+                set('section.property', value='somevalue')
+
+            Note that currently array indexes are not supported. You must
+            set the whole array.
+        '''
+        if filename is None:
+            config = self._firstConfig()[1]
+        else:
+            config = self.configs[filename]
+
+        path = self._splitPath([path])
+        for el in path[:-1]:
+            if el in config:
+                config = config[el]
+            else:
+                config[el] = OrderedDict()
+                config = config[el]
+        config[path[-1]] = value
+    
+    def write(self, filename=None):
+        if filename is None:
+            filename, data = _firstConfig()
+        elif filename in self.configs:
+            data = self.configs[filename]
+        else:
+            raise ValueError('No such file.')
+        dirname = os.path.dirname(filename)
+        fsutils.mkDirP(dirname)
+        ordered_json.dump(filename, data)
+    
+    def _firstConfig(self):
+        for fn, data in self.configs.items():
+            return fn, data
+        raise ValueError('No configs available.')
+
+    def _splitPath(self, path):
+        r = []
+        for p in path:
+            r += p.split('.')
+        if not len(path):
+            raise ValueError('A path must be specified.')
+        return r
+        
+
 
 def _ensureParser():
     global parser
     with parser_lock:
         if not parser:
-            parser = ConfigParser.RawConfigParser()
-            parser.read(_iniFiles())
+            parser = _JSONConfigParser()
+            parser.read(config_files)
 
 def _checkEnv(section, name):
     env_key = 'YOTTA_%s_%s' % (section.upper(), name.upper())
@@ -63,46 +159,20 @@ def getProperty(section, name):
         logging.debug('read property from environment: %s:%s', section, name)
         return value
     _ensureParser()
-    try:
-        with parser_lock:
-            return parser.get(section, name)
-    except ConfigParser.NoSectionError:
-        return None
-    except ConfigParser.NoOptionError:
-        return None
+    with parser_lock:
+        return parser.get('.'.join([section, name]))
+
+def getArray(path):
+    pass
+
+def setArray(path, value):
+    pass
 
 def setProperty(section, name, value):
     logging.debug('setProperty: %s:%s %s:%s', type(name), name, type(value), value)
     # use a local parser instance so that we don't copy system-wide settings
     # into the user config file
-    p = ConfigParser.RawConfigParser()
-    full_ini_path = os.path.expanduser(user_ini_file)
-    ini_directory = os.path.dirname(full_ini_path)
-    fsutils.mkDirP(ini_directory)
-    def saveTofile(f):
-        p.readfp(f)
-        f.seek(0)
-        if not p.has_section(section):
-            p.add_section(section)
-        p.set(section, name, value)
-        p.write(f)
-        f.truncate()
-    try:
-        with open(full_ini_path, 'r+') as f:
-            saveTofile(f)
-    except IOError as e:
-        # if the file didn't exist we can't open in r+, so open with w,
-        # exclusively, and making sure to set the right permissions
-        if e.errno == errno.ENOENT:
-            fd = os.open(full_ini_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o0600)
-            with os.fdopen(fd, 'w+') as f:
-                saveTofile(f)
-        else: 
-            raise
-    # also update the in-memory settings:
     with parser_lock:
-        if parser is not None:
-            if not parser.has_section(section):
-                parser.add_section(section)
-            parser.set(section, name, value)
+        parser.set('.'.join([section, name]), value=value, filename=user_config_file)
+        parser.write(user_config_file)
 
