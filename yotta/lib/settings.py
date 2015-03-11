@@ -114,7 +114,7 @@ class _JSONConfigParser(object):
     
     def write(self, filename=None):
         if filename is None:
-            filename, data = _firstConfig()
+            filename, data = self._firstConfig()
         elif filename in self.configs:
             data = self.configs[filename]
         else:
@@ -135,8 +135,6 @@ class _JSONConfigParser(object):
         if not len(path):
             raise ValueError('A path must be specified.')
         return r
-        
-
 
 def _ensureParser():
     global parser
