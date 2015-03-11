@@ -31,9 +31,10 @@ import folders
 
 # constants
 user_config_file = os.path.expanduser('~/.yotta/config.json')
+dir_config_file = os.path.join('.','.yotta.json')
 
 config_files = [
-    os.path.join('.','.yottaconfig'),
+    dir_config_file,
     user_config_file,
     os.path.expanduser(os.path.join(folders.prefix(), 'etc','yottaconfig.json')),
     '/etc/yottaconfig.json'
@@ -158,17 +159,16 @@ def getProperty(section, name):
     with parser_lock:
         return parser.get('.'.join([section, name]))
 
-def getArray(path):
-    pass
+def setProperty(section, name, value, save_locally=False):
+    if save_locally:
+        filename = dir_config_file
+    else:
+        filename = user_config_file
 
-def setArray(path, value):
-    pass
-
-def setProperty(section, name, value):
     logging.debug('setProperty: %s:%s %s:%s', type(name), name, type(value), value)
     # use a local parser instance so that we don't copy system-wide settings
     # into the user config file
     with parser_lock:
-        parser.set('.'.join([section, name]), value=value, filename=user_config_file)
-        parser.write(user_config_file)
+        parser.set('.'.join([section, name]), value=value, filename=filename)
+        parser.write(filename)
 
