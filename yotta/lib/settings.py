@@ -13,6 +13,8 @@ from collections import OrderedDict
 import fsutils
 # Ordered JSON, , read & write json, internal
 import ordered_json
+# folders, , get places to install things, internal
+import folders
 
 #
 # yotta's settings always written to ~/.yotta/config.json, but are read, in
@@ -27,17 +29,13 @@ import ordered_json
 #
 #
 
-if 'YOTTA_PREFIX' in os.environ:
-    path_prefix = os.environ['YOTTA_PREFIX']
-else:
-    path_prefix = '/usr/local'
-
 # constants
 user_config_file = os.path.expanduser('~/.yotta/config.json')
 
 config_files = [
+    os.path.join('.','.yottaconfig'),
     user_config_file,
-    os.path.expanduser(os.path.join(path_prefix, 'etc','yottaconfig.json')),
+    os.path.expanduser(os.path.join(folders.prefix(), 'etc','yottaconfig.json')),
     '/etc/yottaconfig.json'
 ]
 
