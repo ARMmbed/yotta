@@ -8,13 +8,13 @@
 # standard library modules, , ,
 import unittest
 import os
+import tempfile
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
 from . import cli
 
 
-Test_Dir = '/tmp/yotta/version_cli_test'
 Test_Module_JSON = '''{
   "name": "testmod",
   "version": "0.0.0",
@@ -40,12 +40,12 @@ Test_Module_JSON = '''{
 
 class TestCLITarget(unittest.TestCase):
     def setUp(self):
-        mkDirP(Test_Dir)
-        with open(os.path.join(Test_Dir, 'module.json'), 'w') as f:
+        self.test_dir = tempfile.mkdtemp()
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         
     def tearDown(self):
-        rmRf(Test_Dir)
+        rmRf(self.test_dir)
 
     def test_setTarget(self):
         stdout = self.runCheckCommand(['target', 'testtarget'])
@@ -54,7 +54,7 @@ class TestCLITarget(unittest.TestCase):
         stdout = self.runCheckCommand(['target', 'x86-linux-native'])
 
     def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
+        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 

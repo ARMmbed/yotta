@@ -10,7 +10,7 @@ import unittest
 import os
 import subprocess
 from collections import namedtuple
-import logging
+import tempfile
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
@@ -20,7 +20,6 @@ from yotta.lib import settings
 from yotta import install
 
 
-Test_Dir = '/tmp/yotta/version_cli_test'
 Test_Name = 'testing-dummy'
 Test_Github_Name = "autopulated/github-access-testing"
 Test_Target = "x86-osx-native,*"
@@ -62,11 +61,11 @@ def hasGithubConfig():
 
 class TestCLIInstall(unittest.TestCase):
     def setUp(self):
-        mkDirP(Test_Dir)
+        self.test_dir = tempfile.mkdtemp() 
         ensureGithubConfig()
 
     def tearDown(self):
-        rmRf(Test_Dir)
+        rmRf(self.test_dir)
     
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installRegistryRef(self):
@@ -78,7 +77,7 @@ class TestCLIInstall(unittest.TestCase):
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
-        with open(os.path.join(Test_Dir, 'module.json'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'])
 
@@ -93,7 +92,7 @@ class TestCLIInstall(unittest.TestCase):
         self.assertTrue(stdout.find('hg-access-testing') != -1)
 
     def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
+        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 
