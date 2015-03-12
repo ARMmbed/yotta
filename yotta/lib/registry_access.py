@@ -142,7 +142,7 @@ def _friendlyAuthError(fn):
 def _listVersions(namespace, name):
     # list versions of the package:
     url = '%s/%s/%s/versions' % (
-        Registry_Base_URL,
+        Public_Registry_URL,
         namespace,
         name
     )
@@ -165,9 +165,9 @@ def _listVersions(namespace, name):
 
     return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(response.text)]
 
-def _tarballURL(namespace, name, version):
+def _tarballURL(namespace, name, version, registry=Public_Registry_URL):
     return '%s/%s/%s/versions/%s/tarball' % (
-        Registry_Base_URL, namespace, name, version
+        registry, namespace, name, version
     )
 
 def _getTarball(url, directory, sha256):
@@ -187,6 +187,29 @@ def _getTarball(url, directory, sha256):
 
     return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
 
+def _getSources():
+    sources = settings.get('sources')
+    if sources is None:
+        sources = []
+    return sources
+
+def _isPublicRegistry(registry):
+    return (registry is None) or (registry == Public_Registry_URL)
+
+def _getPrivateKey(registry):
+    if _isPublicRegistry(registry):
+        return settings.getProperty('keys', 'private')
+    else:
+        for s in _getSources():
+            if _sourceMatches(s, registry):
+                if 'keys' in s and s['keys'] and 'private' in s['keys']:
+                    return s['keys']['private']
+        return None
+
+def _sourceMatches(source, registry):
+    return ('type' in source and source['type'] == 'registry' and
+             'url' in source and source['url'] == registry)
+
 def _generateAndSaveKeys():
     k = rsa.generate_private_key(
         public_exponent=65537, key_size=2048, backend=default_backend()
@@ -196,17 +219,38 @@ def _generateAndSaveKeys():
         serialization.PrivateFormat.PKCS8,
         serialization.NoEncryption()
     )
-    settings.setProperty('keys', 'private', privatekey_pem)
 
     pubkey_pem = k.public_key().public_bytes(
         serialization.Encoding.PEM,
         serialization.PublicFormat.SubjectPublicKeyInfo
     )
-    settings.setProperty('keys', 'public', pubkey_pem)
+
+    if _isPublicRegistry(registry):
+        settings.setProperty('keys', 'private', privatekey_pem)
+        settings.setProperty('keys', 'public', pubkey_pem)
+    else:
+        sources = _getSources()
+        keys = None
+        for s in sources:
+            if _sourceMatches(s, registry):
+                if not 'keys' in s:
+                    s['keys'] = dict()
+                keys = s['keys']
+                break
+        if keys is None:
+            keys = dict()
+            sources.append({
+               'type':'registry',
+                'url':registry,
+               'keys':keys
+            })
+        keys['private'] = privatekey_pem
+        keys['public']  = pubkey_pem
+        settings.set('sources', sources)
     return pubkey_pem, privatekey_pem
 
 def _getPrivateKeyObject():
-    privatekey_pem =  settings.getProperty('keys', 'private')
+    privatekey_pem = _getPrivateKey(registry)
     if not privatekey_pem:
         pubkey_pem, privatekey_pem = _generateAndSaveKeys()
     else:
@@ -283,7 +327,8 @@ class RegistryThing(access_common.RemoteComponent):
         return 'registry'
 
 @_handleAuth
-def publish(namespace, name, version, description_file, tar_file, readme_file, readme_file_ext):
+def publish(namespace, name, version, description_file, tar_file, readme_file,
+            readme_file_ext, registry=Public_Registry_URL):
     ''' Publish a tarblob to the registry, if the request fails, an exception
         is raised, which either triggers re-authentication, or is turned into a
         return value by the decorators. (If successful, the decorated function
@@ -291,7 +336,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     '''
 
     url = '%s/%s/%s/versions/%s' % (
-        Registry_Base_URL,
+        registry,
         namespace,
         name,
         version
@@ -321,12 +366,12 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
 
 @_friendlyAuthError
 @_handleAuth
-def listOwners(namespace, name):
+def listOwners(namespace, name, registry=Public_Registry_URL):
     ''' List the owners of a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
     url = '%s/%s/%s/owners' % (
-        Registry_Base_URL,
+        registry,
         namespace,
         name
     )
@@ -352,12 +397,12 @@ def listOwners(namespace, name):
 
 @_friendlyAuthError
 @_handleAuth
-def addOwner(namespace, name, owner):
+def addOwner(namespace, name, owner, registry=Public_Registry_URL):
     ''' Add an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
     url = '%s/%s/%s/owners/%s' % (
-        Registry_Base_URL,
+        registry,
         namespace,
         name,
         owner
@@ -382,12 +427,12 @@ def addOwner(namespace, name, owner):
 
 @_friendlyAuthError
 @_handleAuth
-def removeOwner(namespace, name, owner):
+def removeOwner(namespace, name, owner, registry=Public_Registry_URL):
     ''' Remove an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
     url = '%s/%s/%s/owners/%s' % (
-        Registry_Base_URL,
+        registry,
         namespace,
         name,
         owner
@@ -421,7 +466,7 @@ def search(query='', keywords=[]):
         two queries.
     '''
 
-    url = '%s/search' % Registry_Base_URL
+    url = '%s/search' % Public_Registry_URL
     params = {
          'skip': 0,
         'limit': 50
@@ -443,15 +488,28 @@ def search(query='', keywords=[]):
             break
     
 
-def deauthorize():
-    if settings.getProperty('keys', 'private'):
-        settings.setProperty('keys', 'private', '')
-    if settings.getProperty('keys', 'public'):
-        settings.setProperty('keys', 'public', '')
+def deauthorize(registry=Public_Registry_URL):
+    if _isPublicRegistry(registry):
+        if settings.get('keys'):
+            settings.set('keys', dict())
+    else:
+        sources = _getSources()
+        for s in sources:
+            if _sourceMatches(s, registry):
+                sources['keys'] = dict()
+                settings.set('sources', sources)
 
-def getPublicKey():
+def getPublicKey(registry=Public_Registry_URL):
     ''' Return the user's public key (generating and saving a new key pair if necessary) '''
-    pubkey_pem = settings.getProperty('keys', 'public')
+    pubkey_pem = None
+    if _isPublicRegistry(registry):
+        pubkey_pem = settings.getProperty('keys', 'public')
+    else:
+        for s in _getSources():
+            if _sourceMatches(s, registry):
+                if 'keys' in s and s['keys'] and 'public' in s['keys']:
+                    pubkey_pem = s['keys']['public']
+                    break
     if not pubkey_pem:
         pubkey_pem, privatekey_pem = _generateAndSaveKeys()
     else:
@@ -468,9 +526,9 @@ def getPublicKey():
     return _pubkeyWireFormat(pubkey)
 
 
-def testLogin():
+def testLogin(registry=Public_Registry_URL):
     url = '%s/users/me' % (
-        Registry_Base_URL
+        registry
     )
 
     auth_token = generate_jwt_token(_getPrivateKeyObject())
@@ -483,13 +541,13 @@ def testLogin():
     response = requests.get(url, headers=request_headers)
     response.raise_for_status()
 
-def getAuthData():
+def getAuthData(registry=Public_Registry_URL):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
         to, will include a github or other access token)
     '''
     url = '%s/tokens' % (
-        Registry_Base_URL
+        registry
     )
     headers = {}
 
@@ -536,7 +594,7 @@ def getLoginURL(provider=None):
         query = '?provider=github'
     else:
         query = ''
-    return  Website_Base_URL + '/#login/' + getPublicKey() + query
+    return  Website_Base_URL + '/' + query + '#login/' + getPublicKey()
 
 def openBrowserLogin(provider=None):
     webbrowser.open(getLoginURL(provider=provider))
