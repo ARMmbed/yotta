@@ -70,6 +70,42 @@ from `targetDependencies` that matches one of the identifiers in this list.
 The identifiers are arbitrary strings, and do not need to be the names of other
 targets.
 
+### `licenses` *required*
+**type: Array of objects: `{"url":"<URL to full license>", "type":"<SPDX license identifier>" }`**
+
+The licenses property in module.json should include all of the licenses that
+affect code in your module. For example:
+
+```json
+  "licenses": [
+    {
+      "url": "https://spdx.org/licenses/Apache-2.0",
+      "type": "Apache-2.0"
+    }
+  ]
+```
+
+If you're starting a completely new module, and have freedom to choose the
+license yourself, `yotta`'s preferred license is
+[Apache-2.0](http://spdx.org/licenses/Apache-2.0), a permissive OSI-approved
+open source license which provides clarity over the scope of patent grants.
+`yotta` itself is also licensed under Apache-2.0.
+
+### `description`
+**type: String**
+
+Brief description of what this target is for. This helps other people to find
+your target.
+Include a `readme.md` file with a longer description, and preferably a photo of
+the target platform.
+
+### `keywords`
+**type: Array of String**
+
+Keywords describe what this target is for, and help other people to find it.
+For example, a target to build for a specific mbed board should be tagged with
+`mbed-target:{mbedtargetname}` (where `{mbedtargetname}` should be replaced
+with the mbed target name of the development board.
 
 ### `toolchain` *required*
 **type: String (path relative to target root directory)**

@@ -137,7 +137,10 @@ your configuration):
 ```sh
 pip install -U yotta
 ```
-You can use the following commands for allowing your current yotta user to override module dependencies without sudo:
+
+You can use the following commands to allow the current user to override module
+dependencies using [`yotta link`](/reference/commands.html#yotta-link) without
+sudo:
 
 ```bash
 sudo mkdir -p /usr/local/lib/yotta_modules
@@ -205,21 +208,22 @@ target, such as
 
  3. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
     generate makefiles that control the build. Select the latest available
-    version, currently 3.1.0-rc2. The [32-bit
-    version](http://www.cmake.org/files/v3.1/cmake-3.1.0-rc3-win32-x86.exe)
+    version, currently 3.2.1 The [32-bit
+    version](http://www.cmake.org/files/v3.2/cmake-3.2.1-win32-x86.exe)
     will work on all versions of windows. Be sure to check the "add cmake to
     the path for current user" option during installation.
 
  4. **Install Ninja**, the small and extremely fast build system that yotta
     uses. Download the release archive from the [releases
     page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
-    and extract it to a directory (for example `C:\ninja`. Add this directory
-    to [your path](#windows-path).
+    and extract it to a directory (for example `C:\ninja`).
+ 
+ 5. Add the directory you installed Ninja in to [your path](#windows-path).
 
- 5. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
+ 6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
     order to build software to run on embedded devices.
 
- 6. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
+ 7. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
     itself.
 
 
