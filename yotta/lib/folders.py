@@ -24,7 +24,6 @@ def prefix():
     else:
         if os.name == 'nt':
             dirname = os.path.join(os.getenv("PROGRAMFILES"), "yotta")
-            fsutils.mkDirP(dirname)
             return dirname
         else:
             return '/usr/local'
