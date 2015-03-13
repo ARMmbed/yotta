@@ -17,6 +17,7 @@ import hashlib
 import itertools
 import base64
 import webbrowser
+import os
 try:
     from urllib import quote as quoteURL
 except ImportError:
@@ -56,15 +57,19 @@ logger = logging.getLogger('access')
 # suppress logging from the requests library
 logging.getLogger("requests").setLevel(logging.WARNING)
 
+class AuthError(RuntimeError):
+    pass
+
 # Internal functions
 
-def generate_jwt_token(private_key):
+def generate_jwt_token(private_key, registry=None):
+    registry = registry or Public_Registry_URL    
     expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
     prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
     token_fields = {
         "iss": 'yotta',
-        "aud": Registry_Auth_Audience,
+        "aud": registry,
         "prn": prn,
         "exp": str(expires)
     }
@@ -91,11 +96,6 @@ def _fingerprint(pubkey):
     return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
 
 
-def _registryAuthFilter():
-    # basic auth until we release publicly, to prevent outside registry access,
-    # after that this will be removed
-    return  _BearerJWTFilter(_getPrivateKeyObject())
-
 def _returnRequestError(fn):
     ''' Decorator that captures requests.exceptions.RequestException errors
         and returns them as an error message. If no error occurs the reture
@@ -116,8 +116,9 @@ def _handleAuth(fn):
             return fn(*args, **kwargs)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == requests.codes.unauthorized:
+                logger.debug('%s unauthorised', fn)
                 github_access.authorizeUser()
-                logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+                logger.debug('trying with authtoken: %s', settings.getProperty('github', 'authtoken'))
                 return fn(*args, **kwargs)
             else:
                 raise
@@ -139,44 +140,62 @@ def _friendlyAuthError(fn):
                 raise
     return wrapped
 
+def _getPrivateRegistryKey():
+    if 'YOTTA_PRIVATE_REGISTRY_API_KEY' in os.environ:
+        return os.environ['YOTTA_PRIVATE_REGISTRY_API_KEY']
+    return None
+
 def _listVersions(namespace, name):
-    # list versions of the package:
-    url = '%s/%s/%s/versions' % (
-        Public_Registry_URL,
-        namespace,
-        name
-    )
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
+    sources = _getSources()
 
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
+    registry_urls = [s['url'] for s in sources if 'type' in s and s['type'] == 'registry']
 
-    response = requests.get(url, headers=request_headers)
-    
-    if response.status_code == 404:
-        raise access_common.ComponentUnavailable(
-            ('%s does not exist in the %s registry. '+
-            'Check that the name is correct, and that it has been published.') % (name, namespace)
+    # look in the public registry last
+    registry_urls.append(Public_Registry_URL)
+
+    versions = []
+
+    for registry in registry_urls:
+        # list versions of the package:
+        url = '%s/%s/%s/versions' % (
+            registry,
+            namespace,
+            name
         )
+        
+        request_headers = _headersForRegistry(registry)
 
-    # raise any other HTTP errors
-    response.raise_for_status()
+        response = requests.get(url, headers=request_headers)
+        
+        if response.status_code == 404:
+            raise access_common.ComponentUnavailable(
+                ('%s does not exist in the %s registry. '+
+                'Check that the name is correct, and that it has been published.') % (name, namespace)
+            )
 
-    return [RegistryThingVersion(x, namespace, name) for x in ordered_json.loads(response.text)]
+        # raise any other HTTP errors
+        response.raise_for_status()
 
-def _tarballURL(namespace, name, version, registry=Public_Registry_URL):
+        for x in ordered_json.loads(response.text):
+            rtv = RegistryThingVersion(x, namespace, name)
+            if not rtv in versions:
+                versions.append(rtv)
+
+    return versions
+
+def _tarballURL(namespace, name, version, registry=None):
+    registry = registry or Public_Registry_URL    
     return '%s/%s/%s/versions/%s/tarball' % (
         registry, namespace, name, version
     )
 
-def _getTarball(url, directory, sha256):
+def _getTarball(url, directory, sha256, registry=None):
     logger.debug('registry: get: %s' % url)
 
     if not sha256:
         logger.warn('tarball %s has no hash to check' % url)
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
+    auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
 
     request_headers = {
         'Authorization': 'Bearer %s' % auth_token
@@ -210,7 +229,8 @@ def _sourceMatches(source, registry):
     return ('type' in source and source['type'] == 'registry' and
              'url' in source and source['url'] == registry)
 
-def _generateAndSaveKeys():
+def _generateAndSaveKeys(registry=None):
+    registry = registry or Public_Registry_URL    
     k = rsa.generate_private_key(
         public_exponent=65537, key_size=2048, backend=default_backend()
     )
@@ -249,10 +269,11 @@ def _generateAndSaveKeys():
         settings.set('sources', sources)
     return pubkey_pem, privatekey_pem
 
-def _getPrivateKeyObject():
+def _getPrivateKeyObject(registry=None):
+    registry = registry or Public_Registry_URL
     privatekey_pem = _getPrivateKey(registry)
     if not privatekey_pem:
-        pubkey_pem, privatekey_pem = _generateAndSaveKeys()
+        pubkey_pem, privatekey_pem = _generateAndSaveKeys(registry)
     else:
         # settings are unicode, we should be able to safely decode to ascii for
         # the key though, as it will either be hex or PEM encoded:
@@ -269,23 +290,48 @@ def _getPrivateKeyObject():
             privatekey_der, None, default_backend()
         )
 
+
+def _headersForRegistry(registry):
+    registry = registry or Public_Registry_URL
+    auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
+    r = {
+        'Authorization': 'Bearer %s' % auth_token
+    }
+    if registry == Public_Registry_URL:
+        return r
+    for s in _getSources():
+        if _sourceMatches(s, registry):
+            if 'apikey' in s:
+                r['X-Api-Key'] = s['apikey']
+                break
+    return r
+
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
-    def __init__(self, data, namespace, name):
+    def __init__(self, data, namespace, name, registry=None):
         logger.debug('RegistryThingVersion %s/%s data: %s' % (namespace, name, data))
         version = data['version']
         self.namespace = namespace
-        self.name = name
+        self.name      = name
+        self.version   = version
         if 'hash' in data and 'sha256' in data['hash']:
             self.sha256 = data['hash']['sha256']
         else:
             self.sha256 = None
-        url = _tarballURL(self.namespace, self.name, version)
+        url = _tarballURL(self.namespace, self.name, version, registry)
         super(RegistryThingVersion, self).__init__(version, url)
 
     def unpackInto(self, directory):
         assert(self.url)
         _getTarball(self.url, directory, self.sha256)
+
+    def __eq__(self, other):
+        return self.namespace == other.namespace and \
+               self.name == other.name and \
+               self.version == version
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class RegistryThing(access_common.RemoteComponent):
     def __init__(self, name, version_spec, namespace):
@@ -328,12 +374,13 @@ class RegistryThing(access_common.RemoteComponent):
 
 @_handleAuth
 def publish(namespace, name, version, description_file, tar_file, readme_file,
-            readme_file_ext, registry=Public_Registry_URL):
+            readme_file_ext, registry=None):
     ''' Publish a tarblob to the registry, if the request fails, an exception
         is raised, which either triggers re-authentication, or is turned into a
         return value by the decorators. (If successful, the decorated function
         returns None)
     '''
+    registry = registry or Public_Registry_URL    
 
     url = '%s/%s/%s/versions/%s' % (
         registry,
@@ -353,9 +400,9 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
     body = OrderedDict([('metadata', (None, description_file.read(),'application/json')),
                         ('tarball',('tarball', tar_file)),
                         (readme_section_name, (readme_section_name, readme_file))])
-    headers = {}
+
+    headers = _headersForRegistry(registry)
     
-    headers['Authorization'] = 'Bearer %s' % generate_jwt_token(_getPrivateKeyObject())
     response = requests.put(url, headers=headers, files=body)
 
     if not response.ok:
@@ -366,27 +413,25 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
 
 @_friendlyAuthError
 @_handleAuth
-def listOwners(namespace, name, registry=Public_Registry_URL):
+def listOwners(namespace, name, registry=None):
     ''' List the owners of a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
+    registry = registry or Public_Registry_URL
+    
     url = '%s/%s/%s/owners' % (
         registry,
         namespace,
         name
     )
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
-
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
+    request_headers = _headersForRegistry(registry)
 
     response = requests.get(url, headers=request_headers)
 
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace[:-1], name))
-        return None
+        return []
     
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
@@ -394,13 +439,14 @@ def listOwners(namespace, name, registry=Public_Registry_URL):
 
     return ordered_json.loads(response.text)
 
-
 @_friendlyAuthError
 @_handleAuth
-def addOwner(namespace, name, owner, registry=Public_Registry_URL):
+def addOwner(namespace, name, owner, registry=None):
     ''' Add an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
+    registry = registry or Public_Registry_URL
+    
     url = '%s/%s/%s/owners/%s' % (
         registry,
         namespace,
@@ -408,11 +454,7 @@ def addOwner(namespace, name, owner, registry=Public_Registry_URL):
         owner
     )
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
-
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
+    request_headers = _headersForRegistry(registry)
 
     response = requests.put(url, headers=request_headers)
 
@@ -427,10 +469,12 @@ def addOwner(namespace, name, owner, registry=Public_Registry_URL):
 
 @_friendlyAuthError
 @_handleAuth
-def removeOwner(namespace, name, owner, registry=Public_Registry_URL):
+def removeOwner(namespace, name, owner, registry=None):
     ''' Remove an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
+    registry = registry or Public_Registry_URL
+    
     url = '%s/%s/%s/owners/%s' % (
         registry,
         namespace,
@@ -438,11 +482,7 @@ def removeOwner(namespace, name, owner, registry=Public_Registry_URL):
         owner
     )
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
-
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
+    request_headers = _headersForRegistry(registry)
 
     response = requests.delete(url, headers=request_headers)
 
@@ -488,7 +528,8 @@ def search(query='', keywords=[]):
             break
     
 
-def deauthorize(registry=Public_Registry_URL):
+def deauthorize(registry=None):
+    registry = registry or Public_Registry_URL
     if _isPublicRegistry(registry):
         if settings.get('keys'):
             settings.set('keys', dict())
@@ -499,8 +540,30 @@ def deauthorize(registry=Public_Registry_URL):
                 sources['keys'] = dict()
                 settings.set('sources', sources)
 
-def getPublicKey(registry=Public_Registry_URL):
+def setAPIKey(registry, api_key):
+    ''' Set the api key for accessing a registry. This is only necessary for
+        development/test registries.
+    '''
+    if (registry is None) or (registry == Public_Registry_URL):
+        return
+    sources = _getSources()
+    source = None
+    for s in sources:
+        if _sourceMatches(s, registry):
+            source = s
+    if source is None:
+        source = {
+           'type':'registry',
+            'url':registry,
+        }
+        sources.append(source)
+    source['apikey'] = api_key
+    settings.set('sources', sources)
+
+
+def getPublicKey(registry=None):
     ''' Return the user's public key (generating and saving a new key pair if necessary) '''
+    registry = registry or Public_Registry_URL
     pubkey_pem = None
     if _isPublicRegistry(registry):
         pubkey_pem = settings.getProperty('keys', 'public')
@@ -526,38 +589,31 @@ def getPublicKey(registry=Public_Registry_URL):
     return _pubkeyWireFormat(pubkey)
 
 
-def testLogin(registry=Public_Registry_URL):
+def testLogin(registry=None):
+    registry = registry or Public_Registry_URL    
     url = '%s/users/me' % (
         registry
     )
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
-
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
+    request_headers = _headersForRegistry(registry)
 
     logger.debug('test login...')
     response = requests.get(url, headers=request_headers)
     response.raise_for_status()
 
-def getAuthData(registry=Public_Registry_URL):
+def getAuthData(registry=None):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
         to, will include a github or other access token)
     '''
+    registry = registry or Public_Registry_URL
     url = '%s/tokens' % (
         registry
     )
-    headers = {}
+    
+    request_headers = _headersForRegistry(registry)
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject())
-
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
-
-    logger.debug('poll for tokens...')
+    logger.debug('poll for tokens... %s', request_headers)
 
     try:
         response = requests.get(url, headers=request_headers)
@@ -576,12 +632,12 @@ def getAuthData(registry=Public_Registry_URL):
     logger.debug('auth data response: %s' % body);
     r = {}
 
-    json_body = ordered_json.loads(body)
+    parsed_response = ordered_json.loads(body)
 
-    if 'error' in json_body:
-        raise Exception(json_body['error'])
+    if 'error' in parsed_response:
+        raise AuthError(parsed_response['error'])
 
-    for token in json_body:
+    for token in parsed_response:
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
@@ -589,12 +645,18 @@ def getAuthData(registry=Public_Registry_URL):
     logger.debug('parsed auth tokens %s' % r);
     return r
 
-def getLoginURL(provider=None):
+def getLoginURL(provider=None, registry=None):
+    registry = registry or Public_Registry_URL
     if provider:
         query = '?provider=github'
     else:
         query = ''
+    if not _isPublicRegistry(registry):
+        if not len(query):
+            query = '?'
+        query += '&private=1'
     return  Website_Base_URL + '/' + query + '#login/' + getPublicKey()
 
-def openBrowserLogin(provider=None):
-    webbrowser.open(getLoginURL(provider=provider))
+def openBrowserLogin(provider=None, registry=None):
+    registry = registry or Public_Registry_URL    
+    webbrowser.open(getLoginURL(provider=provider, registry=registry))
