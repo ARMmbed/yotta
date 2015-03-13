@@ -168,10 +168,7 @@ def _listVersions(namespace, name):
         response = requests.get(url, headers=request_headers)
         
         if response.status_code == 404:
-            raise access_common.ComponentUnavailable(
-                ('%s does not exist in the %s registry. '+
-                'Check that the name is correct, and that it has been published.') % (name, namespace)
-            )
+            continue
 
         # raise any other HTTP errors
         response.raise_for_status()
@@ -180,6 +177,12 @@ def _listVersions(namespace, name):
             rtv = RegistryThingVersion(x, namespace, name)
             if not rtv in versions:
                 versions.append(rtv)
+
+    if not len(versions):
+        raise access_common.ComponentUnavailable(
+            ('%s does not exist in the %s registry. '+
+            'Check that the name is correct, and that it has been published.') % (name, namespace)
+        )
 
     return versions
 
