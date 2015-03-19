@@ -26,7 +26,7 @@ Private_Module_JSON = '''{
   "name": "testmod",
   "version": "0.0.0",
   "description": "a test module",
-  "private": "true",
+  "private": true,
   "keywords": [
   ],
   "author": "Someone Somewhere <someone.somewhere@yottabuild.org>",
