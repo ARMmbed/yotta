@@ -44,8 +44,7 @@ import github_access
 # export key, , export pycrypto keys, internal
 import exportkey
 
-# !!! FIXME get SSL cert for main domain, then use HTTPS
-Registry_Base_URL = 'http://registry.yottabuild.org'
+Registry_Base_URL = 'https://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
