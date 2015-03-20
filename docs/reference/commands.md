@@ -119,7 +119,7 @@ yotta debug source/helloyotta
 
 ```
 yotta target
-yotta target <targetname>[,url-or-version-spec]
+yotta target <targetname>[,url-or-version-spec] [-g]
 ```
 
 #### Description
@@ -128,6 +128,13 @@ Display or set the current target. `yotta` will look for and install a target de
 Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
 
 A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
+
+If `-g` is specified when setting the target, then it will be saved globally
+(in the user settings file). Otherwise the specified target will be saved for
+the current module only, in a `.yotta.json` file.
+
+If the target is set both locally and globally, then the locally set target
+takes precedence.
 
 <a name="yotta-install"></a>
 ## yotta install
