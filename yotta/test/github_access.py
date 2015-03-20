@@ -32,7 +32,7 @@ def hasGithubConfig():
 
 class TestGitHubAccess(unittest.TestCase):
     def setUp(self):
-        ensureGithubConfig()
+        pass
         
     def tearDown(self):
         pass

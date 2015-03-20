@@ -5,6 +5,8 @@
 
 # standard library modules, , ,
 import json
+import os
+import stat
 from collections import OrderedDict
 
 # provide read & write methods for json files that maintain the order of
@@ -18,8 +20,10 @@ def load(path):
         return json.load(f, object_pairs_hook=OrderedDict)
 
 def dump(path, obj):
-    with open(path, 'w') as f:
+    with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as f:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
         json.dump(obj, f, indent=2, separators=(',', ': '))
+        f.truncate()
 
 def loads(string):
     return json.loads(string, object_pairs_hook=OrderedDict)

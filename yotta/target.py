@@ -25,6 +25,10 @@ def addOptions(parser):
     parser.add_argument('set_target', default=None, nargs='?',
         help='set the build target to this (targetname[,versionspec_or_url])'
     )
+    parser.add_argument('-g', '--global', dest='save_global',
+        default=False, action='store_true',
+        help='set globally (in the per-user settings) instead of locally to this directory'
+    )
 
     # FIXME: need help that lists possible targets, and we need a walkthrough
     # guide to forking a new target for an existing board
@@ -65,4 +69,4 @@ def execCommand(args, following_args):
                 target = args.set_target + ',*'
             else:
                 target = args.set_target
-            settings.setProperty('build', 'target', target)
+            settings.setProperty('build', 'target', target, not args.save_global)

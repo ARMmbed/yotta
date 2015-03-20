@@ -22,7 +22,7 @@ else:
 
 setup(
     name = "yotta",
-    version = "0.0.43",
+    version = "0.1.0",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -59,5 +59,6 @@ setup(
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
         'mbed_test_wrapper>=0.0.2,<0.1.0',
+        'valinor>=0.0.0,<1.0'
     ] + platform_deps
 )

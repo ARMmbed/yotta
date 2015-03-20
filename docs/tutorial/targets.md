@@ -35,10 +35,11 @@ yotta target
 yotta target x86-osx-native
 ```
 
-The target is set globally, but you can switch targets back and forth to test
-building the same module for different targets without removing the build
-directory or recompiling unnecessarily, as builds are carried out a separate
-directory for each target: `./build/<targetname>/`.
+By default the target is set in the *current directory only*. To set it
+globally, append ` -g` to the second command. You can switch targets back and
+forth to test building the same module for different targets without removing
+the build directory or recompiling unnecessarily, as builds are carried out a
+separate directory for each target: `./build/<targetname>/`.
 
 
 ## Writing Targets
