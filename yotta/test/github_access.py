@@ -23,26 +23,26 @@ Test_Name = 'testing-dummy'
 Test_Deps_Name = "autopulated/github-access-testing"
 Test_Branch_Name = "autopulated/github-access-testing#master"
 Test_Deps_Target = "x86-osx-native,*"
-Test_Username = 'yottatest'
-Test_Access_Token = 'c53aadbd89caefdcadb0d43d18ef863e1d9cbcf4'
 
-def ensureGithubConfig():
-    # ensure we have authentication for the test github account
+def hasGithubConfig():
+    # can't run tests that hit github without an authn token
     if not settings.getProperty('github', 'authtoken'):
-        settings.setProperty('github', 'authtoken', Test_Access_Token)
-
+        return False
+    return True
 
 class TestGitHubAccess(unittest.TestCase):
     def setUp(self):
-        ensureGithubConfig()
+        pass
         
     def tearDown(self):
         pass
 
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
         Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
         install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False))
 
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_branchAccess(self):
         Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
         install.installComponent(Args(Test_Branch_Name, Test_Deps_Target, False, False, False, False))

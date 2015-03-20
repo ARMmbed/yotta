@@ -22,10 +22,13 @@ yotta is written in [python](https://www.python.org/download/releases/2.7/),
 and distributed using
 [pip](http://pip.readthedocs.org/en/latest/installing.html), the python package
 manager. You will need a working installation of both python and pip to install
-yotta. If you have these, and a working development environment, you can run
-**`pip install -U yotta`** to install the latest version of yotta.  If you
-don't know that you already have a working development environment set up,
-follow the more detailed instructions for your OS below
+yotta.
+
+If you have these, and a working development environment, you can run
+**`pip install -U yotta`** to install the latest version of yotta. In case of
+problems while installing yotta, you can update pip to the latest
+version by using **`sudo pip install -U pip`**. If you don't know that you
+already have a working development environment set up, follow the more detailed instructions for your OS below
 ([windows](#installing-on-windows), [mac](#installing-on-osx), or
 [linux](#installing-on-linux)).
 
@@ -111,8 +114,22 @@ First install yotta's dependencies using your system's package manager, for
 example on Debian and Ubuntu:
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build
+sudo apt-get install python-pip cmake build-essential ninja-build python-dev
 ```
+
+and on Fedora Linux (tested on FC21):
+
+```sh
+# install development tool dependencies
+sudo yum install python-pip cmake ninja-build python-devel clang
+sudo yum groupinstall "Development Tools" "Development Libraries"
+
+# update pip to latest release
+sudo yum remove python-pip
+curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+```
+
 
 Then install yotta itself (you may need to use `sudo` for this, depending on
 your configuration):
@@ -121,6 +138,15 @@ your configuration):
 pip install -U yotta
 ```
 
+You can use the following commands to allow the current user to override module
+dependencies using [`yotta link`](/reference/commands.html#yotta-link) without
+sudo:
+
+```bash
+sudo mkdir -p /usr/local/lib/yotta_modules
+sudo chown $USER /usr/local/lib/yotta_modules
+chmod 755 /usr/local/lib/yotta_modules
+```
 
 
 ### Using clang to build natively for Linux
@@ -175,28 +201,31 @@ target, such as
     installer](http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win-amd64-py2.7.exe)
     matching the python version that you installed.
 
- 3. **Open cmd.exe and run `pip install -U yotta`**
-
     If pip cannot be found, you need to add the python scripts directory to
     your path. This is `C:\Python27\Scripts` unless you selected a different
     directory during python installation. [These instructions](#windows-path)
     will guide you through the process.
 
- 4. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
+ 3. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
     generate makefiles that control the build. Select the latest available
-    version, currently 3.1.0-rc2. The [32-bit
-    version](http://www.cmake.org/files/v3.1/cmake-3.1.0-rc3-win32-x86.exe)
+    version, currently 3.2.1 The [32-bit
+    version](http://www.cmake.org/files/v3.2/cmake-3.2.1-win32-x86.exe)
     will work on all versions of windows. Be sure to check the "add cmake to
     the path for current user" option during installation.
 
- 5. **Install Ninja**, the small and extremely fast build system that yotta
+ 4. **Install Ninja**, the small and extremely fast build system that yotta
     uses. Download the release archive from the [releases
     page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
-    and extract it to a directory (for example `C:\ninja`. Add this directory
-    to [your path](#windows-path).
+    and extract it to a directory (for example `C:\ninja`).
+ 
+ 5. Add the directory you installed Ninja in to [your path](#windows-path).
 
  6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
     order to build software to run on embedded devices.
+
+ 7. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
+    itself.
+
 
 ### Building programs natively to run on windows
 yotta does not yet allow compiling programs to run on windows. If you are

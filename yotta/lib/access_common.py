@@ -25,7 +25,7 @@ class ComponentUnavailable(AccessException):
     pass
 
 
-class TargetUnavailable(AccessException):
+class TargetUnavailable(ComponentUnavailable):
     pass
 
 

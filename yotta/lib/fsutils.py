@@ -8,6 +8,7 @@ import os
 import errno
 import shutil
 import platform
+import stat
 
 def mkDirP(path):
     try:
@@ -24,8 +25,16 @@ def rmF(path):
             raise
 
 def rmRf(path):
+    # we may have to make files writable before we can successfully delete
+    # them, to do this
+    def fixPermissions(fn, path, excinfo):
+        if os.access(path, os.W_OK):
+            raise
+        else:
+            os.chmod(path, stat.S_IWUSR)
+            fn(path)
     try:
-        shutil.rmtree(path)
+        shutil.rmtree(path, onerror=fixPermissions)
     except OSError as exception:
         if 'cannot call rmtree on a symbolic link' in str(exception).lower():
             os.unlink(path)

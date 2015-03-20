@@ -96,7 +96,7 @@ def _returnRequestError(fn):
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.RequestException as e:
-            return "sever returned status %s: %s" % (e.response.status_code, e.message)
+            return "server returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
  
 def _handleAuth(fn):
@@ -147,7 +147,8 @@ def _listVersions(namespace, name):
     
     if response.status_code == 404:
         raise access_common.ComponentUnavailable(
-            '%s does not exist in the %s registry' % (name, namespace)
+            ('%s does not exist in the %s registry. '+
+            'Check that the name is correct, and that it has been published.') % (name, namespace)
         )
 
     # raise any other HTTP errors
@@ -280,7 +281,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     response = requests.put(url, headers=headers, files=body)
 
     if not response.ok:
-        return "sever returned status %s: %s" % (response.status_code, response.text)
+        return "server returned status %s: %s" % (response.status_code, response.text)
 
     return None
 
@@ -306,7 +307,7 @@ def listOwners(namespace, name):
     response = requests.get(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
         return None
     
     # raise exceptions for other errors - the auth decorators handle these and
@@ -338,7 +339,8 @@ def addOwner(namespace, name, owner):
     response = requests.put(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
@@ -367,12 +369,46 @@ def removeOwner(namespace, name, owner):
     response = requests.delete(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
     response.raise_for_status()
 
+
+def search(query='', keywords=[]):
+    ''' generator of objects returned by the search endpoint (both modules and
+        targets).
+        
+        Query is a full-text search (description, name, keywords), keywords
+        search only the module/target description keywords lists.
+        
+        If both parameters are specified the search is the intersection of the
+        two queries.
+    '''
+
+    url = '%s/search' % Registry_Base_URL
+    params = {
+         'skip': 0,
+        'limit': 50
+    }
+    if len(query):
+        params['query'] = query
+    if len(keywords):
+        params['keywords[]'] = keywords
+    
+    while True:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        objects = ordered_json.loads(response.text)
+        if len(objects):
+            for o in objects:
+                yield o
+            params['skip'] += params['limit']
+        else:
+            break
+    
 
 def deauthorize():
     if settings.getProperty('keys', 'private'):

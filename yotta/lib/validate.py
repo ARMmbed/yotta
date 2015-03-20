@@ -38,7 +38,7 @@ def sourceDirValidationError(dirname, component_name):
 
 def componentNameValidationError(component_name):
     if not Component_Name_Regex.match(component_name):
-        return 'Module name "%s" is invalid - must contain only lowercase a-z, 0-9 and hyphen, with no spaces.'
+        return 'Module name "%s" is invalid - must contain only lowercase a-z, 0-9 and hyphen, with no spaces.' % component_name
     return None
 
 def componentNameCoerced(component_name):
@@ -53,7 +53,7 @@ def looksLikeAnEmail(email):
 def currentDirectoryModule():
     c = component.Component(os.getcwd())
     if not c:
-        logging.debug(str(c.error))
+        logging.error(str(c.error))
         logging.error('The current directory does not contain a valid module.')
         return None
     return c

@@ -4,7 +4,7 @@
 # See LICENSE file for details.
 
 # Github Access, , access repositories on github, internal
-from .lib import github_access
+from .lib import github_access, registry_access
 
 def addOptions(parser):
     pass

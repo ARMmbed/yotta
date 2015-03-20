@@ -17,7 +17,7 @@ from .lib import fsutils
 # validate, , validate things, internal
 from .lib import validate
 # folders, , get places to install things, internal
-from . import folders
+from .lib import folders
 # install, , install subcommand, internal
 from . import install
 

@@ -61,6 +61,39 @@ yotta build -r
 yotta build -r -G "Sublime Text 2 - Ninja"
 ```
 
+<a name="yotta-search"></a>
+## yotta search
+#### Synopsis
+```
+yotta search <string> [--keyword=<keyword>] [--limit=<N>]
+yotta search module <string> [--keyword=<keyword>] [--limit=<N>]
+yotta search target <string> [--keyword=<keyword>] [--limit=<N>]
+```
+
+#### Description
+
+Search for open-source yotta modules and build targets that have been published
+to the yotta registry.
+
+The results will be listed in combined order of search relevance and
+popularity.
+
+Options:
+
+ * `--keyword`, `-k`: specify keywords to constrain the search (use multiple
+   times for multiple keywords, modules returned will have all of the specified
+   keywords)
+ * `--limit`, `-l`: limit the number of results returned
+
+#### Examples
+
+```
+yotta search logging
+yotta search module logging
+yotta search target -k mbed-official -k mbed-target:k64f
+```
+
+
 <a name="yotta-debug"></a>
 ## yotta debug
 #### Synopsis
@@ -86,7 +119,7 @@ yotta debug source/helloyotta
 
 ```
 yotta target
-yotta target <targetname>[,url-or-version-spec]
+yotta target <targetname>[,url-or-version-spec] [-g]
 ```
 
 #### Description
@@ -95,6 +128,13 @@ Display or set the current target. `yotta` will look for and install a target de
 Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
 
 A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
+
+If `-g` is specified when setting the target, then it will be saved globally
+(in the user settings file). Otherwise the specified target will be saved for
+the current module only, in a `.yotta.json` file.
+
+If the target is set both locally and globally, then the locally set target
+takes precedence.
 
 <a name="yotta-install"></a>
 ## yotta install
@@ -161,6 +201,7 @@ yotta update <module>
 Update all of the current modules dependencies to the latest matching versions. Or, if a module is specified, update only that module and its dependencies.
 
 Options:
+
  * `--update-linked`: update the dependencies of linked modules too.
 
 <a name="yotta-version"></a>
@@ -247,6 +288,15 @@ When you run `yotta build` it will then pick up the linked module.
 
 This works for direct and indirect dependencies: you can link to a module that your module does not use directly, but a dependency of your module does.
 
+#### Directories
+When you run `yotta link`, links are created in a system-wide directory under
+`YOTTA_PREFIX`, and the links in that directory are then picked up by
+subsequent `yotta link <modulename>` commands.
+
+On linux this defaults to `/usr/local`, and on windows to
+`%PROGRAMFILES/yotta`. To change this directory (e.g. to make yotta link things
+into your home directory), set the `YOTTA_PREFIX` environment variable.
+
 
 <a name="yotta-link-target"></a>
 ## yotta link-target
@@ -315,3 +365,23 @@ yotta owner remove <email> [<modulename>]
 List, add, or remove owners from the specified module or target. Owners are people with permission to publish new versions of a module, and to add/remove other owners.
 
 If the current directory is a module or target, then the module name is optional, and defaults to the current module.
+
+
+<a name="yotta-licenses"></a>
+## yotta licenses
+
+#### Synopsis
+
+```
+yotta licenses [--all]
+```
+
+#### Description
+List the licenses of all of the modules that the current module depends on. If
+`--all` is specified, then each unique license is listed for each module it
+occurs in, instead of just once.
+
+**NOTE:** while yotta can list the licenses that modules have declared in their
+`module.json` files, it can make no warranties about whether modules contain
+code under other licenses that have not been declared.
+

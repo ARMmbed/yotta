@@ -16,6 +16,9 @@ import copy
 # PyPi/standard library > 3.4
 # it has to be PurePath
 from pathlib import PurePath
+ 
+# JSON Schema, pip install jsonschema, Verify JSON Schemas, MIT
+import jsonschema
 
 # version, , represent versions and specifications, internal
 import version
@@ -86,7 +89,16 @@ class OptionalFileWrapper(object):
 # VCS, etc.)
 
 class Pack(object):
-    def __init__(self, path, description_filename, installed_linked, latest_suitable_version=None):
+    schema_errors_displayed = set()
+
+    def __init__(
+            self,
+            path,
+            description_filename,
+            installed_linked,
+            schema_filename = None,
+            latest_suitable_version = None
+        ):
         self.path = path
         self.installed_linked = installed_linked
         self.vcs = None
@@ -98,7 +110,13 @@ class Pack(object):
         self.ignore_patterns = copy.copy(Default_Publish_Ignore)
         try:
             self.description = ordered_json.load(os.path.join(path, description_filename))
-            self.version = version.Version(self.description['version'])
+            if self.description:
+                if not 'name' in self.description:
+                    raise Exception('missing "name" in module.json')
+                if 'version' in self.description:
+                    self.version = version.Version(self.description['version'])
+                else:
+                    raise Exception('missing "version" in module.json')
         except Exception as e:
             self.description = OrderedDict()
             self.error = e
@@ -108,6 +126,24 @@ class Pack(object):
         except IOError as e: 
             if e.errno != errno.ENOENT:
                 raise
+        if self.description and schema_filename and not self.path in self.schema_errors_displayed:
+            self.schema_errors_displayed.add(self.path)
+            have_errors = False
+            with open(schema_filename, 'r') as schema_file:
+                schema = json.load(schema_file)
+                validator = jsonschema.Draft4Validator(schema)
+                for error in validator.iter_errors(self.description):
+                    if not have_errors:
+                        logger.warning(u'%s has invalid %s:' % (
+                            os.path.split(self.path.rstrip('/'))[1],
+                            description_filename
+                        ))
+                        have_errors = True
+                    logger.warning(u"  %s value %s" % (u'.'.join([str(x) for x in error.path]), error.message))
+            # for now schema validation errors aren't fatal... will be soon
+            # though!
+            #if have_errors:
+            #    raise Exception('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
     def exists(self):
@@ -244,6 +280,8 @@ class Pack(object):
             errors that occured, or None if successful.
             No VCS tagging is performed.
         '''
+        if 'private' in self.description and self.description['private']:
+            return "this %s is private and cannot be published" % (self.description_filename.split('.')[0])
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
         fsutils.rmF(upload_archive)
         fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))

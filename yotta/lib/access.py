@@ -384,14 +384,14 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
 
     if not v:
         raise access_common.TargetUnavailable(
-            'Target "%s":"%s" is not a supported form.' % (name, version_required)
+            '"%s" is not a supported specification for a target (the target is %s)' % (version_required, name)
         )
     directory = os.path.join(working_directory, name)
     v.unpackInto(directory)
     r = target.Target(directory)
     if not r:
         raise Exception(
-            'Dependency "%s":"%s" is not a valid target.' % (name, version_required)
+            '"%s":"%s" is not a valid target (its description file is invalid)' % (name, version_required)
         )
     return r
 
