@@ -163,8 +163,28 @@ the native compiler.
 ### Cross-compiling from Linux
 
 First install the [`arm-none-eabi-gcc`
-compiler](https://launchpad.net/gcc-arm-embedded):
+compiler](https://launchpad.net/gcc-arm-embedded).
 
+#### Ubuntu 14.04 or later users:
+There is a package name conflict for [Ubuntu 14.04 and later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded).
+Remove previous versions and update your repositories:
+```sh
+sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
+sudo add-apt-repository ppa:terry.guo/gcc-arm-embedded
+sudo apt-get update
+```
+
+Install the compiler package for Ubuntu 14.04:
+```sh
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0trusty13
+```
+
+or for Ubuntu 14.10:
+```sh
+    sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
+```
+
+#### All other Linux users:
 ```sh
 sudo apt-get install gcc-arm-none-eabi
 ```
@@ -216,7 +236,7 @@ target, such as
     uses. Download the release archive from the [releases
     page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
     and extract it to a directory (for example `C:\ninja`).
- 
+
  5. Add the directory you installed Ninja in to [your path](#windows-path).
 
  6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
