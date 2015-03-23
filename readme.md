@@ -8,7 +8,7 @@ Detailed instructions can be found on the [documentation
 site](http://docs.yottabuild.org/#installing), in summary, to use yotta you
 need:
 
- * yotta itself (yotta is written in [python](https://www.python.org/downloads/release/python-278/), and installed using [pip](http://pip.readthedocs.org/en/latest/installing.html))
+ * yotta itself (yotta is runs in [python](https://www.python.org/downloads/release/python-279/), and is installed using [pip](http://pip.readthedocs.org/en/latest/installing.html). Version 2.7.9 pf python is recommended.)
  * [CMake](http://www.cmake.org/download/)
  * a compiler
 
