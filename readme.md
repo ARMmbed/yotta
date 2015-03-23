@@ -16,7 +16,7 @@ need:
 ``` bash
 pip install yotta
 ```
-If permission is denied, you may need to run `sudo pip install yotta`, and you may need to first install [Python 2.7](https://www.python.org/downloads/release/python-278/) and [pip](http://pip.readthedocs.org/en/latest/installing.html), if you do not already have them.
+If permission is denied, you may need to run `sudo pip install yotta`, and you may need to first install [Python 2.7](https://www.python.org/downloads/release/python-279/) and [pip](http://pip.readthedocs.org/en/latest/installing.html), if you do not already have them.
 
 **Install CMake** from the [CMake download page](http://www.cmake.org/download/), or using your system's package manager. Make sure to check the option in the installer to add it to your path. 
 
