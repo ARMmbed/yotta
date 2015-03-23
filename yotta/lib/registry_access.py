@@ -45,6 +45,7 @@ import github_access
 import exportkey
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
+Registry_Auth_Audience = 'http://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
@@ -61,7 +62,7 @@ def generate_jwt_token(private_key):
     logger.debug('fingerprint: %s' % prn)
     token_fields = {
         "iss": 'yotta',
-        "aud": Registry_Base_URL,
+        "aud": Registry_Auth_Audience,
         "prn": prn,
         "exp": str(expires)
     }
@@ -476,7 +477,12 @@ def getAuthData():
     logger.debug('auth data response: %s' % body);
     r = {}
 
-    for token in ordered_json.loads(body):
+    json_body = ordered_json.loads(body)
+
+    if 'error' in json_body:
+        raise Exception(json_body['error'])
+
+    for token in json_body:
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
