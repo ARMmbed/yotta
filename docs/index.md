@@ -25,10 +25,9 @@ manager. You will need a working installation of both python and pip to install
 yotta.
 
 If you have these, and a working development environment, you can run
-**`pip install -U yotta`** to install the latest version of yotta. In case of
-problems while installing yotta, you can update pip to the latest
-version by using **`sudo pip install -U pip`**. If you don't know that you
-already have a working development environment set up, follow the more detailed instructions for your OS below
+**`pip install -U yotta`** to install the latest version of yotta. If you don't
+know that you already have a working development environment set up, follow the
+more detailed instructions for your OS below
 ([windows](#installing-on-windows), [mac](#installing-on-osx), or
 [linux](#installing-on-linux)).
 
