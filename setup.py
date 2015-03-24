@@ -51,7 +51,7 @@ setup(
         'hgapi>=1.7,<2',
         'Jinja2>=2.7.0,<3',
         'cryptography>=0.8',
-        'PyJWT>=0.3,<0.4',
+        'PyJWT>=1.0,<2.0',
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
         'valinor>=0.0.0,<1.0'
