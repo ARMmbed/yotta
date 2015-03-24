@@ -57,10 +57,6 @@ def long_to_bytes(n, blocksize=0):
 def openSSH(pubkey):
     e = long_to_bytes(pubkey.e)
     n = long_to_bytes(pubkey.n)
-    print 'e:', pubkey.e
-    print 'n:', pubkey.n
-    print 'e bytes:', len(e), binascii.hexlify(e)
-    print 'n bytes:', len(n), binascii.hexlify(n)
 
     if bord(e[0]) & 0x80:
         e = bchr(0) + e
