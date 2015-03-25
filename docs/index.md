@@ -22,9 +22,14 @@ yotta is written in [python](https://www.python.org/download/releases/2.7/),
 and distributed using
 [pip](http://pip.readthedocs.org/en/latest/installing.html), the python package
 manager. You will need a working installation of both python and pip to install
-yotta. If you have these, you can run **`pip install -U yotta`** to install the
-latest version of yotta.  If you don't know that you already have these, follow
-the more detailed instructions for your OS below.
+yotta.
+
+If you have these, and a working development environment, you can run
+**`pip install -U yotta`** to install the latest version of yotta. If you don't
+know that you already have a working development environment set up, follow the
+more detailed instructions for your OS below
+([windows](#installing-on-windows), [mac](#installing-on-osx), or
+[linux](#installing-on-linux)).
 
 Because yotta is used to build software, you will also need a working
 development environment for compiling software, including:
@@ -108,8 +113,22 @@ First install yotta's dependencies using your system's package manager, for
 example on Debian and Ubuntu:
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build
+sudo apt-get install python-pip cmake build-essential ninja-build python-dev
 ```
+
+and on Fedora Linux (tested on FC21):
+
+```sh
+# install development tool dependencies
+sudo yum install python-pip cmake ninja-build python-devel clang
+sudo yum groupinstall "Development Tools" "Development Libraries"
+
+# update pip to latest release
+sudo yum remove python-pip
+curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+```
+
 
 Then install yotta itself (you may need to use `sudo` for this, depending on
 your configuration):
@@ -118,6 +137,15 @@ your configuration):
 pip install -U yotta
 ```
 
+You can use the following commands to allow the current user to override module
+dependencies using [`yotta link`](/reference/commands.html#yotta-link) without
+sudo:
+
+```bash
+sudo mkdir -p /usr/local/lib/yotta_modules
+sudo chown $USER /usr/local/lib/yotta_modules
+chmod 755 /usr/local/lib/yotta_modules
+```
 
 
 ### Using clang to build natively for Linux
@@ -135,8 +163,28 @@ the native compiler.
 ### Cross-compiling from Linux
 
 First install the [`arm-none-eabi-gcc`
-compiler](https://launchpad.net/gcc-arm-embedded):
+compiler](https://launchpad.net/gcc-arm-embedded).
 
+#### Ubuntu 14.04 or later users:
+There is a package name conflict for [Ubuntu 14.04 and later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded).
+Remove previous versions and update your repositories:
+```sh
+sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
+sudo add-apt-repository ppa:terry.guo/gcc-arm-embedded
+sudo apt-get update
+```
+
+Install the compiler package for Ubuntu 14.04:
+```sh
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0trusty13
+```
+
+or for Ubuntu 14.10:
+```sh
+    sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
+```
+
+#### All other Linux users:
 ```sh
 sudo apt-get install gcc-arm-none-eabi
 ```
@@ -150,54 +198,114 @@ target, such as
 <br>
 <a name="installing-on-windows"></a>
 ## Installing On Windows
-Before installing yotta in Windows, you need to have a working installation of Python and pip
-(a Python package manager) . There are a number of places that provide installers for Python on
-Windows, including:
 
-- [python.org](https://www.python.org/downloads/). If you use this, you'll also need to [install pip manually](https://pip.pypa.io/en/latest/installing.html).
-- [ActivePython](http://www.activestate.com/activepython/downloads). This distribution already includes pip and other useful modules.
+ 1. **Install [python](https://www.python.org/downloads/release/python-279/)**. You
+    **must** install [python
+    2.7.9](https://www.python.org/downloads/release/python-279/) for yotta to
+    work on windows. Select either the [x86-64
+    installer](https://www.python.org/ftp/python/2.7.9/python-2.7.9.amd64.msi)
+    if you use 64-bit
+    windows, or the [x86
+    installer](https://www.python.org/ftp/python/2.7.9/python-2.7.9.msi) if you
+    use 32-bit windows.
 
-Choose an installer for the latest available Python 2.7 version.
+    **During installation, be sure to select the "add to path" option.** This
+    will let you run python easily from a command prompt.
 
-During installation, make sure to check the "add to path" option in the installer. After the installation,
-you should be able to open cmd.exe and run `python`. If that doesn't work, the most likely cause
-is that the Python installation directory (typically **c:\Python27**) is not in your PATH, so make sure
-you add it (following, for example, [this guide](http://superuser.com/questions/317631/setting-path-in-windows-7-command-prompt)).
-You also need to add the "scripts" subdirectory of your Python installation (typically **c:\Python27\Scripts**)
-to your PATH. If the "scripts" subdirectory is properly added to your PATH, you should be able to
-execute `pip` from the command prompt.
+ 2. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
+    generate makefiles that control the build. Select the latest available
+    version, currently 3.2.1 The [32-bit
+    version](http://www.cmake.org/files/v3.2/cmake-3.2.1-win32-x86.exe)
+    will work on all versions of windows. Be sure to check the "add cmake to
+    the path for current user" option during installation.
 
-With Python and pip properly installed, follow these steps to install yotta:
+ 3. **Install Ninja**, the small and extremely fast build system that yotta
+    uses. Download the release archive from the [releases
+    page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
+    and extract it to a directory (for example `C:\ninja`).
+ 
+ 4. Add the directory you installed Ninja in to [your path](#windows-path).
 
-- install PyCrypto 2.6 for Python 2.7 from [Voidspace](http://www.voidspace.org.uk/python/modules.shtml#pycrypto).
-Make sure that you use the installer that matches your Python installation (32 or 64 bit).
-- open cmd.exe and run `pip install -U yotta`
-- [cmake](http://www.cmake.org/) is a makefile generator, used by yotta internally. Download and install
-it from [here](http://www.cmake.org/download/). yotta on Windows was tested mostly with version 3.1.0-rc2
-of cmake, but 3.0.2 (the latest stable version at the time of writing this) should work too. Make sure to
-check the "add cmake to the path for current user" option during installation.
-- [ninja](http://martine.github.io/ninja/) is a fast and small build system that works well in Windows.
-Download the release archive from [here](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip)
-and extract 'ninja.exe' to **c:\ninja** or any other directory. Add that directory to your PATH.
-- [sed](https://www.gnu.org/software/sed/) is another tool used by yotta in Windows. A binary installer can be
-found [here](http://gnuwin32.sourceforge.net/packages/sed.htm). After installing sed, add the directory with
-'sed.exe' to your PATH.
+ 5. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
+    order to build software to run on embedded devices.
 
-### Building natively for windows
-Building natively for windows isn't yet supported. If you're adventurous and
-get it working, submit a [pull request](https://github.com/armmbed/yotta/pulls)
-to update these docs.
+ 6. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
+    itself.
 
+
+### Building programs natively to run on windows
+yotta does not yet allow compiling programs to run on windows. If you are
+adventurous and get it working, submit a [pull
+request](https://github.com/armmbed/yotta/pulls) to update these docs.
+
+<a name="windows-cross-compile"></a>
 ### Cross-compiling from Windows
-First install the [`arm-none-eabi-gcc` compiler](https://launchpad.net/gcc-arm-embedded). At the
-time of writing this, the latest version used for cross-compiling with yotta is
-[gcc 4.8](https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe).
-Download and install it, then add the bin/ subdirectory of the installation directory to your PATH.
-After you do that, you should be able to open cmd.exe and run `arm-none-eabi-gcc` from
-the command prompt. If that doesn't work, make sure that your PATH is properly set.
+To use yotta to cross-compile binaries to run on embedded hardware, you need to
+first install the [`arm-none-eabi-gcc`
+compiler](https://launchpad.net/gcc-arm-embedded). At the time of writing this,
+the latest version used for cross-compiling with yotta is [gcc
+4.8](https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe).
+Download and install it, then add the bin/ subdirectory of the installation
+directory to [your path](#windows-path).  After you do that, you should be able to open cmd.exe
+and run `arm-none-eabi-gcc` from the command prompt. If that doesn't work, make
+sure that your path is properly set.
 
 To use this compiler, you'll need to select a supported cross-compilation
 target, such as
 [frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
 `yotta target frdm-k64f-gcc` before building.
 
+<a name="windows-common-issues"></a>
+### Solving Common Windows Installation Problems
+
+#### `error: command ['ninja'] failed`
+If you get an error when running `yotta build` which looks something like this:
+
+```sh
+':' is not recognized as an internal or external command,
+operable program or batch file.
+...
+ninja: build stopped: subcommand failed.
+error: command ['ninja'] failed
+```
+This is caused by re-trying a `yotta build` after fixing a missing
+[cross-compiler installation](#windows-cross-compile). After completing the
+installation of the compiler, you'll need to **delete the `./build` directory**
+before running build again.
+
+<a name="windows-path"></a>
+### Adding things to your PATH in windows
+Your PATH environment variable holds the location of programs that can be
+easily executed by other programs. If yotta fails to find one of its
+dependencies (such as cmake.exe) the first thing to check is that you have
+added the directory that contains the dependencies executable to the PATH. To
+add things to your path:
+
+ 1. Right click on Computer, select `Properties`
+ 2. Select `Advanced System Settings`
+ 3. Select the `Advanced` tab
+ 4. Click the `Environment Variables` button
+ 5. Find the `Path` variable, edit it, and append the path you want to add,
+    preceded by a semicolon, for example: `;C:\Path\to\wherever`
+ 6. **close then re-open any open cmd.exe windows**
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>

@@ -8,13 +8,14 @@
 # standard library modules, , ,
 import unittest
 import os
+import tempfile
+import stat
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
 from . import cli
 
 
-Test_Dir = '/tmp/yotta/version_cli_test'
 Test_Module_JSON = '''{
   "name": "testmod",
   "version": "0.0.0",
@@ -38,23 +39,42 @@ Test_Module_JSON = '''{
 }
 '''
 
+Check_Not_Stat = stat.S_IRWXG | stat.S_IRWXO
+
 class TestCLITarget(unittest.TestCase):
     def setUp(self):
-        mkDirP(Test_Dir)
-        with open(os.path.join(Test_Dir, 'module.json'), 'w') as f:
+        self.test_dir = tempfile.mkdtemp()
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         
     def tearDown(self):
-        rmRf(Test_Dir)
+        rmRf(self.test_dir)
 
     def test_setTarget(self):
+        rmRf(os.path.join(self.test_dir, '.yotta.json'))
+        stdout = self.runCheckCommand(['target', 'testtarget', '-g'])
+        stdout = self.runCheckCommand(['target'])
+        self.assertTrue(stdout.find('testtarget') != -1)
+        stdout = self.runCheckCommand(['target', 'x86-linux-native', '-g'])
+        if os.name == 'posix':
+            # check that the settings file was created with the right permissions
+            self.assertFalse(
+                os.stat(os.path.join(os.path.expanduser('~'), '.yotta', 'config.json')).st_mode & Check_Not_Stat
+            )
+
+    def test_setTargetLocal(self):
         stdout = self.runCheckCommand(['target', 'testtarget'])
         stdout = self.runCheckCommand(['target'])
         self.assertTrue(stdout.find('testtarget') != -1)
         stdout = self.runCheckCommand(['target', 'x86-linux-native'])
+        if os.name == 'posix':
+            # check that the settings file was created with the right permissions
+            self.assertFalse(
+                os.stat(os.path.join(self.test_dir, '.yotta.json')).st_mode & Check_Not_Stat
+            )
 
     def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=Test_Dir)
+        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 

@@ -1,0 +1,266 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "yotta module.json schema",
+    "properties": {
+        "name": {
+            "$ref": "#/definitions/name"
+        },
+        "version": {
+            "$ref": "#/definitions/semver"
+        },
+        "license": {
+            "$ref" : "#/definitions/license"
+        },
+        "licenses": {
+            "type" : "array",
+            "uniqueItems" : true,
+            "items": {
+                "$ref": "#/definitions/license"
+            }
+        },
+        "private": {
+            "type": "boolean"
+        },
+        "description": {
+                "type": "string",
+           "minLength": 1,
+           "maxLength": 2000
+        },
+        "keywords": {
+                   "type": "array",
+            "uniqueItems": true,
+            "items": {
+                   "type": "string",
+                "pattern": "[a-zA-Z0-9-]*",
+              "minLength": 1,
+              "maxLength": 100
+            }
+        },
+        "author": {
+            "oneOf": [
+                {"$ref": "#/definitions/person"},
+                {"$ref": "#/definitions/personObject"}
+            ]
+        },
+        "contributors": {
+                   "type": "array",
+            "uniqueItems": true,
+                  "items": {
+                      "oneOf": [
+                          {"$ref": "#/definitions/person"},
+                          {"$ref": "#/definitions/personObject"}
+                      ]
+                  }
+        },
+        "maintainers": {
+                   "type": "array",
+            "uniqueItems": true,
+                  "items": {
+                      "oneOf": [
+                          {"$ref": "#/definitions/person"},
+                          {"$ref": "#/definitions/personObject"}
+                      ]
+                  }
+        },
+        "homepage": {
+            "$ref": "#/definitions/httpURL"
+        },
+        "repository": {
+            "type":"object",
+            "properties": {
+                "type":{
+                    "enum": [
+                        "git", "hg", "svn"
+                    ]
+                },
+                "url": {"$ref": "#/definitions/repositoryURL"}
+            },
+            "required": ["type", "url"]
+        },
+        "bugs": {
+            "oneOf": [
+                {"$ref": "#/definitions/httpURL"},
+                {"$ref": "#/definitions/bugsObject"}
+            ]
+        },
+        "extraIncludes": {
+             "type": "array",
+            "items": {
+                "$ref": "#/definitions/path"
+            }
+        },
+        "bin": {
+            "$ref": "#/definitions/path"
+        },
+        "dependencies": {
+            "$ref": "#/definitions/dependencyMap"
+        },
+        "targetDependencies": {
+            "type": "object",
+            "patternProperties": {
+                "(^[a-z]+[a-z0-9-]*$)|(^[*]$)": {
+                    "$ref": "#/definitions/dependencyMap"
+                }
+            },
+            "additionalProperties": false
+        }
+
+    },
+    "definitions": {
+        "name": {
+                "type": "string",
+             "pattern": "^[a-z]+[a-z0-9-]*$",
+           "minLength": 2,
+           "maxLength": 64
+        },
+        "person": {
+                 "type": "string",
+            "minLength": 0,
+            "maxLength": 300
+        },
+        "personObject": {
+                 "type": "object",
+             "required": [
+                        "name"
+                     ],
+           "properties":{
+               "name": {
+                         "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+               },
+               "email": {
+					"$ref": "#/definitions/email"
+				},
+				"url": {
+					"$ref": "#/definitions/httpUrl"
+				}
+           },
+           "required": [
+               "name", "email"
+           ]
+        },
+        "email": {
+                 "type": "string",
+            "maxLength": 120,
+              "pattern": "^[^@]+@[^@]+$"
+        },
+        "httpURL": {
+                 "type": "string",
+            "maxLength": 1200,
+              "comment": "!!! TODO: pattern"
+        },
+        "repositoryURL": {
+            "oneOf": [
+                {"$ref": "#/definitions/gitRepositoryUrl"},
+                {"$ref": "#/definitions/hgRepositoryUrl"},
+                {"$ref": "#/definitions/svnRepositoryUrl"}
+            ]
+        },
+        "gitRepositoryUrl": {
+                 "type": "string",
+            "minLength": 6,
+            "maxLength": 1200,
+              "pattern": "^(git[+a-zA-Z-]*:.*|.*\\.git|.*git@.*github\\.com.*)$"
+        },
+        "hgRepositoryUrl": {
+                 "type": "string",
+            "minLength": 6,
+            "maxLength": 1200,
+              "pattern": "^(hg[+a-zA-Z-]*:.*|.*\\.hg)$"
+        },
+        "svnRepositoryUrl": {
+                 "type": "string",
+            "minLength": 6,
+            "maxLength": 1200,
+              "pattern": "^svn[+a-zA-Z-]*:.*$"
+        },
+        "license": {
+            "oneOf": [
+                {"$ref": "#/definitions/licenseID"},
+                {"$ref": "#/definitions/licenseObject"}
+            ]
+        },
+        "licenseID": {
+            "type":"string",
+            "minLength":3,
+            "maxLength":1000
+        },
+        "licenseObject": {
+            "type": "object",
+            "properties": {
+                "type": {"$ref": "#/definitions/spdxIdentifier"},
+                 "url": {"$ref": "#/definitions/httpURL"}
+            },
+           "required": [
+               "type"
+           ]
+        },
+        "spdxIdentifier": {
+              "comment": "This is meant to be a SPDX identifier for the license, but might also be the text of a proprietary license.",
+                 "type": "string",
+            "minLength": 3,
+            "maxLength": 5000
+        },
+        "bugsObject": {
+            "type": "object",
+            "properties": {
+                  "url": {"$ref": "#/definitions/httpURL"},
+                "email": {"$ref": "#/definitions/email"}
+            },
+           "minProperties": 1
+        },
+        "path": {
+                  "type": "string",
+             "minLength": 1,
+             "maxLength": 260,
+               "pattern": "^[a-zA-Z0-9 ()._/-]*$"
+        },
+        "dependencyMap": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-z]+[a-z0-9-]{1,63}$": {
+                    "anyOf": [
+                        {"$ref": "#/definitions/githubDepSource"},
+                        {"$ref": "#/definitions/gitDepSource"},
+                        {"$ref": "#/definitions/hgDepSource"},
+                        {"$ref": "#/definitions/semverSpecification"}
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "githubDepSource":{
+                 "type":"string",
+              "pattern":"^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+(#[.*])?$",
+            "minLength": 3,
+            "maxLength": 200
+        },
+        "gitDepSource":{
+              "comment": "!!! TODO: pattern",
+                 "type": "string",
+            "minLength": 5,
+            "maxLength": 1200
+        },
+        "hgDepSource":{
+              "comment": "!!! TODO: pattern",
+                 "type": "string",
+            "minLength": 5,
+            "maxLength": 1200
+        },
+        "semver":{
+            "type": "string",
+         "pattern": "^(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)(-[a-zA-Z0-9]+[a-zA-Z0-9-]*([.][a-zA-Z0-9]+[a-zA-Z0-9-]*)*)?([+][a-zA-Z0-9]+[a-zA-Z0-9-]*([.][a-zA-Z0-9]+[a-zA-Z0-9-]*)*)?$"
+        },
+        "semverSpecification":{
+            "comment": "!!! TODO: pattern",
+               "type": "string",
+            "pattern": ".*"
+        }
+    },
+    "required": ["name", "version"],
+    "oneOf" : [
+        {"required": ["license"]},
+        {"required": ["licenses"]}
+    ]
+}

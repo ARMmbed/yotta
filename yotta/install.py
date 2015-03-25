@@ -15,7 +15,7 @@ from .lib import component
 from .lib import access
 
 # folders, , get places to install things, internal
-from . import folders
+from .lib import folders
 
 GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
 

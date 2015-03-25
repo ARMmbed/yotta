@@ -10,3 +10,8 @@ echo -e "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA/C5iyF6B2eM0U5vmpw3qu6
 echo -e "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD8LmLIXoHZ4zRTm+anDeq7qvWwatYgjmaT2Pl0rjGdRZ8+rMXpPJWzcLr2hPpU5EjTPl8ykVgRPyE1toQwKDbdL0tpifjbSWsOa4SasyYSh3fgTvAevrm2wkdpS150ii5r28sHMuKraTfW614XsQwinwuffOVo+loaPlj2WPx8YBOb19IG9RHSawoo0g7jJT7GojM+QoMDiH5+4FcvUn/kNSn3oDbYIP3E3xV9YlIQldYApqyXoQf7lFvKny4VwlPcTYuFGc3AQlaQ2kNeI69rubY+xoh03jH8MsuMb4DqaKfJV5JLa8E4VJwKESEaf/HikDPSRcX7AhgTIh5jvoJ1 yottatest@yottabuild.org" > ~/.ssh/id_rsa.pub
 # make sure the keys have the right permissions
 chmod 600 ~/.ssh/*
+
+# set git settings
+git config --global user.email "test@yottabuild.org"
+git config --global user.name "Yotta Travis-CI Bot"
+

@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -26,6 +26,9 @@ from . import logout
 from . import list as list_command
 from . import uninstall
 from . import owners
+from . import licenses
+from . import clean
+from . import search
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -46,7 +49,11 @@ def splitList(l, at_value):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description='Build software using re-usable components.\n'+
+        'For more detailed help on each subcommand, run: yotta <subcommand> --help'
+    )
     subparser = parser.add_subparsers(metavar='<subcommand>')
 
     parser.add_argument('--version', dest='show_version', action='version',
@@ -59,8 +66,9 @@ def main():
     )
     parser.add_argument('-d', '--debug', dest='debug', action='append',
         metavar='SUBSYS',
-        help='specify subsystems to debug: use in conjunction with -v to '+
-             'increase the verbosity only for specified subsystems'
+        help=argparse.SUPPRESS
+        #help='specify subsystems to debug: use in conjunction with -v to '+
+        #     'increase the verbosity only for specified subsystems'
     )
 
     parser.add_argument('-t', '--target', dest='target',
@@ -71,30 +79,41 @@ def main():
     def addParser(name, module, description, help=None):
         if help is None:
             help = description
-        parser = subparser.add_parser(name, description=description, help=help)
+        parser = subparser.add_parser(
+            name, description=description, help=help,
+            formatter_class=argparse.RawTextHelpFormatter
+        )
         module.addOptions(parser)
         parser.set_defaults(command=module.execCommand)
 
-    addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
-    addParser('link', link, 'Symlink a module.')
-    addParser('link-target', link_target, 'Symlink a target.')
+    addParser('search', search,
+        'Search for open-source modules and targets that have been published '+
+        'to the yotta registry (with yotta publish). See help for `yotta '+
+        'install --save` for installing modules, and for `yotta target` for '+
+        'switching targets.'
+    )
+    addParser('init', init, 'Create a new module.')
     addParser('install', install, 'Install dependencies for the current module, or a specific module.')
-    addParser('update', update, 'Update dependencies for the current module, or a specific module.')
-    addParser('target', target, 'Set or display the target device.')
     addParser('build', build,
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\
         'when make is the build tool, run `yotta build -- -j`',
         'Build the current module.'
     )
+    addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
+    addParser('link', link, 'Symlink a module.')
+    addParser('link-target', link_target, 'Symlink a target.')
+    addParser('update', update, 'Update dependencies for the current module, or a specific module.')
+    addParser('target', target, 'Set or display the target device.')
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
-    addParser('init', init, 'Create a new module.')
     addParser('publish', publish, 'Publish a module or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
     addParser('list', list_command, 'List the dependencies of the current module.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
+    addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
+    addParser('clean', clean, 'Remove files created by yotta and the build.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
@@ -106,7 +125,8 @@ def main():
             'ls':subparser.choices['list'],
         'unlink':subparser.choices['uninstall'],
             'rm':subparser.choices['uninstall'],
-         'owner':subparser.choices['owners']
+         'owner':subparser.choices['owners'],
+          'lics':subparser.choices['licenses']
     })
     
     # split the args into those before and after any '--'

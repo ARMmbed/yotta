@@ -260,6 +260,12 @@ The URL of your module's source code repository (if any). Including this helps
 other people to contribute to your module by making it easy for them to clone
 their own copy and suggest improvements.
 
+### `private`
+**type: Boolean**
+
+If present, and set to `true`, then `yotta publish` will not allow you to
+publish this module to the public registry. This is useful to prevent
+accidental publication of private modules and applications.
 
 ### `bugs`
 **type: Object `{"url":"<url>", "email": "<optional email>"}`**

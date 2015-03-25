@@ -27,9 +27,11 @@ import requests
 
 # PyJWT, MIT, Jason Web Tokens, pip install PyJWT
 import jwt
-# pycrypto, Public Domain, Python Crypto Library, pip install pyCRypto
-import Crypto
-from Crypto.PublicKey import RSA
+# cryptography, Apache License, Python Cryptography library, 
+import cryptography
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 
 # settings, , load and save settings, internal
 import settings
@@ -44,8 +46,8 @@ import github_access
 # export key, , export pycrypto keys, internal
 import exportkey
 
-# !!! FIXME get SSL cert for main domain, then use HTTPS
-Registry_Base_URL = 'http://registry.yottabuild.org'
+Registry_Base_URL = 'https://registry.yottabuild.org'
+Registry_Auth_Audience = 'http://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
@@ -58,25 +60,32 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 def generate_jwt_token(private_key):
     expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
-    prn = _fingerprint(private_key.publickey())
+    prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
     token_fields = {
         "iss": 'yotta',
-        "aud": Registry_Base_URL,
+        "aud": Registry_Auth_Audience,
         "prn": prn,
         "exp": str(expires)
     }
     logger.debug('token fields: %s' % token_fields)
-    token = jwt.encode(token_fields, private_key, 'RS256').decode('ascii')
+    private_key_pem = private_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()
+    )
+    token = jwt.encode(token_fields, private_key_pem, 'RS256').decode('ascii')
     logger.debug('encoded token: %s' % token)
 
     return token
 
 def _pubkeyWireFormat(pubkey):
-    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey)))
+    pubk_numbers = pubkey.public_numbers()
+    logger.debug('openssh format publickey:\n%s' % exportkey.openSSH(pubk_numbers))
+    return quoteURL(_OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubk_numbers)))
 
 def _fingerprint(pubkey):
-    stripped = _OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey))
+    stripped = _OpenSSH_Keyfile_Strip.sub(b'', exportkey.openSSH(pubkey.public_numbers()))
     decoded  = base64.b64decode(stripped)
     khash    = hashlib.md5(decoded).hexdigest()
     return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
@@ -96,7 +105,7 @@ def _returnRequestError(fn):
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.RequestException as e:
-            return "sever returned status %s: %s" % (e.response.status_code, e.message)
+            return "server returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
  
 def _handleAuth(fn):
@@ -147,7 +156,8 @@ def _listVersions(namespace, name):
     
     if response.status_code == 404:
         raise access_common.ComponentUnavailable(
-            '%s does not exist in the %s registry' % (name, namespace)
+            ('%s does not exist in the %s registry. '+
+            'Check that the name is correct, and that it has been published.') % (name, namespace)
         )
 
     # raise any other HTTP errors
@@ -178,18 +188,42 @@ def _getTarball(url, directory, sha256):
     return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
 
 def _generateAndSaveKeys():
-    k = RSA.generate(2048)
-    privatekey_hex = binascii.hexlify(k.exportKey('DER')).decode('ascii')
-    settings.setProperty('keys', 'private', privatekey_hex)
-    pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER')).decode('ascii')
-    settings.setProperty('keys', 'public', pubkey_hex)
-    return pubkey_hex, privatekey_hex
+    k = rsa.generate_private_key(
+        public_exponent=65537, key_size=2048, backend=default_backend()
+    )
+    privatekey_pem = k.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()
+    )
+    settings.setProperty('keys', 'private', privatekey_pem)
+
+    pubkey_pem = k.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    settings.setProperty('keys', 'public', pubkey_pem)
+    return pubkey_pem, privatekey_pem
 
 def _getPrivateKeyObject():
-    privatekey_hex =  settings.getProperty('keys', 'private')
-    if not privatekey_hex:
-        pubkey_hex, privatekey_hex = _generateAndSaveKeys()
-    return RSA.importKey(binascii.unhexlify(privatekey_hex))
+    privatekey_pem =  settings.getProperty('keys', 'private')
+    if not privatekey_pem:
+        pubkey_pem, privatekey_pem = _generateAndSaveKeys()
+    else:
+        # settings are unicode, we should be able to safely decode to ascii for
+        # the key though, as it will either be hex or PEM encoded:
+        privatekey_pem = privatekey_pem.encode('ascii')
+    # if the key doesn't look like PEM, it might be hex-encided-DER (which we
+    # used historically), so try loading that:
+    if '-----BEGIN PRIVATE KEY-----' in privatekey_pem:
+        return serialization.load_pem_private_key(
+            privatekey_pem, None, default_backend()
+        )
+    else:
+        privatekey_der = binascii.unhexlify(privatekey_pem)
+        return serialization.load_der_private_key(
+            privatekey_der, None, default_backend()
+        )
 
 # API
 class RegistryThingVersion(access_common.RemoteVersion):
@@ -280,7 +314,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file, r
     response = requests.put(url, headers=headers, files=body)
 
     if not response.ok:
-        return "sever returned status %s: %s" % (response.status_code, response.text)
+        return "server returned status %s: %s" % (response.status_code, response.text)
 
     return None
 
@@ -306,7 +340,7 @@ def listOwners(namespace, name):
     response = requests.get(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
         return None
     
     # raise exceptions for other errors - the auth decorators handle these and
@@ -338,7 +372,8 @@ def addOwner(namespace, name, owner):
     response = requests.put(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
@@ -367,12 +402,46 @@ def removeOwner(namespace, name, owner):
     response = requests.delete(url, headers=request_headers)
 
     if response.status_code == 404:
-        logger.error('no such %s, "%s"' % (namespace, name))
+        logger.error('no such %s, "%s"' % (namespace[:-1], name))
+        return
 
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
     response.raise_for_status()
 
+
+def search(query='', keywords=[]):
+    ''' generator of objects returned by the search endpoint (both modules and
+        targets).
+        
+        Query is a full-text search (description, name, keywords), keywords
+        search only the module/target description keywords lists.
+        
+        If both parameters are specified the search is the intersection of the
+        two queries.
+    '''
+
+    url = '%s/search' % Registry_Base_URL
+    params = {
+         'skip': 0,
+        'limit': 50
+    }
+    if len(query):
+        params['query'] = query
+    if len(keywords):
+        params['keywords[]'] = keywords
+    
+    while True:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        objects = ordered_json.loads(response.text)
+        if len(objects):
+            for o in objects:
+                yield o
+            params['skip'] += params['limit']
+        else:
+            break
+    
 
 def deauthorize():
     if settings.getProperty('keys', 'private'):
@@ -382,14 +451,22 @@ def deauthorize():
 
 def getPublicKey():
     ''' Return the user's public key (generating and saving a new key pair if necessary) '''
-    pubkey_hex = settings.getProperty('keys', 'public')
-    if not pubkey_hex:
-        k = RSA.generate(2048)
-        settings.setProperty('keys', 'private', binascii.hexlify(k.exportKey('DER')))
-        pubkey_hex = binascii.hexlify(k.publickey().exportKey('DER'))
-        settings.setProperty('keys', 'public', pubkey_hex)
-        pubkey_hex, privatekey_hex = _generateAndSaveKeys()
-    return _pubkeyWireFormat(RSA.importKey(binascii.unhexlify(pubkey_hex)))
+    pubkey_pem = settings.getProperty('keys', 'public')
+    if not pubkey_pem:
+        pubkey_pem, privatekey_pem = _generateAndSaveKeys()
+    else:
+        # settings are unicode, we should be able to safely decode to ascii for
+        # the key though, as it will either be hex or PEM encoded:
+        pubkey_pem = pubkey_pem.encode('ascii')
+    # if the key doesn't look like PEM, it might be hex-encided-DER (which we
+    # used historically), so try loading that:
+    if '-----BEGIN PUBLIC KEY-----' in pubkey_pem:
+        pubkey = serialization.load_pem_public_key(pubkey_pem, default_backend())
+    else:
+        pubkey_der = binascii.unhexlify(pubkey_pem)        
+        pubkey = serialization.load_der_public_key(pubkey_der, default_backend())
+    return _pubkeyWireFormat(pubkey)
+
 
 def testLogin():
     url = '%s/users/me' % (
@@ -441,7 +518,12 @@ def getAuthData():
     logger.debug('auth data response: %s' % body);
     r = {}
 
-    for token in ordered_json.loads(body):
+    json_body = ordered_json.loads(body)
+
+    if 'error' in json_body:
+        raise Exception(json_body['error'])
+
+    for token in json_body:
         if token['provider'] == 'github':
             r['github'] = token['accessToken']
             break
