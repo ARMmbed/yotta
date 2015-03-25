@@ -26,15 +26,13 @@ import subprocess
 # Note that on windows the '.exe' extension is necessary to run with a subprocess
 downloads = {
 	"all":{
-		"cmake.exe":"http://www.cmake.org/files/v3.1/cmake-3.1.0-rc3-win32-x86.exe",
+		"cmake.exe":"http://www.cmake.org/files/v3.2/cmake-3.2.1-win32-x86.exe",
 		"ninja.zip":"https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip",
-		"gcc.exe":"http://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe"
+		"gcc.exe":"https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe"
 	},
 	"64bit":{
-		"pycrypto.exe":"http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win-amd64-py2.7.exe"
 	},
 	"32bit":{
-		"pycrypto.exe":"http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win32-py2.7.exe"
 	}
 
 }
@@ -43,21 +41,21 @@ downloads = {
 # Cygwin Install Script - TODO
 #
 def cygwin():
-	print("Cygwin is not currently supported. Please install for the windows command line.");
+	print("Cygwin is not currently supported. Please install for the windows command line. See  http://docs.yottabuild.org/#installing-on-windows for details.");
 	return;
 
 #
 # Linux Install Script - TODO
 #
 def linux():
-	print("For Linux install instructions please see http://docs.yottabuild.org/#installing");
+	print("For Linux install instructions please see http://docs.yottabuild.org/#installing-on-linux");
 	return;
 
 #
 # OSX Install Script - TODO
 #
 def osx():
-	print("For OSX install instructions please see http://docs.yottabuild.org/#installing");
+	print("For OSX install instructions please see http://docs.yottabuild.org/#installing-on-osx");
 	return;
 
 #
@@ -103,14 +101,6 @@ def windows():
 	#subprocess.call(['cmake.exe','/S'], shell=True)
 	# Add to Path... TODO
 	#print("\t[Installed]");
-
-	#pycrypto
-	print("\n\tInstalling PyCrypto: Please follow ClickThrough")
-	x = subprocess.call(['pycrypto.exe'], shell=True);
-	if x != 0:
-		print("\t[**ERROR**]: PyCrypto install failed.")
-	else:
-		print("\t[Installed]");
 
 	#Yotta
 	print("\n\tInstalling Yotta from pip ...");
