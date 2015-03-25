@@ -38,6 +38,26 @@ downloads = {
 }
 
 #
+# Prompt to re-install / download packages
+#
+def shouldInstall(binName):
+	import shutil
+	import shutilwhich
+	question = "\n\t"+binName+" already exists on your PATH, would you like to reinstall it? (y/n): "
+	choice = ""
+	if shutil.which(binName):
+		sys.stdout.write(question)
+		choice = raw_input().lower() # check for a y for yes, all others are no
+		dir(choice)
+		if choice =='y':
+			return True #re-install bin
+		else:
+			print("\n\tSkipping installation of "+binName)
+			return False  #skip installation
+	else:
+		return True; #bin does not exist, install it
+
+#
 # Cygwin Install Script - TODO
 #
 def cygwin():
@@ -63,6 +83,8 @@ def osx():
 #
 def windows():
 	import wget
+	import shutil
+	import shutilwhich
 	print("\nOpening an Internet Explorer window to launchpad.net to grab security certificate to download GCC.");
 	w = subprocess.Popen(r'"C:\Program Files\Internet Explorer\iexplore.exe" https://launchpad.net/' ); #hack to get the security certificate in place so we can dowload the file.
 	print("\nDownloading dependencies...");
@@ -96,46 +118,44 @@ def windows():
 	
 	# Install the Packages
 	print("\nInstalling packages: Please Follow the Click Throughs ");
-	#Cmake - Silent install, will prompt for admin priveledges
-	#print("\n\t Installing Cmake : please allow admin priveledges...");
-	#subprocess.call(['cmake.exe','/S'], shell=True)
-	# Add to Path... TODO
-	#print("\t[Installed]");
 
 	#Yotta
-	print("\n\tInstalling Yotta from pip ...");
-	#sys.exit(pip.main(["install","-U","yotta"]))
-	x = subprocess.call(['pip','install','-U','yotta']);
-	if x!= 0:
-		print("\t[**ERROR**]: Yotta install failed. Please run 'pip install yotta -U' from the command line");
-	else:
-		print("\t[Installed]");
+	if shouldInstall("yotta"):
+		print("\n\tInstalling Yotta from pip ...");
+		x = subprocess.call(['pip','install','-qU','yotta']);
+		if x!= 0:
+			print("\t[**ERROR**]: Yotta install failed. Please run 'pip install yotta -U' from the command line");
+		else:
+			print("\t[Installed]");
 
 	#cmake
-	print("\n\tInstalling Cmake: Please make sure to add to your Path");	
-	x = subprocess.call(['cmake.exe'], shell=True);
-	if x!=0:
-		print("\t[**ERROR**]: Cmake install failed, Please re-run installer and give admin rights to installer");
-	else:
-		print("\t[Installed]");
+	if shouldInstall("cmake"):
+		print("\n\tInstalling Cmake: Please allow admin permissions and check 'Add CMake to system PATH for all users' option");	
+		x = subprocess.call(['cmake.exe'], shell=True);
+		if x!=0:
+			print("\t[**ERROR**]: Cmake install failed, Please re-run installer and give admin rights to installer");
+		else:
+			print("\t[Installed]");
 
 	#gcc-arm-none-eabi
-	print("\n\tInstalling gcc-arm-none-eabi : Please grant Admin Priveledges and check add to path box");
-	x = subprocess.call(['gcc.exe'], shell=True);
-	if x!=0:
-		print("\t[**ERROR**]: gcc-arm-none-eabi install failed, Please re-run installer and give admin rights to installer");
-	else:
-		print("\t[Installed]");	
+	if shouldInstall("arm-none-eabi-gcc"):
+		print("\n\tInstalling gcc-none-eabi-gcc : Please allow admin permissions and check 'Add path to enviroment variable' box");
+		x = subprocess.call(['gcc.exe'], shell=True);
+		if x!=0:
+			print("\t[**ERROR**]: gcc-none-eabi-gcc install failed, Please re-run installer and give admin rights to installer");
+		else:
+			print("\t[Installed]");	
 
 	#ninja
-	import zipfile
-	import shutil
-	print("\n\tInstalling Ninja...");
-	zipfile.ZipFile('ninja.zip').extract('ninja.exe');
-	if not os.path.exists('c:/ninja'):
-		os.makedirs('c:/ninja');
-	shutil.copy2('ninja.exe','c:/ninja/ninja.exe')
-	print("\t**Required** Add c:/ninja/ to your PATH to complete ninja install")
+	if shouldInstall("ninja"):
+		import zipfile
+		import shutil
+		print("\n\tInstalling Ninja...");
+		zipfile.ZipFile('ninja.zip').extract('ninja.exe');
+		if not os.path.exists('c:/ninja'):
+			os.makedirs('c:/ninja');
+		shutil.copy2('ninja.exe','c:/ninja/ninja.exe')
+		print("\t**REQUIRED:** Add c:/ninja/ to your PATH to complete ninja install")
 
 
 #
@@ -158,6 +178,19 @@ def bootstrap():
 		x = subprocess.call(['pip', 'install', '-q','wget']);
 		if x!= 0:
 			print("\t**ERROR** wget did not install correctly!");
+			sys.exit();
+		else:
+			print("[Installed]");
+
+	#install shutil.which if it doesnt already exist.
+	#Python 3 has this already, python 2.7 does not so we need to install it.
+	try: 
+		import shutilwhich
+	except ImportError:
+		print("\nshutilwhich package missing, installing now...");
+		x = subprocess.call(['pip', 'install', '-q','shutilwhich']);
+		if x!= 0:
+			print("\t**ERROR** shutilwhich did not install correctly!");
 			sys.exit();
 		else:
 			print("[Installed]");
