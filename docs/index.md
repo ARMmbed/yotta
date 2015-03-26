@@ -169,6 +169,7 @@ compiler](https://launchpad.net/gcc-arm-embedded).
 #### Ubuntu 14.04 or later users:
 There is a package name conflict for [Ubuntu 14.04 and later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded).
 Remove previous versions and update your repositories:
+
 ```sh
 sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
 sudo add-apt-repository ppa:terry.guo/gcc-arm-embedded
@@ -176,13 +177,15 @@ sudo apt-get update
 ```
 
 Install the compiler package for Ubuntu 14.04:
+
 ```sh
 sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0trusty13
 ```
 
 or for Ubuntu 14.10:
+
 ```sh
-    sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
 ```
 
 #### All other Linux users:
