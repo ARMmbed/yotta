@@ -17,7 +17,12 @@ def prefix():
     if 'YOTTA_PREFIX' in os.environ:
         return os.environ['YOTTA_PREFIX']
     else:
-        return sys.exec_prefix
+        # we only use sys.exec_prefix on windows, because on *nixes it might
+        # well be /usr, and we don't want to create things in /usr/xxx
+        if os.name == 'nt':
+            return sys.exec_prefix
+        else:
+            return '/usr/local'
 
 def globalInstallDirectory():
     if os.name == 'nt':
