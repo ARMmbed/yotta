@@ -17,7 +17,7 @@ from .lib import target
 # install, , install subcommand, internal
 from . import install
 
-def addOptions(parser):
+def addOptions(parser, add_build_targets=True):
     parser.add_argument('-g', '--generate-only', dest='generate_only',
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
@@ -28,8 +28,19 @@ def addOptions(parser):
     # future we probably want to load these from a target instance, rather than
     # from the class
     target.Target.addBuildOptions(parser)
+    
+    if add_build_targets:
+        parser.add_argument(
+            "build_targets", metavar='MODULE_TO_BUILD', nargs='*', type=str, default=[],
+            help='List modules or programs to build (omit to build the default '+
+                 'set, or use "all_tests" to build all tests, including those '+
+                 'of dependencies).'
+        )
 
 def execCommand(args, following_args):
+    if not hasattr(args, 'build_targets'):
+        vars(args)['build_targets'] = []
+
     cwd = os.getcwd()
     c = validate.currentDirectoryModule()
     if not c:
@@ -71,7 +82,10 @@ def execCommand(args, following_args):
         errcode = 1
     
     if not args.generate_only:
-        for error in target.build(builddir, c, args, release_build=args.release_build, build_args=following_args):
+        for error in target.build(
+                builddir, c, args, release_build=args.release_build,
+                build_args=following_args, targets=args.build_targets
+        ):
             logging.error(error)
             errcode = 1
             break

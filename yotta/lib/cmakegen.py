@@ -233,7 +233,7 @@ class CMakeGen(object):
                     exe_name = None
                 if f in test_subdirs:
                     self.generateTestDirList(
-                        builddir, f, source_files, component, immediate_dependencies
+                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
                 else:
                     self.generateSubDirList(
@@ -312,7 +312,7 @@ class CMakeGen(object):
             with open(fname, "w") as f:
                 f.write(contents)
 
-    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies):
+    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
@@ -360,7 +360,8 @@ class CMakeGen(object):
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
             'link_dependencies':link_dependencies,
-                  'cmake_files': cmake_files
+                  'cmake_files': cmake_files,
+             'exclude_from_all': (not toplevel),
         })
 
         self._writeFile(fname, file_contents)

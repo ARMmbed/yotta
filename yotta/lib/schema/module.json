@@ -266,9 +266,12 @@
             "pattern": ".*"
         },
         "command":{
+            "type": "array",
+            "items": {
                 "type": "string",
-           "minLength": 1,
-           "maxLength": 3000
+                "minLength": 0,
+                "maxLength": 3000
+            }
         }
     },
     "required": ["name", "version"],

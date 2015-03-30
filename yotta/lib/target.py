@@ -76,15 +76,22 @@ class Target(pack.Pack):
         )
 
     @classmethod
-    def overrideBuildCommand(cls, generator_name):
+    def overrideBuildCommand(cls, generator_name, targets=None):
+        if targets is None:
+            targets = []
         # when we build using cmake --build, the nice colourised output is lost
         # - so override with the actual build command for command-line
         # generators where people will care:
         try:
-            return {
+            r = {
                 'Unix Makefiles': ['make'],
                 'Ninja': ['ninja']
             }[generator_name]
+            # all of the above build programs take the build targets (e.g.
+            # "all") as the last arguments
+            if targets is not None:
+                r += targets
+            return r
         except KeyError:
             return None
 
@@ -120,11 +127,13 @@ class Target(pack.Pack):
         if child.returncode:
             return 'command %s failed' % (cmd)
 
-    def build(self, builddir, component, args, release_build=False, build_args=None):
+    def build(self, builddir, component, args, release_build=False, build_args=None, targets=None):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
         if build_args is None:
             build_args = []
+        if targets is None:
+            targets = []
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
         build_type = ('Debug', 'RelWithDebInfo')[release_build]
@@ -156,11 +165,16 @@ class Target(pack.Pack):
                 f.close()
             except:
                 yield 'Unable to update "%s", aborting' % build_file
-        build_command = self.overrideBuildCommand(args.cmake_generator)
+        build_command = self.overrideBuildCommand(args.cmake_generator, targets=targets)
         if build_command:
             cmd = build_command + build_args
         else:
-            cmd = ['cmake', '--build', builddir] + build_args
+            cmd = ['cmake', '--build', builddir]
+            if len(targets):
+                # !!! FIXME: support multiple targets with the default CMake
+                # build command
+                cmd += ['--target', target[0]]
+            cmd += build_args
         res = self.exec_helper(cmd, builddir)
         if res is not None:
             yield res

@@ -32,8 +32,8 @@ def addOptions(parser):
         help='Don\'t build first.'
     )
     parser.add_argument(
-        "tests", metavar='TESTS_TO_RUN ...', default=[], action='append', nargs='?',
-        help='List tests to run (leave empty to run everything).'
+        "tests", metavar='TEST_TO_RUN', nargs='*', type=str, default=[],
+        help='List tests to run (omit to run everything).'
     )
     # we build before testing, so also expose the build options
     build.addOptions(parser)
@@ -86,9 +86,20 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
     return module
 
 def execCommand(args, following_args):
-    logging.info('args.tests: %s', args.tests)
     if args.build:
-        # we need to build before testing:
+        # we need to build before testing, make sure that any tests needed are
+        # built:
+        if len(args.tests) == 0:
+            # no specific tests: either build the default set (tests for this
+            # module only), or all tests, depending on whether --all was
+            # specified:
+            if args.all:
+                vars(args)['build_targets'] = ['all_tests']
+            else:
+                vars(args)['build_targets'] = []
+        else:
+            # otherwise try to build only the programs specified
+            vars(args)['build_targets'] = args.tests
         status = build.execCommand(args, following_args)
         if status:
             return status
@@ -128,16 +139,18 @@ def execCommand(args, following_args):
         logging.debug('inferred module %s from path %s', module.getName(), os.path.relpath(dirname, builddir))
         if (not len(args.tests)) and (module is not c) and not args.all:
             continue
+        info_filter = True
         filter_command = module.getTestFilterCommand()
-        if filter_command:
-            logging.info('using filter "%s" for tests in %s', ' '.join(filter_command), dirname)
         for test in test_exes:
-            if args.list_only:
-                continue
             if len(args.tests) and not test in args.tests:
                 logging.debug('skipping not-listed test %s', test)
                 continue
+            if info_filter and filter_command:
+                info_filter = False
+                logging.info('using filter "%s" for tests in %s', ' '.join(filter_command), dirname)
             logging.info('test %s: %s', module.getName(), test)
+            if args.list_only:
+                continue
             returncode = target.test(
                        builddir = dirname, 
                         program = test,
