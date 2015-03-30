@@ -25,12 +25,14 @@ manager. You will need a working installation of both python and pip to install
 yotta.
 
 If you have these, and a working development environment, you can run
-**`pip install -U yotta`** to install the latest version of yotta. In case of
-problems while installing yotta, you can update pip to the latest
-version by using **`sudo pip install -U pip`**. If you don't know that you
-already have a working development environment set up, follow the more detailed instructions for your OS below
+**`pip install yotta`** to install yotta. If you don't
+know that you already have a working development environment set up, follow the
+more detailed instructions for your OS below
 ([windows](#installing-on-windows), [mac](#installing-on-osx), or
 [linux](#installing-on-linux)).
+
+To upgrade an existing installation to a new version, see
+[upgrading](#upgrading) (the same for all systems).
 
 Because yotta is used to build software, you will also need a working
 development environment for compiling software, including:
@@ -40,6 +42,7 @@ development environment for compiling software, including:
 
 yotta supports compiling with different compilers by specifying different
 [targets](../tutorial/targets.html) for the compilation.
+
 
 <br>
 <a name="installing-on-osx"></a>
@@ -65,23 +68,8 @@ brew install python cmake ninja arm-none-eabi-gcc
 And install yotta itself:
 
 ```sh
-pip install -U yotta
+pip install yotta
 ```
-
-
-### Using Xcode's compiler to build natively for OS X
-To compile things natively you need to have the Xcode command line tools
-installed. Install [Xcode](https://developer.apple.com/xcode/downloads/) from
-the Mac app store, then run:
-
-```sh
-xcode-select --install
-```
-
-To use this compiler to build a module, you should run `yotta target
-x86-osx-native` before building. This selects the yotta target description for
-the native compiler.
-
 
 ### Cross-compiling from OS X
 To cross-compile, you need the `arm-none-eabi-gcc` cross-compiler. You can
@@ -98,6 +86,20 @@ target, such as
 `yotta target frdm-k64f-gcc` before building.
 
 
+### Using Xcode's compiler to build natively for OS X
+To compile things natively you need to have the Xcode command line tools
+installed. Install [Xcode](https://developer.apple.com/xcode/downloads/) from
+the Mac app store, then run:
+
+```sh
+xcode-select --install
+```
+
+To use this compiler to build a module, you should run `yotta target
+x86-osx-native` before building. This selects the yotta target description for
+the native compiler.
+
+
 ### Solving Common OS X installation problems
 On OS X, if you get an unknown argument error when running `pip install yotta`, it means some of yotta's dependencies have not yet been updated to support Xcode 5.1.
 To fix this, install yotta by running:
@@ -111,7 +113,8 @@ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip insta
 <a name="installing-on-linux"></a>
 ## Installing On Linux
 First install yotta's dependencies using your system's package manager, for
-example on Debian and Ubuntu:
+example on Debian and Ubuntu. Use whatever 2.7.* python version is provided by
+your distribution (python 3 support is currently experimental).
 
 ```sh
 sudo apt-get install python-pip cmake build-essential ninja-build python-dev
@@ -135,7 +138,7 @@ Then install yotta itself (you may need to use `sudo` for this, depending on
 your configuration):
 
 ```sh
-pip install -U yotta
+pip install yotta
 ```
 
 You can use the following commands to allow the current user to override module
@@ -147,6 +150,43 @@ sudo mkdir -p /usr/local/lib/yotta_modules
 sudo chown $USER /usr/local/lib/yotta_modules
 chmod 755 /usr/local/lib/yotta_modules
 ```
+
+### Cross-compiling from Linux
+
+First install the [`arm-none-eabi-gcc`
+compiler](https://launchpad.net/gcc-arm-embedded).
+
+#### Ubuntu 14.04 or later users:
+There is a package name conflict for [Ubuntu 14.04 and later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded).
+Remove previous versions and update your repositories:
+
+```sh
+sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
+sudo add-apt-repository ppa:terry.guo/gcc-arm-embedded
+sudo apt-get update
+```
+
+Install the compiler package for Ubuntu 14.04:
+
+```sh
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0trusty13
+```
+
+or for Ubuntu 14.10:
+
+```sh
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
+```
+
+#### All other Linux users:
+```sh
+sudo apt-get install gcc-arm-none-eabi
+```
+
+To use this compiler, you'll need to select a supported cross-compilation
+target, such as
+[frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
+`yotta target frdm-k64f-gcc` before building.
 
 
 ### Using clang to build natively for Linux
@@ -161,19 +201,6 @@ x86-linux-native` before building. This selects the yotta target description for
 the native compiler.
 
 
-### Cross-compiling from Linux
-
-First install the [`arm-none-eabi-gcc`
-compiler](https://launchpad.net/gcc-arm-embedded):
-
-```sh
-sudo apt-get install gcc-arm-none-eabi
-```
-
-To use this compiler, you'll need to select a supported cross-compilation
-target, such as
-[frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
-`yotta target frdm-k64f-gcc` before building.
 
 
 <br>
@@ -192,19 +219,17 @@ target, such as
 
     **During installation, be sure to select the "add to path" option.** This
     will let you run python easily from a command prompt.
+ 
+ 2. We have an experimental script that will install the rest of the
+    dependencies for you, but note that you still need to add some things to
+    your path (instructions [here](#windows-path)) when instructed to by the
+    script.
 
- 2. Install PyCrypto 2.6 for Python 2.7 from
-    [Voidspace](http://www.voidspace.org.uk/python/modules.shtml#pycrypto).
-    Select either the [32-bit
-    installer](http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win32-py2.7.exe)
-    or the [64-bit
-    installer](http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win-amd64-py2.7.exe)
-    matching the python version that you installed.
+    To use this script, download
+    [get_yotta.py](https://raw.githubusercontent.com/ARMmbed/yotta/6a652d9095303d595f316b27166677d7db8f2194/get_yotta.py),
+    then run: `python get_yotta.py` in a command prompt.
 
-    If pip cannot be found, you need to add the python scripts directory to
-    your path. This is `C:\Python27\Scripts` unless you selected a different
-    directory during python installation. [These instructions](#windows-path)
-    will guide you through the process.
+    **Alternatively**, you can complete steps 3-7 manually:
 
  3. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
     generate makefiles that control the build. Select the latest available
@@ -226,12 +251,6 @@ target, such as
  7. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
     itself.
 
-
-### Building programs natively to run on windows
-yotta does not yet allow compiling programs to run on windows. If you are
-adventurous and get it working, submit a [pull
-request](https://github.com/armmbed/yotta/pulls) to update these docs.
-
 <a name="windows-cross-compile"></a>
 ### Cross-compiling from Windows
 To use yotta to cross-compile binaries to run on embedded hardware, you need to
@@ -249,6 +268,13 @@ target, such as
 [frdm-k64f-gcc](https://github.com/ARMmbed/target-frdm-k64f-gcc), by running
 `yotta target frdm-k64f-gcc` before building.
 
+
+### Building programs natively to run on windows
+yotta does not yet allow compiling programs to run on windows. If you are
+adventurous and get it working, submit a [pull
+request](https://github.com/armmbed/yotta/pulls) to update these docs.
+
+
 <a name="windows-common-issues"></a>
 ### Solving Common Windows Installation Problems
 
@@ -264,7 +290,7 @@ error: command ['ninja'] failed
 ```
 This is caused by re-trying a `yotta build` after fixing a missing
 [cross-compiler installation](#windows-cross-compile). After completing the
-installation of the compiler, you'll need to **delete the `./build` directory**
+installation of the compiler, you'll need to run **`yotta clean`**
 before running build again.
 
 <a name="windows-path"></a>
@@ -282,6 +308,33 @@ add things to your path:
  5. Find the `Path` variable, edit it, and append the path you want to add,
     preceded by a semicolon, for example: `;C:\Path\to\wherever`
  6. **close then re-open any open cmd.exe windows**
+
+
+<br>
+<a name="upgrading"></a>
+## Upgrading yotta (all platforms)
+To update yotta itself, run:
+
+```
+pip install -U --no-deps yotta
+pip install yotta
+```
+
+This will update yotta to the latest available version, and then install any
+missing dependencies required by the new version.
+
+You can also run:
+
+```
+pip install -U yotta
+```
+
+This will also attempt to update all of yotta's dependencies to their latest
+versions.
+
+On Linux and OS X you may have to run these commands as `sudo pip ....`, if
+permission is denied.
+
 
 <br>
 <br>

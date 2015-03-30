@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -10,19 +10,15 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-# On Windows, fix the version of PyCrypto dependency to 2.6, so we can use
-# the binary installer from voidspace.org.uk (otherwise pip tries to install
-# a newer pycrypto from PyPI). Also, we need 'ntfsutils' in Windows
+# we need 'ntfsutils' in Windows
 if os.name == 'nt':
     platform_deps = ['ntfsutils>=0.1.3,<0.2']
-    pycrypto_dep = 'PyCrypto==2.6'
 else:
     platform_deps = []
-    pycrypto_dep = 'PyCrypto>=2.5,<3'
 
 setup(
     name = "yotta",
-    version = "0.1.0",
+    version = "0.2.3",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -54,8 +50,8 @@ setup(
         'colorama>=0.3,<0.4',
         'hgapi>=1.7,<2',
         'Jinja2>=2.7.0,<3',
-        pycrypto_dep,
-        'PyJWT>=0.3,<0.4',
+        'cryptography>=0.8',
+        'PyJWT>=1.0,<2.0',
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
         'mbed_test_wrapper>=0.0.2,<0.1.0',
