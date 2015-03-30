@@ -14,6 +14,8 @@ from .lib import validate
 from .lib import cmakegen
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
+# build, , build subcommand, internal
+from . import build
 
 
 def addOptions(parser):
@@ -21,6 +23,20 @@ def addOptions(parser):
         "--all", dest='all', default=False, action='store_true',
         help='Run the tests for all dependencies too, not just this module.'
     )
+    parser.add_argument(
+        "--list", dest='list_only', default=False, action='store_true',
+        help='List the tests that would be run, but don\'t run them. Implies --no-build'
+    )
+    parser.add_argument(
+        "--no-build", dest='build', default=True, action='store_false',
+        help='Don\'t build first.'
+    )
+    parser.add_argument(
+        "tests", metavar='TESTS_TO_RUN ...', default=[], action='append', nargs='?',
+        help='List tests to run (leave empty to run everything).'
+    )
+    # we build before testing, so also expose the build options
+    build.addOptions(parser)
 
 def findCTests(builddir, recurse_yotta_modules=False):
     ''' returns a list of (directory_path, [list of test commands]) '''
@@ -69,14 +85,14 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
                 modtop = False
     return module
 
-#assert(moduleFromDirname('ym/b/ym/c/d', {'b':'b', 'c':'c'}, 'a') == 'c')
-#assert(moduleFromDirname('ym/b/q/c/d', {'b':'b', 'c':'c'}, 'a') == 'b')
-#assert(moduleFromDirname('z/b/q/c/d', {'b':'b', 'c':'c'}, 'a') == 'a')
-#assert(moduleFromDirname('ym/e/d', {'b':'b', 'c':'c'}, 'a') == 'a')
-#assert(moduleFromDirname('ym/e/d', {'b':'b', 'c':'c', 'e':'e'}, 'a') == 'e')
-
-
 def execCommand(args, following_args):
+    logging.info('args.tests: %s', args.tests)
+    if args.build:
+        # we need to build before testing:
+        status = build.execCommand(args, following_args)
+        if status:
+            return status
+
     cwd = os.getcwd()
 
     c = validate.currentDirectoryModule()
@@ -89,39 +105,43 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
-    if args.all:
-        all_modules = c.getDependenciesRecursive(
-                          target = target,
-            available_components = [(c.getName(), c)]
-        )
-    else:
-        all_modules = {
-        }
+    all_modules = c.getDependenciesRecursive(
+                      target = target,
+        available_components = [(c.getName(), c)]
+    )
 
 
     builddir = os.path.join(cwd, 'build', target.getName())
  
     # get the list of tests we need to run, if --all is specified we also run
     # the tests for all of our submodules, otherwise we just run the tests for
-    # this module. 
-    tests = findCTests(builddir, recurse_yotta_modules=args.all)
+    # this module.
+    # If we have specific test specified, we also need to search for all the
+    # tests, in case the specific test does not belong to this module
+    tests = findCTests(builddir, recurse_yotta_modules=(args.all or len(args.tests)))
 
     returncode = 0
     passed = 0
     failed = 0
     for dirname, test_exes in tests:
-        # !!! FIXME: find the module associated with the specified directory,
-        # read it's testReporter command if it has one, and pipe the test
-        # output for all of its tests through its test reporter
         module = moduleFromDirname(os.path.relpath(dirname, builddir), all_modules, c)
+        logging.debug('inferred module %s from path %s', module.getName(), os.path.relpath(dirname, builddir))
+        if (not len(args.tests)) and (module is not c) and not args.all:
+            continue
         filter_command = module.getTestFilterCommand()
         if filter_command:
             logging.info('using filter "%s" for tests in %s', ' '.join(filter_command), dirname)
         for test in test_exes:
+            if args.list_only:
+                continue
+            if len(args.tests) and not test in args.tests:
+                logging.debug('skipping not-listed test %s', test)
+                continue
+            logging.info('test %s: %s', module.getName(), test)
             returncode = target.test(
                        builddir = dirname, 
                         program = test,
-                 filter_command = module.getTestFilterCommand(),
+                 filter_command = filter_command,
                    forward_args = following_args
             )
             if returncode:
@@ -130,7 +150,8 @@ def execCommand(args, following_args):
             else:
                 logging.info('test %s passed', test)
                 passed += 1
-    logging.info("tests complete: %d passed, %d failed", passed, failed)
+    if not args.list_only:
+        logging.info("tests complete: %d passed, %d failed", passed, failed)
     
     return returncode
 

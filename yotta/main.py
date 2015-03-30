@@ -107,7 +107,15 @@ def main():
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
-    addParser('test', test, 'Run the tests for the current module on the current target. Requires target support.')
+    addParser('test', test,
+        'Run the tests for the current module on the current target. A build '+
+        'will be run first, and any options to the build subcommand are also '+
+        'accepted by test.\nThis subcommand requires the target to provide a '+
+        '"test" script that will be used to run each test. Modules may also '+
+        'define a "testReporter" script, which will be piped the output from '+
+        'each test, and may produce a summary.',
+        'Run the tests for the current module on the current target. Requires target support.'
+    )
     addParser('publish', publish, 'Publish a module or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')

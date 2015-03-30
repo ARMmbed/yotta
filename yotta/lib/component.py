@@ -562,7 +562,7 @@ class Component(pack.Pack):
     def getTestFilterCommand(self):
         ''' return the test-output filtering command (array of strings) that
             this module defines, if any. '''
-        if 'scripts' in self.description and 'testOutputFilter' in self.description['scripts']:
-            return self.description['scripts']['testOutputFilter']
+        if 'scripts' in self.description and 'testReporter' in self.description['scripts']:
+            return self.description['scripts']['testReporter']
         else:
             return None

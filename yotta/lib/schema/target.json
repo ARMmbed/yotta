@@ -92,12 +92,6 @@
                 {"$ref": "#/definitions/bugsObject"}
             ]
         },
-        "extraIncludes": {
-             "type": "array",
-            "items": {
-                "$ref": "#/definitions/path"
-            }
-        },
         "scripts": {
             "type": "object",
             "patternProperties": {

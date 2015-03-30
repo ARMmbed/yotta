@@ -83,6 +83,15 @@
                 {"$ref": "#/definitions/bugsObject"}
             ]
         },
+        "scripts": {
+            "type": "object",
+            "patternProperties": {
+                "^(testReporter)$": {
+                    "$ref": "#/definitions/command"
+                }
+            },
+            "additionalProperties": true
+        },
         "extraIncludes": {
              "type": "array",
             "items": {
@@ -103,9 +112,6 @@
                 }
             },
             "additionalProperties": false
-        },
-        "testReporter": {
-            "$ref": "#/definitions/command"
         }
     },
     "definitions": {
