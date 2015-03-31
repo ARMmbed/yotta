@@ -307,7 +307,11 @@ add things to your path:
  4. Click the `Environment Variables` button
  5. Find the `Path` variable, edit it, and append the path you want to add,
     preceded by a semicolon, for example: `;C:\Path\to\wherever`
- 6. **close then re-open any open cmd.exe windows**
+    
+    **NOTE:** be careful not to add any spaces before or after the semicolon,
+    this can cause commands to fail later.
+
+ 6. **finally,** close then re-open any open cmd.exe windows
 
 
 <br>
