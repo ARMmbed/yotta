@@ -112,13 +112,36 @@ with the mbed target name of the development board.
 
 Path to the target's CMake toolchain file.
 
+### `scripts`
+**type: hash of script-name to command**
 
-### `debugServer`
+Each command is an array of the separate command arguments.
+
+The supported scripts are:
+
+ * **debug**: this is the command that's run by `yotta debug`, it should
+   probably open a debugger. `$program` will be expanded to the full path of
+   the binary to be debugged.
+ * **test**: this command is used by `yotta test` to run each test. `$program`
+   will be expanded to the full path of the binary to be debugged. For
+   cross-compiling targets, this command should load the binary on to the
+   target device, and then print the program's output on standard out.
+
+For example, the scripts for a native compilation target might look like:
+
+```json
+   "scripts": {
+      "debug": ["lldb", "$program"],
+      "test": ["$program"]
+   }
+```
+
+### `debugServer` **deprecated: use scripts.debug instead**
 **type: Array of String (command parts)**
 
 Optional command to run a debug server.
 
-### `debug`
+### `debug` **deprecated: use scripts.debug instead**
 **type: Array of String (command parts)**
 
 Optional command to run when the `yotta debug` is invoked.

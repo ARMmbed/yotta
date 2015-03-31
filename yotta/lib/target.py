@@ -367,9 +367,9 @@ class Target(pack.Pack):
     @fsutils.dropRootPrivs
     def test(self, builddir, program, filter_command, forward_args):
         if not ('scripts' in self.description and 'debug' in self.description['scripts']):
-            # !!! FIXME: should probably default to trying to run tests natively?
-            logger.error('running tests is not supported by this target (no test script is specified)')
-            return
+            test_command = ['$program']
+        else:
+            test_command = self.description['scripts']['test']
 
         test_child = None
         test_filter = None
@@ -378,7 +378,7 @@ class Target(pack.Pack):
 
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
-                for x in self.description['scripts']['test']
+                for x in test_command
             ] + forward_args
             logger.debug('running test: %s', cmd)
             if filter_command:

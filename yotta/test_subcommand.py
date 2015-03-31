@@ -12,6 +12,8 @@ import re
 from .lib import validate
 # CMakeGen, , generate build files, internal
 from .lib import cmakegen
+# Target, , represents an installed target, internal
+from .lib import target
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
 # build, , build subcommand, internal
@@ -20,23 +22,23 @@ from . import build
 
 def addOptions(parser):
     parser.add_argument(
-        "--all", dest='all', default=False, action='store_true',
-        help='Run the tests for all dependencies too, not just this module.'
-    )
-    parser.add_argument(
-        "--list", dest='list_only', default=False, action='store_true',
+        "--list", '-l', dest='list_only', default=False, action='store_true',
         help='List the tests that would be run, but don\'t run them. Implies --no-build'
     )
     parser.add_argument(
-        "--no-build", dest='build', default=True, action='store_false',
+        "--no-build", '-n', dest='build', default=True, action='store_false',
         help='Don\'t build first.'
     )
     parser.add_argument(
         "tests", metavar='TEST_TO_RUN', nargs='*', type=str, default=[],
-        help='List tests to run (omit to run everything).'
+        help='List tests to run (omit to run the default set, or use "all" to run all).'
     )
-    # we build before testing, so also expose the build options
-    build.addOptions(parser)
+
+    # relevant build options:
+    parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
+    parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
+    target.Target.addBuildOptions(parser)
+
 
 def findCTests(builddir, recurse_yotta_modules=False):
     ''' returns a list of (directory_path, [list of test commands]) '''
@@ -86,19 +88,17 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
     return module
 
 def execCommand(args, following_args):
-    if args.build:
+    # remove the pseudo-name 'all': it wouldn't be recognised by build/cmake
+    all_tests = 'all' in args.tests
+    if all_tests:
+        args.tests.remove('all')
+
+    if args.build and not args.list_only:
         # we need to build before testing, make sure that any tests needed are
         # built:
-        if len(args.tests) == 0:
-            # no specific tests: either build the default set (tests for this
-            # module only), or all tests, depending on whether --all was
-            # specified:
-            if args.all:
-                vars(args)['build_targets'] = ['all_tests']
-            else:
-                vars(args)['build_targets'] = []
+        if all_tests:
+            vars(args)['build_targets'] = args.tests + ['all_tests']
         else:
-            # otherwise try to build only the programs specified
             vars(args)['build_targets'] = args.tests
         status = build.execCommand(args, following_args)
         if status:
@@ -129,7 +129,7 @@ def execCommand(args, following_args):
     # this module.
     # If we have specific test specified, we also need to search for all the
     # tests, in case the specific test does not belong to this module
-    tests = findCTests(builddir, recurse_yotta_modules=(args.all or len(args.tests)))
+    tests = findCTests(builddir, recurse_yotta_modules=(all_tests or len(args.tests)))
 
     returncode = 0
     passed = 0
@@ -137,7 +137,7 @@ def execCommand(args, following_args):
     for dirname, test_exes in tests:
         module = moduleFromDirname(os.path.relpath(dirname, builddir), all_modules, c)
         logging.debug('inferred module %s from path %s', module.getName(), os.path.relpath(dirname, builddir))
-        if (not len(args.tests)) and (module is not c) and not args.all:
+        if (not len(args.tests)) and (module is not c) and not all_tests:
             continue
         info_filter = True
         filter_command = module.getTestFilterCommand()

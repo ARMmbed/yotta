@@ -41,6 +41,10 @@ def execCommand(args, following_args):
     if not hasattr(args, 'build_targets'):
         vars(args)['build_targets'] = []
 
+    if 'test' in args.build_targets:
+        logging.error('Cannot build "test". Use "yotta test" to run tests.')
+        return 1
+
     cwd = os.getcwd()
     c = validate.currentDirectoryModule()
     if not c:
@@ -81,7 +85,7 @@ def execCommand(args, following_args):
         logging.error(error)
         errcode = 1
     
-    if not args.generate_only:
+    if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
                 build_args=following_args, targets=args.build_targets

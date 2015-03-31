@@ -113,7 +113,7 @@ def main():
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
     addParser('test', test,
         'Run the tests for the current module on the current target. A build '+
-        'will be run first, and any options to the build subcommand are also '+
+        'will be run first, and options to the build subcommand are also '+
         'accepted by test.\nThis subcommand requires the target to provide a '+
         '"test" script that will be used to run each test. Modules may also '+
         'define a "testReporter" script, which will be piped the output from '+
