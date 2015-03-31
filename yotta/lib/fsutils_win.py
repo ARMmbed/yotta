@@ -12,6 +12,17 @@
 import ntfsutils.junction as junction
 import os
 
+def dropRootPrivs(fn):
+    ''' decorator to drop su/sudo privilages before running a function on
+        unix/linux.
+        
+        ** on windows this function does nothing **
+    '''
+    def wrapper(*args, **kwargs):
+        # !!! TODO: what can we do to de-priv on windows?
+        return fn(*args, **kwargs)
+    return wrapper
+
 def isLink(path):
     return junction.isjunction(path)
 

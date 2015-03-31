@@ -161,7 +161,11 @@ def main():
         parser.print_usage()
         sys.exit(0)
 
-    status = args.command(args, following_args)
+    try:
+        status = args.command(args, following_args)
+    except KeyboardInterrupt:
+        logging.warning('interrupted')
+        status = -1
 
     sys.exit(status or 0)
 

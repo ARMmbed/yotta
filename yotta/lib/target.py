@@ -17,6 +17,8 @@ import errno
 import version
 # Pack, , common parts of Components/Targets, internal
 import pack
+# fsutils, , misc filesystem utils, internal
+import fsutils
 
 Target_Description_File = 'target.json'
 Registry_Namespace = 'targets'
@@ -127,6 +129,7 @@ class Target(pack.Pack):
         if child.returncode:
             return 'command %s failed' % (cmd)
 
+    @fsutils.dropRootPrivs
     def build(self, builddir, component, args, release_build=False, build_args=None, targets=None):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
@@ -143,7 +146,7 @@ class Target(pack.Pack):
             cmd = ['cmake', '-G', args.cmake_generator, '.']
         res = self.exec_helper(cmd, builddir)
         if res is not None:
-            yield res
+            return res
         # cmake error: the generated Ninja build file will not work on windows when arguments are read from
         # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
         # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
@@ -164,7 +167,7 @@ class Target(pack.Pack):
                 f.write(data)
                 f.close()
             except:
-                yield 'Unable to update "%s", aborting' % build_file
+                return 'Unable to update "%s", aborting' % build_file
         build_command = self.overrideBuildCommand(args.cmake_generator, targets=targets)
         if build_command:
             cmd = build_command + build_args
@@ -173,11 +176,11 @@ class Target(pack.Pack):
             if len(targets):
                 # !!! FIXME: support multiple targets with the default CMake
                 # build command
-                cmd += ['--target', target[0]]
+                cmd += ['--target', targets[0]]
             cmd += build_args
         res = self.exec_helper(cmd, builddir)
         if res is not None:
-            yield res
+            return res
         hint = self.hintForCMakeGenerator(args.cmake_generator, component)
         if hint:
             logger.info(hint)
@@ -258,6 +261,7 @@ class Target(pack.Pack):
         logging.error('could not find program "%s" to debug' %  program)
         return None
     
+    @fsutils.dropRootPrivs
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
@@ -266,7 +270,7 @@ class Target(pack.Pack):
         '''
         if 'scripts' in self.description and 'debug' in self.description['scripts']:
             for err in self._debugWithScript(builddir, program):
-                yield err
+                return err
         elif 'debug' in self.description:
             logger.warning(
                 'target %s provides deprecated debug property. It should '+
@@ -274,9 +278,9 @@ class Target(pack.Pack):
 
             )
             for err in self._debugDeprecated(builddir, program):
-                yield err
+                return err
         else:
-            yield "Target %s does not specify debug commands" % self
+            return "Target %s does not specify debug commands" % self
 
     def _debugWithScript(self, builddir, program):
         child = None
@@ -360,6 +364,7 @@ class Target(pack.Pack):
                 # clear the sigint handler
                 signal.signal(signal.SIGINT, signal.SIG_DFL);
     
+    @fsutils.dropRootPrivs
     def test(self, builddir, program, filter_command, forward_args):
         if not ('scripts' in self.description and 'debug' in self.description['scripts']):
             # !!! FIXME: should probably default to trying to run tests natively?

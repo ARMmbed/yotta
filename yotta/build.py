@@ -82,13 +82,13 @@ def execCommand(args, following_args):
         errcode = 1
     
     if not args.generate_only:
-        for error in target.build(
+        error = target.build(
                 builddir, c, args, release_build=args.release_build,
                 build_args=following_args, targets=args.build_targets
-        ):
+        )
+        if error:
             logging.error(error)
             errcode = 1
-            break
 
     return errcode
 
