@@ -115,7 +115,7 @@ example on Debian and Ubuntu. Use whatever 2.7.* python version is provided by
 your distribution (python 3 support is currently experimental).
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build python-dev libffi-dev
+sudo apt-get install python-pip cmake build-essential ninja-build python-dev libffi-dev libssl-dev
 ```
 
 and on Fedora Linux (tested on FC21):
