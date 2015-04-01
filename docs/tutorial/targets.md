@@ -110,23 +110,39 @@ any non-alphanumeric characters converted to underscores.
 ### `yotta debug` Support
 Targets can optionally provide a command that yotta will use to start a
 debugger when the user runs `yotta debug`. They do this by providing a
-`debug` property in target.json. This should be an array of commmand arguments,
+`debug` script in target.json. This should be an array of commmand arguments,
 and use $program for the name of the program that's being debugged, for example:
 
 ```json
-  "debug": [
-    "gdb", "$program", "--eval", "target remote localhost:2331"
-  ]
+  "scripts": {
+      "debug": [
+        "lldb", "$program"
+      ]
+  }
 ```
 
 Debuggers that attach to embedded devices often need to run a debug server
-program in the background before running the debugger itself, use the
-`debugServer` property to define this command, for example:
+program in the background before running the debugger itself. ARM mbed
+compilation targets use the [`valinor`](http://github.com/ARMmbed/valinor)
+program to achieve this (valinor also detects which debugger is installed on the
+local system, and chooses the preferred one).
+
+### `yotta test` Support
+To support the `yotta test` command, targets must provide a way of running
+tests, to do this, implement `scripts.test` in target.json. For native
+compilation targets, this can simply run the program in question, for a
+cross-compilation target it should be a wrapper script that loads the program
+onto the target device, runs it, prints the program's output to stdout, and
+exits with the processes return code.
+
+For example:
 
 ```json
-  "debugServer": [
-    "JLinkGDBServer", "-if", "SWD", "-speed", "4000"
-  ],
+  "scripts": {
+      "test": [
+        "mbed-test-wrapper", "-t", "K64F", "-i", 10, "$program"
+      ]
+  }
 ```
 
 
