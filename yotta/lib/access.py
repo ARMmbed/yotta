@@ -11,6 +11,8 @@ import logging
 import component
 # Target, , represents an installed target, internal
 import target
+# Pack, , base class for targets and components, internal
+import pack
 # Access common, , components shared between access modules, internal
 import access_common
 # Registry Access, , access packages in the registry, internal
@@ -244,8 +246,13 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
     '''
     spec = None
     v    = None
+    
+    try:
+        local_component = searchPathsForComponent(name, version_required, search_paths)
+    except pack.InvalidDescription as e:
+        logger.error(e)
+        return None
 
-    local_component = searchPathsForComponent(name, version_required, search_paths)
     logger.debug("%s %s locally" % (('found', 'not found')[not local_component], name))
     if local_component:
         if update and not local_component.installedLinked():
@@ -352,11 +359,16 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
     v = None
     
     target_path = os.path.join(working_directory, name)
-    local_target = target.Target(
-                    target_path,
-               installed_linked = fsutils.isLink(target_path),
-        latest_suitable_version = v
-    )
+
+    try:
+        local_target = target.Target(
+                        target_path,
+                   installed_linked = fsutils.isLink(target_path),
+            latest_suitable_version = v
+        )
+    except pack.InvalidDescription as e:
+        logger.error(e)
+        return None
     
     if local_target and (local_target.installedLinked() or update_installed != 'Update' or not local_target.outdated()):
         # if a target exists (has a valid description file), and either is

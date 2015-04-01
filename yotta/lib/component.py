@@ -558,3 +558,11 @@ class Component(pack.Pack):
         if spec is None:
             spec = self.__saveSpecForComponent(component)
         self.description['targetDependencies'][target.getName()][component.getName()] = spec
+
+    def getTestFilterCommand(self):
+        ''' return the test-output filtering command (array of strings) that
+            this module defines, if any. '''
+        if 'scripts' in self.description and 'testReporter' in self.description['scripts']:
+            return self.description['scripts']['testReporter']
+        else:
+            return None

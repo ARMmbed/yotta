@@ -54,6 +54,9 @@ Ignore_List_Fname = '.yotta_ignore'
 
 logger = logging.getLogger('components')
 
+class InvalidDescription(Exception):
+    pass
+
 # OptionalFileWrapper provides a scope object that can wrap a none-existent file
 class OptionalFileWrapper(object):
     def __init__(self, fname=None, mode=None):
@@ -108,18 +111,24 @@ class Pack(object):
         self.description_filename = description_filename
         self.ignore_list_fname = Ignore_List_Fname
         self.ignore_patterns = copy.copy(Default_Publish_Ignore)
-        try:
-            self.description = ordered_json.load(os.path.join(path, description_filename))
-            if self.description:
-                if not 'name' in self.description:
-                    raise Exception('missing "name" in module.json')
-                if 'version' in self.description:
-                    self.version = version.Version(self.description['version'])
-                else:
-                    raise Exception('missing "version" in module.json')
-        except Exception as e:
+        description_file = os.path.join(path, description_filename)
+        if os.path.isfile(description_file):
+            try:
+                self.description = ordered_json.load(description_file)
+                if self.description:
+                    if not 'name' in self.description:
+                        raise Exception('missing "name"')
+                    if 'version' in self.description:
+                        self.version = version.Version(self.description['version'])
+                    else:
+                        raise Exception('missing "version"')
+            except Exception as e:
+                self.description = OrderedDict()
+                logger.debug(self.error)
+                raise InvalidDescription("Description invalid %s: %s" % (description_file, e))
+        else:
+            self.error = "No %s file." % description_filename
             self.description = OrderedDict()
-            self.error = e
         try:
             with open(os.path.join(path, self.ignore_list_fname), 'r') as ignorefile:
                 self.ignore_patterns += self._parseIgnoreFile(ignorefile)
@@ -143,7 +152,7 @@ class Pack(object):
             # for now schema validation errors aren't fatal... will be soon
             # though!
             #if have_errors:
-            #    raise Exception('Invalid %s' % description_filename)
+            #    raise InvalidDescription('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
     def exists(self):

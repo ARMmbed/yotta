@@ -21,6 +21,7 @@ from . import build
 from . import init
 from . import publish
 from . import debug
+from . import test_subcommand as test
 from . import login
 from . import logout
 from . import list as list_command
@@ -97,7 +98,11 @@ def main():
     addParser('build', build,
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\
-        'when make is the build tool, run `yotta build -- -j`',
+        'when make is the build tool, run:\n    yotta build -- -j\n\n'+
+        'The programs or libraries to build can be specified (by default '+
+        'only the libraries needed by the current module and the current '+
+        "module's own tests are build. For example, to build the tests of "+
+        'all dependencies, run:\n    yotta build all_tests\n\n',
         'Build the current module.'
     )
     addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
@@ -106,6 +111,15 @@ def main():
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
+    addParser('test', test,
+        'Run the tests for the current module on the current target. A build '+
+        'will be run first, and options to the build subcommand are also '+
+        'accepted by test.\nThis subcommand requires the target to provide a '+
+        '"test" script that will be used to run each test. Modules may also '+
+        'define a "testReporter" script, which will be piped the output from '+
+        'each test, and may produce a summary.',
+        'Run the tests for the current module on the current target. Requires target support.'
+    )
     addParser('publish', publish, 'Publish a module or target to the public registry.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
@@ -147,7 +161,11 @@ def main():
         parser.print_usage()
         sys.exit(0)
 
-    status = args.command(args, following_args)
+    try:
+        status = args.command(args, following_args)
+    except KeyboardInterrupt:
+        logging.warning('interrupted')
+        status = -1
 
     sys.exit(status or 0)
 

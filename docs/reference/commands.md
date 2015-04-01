@@ -34,11 +34,16 @@ Create a new `module.json` module-description file based on a set of questions. 
 #### Synopsis
 
 ```
-yotta build [--generate-only / -g] [--release-build / -r] [--cmake-generator / -G <cmake-generator-name>]
+yotta build [--generate-only] [--debug-build] [--cmake-generator <cmake-generator-name>] [name ... ]
+yotta build [ ... ] -- [ build-tool arguments ]
 ```
 
 #### Description
 Build the current module and its dependencies. Missing dependencies will be automatically installed first.
+
+If no `name` arguments are specified then the current module's tests will be
+built, but not the tests for any other module. Use the `yotta build all_tests`
+to build the tests for all dependency modules.
 
 `yotta` uses [CMake](http://www.cmake.org) to control the build, the basic process is:
 
@@ -53,12 +58,18 @@ Options:
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
  * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
  * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by `yotta` targets without additional plugins. The available generators depend on whether `yotta` is running on OS X, Linux, or Windows.
+ * `name ...`: one or more modules may be specified, in which case only these
+   modules and their dependencies will be built. Use `all_tests` to cause all
+   tests to be built.
+ * `-- ...`: any options specified after `--` are passed unmodified on to the tool being used for building (e.g. Ninja, or make)
 
 #### Examples
 
 ```
-yotta build -r
-yotta build -r -G "Sublime Text 2 - Ninja"
+yotta build
+yotta build -d all_tests
+yotta build -d -G "Sublime Text 2 - Ninja"
+yotta build -G "Unix Makefiles" -- -j 4
 ```
 
 <a name="yotta-search"></a>
@@ -93,6 +104,43 @@ yotta search module logging
 yotta search target -k mbed-official -k mbed-target:k64f
 ```
 
+<a name="yotta-test"></a>
+## yotta test
+#### Synopsis
+
+```
+yotta test [--list] [--no-build] [ build-arguments ] [tests-to-run ...]
+```
+
+#### Description
+
+Run tests. If no arguments are specified, then the tests for the current module
+will be run, use `yotta test all` to run the tests for all modules.
+
+The [target description](/tutorial/targets.html) provides support for the test
+command if it is a cross-compiling target (no support is necessary to run tests
+natively). The `scripts.test` value in the target description is executed with
+`$program` expanded to the path to the binary, it should be a wrapper script
+that loads the binary at the specified path onto the target device, runs it,
+and prints output on standard output.
+
+Options:
+
+ * `--list`, `-l`: List the tests that would be run, rather than running them.
+   Implies `--no-build`.
+ * `--no-build`, `-n`: Don't build anything, try to run already-built tests.
+   Things will fail if all the specified tests are not built!
+ * This command also accepts the options to [`yotta build`](#yotta-build),
+   which are used if building.
+
+#### Examples
+
+```
+yotta test
+yotta test --list all
+yotta test -n my-test
+```
+   
 
 <a name="yotta-debug"></a>
 ## yotta debug

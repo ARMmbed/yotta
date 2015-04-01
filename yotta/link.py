@@ -28,18 +28,6 @@ def addOptions(parser):
              'link the current module.'
     )
 
-def dropSudoPrivs(fn):
-    # !!! FIXME: what should this actually do under Windows?
-    if os.name == 'nt':
-        return fn()
-    running_as_root = (os.geteuid() == 0)
-    if running_as_root and os.environ['SUDO_UID']:
-        os.seteuid(int(os.environ['SUDO_UID']))
-    r = fn()
-    if running_as_root:
-        os.seteuid(0)
-    return r
-
 def execCommand(args, following_args):
     c = validate.currentDirectoryModule()
     if not c:
@@ -54,7 +42,7 @@ def execCommand(args, following_args):
         # run the install command first, if we're being run sudo'd, drop sudo
         # privileges for this
         args.act_globally = False
-        dropSudoPrivs(lambda: install.execCommand(args, following_args))
+        fsutils.dropRootPrivs(lambda: install.execCommand(args, following_args))()
         fsutils.mkDirP(folders.globalInstallDirectory())
 
         src = os.getcwd()
