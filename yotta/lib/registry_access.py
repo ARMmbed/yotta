@@ -63,7 +63,7 @@ class AuthError(RuntimeError):
 # Internal functions
 
 def generate_jwt_token(private_key, registry=None):
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
     expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
     prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
@@ -151,7 +151,7 @@ def _listVersions(namespace, name):
     registry_urls = [s['url'] for s in sources if 'type' in s and s['type'] == 'registry']
 
     # look in the public registry last
-    registry_urls.append(Public_Registry_URL)
+    registry_urls.append(Registry_Base_URL)
 
     versions = []
 
@@ -164,7 +164,8 @@ def _listVersions(namespace, name):
         )
         
         request_headers = _headersForRegistry(registry)
-
+        
+        logger.debug("GET %s, %s", url, request_headers)
         response = requests.get(url, headers=request_headers)
         
         if response.status_code == 404:
@@ -174,7 +175,7 @@ def _listVersions(namespace, name):
         response.raise_for_status()
 
         for x in ordered_json.loads(response.text):
-            rtv = RegistryThingVersion(x, namespace, name)
+            rtv = RegistryThingVersion(x, namespace, name, registry=registry)
             if not rtv in versions:
                 versions.append(rtv)
 
@@ -187,23 +188,30 @@ def _listVersions(namespace, name):
     return versions
 
 def _tarballURL(namespace, name, version, registry=None):
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
     return '%s/%s/%s/versions/%s/tarball' % (
         registry, namespace, name, version
     )
 
-def _getTarball(url, directory, sha256, registry=None):
+def _getTarball(url, directory, sha256):
     logger.debug('registry: get: %s' % url)
 
     if not sha256:
         logger.warn('tarball %s has no hash to check' % url)
+    
+    # figure out which registry we're fetching this tarball from (if any) and
+    # add appropriate headers
+    registry = Registry_Base_URL
 
-    auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
+    for source in _getSources():
+        if ('type' in source and source['type'] == 'registry' and
+             'url' in source and url.startswith(source['url'])):
+            registry = source['url']
+            break
 
-    request_headers = {
-        'Authorization': 'Bearer %s' % auth_token
-    }
-
+    request_headers = _headersForRegistry(registry)
+    
+    logger.debug('GET %s, %s', url, request_headers)
     response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
     response.raise_for_status()
 
@@ -216,7 +224,7 @@ def _getSources():
     return sources
 
 def _isPublicRegistry(registry):
-    return (registry is None) or (registry == Public_Registry_URL)
+    return (registry is None) or (registry == Registry_Base_URL)
 
 def _getPrivateKey(registry):
     if _isPublicRegistry(registry):
@@ -233,7 +241,7 @@ def _sourceMatches(source, registry):
              'url' in source and source['url'] == registry)
 
 def _generateAndSaveKeys(registry=None):
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
     k = rsa.generate_private_key(
         public_exponent=65537, key_size=2048, backend=default_backend()
     )
@@ -273,7 +281,7 @@ def _generateAndSaveKeys(registry=None):
     return pubkey_pem, privatekey_pem
 
 def _getPrivateKeyObject(registry=None):
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     privatekey_pem = _getPrivateKey(registry)
     if not privatekey_pem:
         pubkey_pem, privatekey_pem = _generateAndSaveKeys(registry)
@@ -295,12 +303,12 @@ def _getPrivateKeyObject(registry=None):
 
 
 def _headersForRegistry(registry):
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
     r = {
         'Authorization': 'Bearer %s' % auth_token
     }
-    if registry == Public_Registry_URL:
+    if registry == Registry_Base_URL:
         return r
     for s in _getSources():
         if _sourceMatches(s, registry):
@@ -383,7 +391,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
         return value by the decorators. (If successful, the decorated function
         returns None)
     '''
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
 
     url = '%s/%s/%s/versions/%s' % (
         registry,
@@ -420,7 +428,7 @@ def listOwners(namespace, name, registry=None):
     ''' List the owners of a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     
     url = '%s/%s/%s/owners' % (
         registry,
@@ -448,7 +456,7 @@ def addOwner(namespace, name, owner, registry=None):
     ''' Add an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     
     url = '%s/%s/%s/owners/%s' % (
         registry,
@@ -476,7 +484,7 @@ def removeOwner(namespace, name, owner, registry=None):
     ''' Remove an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     
     url = '%s/%s/%s/owners/%s' % (
         registry,
@@ -509,7 +517,7 @@ def search(query='', keywords=[]):
         two queries.
     '''
 
-    url = '%s/search' % Public_Registry_URL
+    url = '%s/search' % Registry_Base_URL
     params = {
          'skip': 0,
         'limit': 50
@@ -532,22 +540,19 @@ def search(query='', keywords=[]):
     
 
 def deauthorize(registry=None):
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     if _isPublicRegistry(registry):
         if settings.get('keys'):
             settings.set('keys', dict())
     else:
-        sources = _getSources()
-        for s in sources:
-            if _sourceMatches(s, registry):
-                sources['keys'] = dict()
-                settings.set('sources', sources)
+        sources = [s for s in _getSources() if not _sourceMatches(s, registry)]
+        settings.set('sources', sources)
 
 def setAPIKey(registry, api_key):
     ''' Set the api key for accessing a registry. This is only necessary for
         development/test registries.
     '''
-    if (registry is None) or (registry == Public_Registry_URL):
+    if (registry is None) or (registry == Registry_Base_URL):
         return
     sources = _getSources()
     source = None
@@ -566,7 +571,7 @@ def setAPIKey(registry, api_key):
 
 def getPublicKey(registry=None):
     ''' Return the user's public key (generating and saving a new key pair if necessary) '''
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     pubkey_pem = None
     if _isPublicRegistry(registry):
         pubkey_pem = settings.getProperty('keys', 'public')
@@ -593,7 +598,7 @@ def getPublicKey(registry=None):
 
 
 def testLogin(registry=None):
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
     url = '%s/users/me' % (
         registry
     )
@@ -609,7 +614,7 @@ def getAuthData(registry=None):
         (which, depending on the authentication the user chose or was directed
         to, will include a github or other access token)
     '''
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     url = '%s/tokens' % (
         registry
     )
@@ -649,7 +654,7 @@ def getAuthData(registry=None):
     return r
 
 def getLoginURL(provider=None, registry=None):
-    registry = registry or Public_Registry_URL
+    registry = registry or Registry_Base_URL
     if provider:
         query = '?provider=github'
     else:
@@ -661,5 +666,5 @@ def getLoginURL(provider=None, registry=None):
     return  Website_Base_URL + '/' + query + '#login/' + getPublicKey(registry)
 
 def openBrowserLogin(provider=None, registry=None):
-    registry = registry or Public_Registry_URL    
+    registry = registry or Registry_Base_URL    
     webbrowser.open(getLoginURL(provider=provider, registry=registry))
