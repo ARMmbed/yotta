@@ -310,7 +310,8 @@ class Pack(object):
                         description_file,
                         tar_file,
                         readme_file_wrapper.file,
-                        readme_file_wrapper.extension().lower()
+                        readme_file_wrapper.extension().lower(),
+                        registry=registry
                     )
 
     @classmethod

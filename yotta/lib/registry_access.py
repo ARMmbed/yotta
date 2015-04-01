@@ -658,7 +658,7 @@ def getLoginURL(provider=None, registry=None):
         if not len(query):
             query = '?'
         query += '&private=1'
-    return  Website_Base_URL + '/' + query + '#login/' + getPublicKey()
+    return  Website_Base_URL + '/' + query + '#login/' + getPublicKey(registry)
 
 def openBrowserLogin(provider=None, registry=None):
     registry = registry or Public_Registry_URL    
