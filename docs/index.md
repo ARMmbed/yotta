@@ -110,9 +110,11 @@ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip insta
 <br>
 <a name="installing-on-linux"></a>
 ## Installing On Linux
-First install yotta's dependencies using your system's package manager, for
-example on Debian and Ubuntu. Use whatever 2.7.* python version is provided by
-your distribution (python 3 support is currently experimental).
+First install yotta's dependencies using your system's package manager. Use
+whatever 2.7.* python version is provided by your distribution (python 3
+support is currently experimental).
+
+For example on Debian and Ubuntu:
 
 ```sh
 sudo apt-get install python-pip cmake build-essential ninja-build python-dev libffi-dev libssl-dev
@@ -122,7 +124,7 @@ and on Fedora Linux (tested on FC21):
 
 ```sh
 # install development tool dependencies
-sudo yum install python-pip cmake ninja-build python-devel libffi-devel clang
+sudo yum install python-pip cmake ninja-build python-devel libffi-devel openssl-devel clang
 sudo yum groupinstall "Development Tools" "Development Libraries"
 
 # update pip to latest release
