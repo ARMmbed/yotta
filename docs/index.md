@@ -22,26 +22,24 @@ yotta is written in [python](https://www.python.org/download/releases/2.7/),
 and distributed using
 [pip](http://pip.readthedocs.org/en/latest/installing.html), the python package
 manager. You will need a working installation of both python and pip to install
-yotta.
-
-If you have these, and a working development environment, you can run
-**`pip install yotta`** to install yotta. If you don't
-know that you already have a working development environment set up, follow the
-more detailed instructions for your OS below
-([windows](#installing-on-windows), [mac](#installing-on-osx), or
-[linux](#installing-on-linux)).
-
-To upgrade an existing installation to a new version, see
-[upgrading](#upgrading) (the same for all systems).
-
-Because yotta is used to build software, you will also need a working
-development environment for compiling software, including:
+yotta, as well as a working development environment for compiling software, including:
 
  * **[CMake](http://www.cmake.org)**, the build system that yotta uses.
  * a **compiler**, to actually compile the code into working programs.
 
 yotta supports compiling with different compilers by specifying different
-[targets](../tutorial/targets.html) for the compilation.
+[targets](../tutorial/targets.html) for the compilation, and a compilation
+target may have its own specific requirements.
+
+To install yotta, please follow the detailed installation instructions for your
+operating system below:
+
+ * [Windows](#installing-on-windows)
+ * [Mac](#installing-on-osx)
+ * [Linux](#installing-on-linux)
+
+To upgrade an existing installation to a new version, see
+[upgrading](#upgrading) (the same for all systems).
 
 
 <br>
@@ -117,14 +115,14 @@ example on Debian and Ubuntu. Use whatever 2.7.* python version is provided by
 your distribution (python 3 support is currently experimental).
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build python-dev
+sudo apt-get install python-pip cmake build-essential ninja-build python-dev libffi-dev
 ```
 
 and on Fedora Linux (tested on FC21):
 
 ```sh
 # install development tool dependencies
-sudo yum install python-pip cmake ninja-build python-devel clang
+sudo yum install python-pip cmake ninja-build python-devel libffi-devel clang
 sudo yum groupinstall "Development Tools" "Development Libraries"
 
 # update pip to latest release
@@ -153,12 +151,18 @@ chmod 755 /usr/local/lib/yotta_modules
 
 ### Cross-compiling from Linux
 
-First install the [`arm-none-eabi-gcc`
-compiler](https://launchpad.net/gcc-arm-embedded).
+To cross-compile yotta modules for embedded targets, you first need install the
+[`arm-none-eabi-gcc` compiler](https://launchpad.net/gcc-arm-embedded).
 
-#### Ubuntu 14.04 or later users:
-There is a package name conflict for [Ubuntu 14.04 and later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded).
-Remove previous versions and update your repositories:
+On most Linux distributiosn, this can be done by running:
+
+```sh
+sudo apt-get install gcc-arm-none-eabi
+```
+
+Unfortunately there is a package name conflict for [Ubuntu 14.04 and
+later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded), so
+you need to remove previous versions and update your repositories:
 
 ```sh
 sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
@@ -176,11 +180,6 @@ or for Ubuntu 14.10:
 
 ```sh
 sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q1-0utopic14
-```
-
-#### All other Linux users:
-```sh
-sudo apt-get install gcc-arm-none-eabi
 ```
 
 To use this compiler, you'll need to select a supported cross-compilation
