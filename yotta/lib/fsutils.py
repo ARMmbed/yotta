@@ -5,7 +5,6 @@
 
 # standard library modules, , ,
 import os
-import pwd
 import errno
 import shutil
 import platform
