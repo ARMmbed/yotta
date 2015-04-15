@@ -42,6 +42,17 @@ Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema'
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8
 
+
+def _mergeDictionaries(d1, d2):
+    # merge dictionaries of dictionaries recursively
+    result = type(d1)()
+    for k, v in d1.items() + d2.items():
+        if not k in result:
+            result[k] = v
+        elif isinstance(result[k], dict):
+            result[k] = _mergeDictionaries(result[k], v)
+    return result
+
 # API
 class Component(pack.Pack):
     def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None):
@@ -90,7 +101,7 @@ class Component(pack.Pack):
         self.installed_dependencies = False
         self.dependencies_failed = False
 
-    def getDependencySpecs(self, target=None):
+    def getDependencySpecs(self, target=None, test=False):
         ''' Returns [(component name, version requirement)]
             e.g. ('ARM-RD/yottos', '*')
 
@@ -106,19 +117,25 @@ class Component(pack.Pack):
             deps += self.description['dependencies'].items()
         if target and 'targetDependencies' in self.description:
             for t in target.dependencyResolutionOrder():
-                if t in self.description['targetDependencies']:
+                target_deps = self.description['targetDependencies']
+                if test and 'testTargetDependencies' in self.description:
+                    target_deps = _mergeDictionaries(target_deps, self.description['testTargetDependencies'])
+                if t in target_deps:
                     logger.debug(
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += self.description['targetDependencies'][t].items()
+                    deps += target_deps[t].items()
+        if test and 'testDependencies' in self.description:
+            deps += self.description['testDependencies'].items()
         return deps
 
     def getDependencies(self,
         available_components = None,
                  search_dirs = None,
                       target = None,
-              available_only = False
+              available_only = False,
+                        test = False
         ):
         ''' Returns {component_name:component}
         '''
@@ -127,7 +144,7 @@ class Component(pack.Pack):
             search_dirs = []
         r = OrderedDict()
         modules_path = self.modulesPath()
-        for name, ver_req in self.getDependencySpecs(target=target):
+        for name, ver_req in self.getDependencySpecs(target=target, test=test):
             if name in available_components:
                 logger.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
