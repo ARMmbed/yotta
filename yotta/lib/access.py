@@ -109,7 +109,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         v = spec.select(vers)
         logger.debug("%s selected %s from %s", spec, v, vers)
         if not v:
-            raise Exception(
+            raise access_common.ComponentUnavailable(
                 'The %s registry does not provide a version of "%s" matching "%s"' % (
                     registry, name, spec
                 )
@@ -130,7 +130,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             v = spec.select(vers)
             logger.debug("%s selected %s from %s", spec, v, vers)
             if not v:
-                raise Exception(
+                raise access_common.ComponentUnavailable(
                     'Github repository "%s" does not provide a version matching "%s"' % (
                         remote_component.repo,
                         remote_component.spec
@@ -147,7 +147,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             )
             if v:
                 return v
-            raise Exception(
+            raise access_common.ComponentUnavailable(
                 'Github repository "%s" does not have any tags or branches matching "%s"' % (
                     version_required, spec
                 )
@@ -158,7 +158,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         logger.debug('satisfy %s from %s url' % (name, clone_type))
         local_clone = remote_component.clone()
         if not local_clone:
-            raise Exception(
+            raise access_common.ComponentUnavailable(
                 'Failed to clone %s URL %s to satisfy dependency %s' % (clone_type, version_required, name)
             )
         spec = remote_component.versionSpec()
@@ -172,7 +172,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             v = spec.select(vers)
             logger.debug("%s selected %s from %s", spec, v, vers)
             if not v:
-                raise Exception(
+                raise access_common.ComponentUnavailable(
                     '%s repository "%s" does not provide a version matching "%s"' % (
                         clone_type,
                         version_required,
@@ -189,7 +189,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             )
             if v:
                 return v
-            raise Exception(
+            raise access_common.ComponentUnavailable(
                 '%s repository "%s" does not have any tags or branches matching "%s"' % (
                     clone_type, version_required, spec
                 )
@@ -230,9 +230,9 @@ def satisfyVersionFromAvailble(name, version_required, available):
                 ) 
         r = available[name]
         if spec and not spec.match(r.getVersion()):
-            raise Exception('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
+            raise access_common.ComponentUnavailable('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
         if name != r.getName():
-            raise Exception('Component %s was installed as different name %s in %s' % (
+            raise access_common.ComponentUnavailable('Component %s was installed as different name %s in %s' % (
                 r.getName(), name, r.path
             ))
         return r

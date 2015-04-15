@@ -13,6 +13,8 @@ import re
 from .lib import component
 # access, , get components, internal
 from .lib import access
+# access, , get components, internal
+from .lib import access_common
 
 # folders, , get places to install things, internal
 from .lib import folders
@@ -108,24 +110,30 @@ def installComponentAsDependency(args, current_component):
     # below), for these the original source should be included in the version
     # spec, too
     github_ref_match = GitHub_Ref_RE.match(args.component)
-    if github_ref_match:
-        component_name = github_ref_match.group(1)
-        installed = access.satisfyVersion(
-                component_name,
-                args.component,
-                     available = {current_component.getName():current_component},
-                  search_paths = [modules_dir],
-             working_directory = modules_dir
-        )
-    else:
-        component_name = args.component
-        installed = access.satisfyVersion(
-                component_name,
-                           '*',
-                     available = {current_component.getName():current_component},
-                  search_paths = [modules_dir],
-             working_directory = modules_dir
-        )
+    try:
+        if github_ref_match:
+            component_name = github_ref_match.group(1)
+            installed = access.satisfyVersion(
+                    component_name,
+                    args.component,
+                         available = {current_component.getName():current_component},
+                      search_paths = [modules_dir],
+                 working_directory = modules_dir
+            )
+        else:
+            component_name = args.component
+            installed = access.satisfyVersion(
+                    component_name,
+                               '*',
+                         available = {current_component.getName():current_component},
+                      search_paths = [modules_dir],
+                 working_directory = modules_dir
+            )
+    except access_common.ComponentUnavailable as e:
+        logging.error(e)
+        return 1
+
+
     # always add the component to the dependencies of the current component
     # - but don't write the dependency file back to disk if we're not meant to
     # save it
