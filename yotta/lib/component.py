@@ -173,7 +173,8 @@ class Component(pack.Pack):
                                search_dirs = None,
                                     target = None,
                           update_installed = False,
-                                  provider = None
+                                  provider = None,
+                                      test = False
    ):
         ''' Get installed components using "provider" to find (and possibly
             install) components.
@@ -201,7 +202,7 @@ class Component(pack.Pack):
             except vcs.VCSError as e:
                 errors.append(e)
                 self.dependencies_failed = True
-        specs = self.getDependencySpecs(target)
+        specs = self.getDependencySpecs(target=target, test=test)
         #dependencies = pool.map(
         dependencies = map(
             satisfyDep, specs
@@ -218,6 +219,7 @@ class Component(pack.Pack):
                                      traverse_links = False,
                                    update_installed = False,                                     
                                            provider = None,
+                                               test = False,
                                          _processed = None
     ):
         ''' Get installed components using "provider" to find (and possibly
@@ -272,6 +274,9 @@ class Component(pack.Pack):
                             working_directory,
                             update_if_installed
                           )
+                test:
+                    True, False, 'toplevel': should test-only dependencies be
+                    included (yes, no, or only at this level, not recursively)
         '''
         def recursionFilter(c):
             if not c:
@@ -289,6 +294,7 @@ class Component(pack.Pack):
             search_dirs = []
         if _processed is None:
             _processed = set()
+        assert(test in [True, False, 'toplevel'])
         search_dirs.append(self.modulesPath())
         logger.debug('process %s\nsearch dirs:%s' % (self.getName(), search_dirs))
         components, errors = self.__getDependenciesWithProvider(
@@ -296,7 +302,8 @@ class Component(pack.Pack):
                      search_dirs = search_dirs,
                 update_installed = update_installed,
                           target = target,
-                        provider = provider
+                        provider = provider,
+                            test = test
         )
         _processed.add(self.getName())
         if errors:
@@ -306,6 +313,8 @@ class Component(pack.Pack):
         logger.debug('processed %s\nneed recursion: %s\navailable:%s\nsearch dirs:%s' % (self.getName(), need_recursion, available_components, search_dirs))
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
+        if test == 'toplevel':
+            test = False
         for c in need_recursion:
             dep_components, dep_errors = c.__getDependenciesRecursiveWithProvider(
                 available_components = available_components,
@@ -314,6 +323,7 @@ class Component(pack.Pack):
                       traverse_links = traverse_links,
                     update_installed = update_installed,
                             provider = provider,
+                                test = test,
                           _processed = _processed
             )
             available_components.update(dep_components)
@@ -327,7 +337,8 @@ class Component(pack.Pack):
                             processed = None,
                           search_dirs = None,
                                target = None,
-                       available_only = False
+                       available_only = False,
+                                 test = False
         ):
         ''' Get available and already installed components, don't check for
             remotely available components. See also
@@ -365,7 +376,8 @@ class Component(pack.Pack):
                          target = target,
                  traverse_links = True,
                update_installed = False,
-                       provider = provideInstalled
+                       provider = provideInstalled,
+                           test = test
         )
         for error in errors:
             logger.error(error)
@@ -385,7 +397,8 @@ class Component(pack.Pack):
                      search_dirs = None,
                 update_installed = False,
                   traverse_links = False,
-                          target = None
+                          target = None,
+                            test = False
         ):
         ''' Retrieve and install all the dependencies of this component and its
             dependencies, recursively, or satisfy them from a collection of
@@ -397,7 +410,6 @@ class Component(pack.Pack):
 
                 components: dictionary of name:Component
                 errors: sequence of errors
-
 
             Parameters
             ==========
@@ -430,6 +442,11 @@ class Component(pack.Pack):
                     name and it's similarTo list will be used in resolving
                     dependencies. If None, then only target-independent
                     dependencies will be installed
+                
+                test:
+                    True, False, or 'toplevel: should test-only dependencies be
+                    installed? (yes, no, or only for this module, not its
+                    dependencies).
 
         '''
         def provider(
@@ -461,7 +478,8 @@ class Component(pack.Pack):
                          target = target,
                  traverse_links = traverse_links,
                update_installed = update_installed,
-                       provider = provider
+                       provider = provider,
+                           test = test
         )
 
     def satisfyTarget(self, target_name_and_version, update_installed=False):

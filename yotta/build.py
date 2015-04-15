@@ -62,6 +62,18 @@ def execCommand(args, following_args):
     vars(args)['act_globally'] = False
     vars(args)['save'] = False
     vars(args)['save_target'] = False
+    if not hasattr(args, 'install_test_deps'):
+        if 'all_tests' in args.build_targets:
+            vars(args)['install_test_deps'] = 'all'
+        elif not len(args.build_targets):
+            vars(args)['install_test_deps'] = 'own'
+        else:
+            # If the named build targets include tests from other modules, we
+            # need to install the deps for those modules. To do this we need to
+            # be able to tell which module a library belongs to, which is not
+            # straightforward (especially if there is custom cmake involved).
+            # That's why this is 'all', and not 'none'.
+            vars(args)['install_test_deps'] = 'all'
     install.execCommand(args, [])
 
     builddir = os.path.join(cwd, 'build', target.getName())

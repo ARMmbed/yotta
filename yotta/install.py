@@ -29,6 +29,10 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Traverse linked modules, and install dependencies needed there too.'
     )
+    parser.add_argument('--test-dependencies', dest='install_test_deps',
+        choices=('none', 'all', 'own'), default='own',
+        help='Control the installation of dependencies necessary for building tests.'
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
         help='Install globally instead of in the current working directory.'
@@ -44,6 +48,8 @@ def addOptions(parser):
 
 
 def execCommand(args, following_args):
+    if not hasattr(args, 'install_test_deps'):
+        vars(args)['install_test_deps'] = 'none'
     cwd = os.getcwd()
     c = component.Component(cwd)
     if args.component is None:
@@ -85,7 +91,8 @@ def installDeps(args, current_component):
         components, errors = current_component.satisfyDependenciesRecursive(
                           target = target,
                   traverse_links = install_linked,
-            available_components = [(current_component.getName(), current_component)]
+            available_components = [(current_component.getName(), current_component)],
+                            test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
         for error in errors:
             logging.error(error)
@@ -142,7 +149,9 @@ def installComponentAsDependency(args, current_component):
     # satisfy dependencies)
     components, errors = current_component.satisfyDependenciesRecursive(
                       target = target,
-        available_components = [(current_component.getName(), current_component)]
+        available_components = [(current_component.getName(), current_component)],
+                        test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
+        
     )
     for error in errors:
         logging.error(error)

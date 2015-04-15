@@ -60,38 +60,64 @@ def hasGithubConfig():
     return True
 
 class TestCLIInstall(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp() 
-
-    def tearDown(self):
-        rmRf(self.test_dir)
-    
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installRegistryRef(self):
-        stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Name])
+        test_dir = tempfile.mkdtemp() 
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Name], test_dir)
+        rmRf(test_dir)
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installGithubRef(self):
-        stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Github_Name])
+        test_dir = tempfile.mkdtemp() 
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Github_Name], test_dir)
+        rmRf(test_dir)
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
-        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+        test_dir = tempfile.mkdtemp() 
+        with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
-        stdout = self.runCheckCommand(['--target', Test_Target, 'install'])
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)
 
         # also sanity-check listing:
-        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'])
+        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'], test_dir)
         self.assertTrue(stdout.find('testmod') != -1)
         self.assertTrue(stdout.find('other-testing-dummy') != -1)
 
         # and test install --save
-        stdout = self.runCheckCommand(['--target', Test_Target, 'install', '--save', 'hg-access-testing'])
-        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'])
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', '--save', 'hg-access-testing'], test_dir)
+        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'], test_dir)
         self.assertTrue(stdout.find('hg-access-testing') != -1)
+        rmRf(test_dir)
 
-    def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
+    def test_installAllTestDeps(self):
+        test_dir = tempfile.mkdtemp()
+        with open(os.path.join(test_dir, 'module.json'), 'w') as f:
+            f.write(Test_Module_JSON)
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', '--test-dependencies', 'all'], test_dir)
+
+        # also sanity-check listing:
+        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'], test_dir)
+        self.assertTrue(stdout.find('testmod') != -1)
+        self.assertTrue(stdout.find('other-testing-dummy') != -1)
+        rmRf(test_dir)        
+
+    @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
+    def test_installNoTestDeps(self):
+        test_dir = tempfile.mkdtemp()
+        with open(os.path.join(test_dir, 'module.json'), 'w') as f:
+            f.write(Test_Module_JSON)
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', '--test-dependencies', 'none'], test_dir)
+
+        # also sanity-check listing:
+        stdout = self.runCheckCommand(['--target', Test_Target, 'ls'], test_dir)
+        self.assertTrue(stdout.find('testmod') != -1)
+        self.assertTrue(stdout.find('other-testing-dummy') != -1)
+        rmRf(test_dir)        
+
+    def runCheckCommand(self, args, test_dir):
+        stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 
