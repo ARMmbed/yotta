@@ -317,3 +317,25 @@ included as:
 *without* specifying any additional include paths. This almost completely
 eliminates any possibility of header name collision, as published module names
 are forced to be unique by the yotta module registry.
+
+<a name="scripts"></a>
+### `scripts`
+**type: hash of script-name to command**
+
+Each command is an array of the separate command arguments.
+
+The supported scripts are:
+
+ * **testReporter**: this command is run for the tests of each module, and is
+   piped the output of the tests. It may display information about the
+   success/failure of a test, and should exit with a status 0 if the test
+   passed, or a status 1 if the test failed.
+
+For example, the scripts for a module that uses the "mbedgt" test framework,
+would use the `mbedgt` helper program to parse and verify the test output:
+
+```json
+   "scripts": {
+      "testReporter": ["mbedgt", "--digest", "stdin", "-v", "-V"]
+   }
+```
