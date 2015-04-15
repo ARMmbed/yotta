@@ -112,6 +112,7 @@ with the mbed target name of the development board.
 
 Path to the target's CMake toolchain file.
 
+<a name="scripts"></a>
 ### `scripts`
 **type: hash of script-name to command**
 
