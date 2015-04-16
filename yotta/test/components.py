@@ -104,37 +104,5 @@ class ComponentTestCase(unittest.TestCase):
         test_deps = c.getDependencies(test=True)
         self.assertEqual(list(test_deps.keys()), test_deps_in_order)
 
-
-    def test_mergeDictionaries(self):
-        a = OrderedDict([('a', 1), ('b', 2), ('c', 3), ('subdict', OrderedDict([('a',7), ('c',0)]))])
-        b = OrderedDict([('a', 2), ('d', 4), ('e', 5), ('subdict', {'a':12, 'b':8, 'subsubdict':{1:'a', 2:'b'}})])
-        c = OrderedDict([('subdict', {'subsubdict':{3:'c'}})])
-
-        self.assertEqual(component._mergeDictionaries(a, {}), a)
-        self.assertEqual(component._mergeDictionaries(b, {}), b)
-        self.assertEqual(component._mergeDictionaries(c, {}), c)
-        self.assertEqual(
-            component._mergeDictionaries(a, b),
-            OrderedDict([
-                ('a', 1),
-                ('b', 2),
-                ('c', 3),
-                ('subdict', OrderedDict([('a', 7), ('c', 0), ('subsubdict', {1: 'a', 2: 'b'}), ('b', 8)])),
-                ('d', 4),
-                ('e', 5)
-            ])
-        )
-        self.assertEqual(
-            component._mergeDictionaries(component._mergeDictionaries(a, b), c),
-            OrderedDict([
-                ('a', 1),
-                ('b', 2),
-                ('c', 3),
-                ('subdict', OrderedDict([('a', 7), ('c', 0), ('subsubdict', {1: 'a', 2: 'b', 3:'c'}), ('b', 8)])),
-                ('d', 4),
-                ('e', 5)
-            ])
-        )
-
 if __name__ == '__main__':
     unittest.main()

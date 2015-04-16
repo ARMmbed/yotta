@@ -39,13 +39,13 @@ class TestGitHubAccess(unittest.TestCase):
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
-        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
-        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False))
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target', 'install_test_deps'])
+        install.installComponent(Args(Test_Deps_Name, Test_Deps_Target, False, False, False, False, 'own'))
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_branchAccess(self):
-        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target'])
-        install.installComponent(Args(Test_Branch_Name, Test_Deps_Target, False, False, False, False))
+        Args = namedtuple('Args', ['component', 'target', 'act_globally', 'install_linked', 'save', 'save_target', 'install_test_deps'])
+        install.installComponent(Args(Test_Branch_Name, Test_Deps_Target, False, False, False, False, 'own'))
 
 
 if __name__ == '__main__':

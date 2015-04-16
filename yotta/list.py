@@ -24,7 +24,7 @@ from .lib import fsutils
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
-        help='Show all dependencies (including repeats)'
+        help='Show all dependencies (including repeats, and test-only dependencies)'
     )
 
 def execCommand(args, following_args):
@@ -44,7 +44,8 @@ def execCommand(args, following_args):
 
     dependencies = c.getDependenciesRecursive(
                       target = target,
-        available_components = [(c.getName(), c)]
+        available_components = [(c.getName(), c)],
+                        test = True
     )
     printComponentDepsRecursive(c, dependencies, [c.getName()], target, args.show_all)
 
@@ -96,7 +97,8 @@ def printComponentDepsRecursive(
         list_all,
         indent=u'',
         tee=u'',
-        installed_at=u''
+        installed_at=u'',
+        test_dep=False
 ):
     DIM    = colorama.Style.DIM
     BRIGHT = colorama.Style.BRIGHT
@@ -107,12 +109,42 @@ def printComponentDepsRecursive(
     mods_path = component.modulesPath()
     deps = component.getDependencies(
             available_components = all_components,
-                          target = target
+                          target = target,
+                            test = True,
+                        warnings = False
     )
-    specs = dict(component.getDependencySpecs(target=target))
+    specs = dict([(x.name, x) for x in component.getDependencySpecs(target=target)])
+
+    def isTestOnly(name):
+        return specs[name].is_test_dependency
+
+    def shouldDisplay(x):
+        if list_all:
+            # list everything everywhere (apart from test dependencies of test
+            # dependencies, which should be considered irrelevant)
+            if component.isTestDependency() and isTestOnly(x[0]):
+                return False
+            else:
+                return True
+        if (not isTestOnly(x[0]) or not len(indent)):
+            # this is non-test dependency, or a top-level test dependency
+            if not x[1]:
+                # if it's missing, display it
+                return True
+            if x[1].path == os.path.join(mods_path, x[0]):
+                # if it's installed in this module, display it
+                return True
+            if x[0] in deps_here:
+                # if it's first depended on by this module, then display it
+                return True
+        # everything else shouldn't be displayed here
+        return False
+
 
     line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
 
+    if test_dep:
+        line += u' ' + DIM + u'(test dependency)' + RESET
     if len(installed_at):
         line += u' ' + DIM + installed_at + RESET
     if component.installedLinked():
@@ -121,12 +153,7 @@ def printComponentDepsRecursive(
     putln(line)
     
     deps_here  = [x for x in list(deps.keys()) if (x not in processed)]
-    print_deps = [x for x in list(deps.items()) if
-            list_all or
-            (not x[1]) or
-            (x[1].path == os.path.join(mods_path, x[0])) or
-            (x[0] in deps_here)
-    ]
+    print_deps = [x for x in list(deps.items()) if shouldDisplay(x)]
     
     processed += [x[0] for x in print_deps]
     
@@ -140,25 +167,49 @@ def printComponentDepsRecursive(
             next_indent = indent + Pipe_Char + u' '
             tee = T_Char + Dash_Char + u' '
             next_tee = T_Char + Dash_Char + u' '
+        test_dep_status = u''
+        if isTestOnly(name):
+            test_dep_status = u' (test dependency)'
+
         if not dep:
-            putln(indent + tee + name + u' ' + specs[name] + BRIGHT + RED + ' missing' + RESET)
+            putln(indent + tee + name + u' ' + specs[name].version_req + test_dep_status + BRIGHT + RED + ' missing' + RESET)
         else:
-            spec = access.remoteComponentFor(name, specs[name], 'modules').versionSpec()
+            spec = access.remoteComponentFor(name, specs[name].version_req, 'modules').versionSpec()
             if not spec:
                 spec_descr = u''
             elif spec.match(dep.getVersion()):
                 spec_descr = u' ' + str(spec)
             else:
                 spec_descr = u' ' + RESET + BRIGHT + RED + str(spec)
+            spec_descr += test_dep_status
 
             if name in deps_here:
                 # dependencies that are first used here may actually be
                 # installed higher up our dependency tree, if they are,
                 # illustrate that:
                 if dep.path == os.path.join(mods_path, name):
-                    printComponentDepsRecursive(dep, all_components, processed, target, list_all, next_indent, next_tee)
+                    printComponentDepsRecursive(
+                                   dep,
+                        all_components,
+                             processed,
+                                target,
+                              list_all,
+                           next_indent,
+                              next_tee,
+                              test_dep = isTestOnly(name)
+                    )
                 else:
-                    printComponentDepsRecursive(dep, all_components, processed, target, list_all, next_indent, next_tee, relpathIfSubdir(dep.path))
+                    printComponentDepsRecursive(
+                                   dep,
+                        all_components,
+                             processed,
+                                target,
+                              list_all,
+                           next_indent,
+                              next_tee,
+                          installed_at = relpathIfSubdir(dep.path),
+                              test_dep = isTestOnly(name)
+                    )
             else:
                 putln(indent + tee + DIM + name + spec_descr + RESET)
 

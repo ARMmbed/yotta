@@ -104,7 +104,19 @@
         "dependencies": {
             "$ref": "#/definitions/dependencyMap"
         },
+        "testDependencies": {
+            "$ref": "#/definitions/dependencyMap"
+        },
         "targetDependencies": {
+            "type": "object",
+            "patternProperties": {
+                "(^[a-z]+[a-z0-9-]*$)|(^[*]$)": {
+                    "$ref": "#/definitions/dependencyMap"
+                }
+            },
+            "additionalProperties": false
+        },
+        "testTargetDependencies": {
             "type": "object",
             "patternProperties": {
                 "(^[a-z]+[a-z0-9-]*$)|(^[*]$)": {

@@ -224,7 +224,7 @@ class Target(pack.Pack):
                     )
 
         if len(exact_matches) == 1:
-            logging.info('found %s at %s')
+            logging.info('found %s at %s', program, exact_matches[0])
             return exact_matches[0]
         elif len(exact_matches) > 1:
             logging.error(
