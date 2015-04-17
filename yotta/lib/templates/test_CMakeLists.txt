@@ -2,6 +2,27 @@
 
 include_directories("{{ source_directory | replaceBackslashes }}")
 
+
+# add include path definitions needed only for tests (from testDependencies):
+{% for component in test_dependencies %}
+    include_directories("{{ component.path | replaceBackslashes }}")
+{% endfor %}
+
+{% for component in test_dependencies %}
+    {% for d in component.getExtraSysIncludes() %}
+        include_directories(SYSTEM "{{ d | replaceBackslashes }}")
+    {% endfor %}
+{% endfor %}
+
+{% for component in test_dependencies %}
+    {% for d in component.getExtraIncludes() %}
+        include_directories("{{ d | replaceBackslashes }}")
+    {% endfor %}
+{% endfor %}
+
+
+# define the tests themselves:
+
 {% for file_names, object_name, languages in tests %}
 add_executable({{ object_name }} {{ 'EXCLUDE_FROM_ALL' if exclude_from_all else '' }}
     {{ file_names | join('\n    ') | replaceBackslashes }}

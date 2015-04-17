@@ -80,11 +80,12 @@ def execCommand(args, following_args):
 
     all_components = c.getDependenciesRecursive(
                       target = target,
-        available_components = [(c.getName(), c)]
+        available_components = [(c.getName(), c)],
+                        test = True
     )
     errors = 0
     for d in all_components.values():
-        if not d:
+        if not d and not (d.isTestDependency() and args.install_test_deps != 'all'):
             logging.error('%s not available' % os.path.split(d.path)[1])
             errors += 1
     if errors:
