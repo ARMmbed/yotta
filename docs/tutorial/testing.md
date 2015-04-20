@@ -51,10 +51,7 @@ Will result in the following test executables:
 
 
 ## `testDependencies`
-**[provisional] the information in this section includes functionality that
-is not yet in the main yotta release.**
-
-The [`testDependencies` section](!!! TODO: implement, document and linky) in
+The [`testDependencies` section](/reference/module.html#testDependencies) in
 each module's `module.json` file can be used for dependencies like testing
 frameworks which are only required for tests. Note that *all* the listed
 `testDependencies` will be linked against all of the tests.
