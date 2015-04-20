@@ -10,6 +10,7 @@ import logging
 import re
 import itertools
 from collections import defaultdict
+from collections import OrderedDict
 
 # bsd licensed - pip install jinja2
 from jinja2 import Environment, FileSystemLoader
@@ -105,7 +106,7 @@ class CMakeGen(object):
         # check for its dependencies, in case it has a circular dependency on
         # itself
         processed_components[component.getName()] = component
-        new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
+        new_dependencies = OrderedDict([(name,c) for name,c in dependencies.items() if c and not name in processed_components])
         self.generate(builddir, modbuilddir, component, new_dependencies, dependencies, recursive_deps, toplevel)
 
         logger.debug('recursive deps of %s:' % component)
@@ -144,7 +145,7 @@ class CMakeGen(object):
         bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         test_subdirs = []
         resource_subdirs = []
-        for f in os.listdir(component.path):
+        for f in sorted(os.listdir(component.path)):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
             if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
@@ -355,7 +356,7 @@ class CMakeGen(object):
                 component.getName(), os.path.basename(os.path.splitext(str(f))[0]).lower()
             )
             tests.append([[str(f)], object_name, [f.lang]])
-        for subdirname, sources in subdirs.items():
+        for subdirname, sources in sorted(subdirs.items(), key=lambda x: x[0]):
             object_name = '%s-test-%s' % (
                 component.getName(), fsutils.fullySplitPath(subdirname)[0].lower()
             )
@@ -447,7 +448,7 @@ class CMakeGen(object):
 
         sources = []
         for root, dires, files in os.walk(directory):
-            for f in files:
+            for f in sorted(files):
                 name, ext = os.path.splitext(f)
                 ext = ext.lower()
                 fullpath = os.path.join(root, f)
