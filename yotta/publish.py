@@ -39,7 +39,7 @@ def execCommand(args, following_args):
         logging.error('The working directory is not clean. Commit before publishing!')
         return 1
 
-    error = p.publish()
+    error = p.publish(args.registry)
     if error:
         logging.error(error)
         return 1

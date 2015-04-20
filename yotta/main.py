@@ -77,6 +77,10 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
+    parser.add_argument(
+        '--registry', default=None, dest='registry', help=argparse.SUPPRESS
+    )
+
     def addParser(name, module, description, help=None):
         if help is None:
             help = description

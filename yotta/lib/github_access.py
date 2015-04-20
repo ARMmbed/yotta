@@ -128,18 +128,22 @@ def _getTarball(url, into_directory):
 
     access_common.unpackTarballStream(response, into_directory)
 
-def _pollForAuth():
-    tokens = registry_access.getAuthData()
+def _pollForAuth(registry=None):
+    tokens = registry_access.getAuthData(registry=registry)
     if tokens and 'github' in tokens:
         settings.setProperty('github', 'authtoken', tokens['github'])
         return True
     return False
 
 # API
-def authorizeUser():
+def authorizeUser(registry=None):
     # poll once with any existing public key, just in case a previous login
     # attempt was interrupted after it completed
-    if _pollForAuth():
+    try:
+        if _pollForAuth(registry=registry):
+            return
+    except registry_access.AuthError as e:
+        logger.error('%s' % e)
         return
 
     # python 2 + 3 compatibility
@@ -162,7 +166,7 @@ def authorizeUser():
             colorama.Style.NORMAL+'\n'
         )
 
-        registry_access.openBrowserLogin(provider='github')
+        registry_access.openBrowserLogin(provider='github', registry=registry)
         
 
         sys.stdout.write('waiting for response...')
@@ -170,7 +174,7 @@ def authorizeUser():
             colorama.Style.DIM+
             '\nIf you are unable to use a browser on this machine, please copy and '+
             'paste this URL into a browser:\n'+
-            registry_access.getLoginURL(provider='github')+'\n'+
+            registry_access.getLoginURL(provider='github', registry=registry)+'\n'+
             colorama.Style.NORMAL
         )
         sys.stdout.flush()
@@ -179,7 +183,7 @@ def authorizeUser():
             '\nyotta is unable to open a browser for you to complete login '+
             'on this machine. Please copy and paste this URL into a '
             'browser to complete login:\n'+
-            registry_access.getLoginURL(provider='github')+'\n'
+            registry_access.getLoginURL(provider='github', registry=registry)+'\n'
         )
         sys.stdout.write('waiting for response...')
         sys.stdout.flush()
@@ -189,8 +193,12 @@ def authorizeUser():
         time.sleep(5)
         sys.stdout.write('.')
         sys.stdout.flush()
-        if _pollForAuth():
-            sys.stdout.write('\n')
+        try:
+            if _pollForAuth(registry=registry):
+                sys.stdout.write('\n')
+                return
+        except registry_access.AuthError as e:
+            logger.error('%s' % e)
             return
 
     raise Exception('Login timed out: please try again.')
