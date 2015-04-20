@@ -42,9 +42,16 @@ Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema'
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8
 
+
 # API
+class DependencySpec(object):
+    def __init__(self, name, version_req, is_test_dependency=False):
+        self.name = name
+        self.version_req = version_req
+        self.is_test_dependency = is_test_dependency
+
 class Component(pack.Pack):
-    def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None):
+    def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
            
             Initialise it with the directory into which the component has been
@@ -89,36 +96,56 @@ class Component(pack.Pack):
         self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
+        self.is_test_dependency = test_dependency
 
     def getDependencySpecs(self, target=None):
-        ''' Returns [(component name, version requirement)]
-            e.g. ('ARM-RD/yottos', '*')
+        ''' Returns [DependencySpec]
 
             These are returned in the order that they are listed in the
             component description file: this is so that dependency resolution
             proceeds in a predictable way.
         '''
-        if 'dependencies' not in self.description and 'targetDependencies' not in self.description:
-            logger.debug("component %s has no dependencies" % self.getName())
-            return tuple()
         deps = []
-        if 'dependencies' in self.description:
-            deps += self.description['dependencies'].items()
-        if target and 'targetDependencies' in self.description:
+        
+        deps += [DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
+        target_deps = self.description.get('targetDependencies', {})
+        if target is not None:
             for t in target.dependencyResolutionOrder():
-                if t in self.description['targetDependencies']:
+                if t in target_deps:
                     logger.debug(
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += self.description['targetDependencies'][t].items()
-        return deps
+                    deps += [DependencySpec(x[0], x[1], False) for x in target_deps[t].items()]
+
+        deps += [DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
+        target_deps = self.description.get('testTargetDependencies', {})
+        if target is not None:
+            for t in target.dependencyResolutionOrder():
+                if t in target_deps:
+                    logger.debug(
+                        'Adding test-target-dependent dependency specs for target %s (similar to %s) to component %s' %
+                        (target, t, self.getName())
+                    )
+                    deps += [DependencySpec(x[0], x[1], True) for x in target_deps[t].items()]
+
+        # remove duplicates (use the first occurrence)
+        seen = set()
+        r = []
+        for dep in deps:
+            if not dep.name in seen:
+                r.append(dep)
+                seen.add(dep.name)
+
+        return r
 
     def getDependencies(self,
         available_components = None,
                  search_dirs = None,
                       target = None,
-              available_only = False
+              available_only = False,
+                        test = False,
+                    warnings = True
         ):
         ''' Returns {component_name:component}
         '''
@@ -127,7 +154,11 @@ class Component(pack.Pack):
             search_dirs = []
         r = OrderedDict()
         modules_path = self.modulesPath()
-        for name, ver_req in self.getDependencySpecs(target=target):
+        for dspec in self.getDependencySpecs(target=target):
+            if dspec.is_test_dependency and not test:
+                continue
+            name = dspec.name
+            ver_req = dspec.version_req
             if name in available_components:
                 logger.debug('found dependency %s of %s in available components' % (name, self.getName()))
                 r[name] = available_components[name]
@@ -146,7 +177,7 @@ class Component(pack.Pack):
                 # if we didn't find a valid component in the search path, we
                 # use the component initialised with the last place checked
                 # (the modules path)
-                if not c:
+                if warnings and not c:
                     logger.warning('failed to find dependency %s of %s' % (name, self.getName()))
                 r[name] = c
         return r
@@ -156,7 +187,8 @@ class Component(pack.Pack):
                                search_dirs = None,
                                     target = None,
                           update_installed = False,
-                                  provider = None
+                                  provider = None,
+                                      test = False
    ):
         ''' Get installed components using "provider" to find (and possibly
             install) components.
@@ -167,12 +199,10 @@ class Component(pack.Pack):
         '''
         errors = []
         modules_path = self.modulesPath()
-        def satisfyDep(name_and_ver_req):
-            (name, ver_req) = name_and_ver_req
+        def satisfyDep(dspec):
             try:
                 return provider(
-                  name,
-                  ver_req,
+                  dspec,
                   available_components,
                   search_dirs,
                   modules_path,
@@ -184,14 +214,17 @@ class Component(pack.Pack):
             except vcs.VCSError as e:
                 errors.append(e)
                 self.dependencies_failed = True
-        specs = self.getDependencySpecs(target)
+        specs = self.getDependencySpecs(target=target)
+        if not test:
+            # filter out things that aren't test dependencies if necessary:
+            specs = [x for x in specs if not x.is_test_dependency]
         #dependencies = pool.map(
         dependencies = map(
             satisfyDep, specs
         )
         self.installed_dependencies = True
         # stable order is important!
-        return (OrderedDict([((d and d.getName()) or specs[i][0], d) for i, d in enumerate(dependencies)]), errors)
+        return (OrderedDict([((d and d.getName()) or specs[i].name, d) for i, d in enumerate(dependencies)]), errors)
 
 
     def __getDependenciesRecursiveWithProvider(self,
@@ -201,6 +234,7 @@ class Component(pack.Pack):
                                      traverse_links = False,
                                    update_installed = False,                                     
                                            provider = None,
+                                               test = False,
                                          _processed = None
     ):
         ''' Get installed components using "provider" to find (and possibly
@@ -248,13 +282,15 @@ class Component(pack.Pack):
 
                 provider: None (default) or function:
                           provider(
-                            name,
-                            version_req,
+                            dependency_spec,
                             available_components,
                             search_dirs,
                             working_directory,
                             update_if_installed
                           )
+                test:
+                    True, False, 'toplevel': should test-only dependencies be
+                    included (yes, no, or only at this level, not recursively)
         '''
         def recursionFilter(c):
             if not c:
@@ -272,14 +308,19 @@ class Component(pack.Pack):
             search_dirs = []
         if _processed is None:
             _processed = set()
+        assert(test in [True, False, 'toplevel'])
         search_dirs.append(self.modulesPath())
         logger.debug('process %s\nsearch dirs:%s' % (self.getName(), search_dirs))
+        if self.isTestDependency():
+            logger.debug("won't provide test dependencies recursively for test dependency %s", self.getName())
+            test = False
         components, errors = self.__getDependenciesWithProvider(
             available_components = available_components,
                      search_dirs = search_dirs,
                 update_installed = update_installed,
                           target = target,
-                        provider = provider
+                        provider = provider,
+                            test = test
         )
         _processed.add(self.getName())
         if errors:
@@ -287,6 +328,8 @@ class Component(pack.Pack):
         need_recursion = filter(recursionFilter, components.values()) 
         available_components.update(components)
         logger.debug('processed %s\nneed recursion: %s\navailable:%s\nsearch dirs:%s' % (self.getName(), need_recursion, available_components, search_dirs))
+        if test == 'toplevel':
+            test = False
         # NB: can't perform this step in parallel, since the available
         # components list must be updated in order
         for c in need_recursion:
@@ -297,6 +340,7 @@ class Component(pack.Pack):
                       traverse_links = traverse_links,
                     update_installed = update_installed,
                             provider = provider,
+                                test = test,
                           _processed = _processed
             )
             available_components.update(dep_components)
@@ -310,7 +354,8 @@ class Component(pack.Pack):
                             processed = None,
                           search_dirs = None,
                                target = None,
-                       available_only = False
+                       available_only = False,
+                                 test = False
         ):
         ''' Get available and already installed components, don't check for
             remotely available components. See also
@@ -318,8 +363,8 @@ class Component(pack.Pack):
 
             Returns {component_name:component}
         '''
-        def provideInstalled(name,
-                      version_req,
+        def provideInstalled(
+                            dspec,
              available_components,
                       search_dirs,
                 working_directory,
@@ -327,18 +372,22 @@ class Component(pack.Pack):
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
                 logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
             if r:
+                if r.isTestDependency() and not dspec.is_test_dependency:
+                    logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
+                    r.setTestDependency(False)
                 return r
-            r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
+            r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
             if r:
+                r.setTestDependency(dspec.is_test_dependency)
                 return r
             # return an in invalid component, so that it's possible to use
             # getDependenciesRecursive to find a list of failed dependencies,
             # as well as just available ones
-            r = Component(os.path.join(self.modulesPath(), name))
+            r = Component(os.path.join(self.modulesPath(), dspec.name), test_dependency=dspec.is_test_dependency)
             assert(not r)
             return r
 
@@ -348,7 +397,8 @@ class Component(pack.Pack):
                          target = target,
                  traverse_links = True,
                update_installed = False,
-                       provider = provideInstalled
+                       provider = provideInstalled,
+                           test = test
         )
         for error in errors:
             logger.error(error)
@@ -368,7 +418,8 @@ class Component(pack.Pack):
                      search_dirs = None,
                 update_installed = False,
                   traverse_links = False,
-                          target = None
+                          target = None,
+                            test = False
         ):
         ''' Retrieve and install all the dependencies of this component and its
             dependencies, recursively, or satisfy them from a collection of
@@ -380,7 +431,6 @@ class Component(pack.Pack):
 
                 components: dictionary of name:Component
                 errors: sequence of errors
-
 
             Parameters
             ==========
@@ -413,11 +463,15 @@ class Component(pack.Pack):
                     name and it's similarTo list will be used in resolving
                     dependencies. If None, then only target-independent
                     dependencies will be installed
+                
+                test:
+                    True, False, or 'toplevel: should test-only dependencies be
+                    installed? (yes, no, or only for this module, not its
+                    dependencies).
 
         '''
         def provider(
-            name,
-            version_req,
+            dspec,
             available_components,
             search_dirs,
             working_directory,
@@ -425,17 +479,23 @@ class Component(pack.Pack):
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(name, version_req, available_components)
+                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
                 logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
             if r:
+                if r.isTestDependency() and not dspec.is_test_dependency:
+                    logger.debug('test dependency subsequently occurred as real dependency: %s', dspec.name)
+                    r.setTestDependency(False)
                 return r
-            r = access.satisfyVersionFromSearchPaths(name, version_req, search_dirs, update_if_installed)
+            r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
             if r:
+                r.setTestDependency(dspec.is_test_dependency)
                 return r
-            r = access.satisfyVersionByInstalling(name, version_req, self.modulesPath())
+            r = access.satisfyVersionByInstalling(dspec.name, dspec.version_req, self.modulesPath())
             if not r:
                 logger.error('could not install %s' % name)
+            if r is not None:
+                r.setTestDependency(dspec.is_test_dependency)
             return r
 
         return self.__getDependenciesRecursiveWithProvider(
@@ -444,7 +504,8 @@ class Component(pack.Pack):
                          target = target,
                  traverse_links = traverse_links,
                update_installed = update_installed,
-                       provider = provider
+                       provider = provider,
+                           test = test
         )
 
     def satisfyTarget(self, target_name_and_version, update_installed=False):
@@ -529,6 +590,12 @@ class Component(pack.Pack):
 
     def getRegistryNamespace(self):
         return Registry_Namespace
+
+    def setTestDependency(self, status):
+        self.is_test_dependency = status
+
+    def isTestDependency(self):
+        return self.is_test_dependency
 
     def __saveSpecForComponent(self, component):
         version = component.getVersion()

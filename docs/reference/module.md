@@ -235,6 +235,17 @@ Example:
 	}
 ```
 
+<a name="testDependencies"></a>
+### `testDependencies`
+**type: Object `{"<modulename>": "<version specification or source>"}`**
+
+The `testDependencies` section can be used to list modules that are only
+depended on by tests. They will not normally be installed if your module is
+installed as a dependency of another.
+
+See [`dependencies`](#dependencies) for a description of how to specify
+different sorts of dependencies.
+
 
 ### `description`
 **type: String**

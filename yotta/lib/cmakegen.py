@@ -83,17 +83,24 @@ class CMakeGen(object):
         recursive_deps = component.getDependenciesRecursive(
             available_components = all_components,
                           target = self.target,
-                  available_only = True
+                  available_only = True,
+                            test = True
         )
         dependencies = component.getDependencies(
                   all_components,
                           target = self.target,
-                  available_only = True
+                  available_only = True,
+                            test = True
         )
 
         for name, dep in dependencies.items():
+            # if dep is a test dependency, then it might not be required (if
+            # we're not building tests). We don't actually know at this point 
             if not dep:
-                yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
+                if dep.isTestDependency():
+                    logger.debug('Test dependency "%s" of "%s" is not installed.' % (name, component))
+                else: 
+                    yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
         # ensure this component is assumed to have been installed before we
         # check for its dependencies, in case it has a circular dependency on
         # itself
@@ -185,6 +192,8 @@ class CMakeGen(object):
         include_sys_dirs = ''
         include_other_dirs = ''
         for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
+            if c is not component and c.isTestDependency():
+                continue
             include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(c.path)
             dep_sys_include_dirs = c.getExtraSysIncludes()
             for d in dep_sys_include_dirs:
@@ -232,6 +241,10 @@ class CMakeGen(object):
                 else:
                     exe_name = None
                 if f in test_subdirs:
+                    # if this module is a test dependency, then don't recurse
+                    # to building its own tests.
+                    if component.isTestDependency():
+                        continue
                     self.generateTestDirList(
                         builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
@@ -243,13 +256,18 @@ class CMakeGen(object):
                 add_own_subdirs.append(
                     (os.path.join(builddir, f), os.path.join(builddir, f))
                 )
+            
+            # from now on, completely forget that this component had any tests
+            # if it is itself a test dependency: 
+            if component.isTestDependency():
+                test_subdirs = []
 
             # if we're not building anything other than tests, then we need to
             # generate a dummy library so that this component can still be linked
             # against
             if len(add_own_subdirs) <= len(test_subdirs):
                 add_own_subdirs.append(self.createDummyLib(
-                    component, builddir, [x for x in immediate_dependencies]
+                    component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
 
 
@@ -362,6 +380,7 @@ class CMakeGen(object):
             'link_dependencies':link_dependencies,
                   'cmake_files': cmake_files,
              'exclude_from_all': (not toplevel),
+            'test_dependencies': [x[1] for x in immediate_dependencies.items() if x[1].isTestDependency()]
         })
 
         self._writeFile(fname, file_contents)
@@ -369,7 +388,7 @@ class CMakeGen(object):
     def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name, resource_subdirs):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
-        link_dependencies = [x for x in immediate_dependencies]
+        link_dependencies = [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
         fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
 
         if dirname == 'source' or executable_name:
