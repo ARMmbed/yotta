@@ -289,7 +289,7 @@ class Pack(object):
             errors that occured, or None if successful.
             No VCS tagging is performed.
         '''
-        if (registry is None) or (registry == registry_access.Public_Registry_URL):
+        if (registry is None) or (registry == registry_access.Registry_Base_URL):
             if 'private' in self.description and self.description['private']:
                 return "this %s is private and cannot be published" % (self.description_filename.split('.')[0])
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
