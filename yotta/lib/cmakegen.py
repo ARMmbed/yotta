@@ -408,10 +408,9 @@ class CMakeGen(object):
             resource_files = []
             for f in resource_subdirs:
                 for root, dires, files in os.walk(f):
-                    if ".xcassets/" in root or ".bundle/" in root:
-                        pass
-                    elif root.endswith(".xcassets") or root.endswith(".bundle"):
+                    if root.endswith(".xcassets") or root.endswith(".bundle"):
                         resource_files.append(root)
+                        del dires[:]
                     else:
                         for f in files:
                             resource_files.append(os.path.join(root, f))
