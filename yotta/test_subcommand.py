@@ -47,7 +47,7 @@ def findCTests(builddir, recurse_yotta_modules=False):
     # seems to be to parse the CTestTestfile.cmake files, which kinda sucks,
     # but works... Patches welcome.
     tests = []
-    add_test_re = re.compile('add_test\\([^" ]*\s*"(.*)"\\)')
+    add_test_re = re.compile('add_test\\([^" ]*\s*"(.*)"\\)', flags=re.IGNORECASE)
     for root, dirs, files in os.walk(builddir, topdown=True):
         if not recurse_yotta_modules:
             dirs = [d for d in dirs if d != 'ym']
@@ -55,7 +55,7 @@ def findCTests(builddir, recurse_yotta_modules=False):
             with open(os.path.join(root, 'CTestTestfile.cmake'), 'r') as ctestf:
                 dir_tests = []
                 for line in ctestf:
-                    if line.startswith('add_test'):
+                    if line.lower().startswith('add_test'):
                         match = add_test_re.search(line)
                         if match:
                             dir_tests.append(match.group(1))
