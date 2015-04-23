@@ -20,6 +20,7 @@ from . import target
 from . import build
 from . import init
 from . import publish
+from . import unpublish
 from . import debug
 from . import test_subcommand as test
 from . import login
@@ -125,6 +126,7 @@ def main():
         'Run the tests for the current module on the current target. Requires target support.'
     )
     addParser('publish', publish, 'Publish a module or target to the public registry.')
+    addParser('unpublish', unpublish, 'Un-publish a recently published module or target.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
     addParser('list', list_command, 'List the dependencies of the current module.')
