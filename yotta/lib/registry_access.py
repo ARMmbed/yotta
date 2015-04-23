@@ -421,6 +421,27 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
 
     return None
 
+@_handleAuth
+def unpublish(namespace, name, version, registry=None):
+    ''' Try to unpublish a recently published version. Return any errors that
+        occur.
+    '''
+    registry = registry or Registry_Base_URL    
+
+    url = '%s/%s/%s/versions/%s' % (
+        registry,
+        namespace,
+        name,
+        version
+    )
+    
+    headers = _headersForRegistry(registry)
+    response = requests.delete(url, headers=headers)
+
+    if not response.ok:
+        return "server returned status %s: %s" % (response.status_code, response.text)
+
+    return None
 
 @_friendlyAuthError
 @_handleAuth
