@@ -136,7 +136,7 @@ def installComponentAsDependency(args, current_component):
                       search_paths = [modules_dir],
                  working_directory = modules_dir
             )
-    except access_common.ComponentUnavailable as e:
+    except access_common.Unavailable as e:
         logging.error(e)
         return 1
 

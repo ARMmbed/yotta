@@ -208,7 +208,7 @@ class Component(pack.Pack):
                   modules_path,
                   update_installed
                 )
-            except access_common.ComponentUnavailable as e:
+            except access_common.Unavailable as e:
                 errors.append(e)
                 self.dependencies_failed = True
             except vcs.VCSError as e:
@@ -525,7 +525,7 @@ class Component(pack.Pack):
                 targets_path,
                 update_installed=('Update' if update_installed else None)
             )
-        except access_common.ComponentUnavailable as e:
+        except access_common.Unavailable as e:
             errors.append(e)
         return (target, errors)
 

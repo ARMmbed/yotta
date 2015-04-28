@@ -21,11 +21,11 @@ class AccessException(Exception):
     pass
 
 
-class ComponentUnavailable(AccessException):
+class Unavailable(AccessException):
     pass
 
 
-class TargetUnavailable(ComponentUnavailable):
+class TargetUnavailable(Unavailable):
     pass
 
 

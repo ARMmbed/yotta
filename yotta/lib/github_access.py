@@ -251,7 +251,7 @@ class GithubComponent(access_common.RemoteComponent):
             try:
                 self.tags = _getTags(self.repo).items()
             except github.UnknownObjectException as e:
-                raise access_common.ComponentUnavailable(
+                raise access_common.Unavailable(
                     'could not locate github component "%s", either the name is misspelt, you do not have access to it, or it does not exist' % self.repo
                 )
         return self.tags
