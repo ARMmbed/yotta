@@ -51,7 +51,7 @@ class DependencySpec(object):
         self.is_test_dependency = is_test_dependency
 
 class Component(pack.Pack):
-    def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None, test_dependency=False):
+    def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
            
             Initialise it with the directory into which the component has been
@@ -93,7 +93,6 @@ class Component(pack.Pack):
                     Component_Description_File
                 )
             )
-        self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
         self.is_test_dependency = test_dependency
@@ -168,7 +167,6 @@ class Component(pack.Pack):
                     component_path = path.join(d, name)
                     c = Component(
                         component_path,
-                        installed_previously=True,
                         installed_linked=fsutils.isLink(component_path)
                     )
                     if c:
@@ -528,12 +526,6 @@ class Component(pack.Pack):
         except access_common.Unavailable as e:
             errors.append(e)
         return (target, errors)
-
-    def installedPreviously(self):
-        ''' Return true if this component was created with
-            installed_previously=True
-        '''
-        return self.installed_previously
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 
