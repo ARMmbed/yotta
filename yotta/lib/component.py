@@ -50,6 +50,11 @@ class DependencySpec(object):
         self.version_req = version_req
         self.is_test_dependency = is_test_dependency
 
+    def __unicode__(self):
+        return u'%s at %s' % (self.name, self.version_req)
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
 class Component(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
@@ -204,7 +209,8 @@ class Component(pack.Pack):
                   available_components,
                   search_dirs,
                   modules_path,
-                  update_installed
+                  update_installed,
+                  self.getName()
                 )
             except access_common.Unavailable as e:
                 errors.append(e)
@@ -473,13 +479,14 @@ class Component(pack.Pack):
             available_components,
             search_dirs,
             working_directory,
-            update_if_installed
+            update_if_installed,
+            dep_of_name=None
         ):
             r = None
             try:
                 r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
+                logger.error('%s (when trying to find %s for %s)' % (str(e), dspec, dep_of_name))
             if r:
                 if r.isTestDependency() and not dspec.is_test_dependency:
                     logger.debug('test dependency subsequently occurred as real dependency: %s', dspec.name)
@@ -505,7 +512,7 @@ class Component(pack.Pack):
                        provider = provider,
                            test = test
         )
-
+    
     def satisfyTarget(self, target_name_and_version, update_installed=False):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
