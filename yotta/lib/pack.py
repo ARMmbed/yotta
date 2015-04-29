@@ -88,6 +88,18 @@ class OptionalFileWrapper(object):
     def __bool__(self):
         return bool(self.fname)
 
+
+class DependencySpec(object):
+    def __init__(self, name, version_req, is_test_dependency=False):
+        self.name = name
+        self.version_req = version_req
+        self.is_test_dependency = is_test_dependency
+
+    def __unicode__(self):
+        return u'%s at %s' % (self.name, self.version_req)
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
 

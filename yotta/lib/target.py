@@ -55,6 +55,17 @@ class Target(pack.Pack):
         '''
         return [self.description['name']] + self.description['similarTo']
 
+    def baseTargetSpec(self):
+        ''' returns pack.DependencySpec for the base target of this target (or
+            None if this target does not inherit from another target.
+        '''
+        inherits = self.description.get('inherits', {})
+        if len(inherits) == 1:
+            return pack.DependencySpec(inherits.items()[0][0], inherits.items()[0][1])
+        elif len(inherits) > 1:
+            logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
+        return None
+
     def getToolchainFile(self):
         return os.path.join(self.path, self.description['toolchain'])
 

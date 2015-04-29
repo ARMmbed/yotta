@@ -44,17 +44,6 @@ VVVERBOSE_DEBUG = logging.DEBUG - 8
 
 
 # API
-class DependencySpec(object):
-    def __init__(self, name, version_req, is_test_dependency=False):
-        self.name = name
-        self.version_req = version_req
-        self.is_test_dependency = is_test_dependency
-
-    def __unicode__(self):
-        return u'%s at %s' % (self.name, self.version_req)
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
-
 class Component(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
@@ -111,7 +100,7 @@ class Component(pack.Pack):
         '''
         deps = []
         
-        deps += [DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
+        deps += [pack.DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
             for t in target.dependencyResolutionOrder():
@@ -120,9 +109,9 @@ class Component(pack.Pack):
                         'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += [DependencySpec(x[0], x[1], False) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], False) for x in target_deps[t].items()]
 
-        deps += [DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
+        deps += [pack.DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
             for t in target.dependencyResolutionOrder():
@@ -131,7 +120,7 @@ class Component(pack.Pack):
                         'Adding test-target-dependent dependency specs for target %s (similar to %s) to component %s' %
                         (target, t, self.getName())
                     )
-                    deps += [DependencySpec(x[0], x[1], True) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], True) for x in target_deps[t].items()]
 
         # remove duplicates (use the first occurrence)
         seen = set()
@@ -376,7 +365,7 @@ class Component(pack.Pack):
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
+                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
                 logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
             if r:
@@ -484,7 +473,7 @@ class Component(pack.Pack):
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
+                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
                 logger.error('%s (when trying to find %s for %s)' % (str(e), dspec, dep_of_name))
             if r:
@@ -519,20 +508,61 @@ class Component(pack.Pack):
             current component
         '''
         logger.debug('satisfy target: %s' % target_name_and_version);
-        errors = []
-        targets_path = self.targetsPath()
-        target = None
-        try:
-            target_name, target_version_req = target_name_and_version.split(',', 1)
-            target = access.satisfyTarget(
-                target_name,
-                target_version_req,
-                targets_path,
-                update_installed=('Update' if update_installed else None)
-            )
-        except access_common.Unavailable as e:
-            errors.append(e)
-        return (target, errors)
+        #errors = []
+        #targets_path = self.targetsPath()
+        #target = None
+        #try:
+        #    target_name, target_version_req = target_name_and_version.split(',', 1)
+        #    target = access.satisfyTarget(
+        #        target_name,
+        #        target_version_req,
+        #        targets_path,
+        #        update_installed=('Update' if update_installed else None)
+        #    )
+        #except access_common.Unavailable as e:
+        #    errors.append(e)
+        #return (target, errors)
+        
+        if ',' in target_name_and_version:
+            name, ver = target_name_and_version.split(',')
+            dspec = pack.DependencySpec(name, ver)
+        else:
+            dspec = pack.DependencySpec(target_name_and_version, "*")
+        
+        top_target        = None
+        previous_name     = dspec.name
+        search_dirs       = [self.targetsPath()]
+        available_targets = []
+        errors            = []
+        while True:
+            target = None
+            try:
+                target = access.satisfyVersion(
+                                 name = dspec.name,
+                     version_required = dspec.version_req,
+                            available = available_targets,
+                         search_paths = search_dirs,
+                    working_directory = self.targetsPath(),
+                     update_installed = ('Update' if update_installed else None),
+                                 type = 'target'
+                )
+            except access_common.Unavailable as e:
+                errors.append(e)
+            if not target:
+                logger.error(
+                    'could not install %s %s for target %s' %
+                    (dspec.name, ver, previous_name)
+                )
+                break
+            else:
+                available_targets.append(target)
+                previous_name = dspec.name
+                dspec = target.baseTargetSpec()
+                if not top_target:
+                    top_target = target
+                if dspec is None:
+                    break
+        return (top_target, errors)
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 

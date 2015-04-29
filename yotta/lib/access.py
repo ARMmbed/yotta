@@ -222,7 +222,7 @@ def _clsForType(type):
     assert(type in ('module', 'target'))
     return {'module':component.Component, 'target':target.Target}[type]
 
-def satisfyVersionFromAvailble(name, version_required, available, type='module'):
+def satisfyVersionFromAvailable(name, version_required, available, type='module'):
     spec = None
     if name in available and available[name]:
         logger.debug('satisfy %s from already installed %ss' % (name, type))
@@ -341,7 +341,7 @@ def satisfyVersion(
                     the newest available has a higher version
     '''
 
-    r = satisfyVersionFromAvailble(name, version_required, available, type=type)
+    r = satisfyVersionFromAvailable(name, version_required, available, type=type)
     if r is not None:
         return r
     
