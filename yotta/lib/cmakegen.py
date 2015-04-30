@@ -271,21 +271,39 @@ class CMakeGen(object):
                     component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
 
-
+        
+        # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
+        # of the config. NB: THESE WILL GO AWAY
         target_definitions = '-DTARGET=' + self._sanitizeTarget(self.target.getName())  + ' '
         set_targets_like = 'set(TARGET_LIKE_' + self._sanitizeTarget(self.target.getName()) + ' TRUE)\n'
-        for target in self.target.dependencyResolutionOrder():
+        for target in self.target.getMergedConfig():
             if '*' not in target:
                 target_definitions += '-DTARGET_LIKE_' + self._sanitizeTarget(target) + ' '
                 set_targets_like += 'set(TARGET_LIKE_' + self._sanitizeTarget(target) + ' TRUE)\n'
 
+        # !!! TODO: generate config definitions (use -include file if at all
+        # possible!)
+        logger.debug('target configuration data: %s', self.target.getMergedConfig())
+
+        # generate the top-level toolchain file:
+        template = jinja_environment.get_template('toolchain.cmake')
+        file_contents = template.render({
+                               # toolchain files are provided in hierarchy
+                               # order, but the template needs them in reverse
+                               # order (base-first):
+            "toolchain_files": reversed(self.target.getToolchainFiles())
+        })
+        toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
+        self._writeFile(toolchain_file_path, file_contents)
+        
+        # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
         file_contents = template.render({
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                     "set_targets_like": set_targets_like,
-                      "toolchain_file": self.target.getToolchainFile(),
+                      "toolchain_file": toolchain_file_path,
                       "component_name": component.getName(),
                      "include_own_dir": include_own_dir,
                    "include_root_dirs": include_root_dirs,

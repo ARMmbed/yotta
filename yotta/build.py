@@ -27,7 +27,7 @@ def addOptions(parser, add_build_targets=True):
     # the target class adds its own build-system specific options. In the
     # future we probably want to load these from a target instance, rather than
     # from the class
-    target.Target.addBuildOptions(parser)
+    target.DerivedTarget.addBuildOptions(parser)
     
     if add_build_targets:
         parser.add_argument(

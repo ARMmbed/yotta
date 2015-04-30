@@ -24,6 +24,8 @@ import vcs
 import fsutils
 # Pack, , common parts of Components/Targets, internal
 import pack
+# Target, , represent an installed target, internal
+import target
 
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
@@ -103,24 +105,24 @@ class Component(pack.Pack):
         deps += [pack.DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
-            for t in target.dependencyResolutionOrder():
-                if t in target_deps:
+            for conf_key, target_conf_deps in target_deps.items():
+                if target.getConfigValue(conf_key):
                     logger.debug(
-                        'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
-                        (target, t, self.getName())
+                        'Adding target-dependent dependency specs for target config %s to component %s' %
+                        (conf_key, self.getName())
                     )
-                    deps += [pack.DependencySpec(x[0], x[1], False) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], False) for x in target_conf_deps.items()]
 
         deps += [pack.DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
-            for t in target.dependencyResolutionOrder():
-                if t in target_deps:
+            for conf_key, target_conf_deps in target_deps.items():
+                if target.getConfigValue(conf_key):
                     logger.debug(
-                        'Adding test-target-dependent dependency specs for target %s (similar to %s) to component %s' %
-                        (target, t, self.getName())
+                        'Adding test-target-dependent dependency specs for target config %s to component %s' %
+                        (conf_key, self.getName())
                     )
-                    deps += [pack.DependencySpec(x[0], x[1], True) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], True) for x in target_conf_deps.items()]
 
         # remove duplicates (use the first occurrence)
         seen = set()
@@ -361,13 +363,14 @@ class Component(pack.Pack):
              available_components,
                       search_dirs,
                 working_directory,
-              update_if_installed
+              update_if_installed,
+                      dep_of_name
         ):
             r = None
             try:
                 r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
+                logger.error('%s (when trying to find dependencies for %s)' % (str(e), dep_of_name))
             if r:
                 if r.isTestDependency() and not dspec.is_test_dependency:
                     logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
@@ -508,39 +511,24 @@ class Component(pack.Pack):
             current component
         '''
         logger.debug('satisfy target: %s' % target_name_and_version);
-        #errors = []
-        #targets_path = self.targetsPath()
-        #target = None
-        #try:
-        #    target_name, target_version_req = target_name_and_version.split(',', 1)
-        #    target = access.satisfyTarget(
-        #        target_name,
-        #        target_version_req,
-        #        targets_path,
-        #        update_installed=('Update' if update_installed else None)
-        #    )
-        #except access_common.Unavailable as e:
-        #    errors.append(e)
-        #return (target, errors)
-        
         if ',' in target_name_and_version:
             name, ver = target_name_and_version.split(',')
             dspec = pack.DependencySpec(name, ver)
         else:
             dspec = pack.DependencySpec(target_name_and_version, "*")
         
-        top_target        = None
-        previous_name     = dspec.name
-        search_dirs       = [self.targetsPath()]
-        available_targets = []
-        errors            = []
+        leaf_target      = None
+        previous_name    = dspec.name
+        search_dirs      = [self.targetsPath()]
+        target_hierarchy = []
+        errors           = []
         while True:
-            target = None
+            t = None
             try:
-                target = access.satisfyVersion(
+                t = access.satisfyVersion(
                                  name = dspec.name,
                      version_required = dspec.version_req,
-                            available = available_targets,
+                            available = target_hierarchy,
                          search_paths = search_dirs,
                     working_directory = self.targetsPath(),
                      update_installed = ('Update' if update_installed else None),
@@ -548,21 +536,21 @@ class Component(pack.Pack):
                 )
             except access_common.Unavailable as e:
                 errors.append(e)
-            if not target:
+            if not t:
                 logger.error(
                     'could not install %s %s for target %s' %
                     (dspec.name, ver, previous_name)
                 )
                 break
             else:
-                available_targets.append(target)
+                target_hierarchy.append(t)
                 previous_name = dspec.name
-                dspec = target.baseTargetSpec()
-                if not top_target:
-                    top_target = target
+                dspec = t.baseTargetSpec()
+                if not leaf_target:
+                    leaf_target = t
                 if dspec is None:
                     break
-        return (top_target, errors)
+        return (target.DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 

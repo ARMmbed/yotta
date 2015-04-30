@@ -12,6 +12,7 @@ import logging
 import string
 import traceback
 import errno
+from collections import OrderedDict
 
 # version, , represent versions and specifications, internal
 import version
@@ -34,6 +35,19 @@ def _ignoreSignal(signum, frame):
 def _newPGroup():
     os.setpgrp()
 
+def _mergeDictionaries(d1, *args):
+    # merge dictionaries of dictionaries recursively
+    result = type(d1)()
+    subsequent_dict_items = []
+    for d in args:
+        subsequent_dict_items += d.items()
+    for k, v in d1.items() + subsequent_dict_items:
+        if not k in result:
+            result[k] = v
+        elif isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = _mergeDictionaries(result[k], v)
+    return result
+
 # API
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
@@ -41,6 +55,7 @@ class Target(pack.Pack):
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
+        # re-initialise with the information from the most-derived target
         super(Target, self).__init__(
                                       path,
                description_filename = Target_Description_File,
@@ -48,13 +63,7 @@ class Target(pack.Pack):
                     schema_filename = Schema_File,
             latest_suitable_version = latest_suitable_version
         )
-    
-    def dependencyResolutionOrder(self):
-        ''' Return a sequence of names that should be used when resolving
-            dependencies: if specific dependencies exist for 
-        '''
-        return [self.description['name']] + self.description['similarTo']
-
+        
     def baseTargetSpec(self):
         ''' returns pack.DependencySpec for the base target of this target (or
             None if this target does not inherit from another target.
@@ -65,15 +74,81 @@ class Target(pack.Pack):
         elif len(inherits) > 1:
             logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
         return None
-
-    def getToolchainFile(self):
-        return os.path.join(self.path, self.description['toolchain'])
-
-    #def getLinkScriptFile(self):
-    #    return os.path.join(self.path, self.description['linkscript'])
     
     def getRegistryNamespace(self):
         return Registry_Namespace
+
+    def getConfig(self):
+        return self.description.get('config', OrderedDict())
+
+    
+class DerivedTarget(Target):
+    def __init__(self, leaf_target, base_targets):
+        ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
+            Targets.), given the most-derived Target description, and a set of
+            available Targets to compose the rest of the lineage from.
+
+            DerivedTarget provides build & debug commands, and access to the
+            derived target config info.
+
+            DerivedTarget can also be used as a stand-in for the most-derived
+            (leaf) target in the inheritance hierarchy.
+        '''
+
+        # initialise the base class as a copy of leaf_target
+        super(DerivedTarget, self).__init__(
+                               path = leaf_target.path,
+                   installed_linked = leaf_target.installed_linked,
+            latest_suitable_version = leaf_target.latest_suitable_version
+        )
+        
+        self.hierarchy = [leaf_target] + base_targets[:]
+        self.config = None
+
+        
+    # override truthiness to test validity of the entire hierarchy:
+    def __nonzero__(self):
+        for t in self.hierarchy:
+            if not t: return False
+        return bool(len(self.hierarchy))
+    def __bool__(self):
+        return self.__nonzero__()
+
+    def _loadConfig(self):
+        ''' load the configuration information from the target hierarchy '''
+        config_dicts = [t.getConfig() for t in self.hierarchy]
+        self.config = _mergeDictionaries(*config_dicts)
+        # !!! merge in the similarTo lists as top-level config values, if such
+        # values do not already exist, for backwards compatibility:
+        compat_dicts = [
+            OrderedDict([(similar_to,True) for similar_to in [t.getName()] + t.description.get('similarTo', [])])
+            for t in self.hierarchy
+        ]
+        self.config = _mergeDictionaries(self.config, *compat_dicts)
+
+
+    def _ensureConfig(self):
+        if self.config is None:
+            self._loadConfig()
+
+    def getConfigValue(self, conf_key):
+        self._ensureConfig()
+        key_path = conf_key.split('.');
+        c = self.config
+        for part in key_path:
+            if part in c:
+                c = c[part]
+            else:
+                return None
+        return c
+
+    def getMergedConfig(self):
+        return self.config
+
+    def getToolchainFiles(self):
+        return [
+            os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy
+        ]
     
     @classmethod
     def addBuildOptions(cls, parser):
