@@ -4,6 +4,8 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+import unittest
+import logging
 from collections import OrderedDict
 
 from yotta.lib import target
