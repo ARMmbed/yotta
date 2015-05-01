@@ -125,7 +125,7 @@ class CMakeGen(object):
         if err:
             logger.warn(err)
 
-    def _sanitizeTarget(self, targetname):
+    def _sanitizePreprocessorSymbol(self, targetname):
         return re.sub('[^a-zA-Z0-9]', '_', targetname).upper()
 
     def _sanitizeSymbol(self, sym):
@@ -178,6 +178,28 @@ class CMakeGen(object):
               "test": test_subdirs,
           "resource": resource_subdirs
         }
+
+    def _definitionsForConfig(self, config, key_path=None):
+        if key_path is None:
+            key_path = list()
+        key_prefix = '_'.join([self._sanitizePreprocessorSymbol(x) for x in key_path])
+        r = []
+        if len(key_prefix):
+            r.append((key_prefix,None))
+        for (k, v) in config.items():
+            if isinstance(v, dict):
+                r += self._definitionsForConfig(v, key_path + [k])
+            else:
+                # Don't validate the value here (we wouldn't know where an
+                # invalid value came from, so the error message would be
+                # unhelpful) - the target schema should validate values, or if
+                # that isn't possible then the target should check when loading
+                if isinstance(v, bool):
+                    # convert bool to 1/0, since we can't know the availability
+                    # of a C bool type
+                    v = 1 if v else 0
+                r.append(('%s_%s' % (key_prefix, self._sanitizePreprocessorSymbol(k)), v))
+        return r
 
     def generate(
             self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel
@@ -270,20 +292,46 @@ class CMakeGen(object):
                 add_own_subdirs.append(self.createDummyLib(
                     component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
-
         
-        # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
-        # of the config. NB: THESE WILL GO AWAY
-        target_definitions = '-DTARGET=' + self._sanitizeTarget(self.target.getName())  + ' '
-        set_targets_like = 'set(TARGET_LIKE_' + self._sanitizeTarget(self.target.getName()) + ' TRUE)\n'
-        for target in self.target.getMergedConfig():
-            if '*' not in target:
-                target_definitions += '-DTARGET_LIKE_' + self._sanitizeTarget(target) + ' '
-                set_targets_like += 'set(TARGET_LIKE_' + self._sanitizeTarget(target) + ' TRUE)\n'
+        set_definitions = ''
+        add_definitions = ''
+        if toplevel:
+            add_defs_header = ''
+            # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
+            # of the config. NB: THESE WILL GO AWAY
+            definitions = []
+            definitions.append(('TARGET', self._sanitizePreprocessorSymbol(self.target.getName())))
+            definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(self.target.getName()),None))
 
-        # !!! TODO: generate config definitions (use -include file if at all
-        # possible!)
-        logger.debug('target configuration data: %s', self.target.getMergedConfig())
+            for target in self.target.getMergedConfig():
+                if '*' not in target:
+                    definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(target),None))
+
+            logger.debug('target configuration data: %s', self.target.getMergedConfig())
+            definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
+            
+            for k, v in definitions:
+                if v is not None:
+                    #add_definitions += '-D%s=%s ' % (k, v)
+                    add_defs_header += '#define %s %s\n' % (k, v)
+                    set_definitions += 'set(%s %s)\n' % (k, v)
+                else:
+                    #add_definitions += '-D%s ' % k
+                    add_defs_header += '#define %s\n' % k
+                    set_definitions += 'set(%s TRUE)\n' % k
+
+            # use -include <definitions header> instead of lots of separate
+            # defines... this is compiler specific, but currently testing it
+            # out for gcc-compatible compilers only:
+            add_defs_header_path = os.path.join(builddir, 'yotta_config.h')
+            self._writeFile(
+                add_defs_header_path,
+                '#ifndef __YOTTA_CONFIG_H__\n'+
+                '#define __YOTTA_CONFIG_H__\n'+
+                add_defs_header+
+                '#endif // ndef __YOTTA_CONFIG_H__\n'
+            )
+            add_definitions = '-include %s' % (replaceBackslashes(add_defs_header_path))
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
@@ -302,7 +350,7 @@ class CMakeGen(object):
         file_contents = template.render({
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
-                    "set_targets_like": set_targets_like,
+                     "set_definitions": set_definitions,
                       "toolchain_file": toolchain_file_path,
                       "component_name": component.getName(),
                      "include_own_dir": include_own_dir,
@@ -311,7 +359,7 @@ class CMakeGen(object):
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-            "yotta_target_definitions": target_definitions,
+            "yotta_target_definitions": add_definitions,
                    "component_version": component.getVersion(),
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir

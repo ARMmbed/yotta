@@ -19,7 +19,10 @@ cmake_policy(SET CMP0017 OLD)
 # toolchain file for {{ target_name }}
 set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
 
-{{ set_targets_like }}
+{{ set_definitions }}
+
+# Definitions provided by the target configuration info:
+add_definitions({{ yotta_target_definitions }})
 {% endif %}
 
 project({{ component_name }})
@@ -44,10 +47,6 @@ project({{ component_name }})
 # implementations that import these headers to import them using the full path.
 {{ include_other_dirs }}
 {% endif %}
-
-# Build targets may define additional preprocessor definitions for all
-# components to use (such as chip variant information)
-add_definitions({{ yotta_target_definitions }})
 
 # Provide the version of the component being built, in case components want to
 # embed this into compiled libraries
