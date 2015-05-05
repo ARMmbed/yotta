@@ -538,7 +538,7 @@ class Component(pack.Pack):
                 errors.append(e)
             if not t:
                 logger.error(
-                    'could not install %s %s for target %s' %
+                    'could not install target %s %s for %s' %
                     (dspec.name, ver, previous_name)
                 )
                 break
@@ -550,7 +550,10 @@ class Component(pack.Pack):
                     leaf_target = t
                 if dspec is None:
                     break
-        return (target.DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
+        if leaf_target is None:
+            return (None, errors)
+        else:
+            return (target.DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 
