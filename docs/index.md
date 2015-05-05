@@ -340,6 +340,20 @@ versions.
 On Linux and OS X you may have to run these commands as `sudo pip ....`, if
 permission is denied.
 
+<br>
+<a name="tabcomplete"></a>
+## Setting up Tab Completion
+yotta uses [argcomplete](https://github.com/kislyuk/argcomplete) to provide tab
+completion, so you can set up completion on Linux and OS X by adding the
+following to your .bashrc file:
+
+```sh
+eval "$(register-python-argcomplete yotta)"
+eval "$(register-python-argcomplete yt)"
+```
+
+For more detailed instructions, see the [argcomplete
+documentation](https://github.com/kislyuk/argcomplete#synopsis).
 
 <br>
 <br>
