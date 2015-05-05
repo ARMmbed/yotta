@@ -78,6 +78,11 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
+    parser.add_argument('--plain', dest='plain',
+        action='store_true', default=False,
+        help="Use a simple output format with no colours"
+    )
+
     parser.add_argument(
         '--registry', default=None, dest='registry', help=argparse.SUPPRESS
     )
@@ -160,7 +165,7 @@ def main():
     args = parser.parse_args(split_args[0][1:])
 
     loglevel = logLevelFromVerbosity(args.verbosity)
-    logging_setup.init(level=loglevel, enable_subsystems=args.debug)
+    logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
     
     # finally, do stuff!
     if 'command' not in args:
