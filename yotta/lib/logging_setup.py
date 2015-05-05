@@ -15,9 +15,9 @@ import colorama
 # logging, so setup that proxying here:
 colorama.init()
 
-class Formatter(logging.Formatter):
+class FancyFormatter(logging.Formatter):
     def __init__(self):
-        super(Formatter, self).__init__()
+        super(FancyFormatter, self).__init__()
 
     def levelStyle(self, record):
         if record.levelno <= logging.DEBUG:
@@ -56,7 +56,14 @@ class Formatter(logging.Formatter):
         s += colorama.Style.RESET_ALL
         return s
 
-def init(level=0, enable_subsystems=[]):
+class PlainFormatter(logging.Formatter):
+    def __init__(self):
+        super(PlainFormatter, self).__init__()
+
+    def format(self, record):
+        return record.levelname.lower() + ': ' + record.getMessage()
+
+def init(level=0, enable_subsystems=[], plain=False):
     level = int(round(level))
     # once logging.something has been called you have to remove all logging
     # handlers before re-configing...
@@ -67,7 +74,10 @@ def init(level=0, enable_subsystems=[]):
 
     # set new handler with our formatter
     handler = logging.StreamHandler()
-    handler.setFormatter(Formatter())
+    if plain:
+        handler.setFormatter(PlainFormatter())
+    else:
+        handler.setFormatter(FancyFormatter())
     root.addHandler(handler)
     
     # set appropriate levels on subsystem loggers - maybe selective logging

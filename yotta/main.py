@@ -3,6 +3,10 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+# NOTE: argcomplete must be first!
+# argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
+import argcomplete
+
 # standard library modules, , ,
 import argparse
 import logging
@@ -78,6 +82,11 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
+    parser.add_argument('--plain', dest='plain',
+        action='store_true', default=False,
+        help="Use a simple output format with no colours"
+    )
+
     parser.add_argument(
         '--registry', default=None, dest='registry', help=argparse.SUPPRESS
     )
@@ -137,7 +146,7 @@ def main():
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
-    subparser.choices.update({
+    short_commands = {
             'up':subparser.choices['update'],
             'in':subparser.choices['install'],
             'ln':subparser.choices['link'],
@@ -147,20 +156,27 @@ def main():
             'rm':subparser.choices['uninstall'],
          'owner':subparser.choices['owners'],
           'lics':subparser.choices['licenses']
-    })
+    }
+    subparser.choices.update(short_commands)
     
     # split the args into those before and after any '--'
     # argument - subcommands get raw access to arguments following '--', and
     # may pass them on to (for example) the build tool being used
     split_args = splitList(sys.argv, '--')
     following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
+    
+    # complete all the things :)
+    argcomplete.autocomplete(
+         parser,
+        exclude = short_commands.keys() + ['-d', '--debug', '-v', '--verbose']
+    )
 
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
 
     loglevel = logLevelFromVerbosity(args.verbosity)
-    logging_setup.init(level=loglevel, enable_subsystems=args.debug)
+    logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
     
     # finally, do stuff!
     if 'command' not in args:
