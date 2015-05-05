@@ -18,7 +18,11 @@
                 "$ref": "#/definitions/license"
             }
         },
+        "inherits": {
+            "$ref": "#/definitions/inheritsMap"
+        },
         "similarTo": {
+          "comment": "deprecated",
              "type": "array",
             "items": {
                 "$ref": "#/definitions/name"
@@ -108,6 +112,9 @@
         "debugServer": {
             "comment": "deprecated",
             "$ref": "#/definitions/command"
+        },
+        "config": {
+            "$ref": "#definitions/configData"
         }
     },
     "definitions": {
@@ -220,7 +227,7 @@
              "maxLength": 260,
                "pattern": "^[a-zA-Z0-9 ()._/-]*$"
         },
-        "dependencyMap": {
+        "inheritsMap": {
             "type": "object",
             "patternProperties": {
                 "^[a-z]+[a-z0-9-]{1,63}$": {
@@ -232,6 +239,8 @@
                     ]
                 }
             },
+            "minProperties": 0,
+            "maxProperties": 1,
             "additionalProperties": false
         },
         "githubDepSource":{
@@ -267,6 +276,28 @@
                 "type": "string",
                 "minLength": 0,
                 "maxLength": 3000
+            }
+        },
+        "configString":{
+              "type": "string",
+           "pattern": "^\"([^\"\\\\]|\\\\.)*\"$"
+        },
+        "configToken":{
+              "type": "string",
+           "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+        },
+        "configValues":{
+            "oneOf": [ 
+                {"type": "number"},
+                {"type": "boolean"},
+                {"$ref": "#/definitions/configToken"},
+                {"$ref": "#/definitions/configString"}
+            ]
+        },
+        "configData":{
+            "type": "object",
+            "additionalProperties": {
+                "oneOf": [{"$ref": "#/definitions/configValues"}, {"$ref": "#/definitions/configData"}]
             }
         }
     },
