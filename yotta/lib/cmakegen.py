@@ -295,6 +295,7 @@ class CMakeGen(object):
         
         set_definitions = ''
         add_definitions = ''
+        config_include_file = None
         if toplevel:
             add_defs_header = ''
             # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
@@ -323,15 +324,14 @@ class CMakeGen(object):
             # use -include <definitions header> instead of lots of separate
             # defines... this is compiler specific, but currently testing it
             # out for gcc-compatible compilers only:
-            add_defs_header_path = os.path.join(builddir, 'yotta_config.h')
+            config_include_file = os.path.join(builddir, 'yotta_config.h')
             self._writeFile(
-                add_defs_header_path,
+                config_include_file,
                 '#ifndef __YOTTA_CONFIG_H__\n'+
                 '#define __YOTTA_CONFIG_H__\n'+
                 add_defs_header+
                 '#endif // ndef __YOTTA_CONFIG_H__\n'
             )
-            add_definitions = '-include %s' % (replaceBackslashes(add_defs_header_path))
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
@@ -359,7 +359,8 @@ class CMakeGen(object):
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-            "yotta_target_definitions": add_definitions,
+                 "config_include_file": config_include_file,
+           #"yotta_target_definitions": add_definitions,
                    "component_version": component.getVersion(),
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir
