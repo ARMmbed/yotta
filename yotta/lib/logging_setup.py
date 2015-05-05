@@ -5,15 +5,27 @@
 
 # standard library modules, , ,
 import logging
+import os
 
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
 import colorama
 
 
+# !!! workaround colorama + posh-git bug, where ANSI emulation is incorrectly
+# disabled:
+restore_env_term = None
+if os.environ.get('POSH_GIT', False) and 'TERM' in os.environ:
+    restore_env_term = os.environ['TERM']
+    del os.environ['TERM']
+
 # colorama replaces stdout and stderr with objects that do switch colour
 # sequences to the appropriate windows ones, we do most of our stdout through
 # logging, so setup that proxying here:
 colorama.init()
+
+if restore_env_term is not None:
+    os.environ['TERM'] = restore_env_term
+
 
 class FancyFormatter(logging.Formatter):
     def __init__(self):
