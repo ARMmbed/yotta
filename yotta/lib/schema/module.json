@@ -168,7 +168,7 @@
         "httpURL": {
                  "type": "string",
             "maxLength": 1200,
-              "comment": "!!! TODO: pattern"
+              "pattern": "^(https?:\/\/).*$"
         },
         "repositoryURL": {
             "oneOf": [
