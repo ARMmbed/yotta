@@ -304,7 +304,7 @@ class CMakeGen(object):
             definitions.append(('TARGET', self._sanitizePreprocessorSymbol(self.target.getName())))
             definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(self.target.getName()),None))
 
-            for target in self.target.getMergedConfig():
+            for target in self.target.getSimilarTo_Deprecated():
                 if '*' not in target:
                     definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(target),None))
 

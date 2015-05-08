@@ -142,6 +142,13 @@ class DerivedTarget(Target):
                 return None
         return c
 
+    def getSimilarTo_Deprecated(self):
+        r = []
+        for t in self.hierarchy:
+            r.append(t.getName())
+            r += t.description.get('similarTo', [])
+        return r
+
     def getMergedConfig(self):
         self._ensureConfig()
         return self.config

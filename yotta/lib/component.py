@@ -106,18 +106,19 @@ class Component(pack.Pack):
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
-                if target.getConfigValue(conf_key):
+                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
                         'Adding target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
                     )
                     deps += [pack.DependencySpec(x[0], x[1], False) for x in target_conf_deps.items()]
 
+
         deps += [pack.DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
-                if target.getConfigValue(conf_key):
+                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
                         'Adding test-target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
