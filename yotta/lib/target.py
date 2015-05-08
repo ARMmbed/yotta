@@ -120,11 +120,11 @@ class DerivedTarget(Target):
         self.config = _mergeDictionaries(*config_dicts)
         # !!! merge in the similarTo lists as top-level config values, if such
         # values do not already exist, for backwards compatibility:
-        compat_dicts = [
-            OrderedDict([(similar_to,True) for similar_to in [t.getName()] + t.description.get('similarTo', [])])
-            for t in self.hierarchy
-        ]
-        self.config = _mergeDictionaries(self.config, *compat_dicts)
+        #compat_dicts = [
+        #    OrderedDict([(similar_to,True) for similar_to in [t.getName()] + t.description.get('similarTo', [])])
+        #    for t in self.hierarchy
+        #]
+        #self.config = _mergeDictionaries(self.config, *compat_dicts)
 
 
     def _ensureConfig(self):
@@ -143,6 +143,7 @@ class DerivedTarget(Target):
         return c
 
     def getMergedConfig(self):
+        self._ensureConfig()
         return self.config
 
     def getToolchainFiles(self):
