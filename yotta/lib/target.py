@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -12,6 +12,7 @@ import logging
 import string
 import traceback
 import errno
+from collections import OrderedDict
 
 # version, , represent versions and specifications, internal
 import version
@@ -34,6 +35,19 @@ def _ignoreSignal(signum, frame):
 def _newPGroup():
     os.setpgrp()
 
+def _mergeDictionaries(d1, *args):
+    # merge dictionaries of dictionaries recursively
+    result = type(d1)()
+    subsequent_dict_items = []
+    for d in args:
+        subsequent_dict_items += d.items()
+    for k, v in d1.items() + subsequent_dict_items:
+        if not k in result:
+            result[k] = v
+        elif isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = _mergeDictionaries(result[k], v)
+    return result
+
 # API
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
@@ -41,6 +55,7 @@ class Target(pack.Pack):
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
         '''
+        # re-initialise with the information from the most-derived target
         super(Target, self).__init__(
                                       path,
                description_filename = Target_Description_File,
@@ -48,21 +63,100 @@ class Target(pack.Pack):
                     schema_filename = Schema_File,
             latest_suitable_version = latest_suitable_version
         )
-    
-    def dependencyResolutionOrder(self):
-        ''' Return a sequence of names that should be used when resolving
-            dependencies: if specific dependencies exist for 
+        
+    def baseTargetSpec(self):
+        ''' returns pack.DependencySpec for the base target of this target (or
+            None if this target does not inherit from another target.
         '''
-        return [self.description['name']] + self.description['similarTo']
-
-    def getToolchainFile(self):
-        return os.path.join(self.path, self.description['toolchain'])
-
-    #def getLinkScriptFile(self):
-    #    return os.path.join(self.path, self.description['linkscript'])
+        inherits = self.description.get('inherits', {})
+        if len(inherits) == 1:
+            return pack.DependencySpec(inherits.items()[0][0], inherits.items()[0][1])
+        elif len(inherits) > 1:
+            logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
+        return None
     
     def getRegistryNamespace(self):
         return Registry_Namespace
+
+    def getConfig(self):
+        return self.description.get('config', OrderedDict())
+
+    
+class DerivedTarget(Target):
+    def __init__(self, leaf_target, base_targets):
+        ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
+            Targets.), given the most-derived Target description, and a set of
+            available Targets to compose the rest of the lineage from.
+
+            DerivedTarget provides build & debug commands, and access to the
+            derived target config info.
+
+            DerivedTarget can also be used as a stand-in for the most-derived
+            (leaf) target in the inheritance hierarchy.
+        '''
+
+        # initialise the base class as a copy of leaf_target
+        super(DerivedTarget, self).__init__(
+                               path = leaf_target.path,
+                   installed_linked = leaf_target.installed_linked,
+            latest_suitable_version = leaf_target.latest_suitable_version
+        )
+        
+        self.hierarchy = [leaf_target] + base_targets[:]
+        self.config = None
+
+        
+    # override truthiness to test validity of the entire hierarchy:
+    def __nonzero__(self):
+        for t in self.hierarchy:
+            if not t: return False
+        return bool(len(self.hierarchy))
+    def __bool__(self):
+        return self.__nonzero__()
+
+    def _loadConfig(self):
+        ''' load the configuration information from the target hierarchy '''
+        config_dicts = [t.getConfig() for t in self.hierarchy]
+        self.config = _mergeDictionaries(*config_dicts)
+        # !!! merge in the similarTo lists as top-level config values, if such
+        # values do not already exist, for backwards compatibility:
+        #compat_dicts = [
+        #    OrderedDict([(similar_to,True) for similar_to in [t.getName()] + t.description.get('similarTo', [])])
+        #    for t in self.hierarchy
+        #]
+        #self.config = _mergeDictionaries(self.config, *compat_dicts)
+
+
+    def _ensureConfig(self):
+        if self.config is None:
+            self._loadConfig()
+
+    def getConfigValue(self, conf_key):
+        self._ensureConfig()
+        key_path = conf_key.split('.');
+        c = self.config
+        for part in key_path:
+            if part in c:
+                c = c[part]
+            else:
+                return None
+        return c
+
+    def getSimilarTo_Deprecated(self):
+        r = []
+        for t in self.hierarchy:
+            r.append(t.getName())
+            r += t.description.get('similarTo', [])
+        return r
+
+    def getMergedConfig(self):
+        self._ensureConfig()
+        return self.config
+
+    def getToolchainFiles(self):
+        return [
+            os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy
+        ]
     
     @classmethod
     def addBuildOptions(cls, parser):
@@ -261,27 +355,30 @@ class Target(pack.Pack):
         logging.error('could not find program "%s" to debug' %  program)
         return None
     
-    @fsutils.dropRootPrivs
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
             `debugServer` commands if not. `program` is inserted into the
             $program variable in commands.
         '''
-        if 'scripts' in self.description and 'debug' in self.description['scripts']:
-            for err in self._debugWithScript(builddir, program):
-                return err
-        elif 'debug' in self.description:
-            logger.warning(
-                'target %s provides deprecated debug property. It should '+
-                'provide script.debug instead.', self.getName()
+        try:
+            signal.signal(signal.SIGINT, _ignoreSignal);
+            if 'scripts' in self.description and 'debug' in self.description['scripts']:
+                return self._debugWithScript(builddir, program)
+            elif 'debug' in self.description:
+                logger.warning(
+                    'target %s provides deprecated debug property. It should '+
+                    'provide script.debug instead.', self.getName()
 
-            )
-            for err in self._debugDeprecated(builddir, program):
-                return err
-        else:
-            return "Target %s does not specify debug commands" % self
+                )
+                return self._debugDeprecated(builddir, program)
+            else:
+                return "Target %s does not specify debug commands" % self
+        finally:
+            # clear the sigint handler
+            signal.signal(signal.SIGINT, signal.SIG_DFL);
 
+    @fsutils.dropRootPrivs
     def _debugWithScript(self, builddir, program):
         child = None
         try:
@@ -289,7 +386,6 @@ class Target(pack.Pack):
             if prog_path is None:
                 return
 
-            signal.signal(signal.SIGINT, _ignoreSignal);
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['debug']
@@ -300,7 +396,7 @@ class Target(pack.Pack):
             )
             child.wait()
             if child.returncode:
-                yield "debug process exited with status %s" % child.returncode
+                return "debug process exited with status %s" % child.returncode
             child = None
         except:
             # reset the terminal, in case the debugger has screwed it up
@@ -308,10 +404,12 @@ class Target(pack.Pack):
             raise
         finally:
             if child is not None:
-                child.terminate()
-            # clear the sigint handler
-            signal.signal(signal.SIGINT, signal.SIG_DFL);
+                try:
+                    child.terminate()
+                except OSError as e:
+                    pass
 
+    @fsutils.dropRootPrivs
     def _debugDeprecated(self, builddir, program):
         prog_path = self.findProgram(builddir, program)
         if prog_path is None:
@@ -338,7 +436,6 @@ class Target(pack.Pack):
                 else:
                     daemon = None
                 
-                signal.signal(signal.SIGINT, _ignoreSignal);
                 cmd = [
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
@@ -349,7 +446,7 @@ class Target(pack.Pack):
                 )
                 child.wait()
                 if child.returncode:
-                    yield "debug process executed with status %s" % child.returncode
+                    return "debug process executed with status %s" % child.returncode
                 child = None
             except:
                 # reset the terminal, in case the debugger has screwed it up
@@ -357,12 +454,16 @@ class Target(pack.Pack):
                 raise
             finally:
                 if child is not None:
-                    child.terminate()
+                    try:
+                        child.terminate()
+                    except OSError as e:
+                        pass
                 if daemon is not None:
                     logger.debug('shutting down debug server...')
-                    daemon.terminate()
-                # clear the sigint handler
-                signal.signal(signal.SIGINT, signal.SIG_DFL);
+                    try:
+                        daemon.terminate()
+                    except OSError as e:
+                        pass
     
     @fsutils.dropRootPrivs
     def test(self, builddir, program, filter_command, forward_args):

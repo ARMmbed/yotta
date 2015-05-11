@@ -24,6 +24,8 @@ import vcs
 import fsutils
 # Pack, , common parts of Components/Targets, internal
 import pack
+# Target, , represent an installed target, internal
+import target
 
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
@@ -44,14 +46,8 @@ VVVERBOSE_DEBUG = logging.DEBUG - 8
 
 
 # API
-class DependencySpec(object):
-    def __init__(self, name, version_req, is_test_dependency=False):
-        self.name = name
-        self.version_req = version_req
-        self.is_test_dependency = is_test_dependency
-
 class Component(pack.Pack):
-    def __init__(self, path, installed_previously=False, installed_linked=False, latest_suitable_version=None, test_dependency=False):
+    def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
            
             Initialise it with the directory into which the component has been
@@ -93,7 +89,6 @@ class Component(pack.Pack):
                     Component_Description_File
                 )
             )
-        self.installed_previously = installed_previously
         self.installed_dependencies = False
         self.dependencies_failed = False
         self.is_test_dependency = test_dependency
@@ -107,27 +102,28 @@ class Component(pack.Pack):
         '''
         deps = []
         
-        deps += [DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
+        deps += [pack.DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
-            for t in target.dependencyResolutionOrder():
-                if t in target_deps:
+            for conf_key, target_conf_deps in target_deps.items():
+                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
-                        'Adding target-dependent dependency specs for target %s (similar to %s) to component %s' %
-                        (target, t, self.getName())
+                        'Adding target-dependent dependency specs for target config %s to component %s' %
+                        (conf_key, self.getName())
                     )
-                    deps += [DependencySpec(x[0], x[1], False) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], False) for x in target_conf_deps.items()]
 
-        deps += [DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
+
+        deps += [pack.DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
-            for t in target.dependencyResolutionOrder():
-                if t in target_deps:
+            for conf_key, target_conf_deps in target_deps.items():
+                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
-                        'Adding test-target-dependent dependency specs for target %s (similar to %s) to component %s' %
-                        (target, t, self.getName())
+                        'Adding test-target-dependent dependency specs for target config %s to component %s' %
+                        (conf_key, self.getName())
                     )
-                    deps += [DependencySpec(x[0], x[1], True) for x in target_deps[t].items()]
+                    deps += [pack.DependencySpec(x[0], x[1], True) for x in target_conf_deps.items()]
 
         # remove duplicates (use the first occurrence)
         seen = set()
@@ -168,7 +164,6 @@ class Component(pack.Pack):
                     component_path = path.join(d, name)
                     c = Component(
                         component_path,
-                        installed_previously=True,
                         installed_linked=fsutils.isLink(component_path)
                     )
                     if c:
@@ -206,9 +201,10 @@ class Component(pack.Pack):
                   available_components,
                   search_dirs,
                   modules_path,
-                  update_installed
+                  update_installed,
+                  self.getName()
                 )
-            except access_common.ComponentUnavailable as e:
+            except access_common.Unavailable as e:
                 errors.append(e)
                 self.dependencies_failed = True
             except vcs.VCSError as e:
@@ -368,13 +364,14 @@ class Component(pack.Pack):
              available_components,
                       search_dirs,
                 working_directory,
-              update_if_installed
+              update_if_installed,
+                      dep_of_name
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
+                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
+                logger.error('%s (when trying to find dependencies for %s)' % (str(e), dep_of_name))
             if r:
                 if r.isTestDependency() and not dspec.is_test_dependency:
                     logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
@@ -475,13 +472,14 @@ class Component(pack.Pack):
             available_components,
             search_dirs,
             working_directory,
-            update_if_installed
+            update_if_installed,
+            dep_of_name=None
         ):
             r = None
             try:
-                r = access.satisfyVersionFromAvailble(dspec.name, dspec.version_req, available_components)
+                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
             except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find dependencies for %s)' % (str(e), self.getName()))
+                logger.error('%s (when trying to find %s for %s)' % (str(e), dspec, dep_of_name))
             if r:
                 if r.isTestDependency() and not dspec.is_test_dependency:
                     logger.debug('test dependency subsequently occurred as real dependency: %s', dspec.name)
@@ -507,33 +505,56 @@ class Component(pack.Pack):
                        provider = provider,
                            test = test
         )
-
+    
     def satisfyTarget(self, target_name_and_version, update_installed=False):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
             current component
         '''
         logger.debug('satisfy target: %s' % target_name_and_version);
-        errors = []
-        targets_path = self.targetsPath()
-        target = None
-        try:
-            target_name, target_version_req = target_name_and_version.split(',', 1)
-            target = access.satisfyTarget(
-                target_name,
-                target_version_req,
-                targets_path,
-                update_installed=('Update' if update_installed else None)
-            )
-        except access_common.ComponentUnavailable as e:
-            errors.append(e)
-        return (target, errors)
-
-    def installedPreviously(self):
-        ''' Return true if this component was created with
-            installed_previously=True
-        '''
-        return self.installed_previously
+        if ',' in target_name_and_version:
+            name, ver = target_name_and_version.split(',')
+            dspec = pack.DependencySpec(name, ver)
+        else:
+            dspec = pack.DependencySpec(target_name_and_version, "*")
+        
+        leaf_target      = None
+        previous_name    = dspec.name
+        search_dirs      = [self.targetsPath()]
+        target_hierarchy = []
+        errors           = []
+        while True:
+            t = None
+            try:
+                t = access.satisfyVersion(
+                                 name = dspec.name,
+                     version_required = dspec.version_req,
+                            available = target_hierarchy,
+                         search_paths = search_dirs,
+                    working_directory = self.targetsPath(),
+                     update_installed = ('Update' if update_installed else None),
+                                 type = 'target'
+                )
+            except access_common.Unavailable as e:
+                errors.append(e)
+            if not t:
+                logger.error(
+                    'could not install target %s %s for %s' %
+                    (dspec.name, ver, previous_name)
+                )
+                break
+            else:
+                target_hierarchy.append(t)
+                previous_name = dspec.name
+                dspec = t.baseTargetSpec()
+                if not leaf_target:
+                    leaf_target = t
+                if dspec is None:
+                    break
+        if leaf_target is None:
+            return (None, errors)
+        else:
+            return (target.DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 

@@ -35,6 +35,7 @@ from . import owners
 from . import licenses
 from . import clean
 from . import search
+from . import config
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -143,6 +144,7 @@ def main():
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
     addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
     addParser('clean', clean, 'Remove files created by yotta and the build.')
+    addParser('config', config, 'Display the target configuration info.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary

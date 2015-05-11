@@ -37,7 +37,7 @@ def addOptions(parser):
     # relevant build options:
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
     parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
-    target.Target.addBuildOptions(parser)
+    target.DerivedTarget.addBuildOptions(parser)
 
 
 def findCTests(builddir, recurse_yotta_modules=False):

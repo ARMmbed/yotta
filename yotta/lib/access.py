@@ -109,7 +109,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         v = spec.select(vers)
         logger.debug("%s selected %s from %s", spec, v, vers)
         if not v:
-            raise access_common.ComponentUnavailable(
+            raise access_common.Unavailable(
                 'The %s registry does not provide a version of "%s" matching "%s"' % (
                     registry, name, spec
                 )
@@ -130,7 +130,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             v = spec.select(vers)
             logger.debug("%s selected %s from %s", spec, v, vers)
             if not v:
-                raise access_common.ComponentUnavailable(
+                raise access_common.Unavailable(
                     'Github repository "%s" does not provide a version matching "%s"' % (
                         remote_component.repo,
                         remote_component.spec
@@ -147,7 +147,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             )
             if v:
                 return v
-            raise access_common.ComponentUnavailable(
+            raise access_common.Unavailable(
                 'Github repository "%s" does not have any tags or branches matching "%s"' % (
                     version_required, spec
                 )
@@ -158,7 +158,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
         logger.debug('satisfy %s from %s url' % (name, clone_type))
         local_clone = remote_component.clone()
         if not local_clone:
-            raise access_common.ComponentUnavailable(
+            raise access_common.Unavailable(
                 'Failed to clone %s URL %s to satisfy dependency %s' % (clone_type, version_required, name)
             )
         spec = remote_component.versionSpec()
@@ -172,7 +172,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             v = spec.select(vers)
             logger.debug("%s selected %s from %s", spec, v, vers)
             if not v:
-                raise access_common.ComponentUnavailable(
+                raise access_common.Unavailable(
                     '%s repository "%s" does not provide a version matching "%s"' % (
                         clone_type,
                         version_required,
@@ -189,7 +189,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
             )
             if v:
                 return v
-            raise access_common.ComponentUnavailable(
+            raise access_common.Unavailable(
                 '%s repository "%s" does not have any tags or branches matching "%s"' % (
                     clone_type, version_required, spec
                 )
@@ -201,98 +201,108 @@ def latestSuitableVersion(name, version_required, registry='modules'):
     
     return None
 
-def searchPathsForComponent(name, version_required, search_paths):
+def searchPathsFor(name, version_required, search_paths, type='module'):
     for path in search_paths:
-        component_path = os.path.join(path, name)
-        logger.debug("check path %s for %s" % (component_path, name))
-        local_component = component.Component(
-                     component_path,
-               installed_previously = True,
-                   installed_linked = fsutils.isLink(component_path),
+        check_path = os.path.join(path, name)
+        logger.debug("check path %s for %s" % (check_path, name))
+        instance = _clsForType(type)(
+                     check_path,
+                   installed_linked = fsutils.isLink(check_path),
             latest_suitable_version = None
         )
-        if local_component:
-            return local_component
+        if instance:
+            return instance
     return None
 
+def _registryNamespaceForType(type):
+    assert(type in ('module', 'target'))
+    return type + 's'
 
-def satisfyVersionFromAvailble(name, version_required, available):
+def _clsForType(type):
+    assert(type in ('module', 'target'))
+    return {'module':component.Component, 'target':target.Target}[type]
+
+def satisfyVersionFromAvailable(name, version_required, available, type='module'):
     spec = None
     if name in available and available[name]:
-        logger.debug('satisfy %s from already installed components' % name)
+        logger.debug('satisfy %s from already installed %ss' % (name, type))
         # we still need to check the version specification - which the remote
         # components know how to parse:
-        remote_component = remoteComponentFor(name, version_required, 'modules')
+        remote_component = remoteComponentFor(name, version_required, _registryNamespaceForType(type))
         if remote_component.versionSpec():
             if not remote_component.versionSpec().match(available[name].version):
                 raise access_common.SpecificationNotMet(
-                    "Installed component %s doesn't match specification %s" % (name, remote_component.versionSpec())
+                    "Installed %s %s doesn't match specification %s" % (type, name, remote_component.versionSpec())
                 ) 
         r = available[name]
         if spec and not spec.match(r.getVersion()):
-            raise access_common.ComponentUnavailable('Previously added component %s@%s doesn\'t meet spec %s' % (name, r.getVersion(), spec))
+            raise access_common.Unavailable(
+                'Previously added %s %s@%s doesn\'t meet spec %s' % (type, name, r.getVersion(), spec)
+            )
         if name != r.getName():
-            raise access_common.ComponentUnavailable('Component %s was installed as different name %s in %s' % (
-                r.getName(), name, r.path
+            raise access_common.Unavailable('%s %s was installed as different name %s in %s' % (
+                type, r.getName(), name, r.path
             ))
         return r
     return None
 
-def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=False):
-    ''' returns a Component for the specified version, if found in the list of
-        search paths. If `update' is True, then also check for newer versions
-        of the found component, and update it in-place (unless it was installed
-        via a symlink).
+def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=False, type='module'):
+    ''' returns a Component/Target for the specified version, if found in the
+        list of search paths. If `update' is True, then also check for newer
+        versions of the found component, and update it in-place (unless it was
+        installed via a symlink).
     '''
     spec = None
     v    = None
     
     try:
-        local_component = searchPathsForComponent(name, version_required, search_paths)
+        local_version = searchPathsFor(name, version_required, search_paths, type)
     except pack.InvalidDescription as e:
         logger.error(e)
         return None
 
-    logger.debug("%s %s locally" % (('found', 'not found')[not local_component], name))
-    if local_component:
-        if update and not local_component.installedLinked():
+    logger.debug("%s %s locally" % (('found', 'not found')[not local_version], name))
+    if local_version:
+        if update and not local_version.installedLinked():
             #logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-            v = latestSuitableVersion(name, version_required)
-            if local_component:
-                local_component.setLatestAvailable(v)
+            v = latestSuitableVersion(name, version_required, registry=_registryNamespaceForType(type))
+            if local_version:
+                local_version.setLatestAvailable(v)
 
         # if we don't need to update, then we're done
-        if local_component.installedLinked() or not local_component.outdated():
-            logger.debug("satisfy component from directory: %s" % local_component.path)
+        if local_version.installedLinked() or not local_version.outdated():
+            logger.debug("satisfy component from directory: %s" % local_version.path)
             # if a component exists (has a valid description file), and either is
             # not outdated, or we are not updating
-            if name != local_component.getName():
+            if name != local_version.getName():
                 raise Exception('Component %s found in incorrectly named directory %s (%s)' % (
-                    local_component.getName(), name, local_component.path
+                    local_version.getName(), name, local_version.path
                 ))
-            return local_component
+            return local_version
         
         # otherwise, we need to update the installed component
         logger.info('update outdated: %s@%s -> %s' % (
             name,
-            local_component.getVersion(),
+            local_version.getVersion(),
             v
         ))
         # must rm the old component before continuing
-        fsutils.rmRf(local_component.path)
-        return _satisfyVersionByInstallingVersion(name, version_required, local_component.path, v)
+        fsutils.rmRf(local_version.path)
+        return _satisfyVersionByInstallingVersion(name, version_required, local_version.path, v, type=type)
     return None
 
-def satisfyVersionByInstalling(name, version_required, working_directory):
-    ''' installs and returns a Component for the specified name+version
+def satisfyVersionByInstalling(name, version_required, working_directory, type='module'):
+    ''' installs and returns a Component/Target for the specified name+version
         requirement, into a subdirectory of `working_directory'
     '''
-    v = latestSuitableVersion(name, version_required)
+    v = latestSuitableVersion(name, version_required, _registryNamespaceForType(type))
     install_into = os.path.join(working_directory, name)
-    return _satisfyVersionByInstallingVersion(name, version_required, install_into, v)
+    return _satisfyVersionByInstallingVersion(
+        name, version_required, install_into, v, type=type
+    )
 
-def _satisfyVersionByInstallingVersion(name, version_required, working_directory, version):
-    ''' installs and returns a Component for the specified version requirement into
+def _satisfyVersionByInstallingVersion(name, version_required, working_directory, version, type='module'):
+    ''' installs and returns a Component/Target for the specified version requirement into
         'working_directory' using the provided remote version object.
         This function is not normally called via `satisfyVersionByInstalling',
         which looks up a suitable remote version object.
@@ -300,14 +310,14 @@ def _satisfyVersionByInstallingVersion(name, version_required, working_directory
     assert(version)
     logger.info('download ' + name)
     version.unpackInto(working_directory)
-    r = component.Component(working_directory)
+    r = _clsForType(type)(working_directory)
     if not r:
         raise Exception(
-            'Dependency "%s":"%s" is not a valid component.' % (name, version_required)
+            'Dependency "%s":"%s" is not a valid %s.' % (name, version_required, type)
         )
     if name != r.getName():
-        raise Exception('Component %s (specification %s) has incorrect name %s' % (
-            name, version_required, r.getName()
+        raise Exception('%s %s (specification %s) has incorrect name %s' % (
+            type, name, version_required, r.getName()
         ))
     return r
 
@@ -317,94 +327,38 @@ def satisfyVersion(
         available,
         search_paths,
         working_directory,
-        update_installed=None
+        update_installed=None,
+        type='module'  # or 'target'
     ):
-    ''' returns a Component for the specified version (either to an already
+    ''' returns a Component/Target for the specified version (either to an already
         installed copy (from the available list, or from disk), or to a newly
         downloaded one), or None if the version could not be satisfied.
 
         update_installed = None / 'Update'
             None:   prevent any attempt to look for new versions if the
-                    component already exists
+                    component/target already exists
             Update: replace any existing version with the newest available, if
                     the newest available has a higher version
     '''
 
-    r = satisfyVersionFromAvailble(name, version_required, available)
+    r = satisfyVersionFromAvailable(name, version_required, available, type=type)
     if r is not None:
         return r
     
-    r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update')
+    r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update', type=type)
     if r is not None:
         return r
 
-    return satisfyVersionByInstalling(name, version_required, working_directory)
+    return satisfyVersionByInstalling(name, version_required, working_directory, type=type)
 
 
 def satisfyTarget(name, version_required, working_directory, update_installed=None):
-    ''' returns a Target for the specified version (either to an already
-        installed copy (from disk), or to a newly downloaded one), or None if
-        the version could not be satisfied.
-
-        update_installed = {None, 'Check', 'Update'}
-            None:   prevent any attempt to look for new versions if the
-                    target already exists
-            Check:  check for new versions, and pass new version information to
-                    the target object
-            Update: replace any existing version with the newest available, if
-                    the newest available has a higher version
-    '''
-    
-    spec = None
-    v = None
-    
-    target_path = os.path.join(working_directory, name)
-
-    try:
-        local_target = target.Target(
-                        target_path,
-                   installed_linked = fsutils.isLink(target_path),
-            latest_suitable_version = v
-        )
-    except pack.InvalidDescription as e:
-        logger.error(e)
-        return None
-    
-    if local_target and (local_target.installedLinked() or update_installed != 'Update' or not local_target.outdated()):
-        # if a target exists (has a valid description file), and either is
-        # not outdated, or we are not updating
-        return local_target
-
-    # if we need to check for latest versions, get the latest available version
-    # before checking for a local target so that we can create the local
-    # target with a handle to its latest available version
-    if update_installed is None:
-        logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-        v = latestSuitableVersion(name, version_required, registry='targets')
-    elif local_target and local_target.outdated():
-        logger.info('%soutdated: %s@%s -> %s' % (
-            ('update ' if update_installed == 'Update' else ''),
-            name,
-            local_target.getVersion(),
-            v
-        ))
-        # must rm the old target before continuing
-        fsutils.rmRf(target_path)
-
-    if not v and update_installed is not None:
-        v = latestSuitableVersion(name, version_required, registry='targets')
-
-    if not v:
-        raise access_common.TargetUnavailable(
-            '"%s" is not a supported specification for a target (the target is %s)' % (version_required, name)
-        )
-    directory = os.path.join(working_directory, name)
-    v.unpackInto(directory)
-    r = target.Target(directory)
-    if not r:
-        raise Exception(
-            '"%s":"%s" is not a valid target (its description file is invalid)' % (name, version_required)
-        )
-    return r
-
-    
+    return satisfyVersion(
+                    name = name,
+        version_required = version_required,
+               available = {},
+            search_paths = [working_directory],
+       working_directory = working_directory,
+        update_installed = update_installed,
+                    type = 'target'
+    )

@@ -180,7 +180,7 @@ def _listVersions(namespace, name):
                 versions.append(rtv)
 
     if not len(versions):
-        raise access_common.ComponentUnavailable(
+        raise access_common.Unavailable(
             ('%s does not exist in the %s registry. '+
             'Check that the name is correct, and that it has been published.') % (name, namespace)
         )
