@@ -308,7 +308,7 @@ def _satisfyVersionByInstallingVersion(name, version_required, working_directory
         which looks up a suitable remote version object.
     '''
     assert(version)
-    logger.info('download ' + name)
+    logger.info('download %s', version)
     version.unpackInto(working_directory)
     r = _clsForType(type)(working_directory)
     if not r:

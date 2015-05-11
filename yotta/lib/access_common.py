@@ -34,10 +34,22 @@ class SpecificationNotMet(AccessException):
 
 
 class RemoteVersion(version.Version):
+    def __init__(self, version_string, url=None, name='unknown', friendly_source='unknown', friendly_version=None):
+        self.name = name
+        self.version_string = version_string
+        self.friendly_version = friendly_version or version_string
+        self.friendly_source = friendly_source
+        super(RemoteVersion, self).__init__(version_string, url)
 
     def unpackInto(self, directory):
         raise NotImplementedError
-
+    
+    def __repr__(self):
+        return u'%s@%s from %s' % (self.name, self.friendly_version, self.friendly_source)
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+    def __unicode__(self):
+        return self.__repr__()
 
 class RemoteComponent(object):
 

@@ -208,21 +208,25 @@ def deauthorize():
         settings.setProperty('github', 'authtoken', '')
 
 class GithubComponentVersion(access_common.RemoteVersion):
-    def __init__(self, semver, tag, url):
+    def __init__(self, semver, tag, url, name):
         self.tag = tag
-        super(GithubComponentVersion, self).__init__(semver, url)
+        github_spec = re.search('/(repos|codeload.github.com)/([^/]*/[^/]*)/', url).group(2)
+        super(GithubComponentVersion, self).__init__(
+            semver, url, name=name, friendly_version=(semver or tag), friendly_source=('GitHub %s' % github_spec)
+        )
     
     def unpackInto(self, directory):
         assert(self.url)
         _getTarball(self.url, directory)
 
 class GithubComponent(access_common.RemoteComponent):
-    def __init__(self, repo, tag_or_branch=None, semantic_spec=None):
+    def __init__(self, repo, tag_or_branch=None, semantic_spec=None, name=None):
         logging.debug('create Github component for repo:%s version spec:%s' % (repo, semantic_spec or tag_or_branch))
         self.repo = repo
         self.spec = semantic_spec
         self.tag_or_branch = tag_or_branch
         self.tags = None
+        self.name = name
     
     @classmethod
     def createFromSource(cls, vs, name=None):    
@@ -238,7 +242,7 @@ class GithubComponent(access_common.RemoteComponent):
             (Note that for github components we ignore the component name - it
              doesn't have to match the github module name)
         '''
-        return GithubComponent(vs.location, vs.spec, vs.semantic_spec)
+        return GithubComponent(vs.location, vs.spec, vs.semantic_spec, name)
 
     def versionSpec(self):
         return self.spec
@@ -265,7 +269,7 @@ class GithubComponent(access_common.RemoteComponent):
             if not len(t[0].strip()):
                 continue
             try:
-                r.append(GithubComponentVersion(t[0], t[0], url=t[1]))
+                r.append(GithubComponentVersion(t[0], t[0], url=t[1], name=self.name))
             except ValueError:
                 logger.debug('invalid version tag: %s', t)
 
@@ -274,17 +278,17 @@ class GithubComponent(access_common.RemoteComponent):
     def availableTags(self):
         ''' return a list of GithubComponentVersion objects for all tags
         '''
-        return [GithubComponentVersion('', t[0], t[1]) for t in self._getTags()]
+        return [GithubComponentVersion('', t[0], t[1], self.name) for t in self._getTags()]
 
     def availableBranches(self):
         ''' return a list of GithubComponentVersion objects for the tip of each branch
         '''
         return [
-            GithubComponentVersion('', b[0], b[1]) for b in _getBranchHeads(self.repo).items()
+            GithubComponentVersion('', b[0], b[1], self.name) for b in _getBranchHeads(self.repo).items()
         ]
 
     def tipVersion(self):
-        return GithubComponentVersion('', '', _getTipArchiveURL(self.repo))
+        return GithubComponentVersion('', '', _getTipArchiveURL(self.repo), self.name)
     
     @classmethod
     def remoteType(cls):

@@ -226,6 +226,9 @@ def _getSources():
 def _isPublicRegistry(registry):
     return (registry is None) or (registry == Registry_Base_URL)
 
+def _friendlyRegistryName(registry):
+    return registry
+
 def _getPrivateKey(registry):
     if _isPublicRegistry(registry):
         return settings.getProperty('keys', 'private')
@@ -330,7 +333,9 @@ class RegistryThingVersion(access_common.RemoteVersion):
         else:
             self.sha256 = None
         url = _tarballURL(self.namespace, self.name, version, registry)
-        super(RegistryThingVersion, self).__init__(version, url)
+        super(RegistryThingVersion, self).__init__(
+            version, url, name=name, friendly_source=_friendlyRegistryName(registry)
+        )
 
     def unpackInto(self, directory):
         assert(self.url)

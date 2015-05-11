@@ -99,6 +99,8 @@ class DependencySpec(object):
         return u'%s at %s' % (self.name, self.version_req)
     def __str__(self):
         return self.__unicode__().encode('utf-8')
+    def __repr__(self):
+        return self.__unicode__()
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
