@@ -355,27 +355,30 @@ class DerivedTarget(Target):
         logging.error('could not find program "%s" to debug' %  program)
         return None
     
-    @fsutils.dropRootPrivs
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
             `debugServer` commands if not. `program` is inserted into the
             $program variable in commands.
         '''
-        if 'scripts' in self.description and 'debug' in self.description['scripts']:
-            for err in self._debugWithScript(builddir, program):
-                return err
-        elif 'debug' in self.description:
-            logger.warning(
-                'target %s provides deprecated debug property. It should '+
-                'provide script.debug instead.', self.getName()
+        try:
+            signal.signal(signal.SIGINT, _ignoreSignal);
+            if 'scripts' in self.description and 'debug' in self.description['scripts']:
+                return self._debugWithScript(builddir, program)
+            elif 'debug' in self.description:
+                logger.warning(
+                    'target %s provides deprecated debug property. It should '+
+                    'provide script.debug instead.', self.getName()
 
-            )
-            for err in self._debugDeprecated(builddir, program):
-                return err
-        else:
-            return "Target %s does not specify debug commands" % self
+                )
+                return self._debugDeprecated(builddir, program)
+            else:
+                return "Target %s does not specify debug commands" % self
+        finally:
+            # clear the sigint handler
+            signal.signal(signal.SIGINT, signal.SIG_DFL);
 
+    @fsutils.dropRootPrivs
     def _debugWithScript(self, builddir, program):
         child = None
         try:
@@ -383,7 +386,6 @@ class DerivedTarget(Target):
             if prog_path is None:
                 return
 
-            signal.signal(signal.SIGINT, _ignoreSignal);
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.description['scripts']['debug']
@@ -394,7 +396,7 @@ class DerivedTarget(Target):
             )
             child.wait()
             if child.returncode:
-                yield "debug process exited with status %s" % child.returncode
+                return "debug process exited with status %s" % child.returncode
             child = None
         except:
             # reset the terminal, in case the debugger has screwed it up
@@ -402,10 +404,12 @@ class DerivedTarget(Target):
             raise
         finally:
             if child is not None:
-                child.terminate()
-            # clear the sigint handler
-            signal.signal(signal.SIGINT, signal.SIG_DFL);
+                try:
+                    child.terminate()
+                except OSError as e:
+                    pass
 
+    @fsutils.dropRootPrivs
     def _debugDeprecated(self, builddir, program):
         prog_path = self.findProgram(builddir, program)
         if prog_path is None:
@@ -432,7 +436,6 @@ class DerivedTarget(Target):
                 else:
                     daemon = None
                 
-                signal.signal(signal.SIGINT, _ignoreSignal);
                 cmd = [
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
@@ -443,7 +446,7 @@ class DerivedTarget(Target):
                 )
                 child.wait()
                 if child.returncode:
-                    yield "debug process executed with status %s" % child.returncode
+                    return "debug process executed with status %s" % child.returncode
                 child = None
             except:
                 # reset the terminal, in case the debugger has screwed it up
@@ -451,12 +454,16 @@ class DerivedTarget(Target):
                 raise
             finally:
                 if child is not None:
-                    child.terminate()
+                    try:
+                        child.terminate()
+                    except OSError as e:
+                        pass
                 if daemon is not None:
                     logger.debug('shutting down debug server...')
-                    daemon.terminate()
-                # clear the sigint handler
-                signal.signal(signal.SIGINT, signal.SIG_DFL);
+                    try:
+                        daemon.terminate()
+                    except OSError as e:
+                        pass
     
     @fsutils.dropRootPrivs
     def test(self, builddir, program, filter_command, forward_args):
