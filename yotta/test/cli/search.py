@@ -43,6 +43,10 @@ class TestCLISearch(unittest.TestCase):
 
     def runCheckCommand(self, args):
         stdout, stderr, statuscode = cli.run(args)
+        if statuscode != 0:
+            print('command failed with status %s' % statuscode)
+            print(stdout)
+            print(strerr)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 

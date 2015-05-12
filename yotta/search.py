@@ -53,4 +53,9 @@ def execCommand(args, following_args):
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
             print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+    # exit status: success if we found something, otherwise fail
+    if count:
+        return 0
+    else:
+        return 1
 
