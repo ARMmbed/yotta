@@ -532,7 +532,7 @@ def removeOwner(namespace, name, owner, registry=None):
     response.raise_for_status()
 
 
-def search(query='', keywords=[]):
+def search(query='', keywords=[], registry=None):
     ''' generator of objects returned by the search endpoint (both modules and
         targets).
         
@@ -542,8 +542,12 @@ def search(query='', keywords=[]):
         If both parameters are specified the search is the intersection of the
         two queries.
     '''
+    registry = registry or Registry_Base_URL
 
-    url = '%s/search' % Registry_Base_URL
+    url = '%s/search' % registry
+
+    headers = _headersForRegistry(registry)
+
     params = {
          'skip': 0,
         'limit': 50
@@ -554,7 +558,7 @@ def search(query='', keywords=[]):
         params['keywords[]'] = keywords
     
     while True:
-        response = requests.get(url, params=params)
+        response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         objects = ordered_json.loads(response.text)
         if len(objects):

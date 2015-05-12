@@ -46,7 +46,7 @@ def execCommand(args, following_args):
     # different things, however, which is why the uniquing key includes the
     # type)
     count = 0
-    for result in registry_access.search(query=args.query, keywords=args.kw):
+    for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
         if count > args.limit:
             break
