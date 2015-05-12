@@ -43,9 +43,9 @@ Default_Publish_Ignore = [
     'build',
     '.DS_Store',
     '.sw[ponml]',
-    '~',
-    '.DS_Store',
+    '*~',
     '._.*',
+    '.yotta.json'
 ]
 
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
