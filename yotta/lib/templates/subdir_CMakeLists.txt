@@ -29,6 +29,7 @@ add_executable ({{ object_name }}
     ${YOTTA_AUTO_{{ object_name | upper }}_RESOURCE_FILES}
 {% endif %}
 )
+set_target_properties({{ object_name }} PROPERTIES ENABLE_EXPORTS ON)
 {% else %}
 add_library({{ object_name }}
 {% for lang in languages %}
