@@ -409,7 +409,7 @@ class CMakeGen(object):
         subdirs = defaultdict(list)
         toplevel_srcs = []
         for f in source_files:
-            if f.lang in ('c', 'cpp', 'objc'):
+            if f.lang in ('c', 'cpp', 'objc', 's'):
                 subrelpath = os.path.relpath(f.relpath, dirname)
                 subdir = os.path.split(subrelpath)[0]
                 if subdir:
@@ -511,6 +511,7 @@ class CMakeGen(object):
     def containsSourceFiles(self, directory, component):
         c_exts          = set(('.c',))
         cpp_exts        = set(('.cpp','.cc','.cxx'))
+        asm_exts        = set(('.s',))
         objc_exts       = set(('.m', '.mm'))
         header_exts     = set(('.h',))
 
@@ -527,6 +528,8 @@ class CMakeGen(object):
                     sources.append(SourceFile(fullpath, relpath, 'c'))
                 elif ext in cpp_exts:
                     sources.append(SourceFile(fullpath, relpath, 'cpp'))
+                elif ext in asm_exts:
+                    sources.append(SourceFile(fullpath, relpath, 's'))
                 elif ext in objc_exts:
                     sources.append(SourceFile(fullpath, relpath, 'objc'))
                 elif ext in header_exts:

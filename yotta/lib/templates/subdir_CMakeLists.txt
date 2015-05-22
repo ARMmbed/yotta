@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 2.8.11)
 
 include_directories("{{ source_directory | replaceBackslashes }}")
 
+{% if 's' in languages %}
+enable_language(ASM)
+{% endif %}
+
 {% for lang in languages %}
 set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
   {% for file_name, language in source_files %}
