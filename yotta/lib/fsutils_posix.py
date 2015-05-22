@@ -18,15 +18,13 @@ def _getNobodyPidGid():
 def _dropPrivsReturnViaQueue(q, fn, args, kwargs):
     running_as_root = (os.geteuid() == 0)
     if running_as_root:
-        if os.environ['SUDO_UID']:
+        nobody_uid, nobody_gid = _getNobodyPidGid()
+        if os.environ.get('SUDO_UID', None) is not None:
             logging.debug('drop SUDO -> %s', os.environ['SUDO_UID'])
-            os.setgid(int(os.environ['SUDO_GID']))
-            os.setuid(int(os.environ['SUDO_UID']))
         else:
             logging.debug('drop SU -> nobody')
-            nobody_uid, nobody_gid = _getNobodyPidGid()
-            os.setgid(nobody_gid)
-            os.setuid(nobody_uid)
+        os.setgid(int(os.environ.get('SUDO_GID', nobody_gid)))
+        os.setgid(int(os.environ.get('SUDO_UID', nobody_uid)))
     try:
         logging.debug('run wrapped function...')
         try:
