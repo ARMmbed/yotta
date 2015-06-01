@@ -36,6 +36,16 @@ class VersionSource(object):
                     "Invalid semantic version spec: \"%s\"" % spec
                 )
 
+    def semanticSpec(self):
+        return self.semantic_spec or version.Spec('*')
+
+    def semanticSpecMatches(self, v):
+        if self.semantic_spec is None:
+            return True
+        else:
+            return self.semantic_spec.match(v)
+
+
 def parseSourceURL(source_url):
     ''' Parse the specified version source URL (or version spec), and return an
         instance of VersionSource
@@ -71,7 +81,7 @@ def parseSourceURL(source_url):
         return VersionSource('github', without_fragment, parsed.fragment)
 
     # something/something@spec = github
-    alternate_github_match = re.match('([a-z0-9_-]+/[a-z0-9_-]+) *@?([~^><=.0-9a-zA-Z\*-]*)', source_url)
+    alternate_github_match = re.match('([a-z0-9_-]+/[a-z0-9_-]+) *@?([~^><=.0-9a-z\*-]*)', source_url, re.I)
     if alternate_github_match:
         return VersionSource('github', alternate_github_match.group(0), alternate_github_match.group(1))
     

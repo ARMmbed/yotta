@@ -55,11 +55,22 @@ def execCommand(args, following_args):
     cwd = os.getcwd()
     c = component.Component(cwd)
     if args.component is None:
-        installDeps(args, c)
+        return installDeps(args, c)
     elif c or c.exists():
-        installComponentAsDependency(args, c)
+        return installComponentAsDependency(args, c)
     else:
-        installComponent(args)
+        return installComponent(args)
+
+def checkPrintStatus(errors, components):
+    status = 0
+    for error in errors:
+        logging.error(error)
+        status = 1
+    for c in components.values():
+        if c and c.getError():
+            logging.error('%s %s', c.getName(), c.getError())
+            status = 1
+    return status
 
 
 def installDeps(args, current_component):
@@ -96,8 +107,7 @@ def installDeps(args, current_component):
             available_components = [(current_component.getName(), current_component)],
                             test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
-        for error in errors:
-            logging.error(error)
+        return checkPrintStatus(errors, components)
 
 
 
@@ -161,8 +171,7 @@ def installComponentAsDependency(args, current_component):
                         test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         
     )
-    for error in errors:
-        logging.error(error)
+    return checkPrintStatus(errors, components)
 
 
 def installComponent(args):
@@ -197,4 +206,4 @@ def installComponent(args):
                working_directory = path
         )
     os.chdir(component_name)
-    installDeps(args, component.Component(os.getcwd()))
+    return installDeps(args, component.Component(os.getcwd()))

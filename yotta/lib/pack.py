@@ -176,6 +176,12 @@ class Pack(object):
         ''' If this isn't a valid component/target, return some sort of
             explanation about why that is. '''
         return self.error
+    
+    def setError(self, error):
+        ''' Set an error: note that setting an error does not make the module
+            invalid if it would otherwise be valid.
+        '''
+        self.error = error
 
     def getDescriptionFile(self):
         return os.path.join(self.path, self.description_filename)

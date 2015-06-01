@@ -74,7 +74,10 @@ def execCommand(args, following_args):
             # straightforward (especially if there is custom cmake involved).
             # That's why this is 'all', and not 'none'.
             vars(args)['install_test_deps'] = 'all'
-    install.execCommand(args, [])
+
+    # install may exit non-zero for non-fatal errors (such as incompatible
+    # version specs), which it will display
+    errcode = install.execCommand(args, [])
 
     builddir = os.path.join(cwd, 'build', target.getName())
 
@@ -83,17 +86,18 @@ def execCommand(args, following_args):
         available_components = [(c.getName(), c)],
                         test = True
     )
-    errors = 0
+
+    # if a dependency is missing the build will almost certainly fail, so don't try
+    missing = 0
     for d in all_components.values():
         if not d and not (d.isTestDependency() and args.install_test_deps != 'all'):
             logging.error('%s not available' % os.path.split(d.path)[1])
-            errors += 1
-    if errors:
+            missing += 1
+    if missing:
         logging.error('Missing dependencies prevent build. Use `yotta ls` to list them.')
         return 1
 
     generator = cmakegen.CMakeGen(builddir, target)
-    errcode = None
     for error in generator.generateRecursive(c, all_components, builddir):
         logging.error(error)
         errcode = 1
