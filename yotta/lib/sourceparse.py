@@ -35,6 +35,10 @@ class VersionSource(object):
                 raise ValueError(
                     "Invalid semantic version spec: \"%s\"" % spec
                 )
+
+    def semanticSpec(self):
+        return self.semantic_spec or version.Spec('*')
+
     def semanticSpecMatches(self, v):
         if self.semantic_spec is None:
             return True

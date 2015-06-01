@@ -239,7 +239,7 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
         versions of the found component, and update it in-place (unless it was
         installed via a symlink).
     '''
-    spec = sourceparse.parseSourceURL(version_required).semantic_spec
+    spec = sourceparse.parseSourceURL(version_required).semanticSpec()
     v    = None
     
     try:
