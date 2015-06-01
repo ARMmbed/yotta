@@ -202,6 +202,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
     return None
 
 def searchPathsFor(name, version_required, search_paths, type='module'):
+    spec = version.Spec(version_required)
     for path in search_paths:
         check_path = os.path.join(path, name)
         logger.debug("check path %s for %s" % (check_path, name))
@@ -210,7 +211,7 @@ def searchPathsFor(name, version_required, search_paths, type='module'):
                    installed_linked = fsutils.isLink(check_path),
             latest_suitable_version = None
         )
-        if instance:
+        if instance and spec.match(instance.getVersion()):
             return instance
     return None
 
@@ -222,23 +223,10 @@ def _clsForType(type):
     assert(type in ('module', 'target'))
     return {'module':component.Component, 'target':target.Target}[type]
 
-def satisfyVersionFromAvailable(name, version_required, available, type='module'):
-    spec = None
+def satisfyFromAvailable(name, available, type='module'):
     if name in available and available[name]:
         logger.debug('satisfy %s from already installed %ss' % (name, type))
-        # we still need to check the version specification - which the remote
-        # components know how to parse:
-        remote_component = remoteComponentFor(name, version_required, _registryNamespaceForType(type))
-        if remote_component.versionSpec():
-            if not remote_component.versionSpec().match(available[name].version):
-                raise access_common.SpecificationNotMet(
-                    "Installed %s %s doesn't match specification %s" % (type, name, remote_component.versionSpec())
-                ) 
         r = available[name]
-        if spec and not spec.match(r.getVersion()):
-            raise access_common.Unavailable(
-                'Previously added %s %s@%s doesn\'t meet spec %s' % (type, name, r.getVersion(), spec)
-            )
         if name != r.getName():
             raise access_common.Unavailable('%s %s was installed as different name %s in %s' % (
                 type, r.getName(), name, r.path
@@ -340,9 +328,13 @@ def satisfyVersion(
             Update: replace any existing version with the newest available, if
                     the newest available has a higher version
     '''
-
-    r = satisfyVersionFromAvailable(name, version_required, available, type=type)
+    
+    r = satisfyFromAvailable(name, available, type=type)
     if r is not None:
+        if not sourceparse.parseSourceURL(version_required).semanticSpecMatches(r.getVersion()):
+            raise access_common.SpecificationNotMet(
+                "Installed %s %s doesn't match specification %s" % (type, name, version_required)
+            ) 
         return r
     
     r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update', type=type)

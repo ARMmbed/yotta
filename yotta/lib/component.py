@@ -26,6 +26,8 @@ import fsutils
 import pack
 # Target, , represent an installed target, internal
 import target
+# sourceparse, , parse version source urls, internal
+import sourceparse
 
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
@@ -145,37 +147,24 @@ class Component(pack.Pack):
         ):
         ''' Returns {component_name:component}
         '''
-        available_components = self.ensureOrderedDict(available_components)        
         if search_dirs is None:
-            search_dirs = []
-        r = OrderedDict()
-        modules_path = self.modulesPath()
-        for dspec in self.getDependencySpecs(target=target):
-            if dspec.is_test_dependency and not test:
-                continue
-            name = dspec.name
-            ver_req = dspec.version_req
-            if name in available_components:
-                logger.debug('found dependency %s of %s in available components' % (name, self.getName()))
-                r[name] = available_components[name]
-            elif not available_only:
-                for d in search_dirs + [modules_path]:
-                    logger.debug('looking for dependency %s of %s in %s' % (name, self.getName(), d))
-                    component_path = path.join(d, name)
-                    c = Component(
-                        component_path,
-                        installed_linked=fsutils.isLink(component_path)
-                    )
-                    if c:
-                        logger.debug('found dependency %s of %s in %s' % (name, self.getName(), d))
-                        break
-                # if we didn't find a valid component in the search path, we
-                # use the component initialised with the last place checked
-                # (the modules path)
-                if warnings and not c:
-                    logger.warning('failed to find dependency %s of %s' % (name, self.getName()))
-                r[name] = c
-        return r
+            search_dirs = [self.modulesPath()]
+        available_components = self.ensureOrderedDict(available_components)
+            
+        components, errors = self.__getDependenciesWithProvider(
+            available_components = available_components,
+                     search_dirs = search_dirs,
+                          target = target,
+                update_installed = False,
+                        provider = self.provideInstalled,
+                            test = test
+        )
+        if warnings:
+            for error in errors:
+                logger.warning(error)
+        if available_only:
+            components = OrderedDict((k, v) for k, v in components.items() if v)
+        return components
 
     def __getDependenciesWithProvider(self,
                       available_components = None,
@@ -196,7 +185,7 @@ class Component(pack.Pack):
         modules_path = self.modulesPath()
         def satisfyDep(dspec):
             try:
-                return provider(
+                r = provider(
                   dspec,
                   available_components,
                   search_dirs,
@@ -204,6 +193,10 @@ class Component(pack.Pack):
                   update_installed,
                   self.getName()
                 )
+                if r and not sourceparse.parseSourceURL(dspec.version_req).semanticSpecMatches(r.getVersion()):
+                    logger.debug('%s does not meet specification %s required by %s' % (r.getName(), dspec.version_req, self.getName()))
+                    r.setError('does not meet specification %s required by %s' % (dspec.version_req, self.getName()))
+                return r
             except access_common.Unavailable as e:
                 errors.append(e)
                 self.dependencies_failed = True
@@ -343,7 +336,34 @@ class Component(pack.Pack):
             components.update(dep_components)
             errors += dep_errors
         return (components, errors)
-        
+    
+    def provideInstalled(self,
+                        dspec,
+         available_components,
+                  search_dirs,
+            working_directory,
+          update_if_installed,
+                  dep_of_name
+        ):
+        r = access.satisfyFromAvailable(dspec.name, available_components)
+        if r:
+            if r.isTestDependency() and not dspec.is_test_dependency:
+                logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
+                r.setTestDependency(False)
+            return r
+        r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
+        if r:
+            r.setTestDependency(dspec.is_test_dependency)
+            return r
+        # return a module initialised to the path where we would have
+        # installed this module, so that it's possible to use
+        # getDependenciesRecursive to find a list of failed dependencies,
+        # as well as just available ones
+        # note that this Component object may still be valid (usable to
+        # attempt a build), if a different version was previously installed
+        # on disk at this location
+        r = Component(os.path.join(self.modulesPath(), dspec.name), test_dependency = dspec.is_test_dependency)
+        return r
 
     def getDependenciesRecursive(self,
                  available_components = None,
@@ -359,42 +379,13 @@ class Component(pack.Pack):
 
             Returns {component_name:component}
         '''
-        def provideInstalled(
-                            dspec,
-             available_components,
-                      search_dirs,
-                working_directory,
-              update_if_installed,
-                      dep_of_name
-        ):
-            r = None
-            try:
-                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
-            except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find dependencies for %s)' % (str(e), dep_of_name))
-            if r:
-                if r.isTestDependency() and not dspec.is_test_dependency:
-                    logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
-                    r.setTestDependency(False)
-                return r
-            r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
-            if r:
-                r.setTestDependency(dspec.is_test_dependency)
-                return r
-            # return an in invalid component, so that it's possible to use
-            # getDependenciesRecursive to find a list of failed dependencies,
-            # as well as just available ones
-            r = Component(os.path.join(self.modulesPath(), dspec.name), test_dependency=dspec.is_test_dependency)
-            assert(not r)
-            return r
-
         components, errors = self.__getDependenciesRecursiveWithProvider(
            available_components = available_components,
                     search_dirs = search_dirs,
                          target = target,
                  traverse_links = True,
                update_installed = False,
-                       provider = provideInstalled,
+                       provider = self.provideInstalled,
                            test = test
         )
         for error in errors:
@@ -475,14 +466,10 @@ class Component(pack.Pack):
             update_if_installed,
             dep_of_name=None
         ):
-            r = None
-            try:
-                r = access.satisfyVersionFromAvailable(dspec.name, dspec.version_req, available_components)
-            except access_common.SpecificationNotMet as e:
-                logger.error('%s (when trying to find %s for %s)' % (str(e), dspec, dep_of_name))
+            r = access.satisfyFromAvailable(dspec.name, available_components)
             if r:
                 if r.isTestDependency() and not dspec.is_test_dependency:
-                    logger.debug('test dependency subsequently occurred as real dependency: %s', dspec.name)
+                    logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                     r.setTestDependency(False)
                 return r
             r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)

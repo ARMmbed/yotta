@@ -341,14 +341,6 @@ class RegistryThingVersion(access_common.RemoteVersion):
         assert(self.url)
         _getTarball(self.url, directory, self.sha256)
 
-    def __eq__(self, other):
-        return self.namespace == other.namespace and \
-               self.name == other.name and \
-               self.version == version
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
 class RegistryThing(access_common.RemoteComponent):
     def __init__(self, name, version_spec, namespace):
         self.name = name

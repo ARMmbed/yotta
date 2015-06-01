@@ -35,6 +35,12 @@ class VersionSource(object):
                 raise ValueError(
                     "Invalid semantic version spec: \"%s\"" % spec
                 )
+    def semanticSpecMatches(self, v):
+        if self.semantic_spec is None:
+            return True
+        else:
+            return self.semantic_spec.match(v)
+
 
 def parseSourceURL(source_url):
     ''' Parse the specified version source URL (or version spec), and return an
