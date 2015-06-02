@@ -25,7 +25,9 @@ include_directories("{{ source_directory | replaceBackslashes }}")
 
 {% for file_names, object_name, languages in tests %}
 add_executable({{ object_name }} {{ 'EXCLUDE_FROM_ALL' if exclude_from_all else '' }}
-    {{ file_names | join('\n    ') | replaceBackslashes }}
+    {% for filename in file_names %}
+        "{{ filename | replaceBackslashes }}"
+    {% endfor %}
 )
 {% if 'objc' in languages %}
 # no proper CMake support for objective-c flags :(
