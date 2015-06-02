@@ -190,6 +190,9 @@ class TestCLIBuild(unittest.TestCase):
 
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
-        print stdout, stderr
+        if statuscode != 0:
+            print('command failed with status %s' % statuscode)
+            print(stdout)
+            print(stderr)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
