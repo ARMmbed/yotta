@@ -140,7 +140,7 @@ def isWindows():
     return sys.platform == 'nt'
 
 
-class TestCLIInstall(unittest.TestCase):
+class TestCLIBuild(unittest.TestCase):
     def writeTestFiles(self, files, add_space_in_path=False):
         test_dir = tempfile.mkdtemp()
         if add_space_in_path:
@@ -190,6 +190,6 @@ class TestCLIInstall(unittest.TestCase):
 
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
-        #print stdout, stderr
+        print stdout, stderr
         self.assertEqual(statuscode, 0)
         return stdout or stderr
