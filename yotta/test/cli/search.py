@@ -46,7 +46,7 @@ class TestCLISearch(unittest.TestCase):
         if statuscode != 0:
             print('command failed with status %s' % statuscode)
             print(stdout)
-            print(strerr)
+            print(stderr)
         self.assertEqual(statuscode, 0)
         return stdout or stderr
 
