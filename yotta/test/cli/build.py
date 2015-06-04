@@ -7,7 +7,6 @@
 # standard library modules, , ,
 import unittest
 import os
-import sys
 import tempfile
 
 # internal modules:
@@ -137,7 +136,7 @@ int main(){
 
 def isWindows():
     # can't run tests that hit github without an authn token
-    return sys.platform == 'nt'
+    return os.name == 'nt'
 
 
 class TestCLIBuild(unittest.TestCase):
