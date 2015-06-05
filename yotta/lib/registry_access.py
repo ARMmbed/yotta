@@ -359,9 +359,6 @@ class RegistryThing(access_common.RemoteComponent):
         # the user fix it
         name_match = re.match('^([a-z0-9-]+)$', name)
         if not name_match:
-            logger.warning(
-                
-            )
             raise ValueError('Dependency name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name)
         assert(vs.semantic_spec)
         return RegistryThing(name, vs.semantic_spec, registry)
