@@ -302,7 +302,10 @@ yotta publish
 ```
 
 #### Description
-Publish the current module or target to the public `yotta` registry, where other people will be able to search for and install it.
+Publish the current module or target to the public [`yotta` registry](https://yottabuild.org), where other people will be able to search for and install it.
+
+Any files matching lines in the `.yotta_ignore` file (if present) are ignored,
+and will not be included in the published tarball.
 
 
 <a name="yotta-link"></a>
