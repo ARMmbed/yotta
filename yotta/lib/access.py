@@ -239,11 +239,15 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
         versions of the found component, and update it in-place (unless it was
         installed via a symlink).
     '''
-    spec = sourceparse.parseSourceURL(version_required).semanticSpec()
     v    = None
     
     try:
-        local_version = searchPathsFor(name, spec, search_paths, type)
+        local_version = searchPathsFor(
+            name,
+            sourceparse.parseSourceURL(version_required).semanticSpec(),
+            search_paths,
+            type
+        )
     except pack.InvalidDescription as e:
         logger.error(e)
         return None
@@ -252,7 +256,7 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
     if local_version:
         if update and not local_version.installedLinked():
             #logger.debug('attempt to check latest version of %s @%s...' % (name, version_required))
-            v = latestSuitableVersion(name, spec, registry=_registryNamespaceForType(type))
+            v = latestSuitableVersion(name, version_required, registry=_registryNamespaceForType(type))
             if local_version:
                 local_version.setLatestAvailable(v)
 
