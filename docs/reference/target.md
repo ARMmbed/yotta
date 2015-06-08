@@ -1,7 +1,7 @@
 ---
 layout: default
 title: target.json
-section: yotta/target
+section: reference/target
 ---
 
 # target.json Reference
