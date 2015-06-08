@@ -18,7 +18,7 @@ else:
 
 setup(
     name = "yotta",
-    version = "0.4.1",
+    version = "0.4.2",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
