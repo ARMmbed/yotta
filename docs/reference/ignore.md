@@ -24,12 +24,12 @@ Any files within an ignored directory will also be ignored.
 
  * `*` matches zero or more of any character, but does not match a directory separator
  * `?` matches any character exactly once, but does not match a directory separator
- * `[]` matches any character within [] exactly once
+ * `[]` matches any character within `[]` exactly once
 
-If a pattern starts with a / then it is an **absolute** pattern, and the whole
+If a pattern starts with a `/` then it is an **absolute** pattern, and the whole
 path relative to the root of the module must match.
 
-If a pattern does not start with a / then it is a **relative** pattern, and
+If a pattern does not start with a `/` then it is a **relative** pattern, and
 will match files and directories with any parent hierarchy.
 
 Note that with the relative pattern `b/c`, and a directory hierarchy `a/b/c/d/e`,
@@ -38,8 +38,8 @@ the whole of the directory `c` (including any subdirectory `d`) will be ignored.
 ### Examples
 
  * Ignore all files in `test/bar/`: `/test/bar/*`
- * Ignore all .tar.gz and .tar.gz files in the root directory: `/*.tar.[bg]z`
- * Ignore all .swp files everywhere: `*.swp`
+ * Ignore all `.tar.gz` and `.tar.bz` files in the root directory: `/*.tar.[bg]z`
+ * Ignore all `.swp` files everywhere: `*.swp`
  * Ignore all dotfiles files everywhere: `.*`
 
 
