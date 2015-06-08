@@ -73,7 +73,7 @@ Test_Complex_Module_JSON = '''{
     }
   ],
   "dependencies": {
-    "test-testdep-b": "*",
+    "test-testdep-b": "0.0.8",
     "test-testdep-c": "*",
     "test-testdep-d": "*"
   },
@@ -201,6 +201,9 @@ class TestCLIInstall(unittest.TestCase):
         self.assertTrue(re.search('test-testdep-g.*missing', stdout))
         self.assertNotIn('test-testdep-j', stdout)
         self.assertNotIn('test-testdep-k', stdout)
+
+        # test update
+        stdout = self.runCheckCommand(['--target', Test_Target, 'up'], test_dir)
 
         rmRf(test_dir)
 
