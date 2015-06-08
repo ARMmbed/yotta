@@ -22,9 +22,9 @@ Any file or directory that matches any pattern in the ignore file will be ignore
 
 Any files within an ignored directory will also be ignored.
 
-`*` matches zero or more of any character, but does not match a directory separator
-`*` matches any character exactly once, but does not match a directory separator
-`[]` matches any character within [] exactly once
+ * `*` matches zero or more of any character, but does not match a directory separator
+ * `?` matches any character exactly once, but does not match a directory separator
+ * `[]` matches any character within [] exactly once
 
 If a pattern starts with a / then it is an **absolute** pattern, and the whole
 path relative to the root of the module must match.
