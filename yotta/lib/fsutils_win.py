@@ -37,3 +37,8 @@ def _symlink(source, link_name):
 
 def realpath(path):
     return os.path.abspath(tryReadLink(path) or path)
+
+def rmLink(path):
+    # Apparently, it's possible to delete both directory links and file links
+    # with 'rmdir' in Windows
+    os.rmdir(path)
