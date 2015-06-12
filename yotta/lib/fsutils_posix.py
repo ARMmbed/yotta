@@ -76,3 +76,6 @@ def _symlink(source, link_name):
 
 def realpath(path):
     return os.path.realpath(path)
+
+def rmLink(path):
+    os.unlink(path)

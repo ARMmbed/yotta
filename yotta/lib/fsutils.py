@@ -19,8 +19,11 @@ def mkDirP(path):
 
 def rmF(path):
     try:
-        os.remove(path)
-    except OSError as exception: 
+        if isLink(path):
+            rmLink(path)
+        else:
+            os.remove(path)
+    except OSError as exception:
         if exception.errno != errno.ENOENT:
             raise
 
@@ -34,11 +37,12 @@ def rmRf(path):
             os.chmod(path, stat.S_IWUSR)
             fn(path)
     try:
-        shutil.rmtree(path, onerror=fixPermissions)
+        if isLink(path):
+            rmLink(path)
+        else:
+            shutil.rmtree(path, onerror=fixPermissions)
     except OSError as exception:
-        if 'cannot call rmtree on a symbolic link' in str(exception).lower():
-            os.unlink(path)
-        elif exception.errno == errno.ENOTDIR:
+        if exception.errno == errno.ENOTDIR:
             rmF(path)
         elif exception.errno != errno.ENOENT:
             raise
@@ -63,6 +67,7 @@ tryReadLink = _platform_dep.tryReadLink
 _symlink = _platform_dep._symlink
 realpath = _platform_dep.realpath
 dropRootPrivs = _platform_dep.dropRootPrivs
+rmLink = _platform_dep.rmLink
 
 # !!! FIXME: the logic in the "except" block below probably doesn't work in Windows
 def symlink(source, link_name):
