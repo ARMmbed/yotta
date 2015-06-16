@@ -45,7 +45,7 @@ setup(
     test_suite = 'yotta.test',
     install_requires=[
         'semantic_version>=2.3.1,<3',
-        'requests>=2.5,<3',
+        'requests>=2.4.3,<3',
         'PyGithub>=1.25,<2',
         'colorama>=0.3,<0.4',
         'hgapi>=1.7,<2',
