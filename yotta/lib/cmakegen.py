@@ -411,7 +411,7 @@ class CMakeGen(object):
         for f in source_files:
             if f.lang in ('c', 'cpp', 'objc', 's'):
                 subrelpath = os.path.relpath(f.relpath, dirname)
-                subdir = os.path.split(subrelpath)[0]
+                subdir = fsutils.fullySplitPath(subrelpath)[0]
                 if subdir:
                     subdirs[subdir].append(f)
                 else:

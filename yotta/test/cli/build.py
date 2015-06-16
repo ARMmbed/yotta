@@ -134,6 +134,43 @@ int main(){
 '''
 }
 
+Test_Tests = {
+'module.json':'''{
+  "name": "test-tests",
+  "version": "0.0.0",
+  "description": "Test yotta's compilation of tests.",
+  "keywords": [],
+  "author": "James Crosby <james.crosby@arm.com>",
+  "licenses": [
+    {
+      "url": "https://spdx.org/licenses/Apache-2.0",
+      "type": "Apache-2.0"
+    }
+  ],
+  "dependencies": {},
+  "targetDependencies": {}
+}''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    printf("foo!\\n");
+    return 7;
+}''',
+'test-tests/foo.h':'int foo();',
+'test/a/bar.c':'#include "test-tests/foo.h"\nint main(){ foo(); return 0; }',
+'test/b/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/b/b/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }',
+'test/c/a/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/c/b/a/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }',
+'test/d/a/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/d/a/b/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }',
+'test/e/a/a/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/e/b/a/a/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }',
+'test/f/a/a/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/f/a/b/a/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }',
+'test/g/a/a/a/bar.c':'#include "test-tests/foo.h"\nint bar(); int main(){ foo(); bar(); return 0; }',
+'test/g/a/a/b/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }'
+}
+
 def isWindows():
     # can't run tests that hit github without an authn token
     return os.name == 'nt'
@@ -171,7 +208,7 @@ class TestCLIBuild(unittest.TestCase):
         rmRf(test_dir)
 
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
-    def test_buildZComplex(self):
+    def test_buildComplex(self):
         test_dir = self.writeTestFiles(Test_Complex)
 
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
@@ -179,11 +216,24 @@ class TestCLIBuild(unittest.TestCase):
         rmRf(test_dir)
 
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
-    def test_buildZZComplexSpaceInPath(self):
+    def test_buildComplexSpaceInPath(self):
         test_dir = self.writeTestFiles(Test_Complex, True)
 
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
 
+        rmRf(test_dir)
+    
+    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    def test_buildTests(self):
+        test_dir = self.writeTestFiles(Test_Tests, True)
+        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
+        self.assertIn('test-a', stdout)
+        self.assertIn('test-c', stdout)
+        self.assertIn('test-d', stdout)
+        self.assertIn('test-e', stdout)
+        self.assertIn('test-f', stdout)
+        self.assertIn('test-g', stdout)
         rmRf(test_dir)
 
 
