@@ -46,11 +46,7 @@ project({{ component_name }})
 
 {% if toplevel %}
 # Definitions provided by the target configuration info:
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "ARMCC")
-    add_definitions("--preinclude \"{{ config_include_file | replaceBackslashes }}\"")
-else()
-    add_definitions("-include \"{{ config_include_file | replaceBackslashes }}\"")
-endif()
+add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceBackslashes }}\"")
 {% endif %}
 
 # include root directories of all components we depend on (directly and
