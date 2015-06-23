@@ -19,6 +19,26 @@ cmake_policy(SET CMP0017 OLD)
 # toolchain file for {{ target_name }}
 set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
 
+# provide function for post-processing executables
+function (yotta_postprocess_target target_type_ target_name_)
+    if(COMMAND yotta_apply_target_rules)
+        yotta_apply_target_rules(${target_type_} ${target_name_})
+    endif()
+
+    # For backwards compatibility, support YOTTA_POSTPROCESS_COMMAND.
+    if(DEFINED YOTTA_POSTPROCESS_COMMAND AND ${target_type_} STREQUAL "EXECUTABLE")
+        #message(AUTHOR_WARNING "This target defines a YOTTA_POSTPROCESS_COMMAND for which support has been deprecated. Please define a CMake function yotta_apply_target_rules(build_object_type build_object) instead.")
+        string(REPLACE YOTTA_CURRENT_EXE_NAME "${target_name_}" LOCAL_POSTPROCESS_COMMAND "${YOTTA_POSTPROCESS_COMMAND}")
+        separate_arguments(LOCAL_POSTPROCESS_COMMAND_SEPARATED UNIX_COMMAND ${LOCAL_POSTPROCESS_COMMAND})
+        add_custom_command(
+            TARGET ${target_name_}
+            POST_BUILD
+            COMMAND ${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
+        )
+    endif()
+endfunction()
+
+# set target-defined definitions
 {{ set_definitions }}
 {% endif %}
 
@@ -26,11 +46,10 @@ project({{ component_name }})
 
 {% if toplevel %}
 # Definitions provided by the target configuration info:
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "ARMCC")
-    add_definitions("--preinclude \"{{ config_include_file | replaceBackslashes }}\"")
-else()
-    add_definitions("-include \"{{ config_include_file | replaceBackslashes }}\"")
+if(NOT DEFINED YOTTA_FORCE_INCLUDE_FLAG)
+    set(YOTTA_FORCE_INCLUDE_FLAG "-include")
 endif()
+add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceBackslashes }}\"")
 {% endif %}
 
 # include root directories of all components we depend on (directly and
@@ -53,6 +72,12 @@ endif()
 # implementations that import these headers to import them using the full path.
 {{ include_other_dirs }}
 {% endif %}
+
+# modules with custom CMake build systems may append to the
+# YOTTA_GLOBAL_INCLUDE_DIRS property to add compile-time-determined include
+# directories:
+get_property(GLOBAL_INCLUDE_DIRS GLOBAL PROPERTY YOTTA_GLOBAL_INCLUDE_DIRS)
+include_directories(${GLOBAL_INCLUDE_DIRS})
 
 # Provide the version of the component being built, in case components want to
 # embed this into compiled libraries
