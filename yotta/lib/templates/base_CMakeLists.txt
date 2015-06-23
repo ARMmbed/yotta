@@ -26,12 +26,12 @@ function (yotta_postprocess_target target_type_ target_name_)
     endif()
 
     # For backwards compatibility, support YOTTA_POSTPROCESS_COMMAND.
-    if(DEFINED YOTTA_POSTPROCESS_COMMAND)
-        message(AUTHOR_WARNING "This target defines a YOTTA_POSTPROCESS_COMMAND for which support has been deprecated. Please define a CMake function yotta_apply_target_rules(build_object_type build_object) instead.")
-        string(REPLACE YOTTA_CURRENT_EXE_NAME "serial-helloworld" LOCAL_POSTPROCESS_COMMAND "${YOTTA_POSTPROCESS_COMMAND}")
+    if(DEFINED YOTTA_POSTPROCESS_COMMAND AND ${target_type_} STREQUAL "EXECUTABLE")
+        #message(AUTHOR_WARNING "This target defines a YOTTA_POSTPROCESS_COMMAND for which support has been deprecated. Please define a CMake function yotta_apply_target_rules(build_object_type build_object) instead.")
+        string(REPLACE YOTTA_CURRENT_EXE_NAME "${target_name_}" LOCAL_POSTPROCESS_COMMAND "${YOTTA_POSTPROCESS_COMMAND}")
         separate_arguments(LOCAL_POSTPROCESS_COMMAND_SEPARATED UNIX_COMMAND ${LOCAL_POSTPROCESS_COMMAND})
         add_custom_command(
-            TARGET serial-helloworld
+            TARGET ${target_name_}
             POST_BUILD
             COMMAND ${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
         )
@@ -46,6 +46,9 @@ project({{ component_name }})
 
 {% if toplevel %}
 # Definitions provided by the target configuration info:
+if(NOT DEFINED YOTTA_FORCE_INCLUDE_FLAG)
+    set(YOTTA_FORCE_INCLUDE_FLAG "-include")
+endif()
 add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceBackslashes }}\"")
 {% endif %}
 
