@@ -19,6 +19,26 @@ cmake_policy(SET CMP0017 OLD)
 # toolchain file for {{ target_name }}
 set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
 
+# provide function for post-processing executables
+function (yotta_postprocess_target target_type_ target_name_)
+    if(COMMAND yotta_apply_target_rules)
+        yotta_apply_target_rules(${target_type_} ${target_name_})
+    endif()
+
+    # For backwards compatibility, support YOTTA_POSTPROCESS_COMMAND.
+    if(DEFINED YOTTA_POSTPROCESS_COMMAND)
+        message(AUTHOR_WARNING "This target defines a YOTTA_POSTPROCESS_COMMAND for which support has been deprecated. Please define a CMake function yotta_apply_target_rules(build_object_type build_object) instead.")
+        string(REPLACE YOTTA_CURRENT_EXE_NAME "serial-helloworld" LOCAL_POSTPROCESS_COMMAND "${YOTTA_POSTPROCESS_COMMAND}")
+        separate_arguments(LOCAL_POSTPROCESS_COMMAND_SEPARATED UNIX_COMMAND ${LOCAL_POSTPROCESS_COMMAND})
+        add_custom_command(
+            TARGET serial-helloworld
+            POST_BUILD
+            COMMAND ${LOCAL_POSTPROCESS_COMMAND_SEPARATED}
+        )
+    endif()
+endfunction()
+
+# set target-defined definitions
 {{ set_definitions }}
 {% endif %}
 
