@@ -54,6 +54,12 @@ endif()
 {{ include_other_dirs }}
 {% endif %}
 
+# modules with custom CMake build systems may append to the
+# YOTTA_GLOBAL_INCLUDE_DIRS property to add compile-time-determined include
+# directories:
+get_property(GLOBAL_INCLUDE_DIRS GLOBAL PROPERTY YOTTA_GLOBAL_INCLUDE_DIRS)
+include_directories(${GLOBAL_INCLUDE_DIRS})
+
 # Provide the version of the component being built, in case components want to
 # embed this into compiled libraries
 set(YOTTA_COMPONENT_VERSION "{{ component_version }}")
