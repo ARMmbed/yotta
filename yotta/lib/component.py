@@ -498,50 +498,11 @@ class Component(pack.Pack):
             github ref or URL) is installed in the targets directory of the
             current component
         '''
-        logger.debug('satisfy target: %s' % target_name_and_version);
-        if ',' in target_name_and_version:
-            name, ver = target_name_and_version.split(',')
-            dspec = pack.DependencySpec(name, ver)
-        else:
-            dspec = pack.DependencySpec(target_name_and_version, "*")
-        
-        leaf_target      = None
-        previous_name    = dspec.name
-        search_dirs      = [self.targetsPath()]
-        target_hierarchy = []
-        errors           = []
-        while True:
-            t = None
-            try:
-                t = access.satisfyVersion(
-                                 name = dspec.name,
-                     version_required = dspec.version_req,
-                            available = target_hierarchy,
-                         search_paths = search_dirs,
-                    working_directory = self.targetsPath(),
-                     update_installed = ('Update' if update_installed else None),
-                                 type = 'target'
-                )
-            except access_common.Unavailable as e:
-                errors.append(e)
-            if not t:
-                logger.error(
-                    'could not install target %s %s for %s' %
-                    (dspec.name, ver, previous_name)
-                )
-                break
-            else:
-                target_hierarchy.append(t)
-                previous_name = dspec.name
-                dspec = t.baseTargetSpec()
-                if not leaf_target:
-                    leaf_target = t
-                if dspec is None:
-                    break
-        if leaf_target is None:
-            return (None, errors)
-        else:
-            return (target.DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
+        return target.getDerivedTarget(
+            target_name_and_version,
+            self.targetsPath(),
+            update_installed = update_installed
+        )
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called. 

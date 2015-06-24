@@ -7,10 +7,19 @@
 from __future__ import print_function
 import re
 import logging
+import os
+
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
 
 # settings, , load and save settings, internal
 from .lib import settings
-
+# Target, , represents an installed target, internal
+from .lib import target
+# Component, , represents an installed component, internal
+from .lib import component
+# fsutils, , misc filesystem utils, internal
+from .lib import fsutils
 
 # OK this is a pretty terrible validation regex... should find a proper module
 # to do this
@@ -37,15 +46,53 @@ def addOptions(parser):
     #  similar to, e.g. objectador is similar to EFM32gg990f, #  EFM32gg,
     #  Cortex-M3, ARMv8, ARM)
 
-    # FIXME: per-program target setting (per-program settings files?)
-    #parser.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
-    #    help='Install globally instead of in the current working directory.'
-    #)
+
+def displayCurrentTarget(args):
+    if not args.plain:
+        DIM    = colorama.Style.DIM
+        BRIGHT = colorama.Style.BRIGHT
+        GREEN  = colorama.Fore.GREEN
+        RED    = colorama.Fore.RED
+        RESET  = colorama.Style.RESET_ALL
+    else:
+        DIM = BRIGHT = GREEN = RED = RESET = u''
+
+    line = u''
+
+    derived_target, errors = target.getDerivedTarget(args.target, component.Component(os.getcwd()).targetsPath(), install_missing=False)
+    for error in errors:
+        logger.error(error)
+    
+    if derived_target is None:
+        line = BRIGHT + RED + args.target + u' missing' + RESET
+    else:
+        for t in derived_target.hierarchy:
+            if len(line):
+                line += '\n'
+            if t:
+                line += t.getName() + DIM + u' ' + str(t.getVersion()) + RESET
+                if t.installedLinked():
+                    line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + fsutils.realpath(t.path)
+            else:
+                line += BRIGHT + RED + t.getName() + DIM + u' ' + str(t.getVersion()) + BRIGHT + u' missing'
+            line += RESET
+        base_spec = t.baseTargetSpec()
+        if base_spec:
+            # if the last target in the hierarchy has a base spec, then the
+            # hierarchy is incomplete:
+            line += '\n' + BRIGHT + RED + base_spec.name + u' ' + base_spec.version_req + u' missing'
+
+    if u'unicode' in str(type(line)):
+        # python 2.7
+        print(line.encode('utf-8'))
+    else:
+        print(line)
+
 
 
 def execCommand(args, following_args):
     if args.set_target is None:
-        print(args.target)
+        displayCurrentTarget(args)
     else:
         if not Target_RE.match(args.set_target):
             logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:
@@ -66,7 +113,7 @@ def execCommand(args, following_args):
             #''')
         else:
             if args.set_target.find(',') == -1:
-                target = args.set_target + ',*'
+                t = args.set_target + ',*'
             else:
-                target = args.set_target
-            settings.setProperty('build', 'target', target, not args.save_global)
+                t = args.set_target
+            settings.setProperty('build', 'target', t, not args.save_global)
