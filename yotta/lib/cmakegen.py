@@ -30,7 +30,13 @@ jinja_environment = Environment(loader=FileSystemLoader(Template_Dir), trim_bloc
 
 def replaceBackslashes(s):
     return s.replace('\\', '/')
+def sanitizePreprocessorSymbol(sym):
+    return re.sub('[^a-zA-Z0-9]', '_', str(sym)).upper()
+def sanitizeSymbol(sym):
+    return re.sub('[^a-zA-Z0-9]', '_', str(sym))
+
 jinja_environment.filters['replaceBackslashes'] = replaceBackslashes
+jinja_environment.filters['sanitizePreprocessorSymbol'] = sanitizePreprocessorSymbol
 
 class SourceFile(object):
     def __init__(self, fullpath, relpath, lang):
@@ -125,12 +131,6 @@ class CMakeGen(object):
         if err:
             logger.warn(err)
 
-    def _sanitizePreprocessorSymbol(self, targetname):
-        return re.sub('[^a-zA-Z0-9]', '_', targetname).upper()
-
-    def _sanitizeSymbol(self, sym):
-        return re.sub('[^a-zA-Z0-9]', '_', sym)
-
     def _listSubDirectories(self, component):
         ''' return: {
                 manual: [list of subdirectories with manual CMakeLists],
@@ -182,7 +182,7 @@ class CMakeGen(object):
     def _definitionsForConfig(self, config, key_path=None):
         if key_path is None:
             key_path = list()
-        key_prefix = '_'.join([self._sanitizePreprocessorSymbol(x) for x in key_path])
+        key_prefix = '_'.join([sanitizePreprocessorSymbol(x) for x in key_path])
         r = []
         if len(key_prefix):
             r.append((key_prefix,None))
@@ -198,8 +198,57 @@ class CMakeGen(object):
                     # convert bool to 1/0, since we can't know the availability
                     # of a C bool type
                     v = 1 if v else 0
-                r.append(('%s_%s' % (key_prefix, self._sanitizePreprocessorSymbol(k)), v))
+                r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
         return r
+    
+    def getConfigData(self, all_dependencies, component, builddir):
+        ''' returns (path_to_config_header, cmake_set_definitions) '''
+        add_defs_header = ''
+        set_definitions = ''
+        # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
+        # of the config. NB: THESE WILL GO AWAY
+        definitions = []
+        definitions.append(('TARGET', sanitizePreprocessorSymbol(self.target.getName())))
+        definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(self.target.getName()),None))
+
+        for target in self.target.getSimilarTo_Deprecated():
+            if '*' not in target:
+                definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
+
+        logger.debug('target configuration data: %s', self.target.getMergedConfig())
+        definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
+        
+        add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
+        for k, v in definitions:
+            if v is not None:
+                #add_definitions += '-D%s=%s ' % (k, v)
+                add_defs_header += '#define %s %s\n' % (k, v)
+                set_definitions += 'set(%s %s)\n' % (k, v)
+            else:
+                #add_definitions += '-D%s ' % k
+                add_defs_header += '#define %s\n' % k
+                set_definitions += 'set(%s TRUE)\n' % k
+
+        add_defs_header += '\n// version definitions\n'
+        
+        for dep in all_dependencies.values() + [component]:
+            add_defs_header += "#define YOTTA_%s_VERSION_STRING \"%s\"\n" % (sanitizePreprocessorSymbol(dep.getName()), str(dep.getVersion()))
+            add_defs_header += "#define YOTTA_%s_VERSION_MAJOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().major())
+            add_defs_header += "#define YOTTA_%s_VERSION_MINOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().minor())
+            add_defs_header += "#define YOTTA_%s_VERSION_PATCH %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().patch())
+
+        # use -include <definitions header> instead of lots of separate
+        # defines... this is compiler specific, but currently testing it
+        # out for gcc-compatible compilers only:
+        config_include_file = os.path.join(builddir, 'yotta_config.h')
+        self._writeFile(
+            config_include_file,
+            '#ifndef __YOTTA_CONFIG_H__\n'+
+            '#define __YOTTA_CONFIG_H__\n'+
+            add_defs_header+
+            '#endif // ndef __YOTTA_CONFIG_H__\n'
+        )
+        return (config_include_file, set_definitions)
 
     def generate(
             self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel
@@ -297,41 +346,7 @@ class CMakeGen(object):
         add_definitions = ''
         config_include_file = None
         if toplevel:
-            add_defs_header = ''
-            # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
-            # of the config. NB: THESE WILL GO AWAY
-            definitions = []
-            definitions.append(('TARGET', self._sanitizePreprocessorSymbol(self.target.getName())))
-            definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(self.target.getName()),None))
-
-            for target in self.target.getSimilarTo_Deprecated():
-                if '*' not in target:
-                    definitions.append(('TARGET_LIKE_%s' % self._sanitizePreprocessorSymbol(target),None))
-
-            logger.debug('target configuration data: %s', self.target.getMergedConfig())
-            definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
-            
-            for k, v in definitions:
-                if v is not None:
-                    #add_definitions += '-D%s=%s ' % (k, v)
-                    add_defs_header += '#define %s %s\n' % (k, v)
-                    set_definitions += 'set(%s %s)\n' % (k, v)
-                else:
-                    #add_definitions += '-D%s ' % k
-                    add_defs_header += '#define %s\n' % k
-                    set_definitions += 'set(%s TRUE)\n' % k
-
-            # use -include <definitions header> instead of lots of separate
-            # defines... this is compiler specific, but currently testing it
-            # out for gcc-compatible compilers only:
-            config_include_file = os.path.join(builddir, 'yotta_config.h')
-            self._writeFile(
-                config_include_file,
-                '#ifndef __YOTTA_CONFIG_H__\n'+
-                '#define __YOTTA_CONFIG_H__\n'+
-                add_defs_header+
-                '#endif // ndef __YOTTA_CONFIG_H__\n'
-            )
+            (config_include_file, set_definitions) = self.getConfigData(all_dependencies, component, builddir)
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
@@ -352,7 +367,7 @@ class CMakeGen(object):
                          "target_name": self.target.getName(),
                      "set_definitions": set_definitions,
                       "toolchain_file": toolchain_file_path,
-                      "component_name": component.getName(),
+                           "component": component,
                      "include_own_dir": include_own_dir,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
@@ -361,14 +376,14 @@ class CMakeGen(object):
                      "add_own_subdirs": add_own_subdirs,
                  "config_include_file": config_include_file,
            #"yotta_target_definitions": add_definitions,
-                   "component_version": component.getVersion(),
                          "delegate_to": delegate_to_existing,
-                  "delegate_build_dir": delegate_build_dir
+                  "delegate_build_dir": delegate_build_dir,
+                 "active_dependencies": active_dependencies
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
     
     def createDummyLib(self, component, builddir, link_dependencies):
-        safe_name        = self._sanitizeSymbol(component.getName())
+        safe_name        = sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name
         dummy_cfile_name = 'dummy.c'
         logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
