@@ -139,7 +139,7 @@ def main():
     addParser('unpublish', unpublish, 'Un-publish a recently published module or target.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
-    addParser('list', list_command, 'List the dependencies of the current module.')
+    addParser('list', list_command, 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
     addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')

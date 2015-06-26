@@ -14,6 +14,9 @@ import traceback
 import errno
 from collections import OrderedDict
 
+# access, , get components, internal
+import access
+import access_common
 # version, , represent versions and specifications, internal
 import version
 # Pack, , common parts of Components/Targets, internal
@@ -49,6 +52,68 @@ def _mergeDictionaries(d1, *args):
     return result
 
 # API
+
+def getDerivedTarget(target_name_and_version, targets_path, install_missing=True, update_installed=False):
+    ''' Get the specified target description, optionally ensuring that it (and
+        all dependencies) are installed in targets_path.
+
+        Returns (DerivedTarget, errors), or (None, errors) if the leaf target
+        could not be found/installed.
+    '''
+    logger.debug('satisfy target: %s' % target_name_and_version);
+    if ',' in target_name_and_version:
+        name, ver = target_name_and_version.split(',')
+        dspec = pack.DependencySpec(name, ver)
+    else:
+        dspec = pack.DependencySpec(target_name_and_version, "*")
+    
+    leaf_target      = None
+    previous_name    = dspec.name
+    search_dirs      = [targets_path]
+    target_hierarchy = []
+    errors           = []
+    while True:
+        t = None
+        try:
+            if install_missing:
+                t = access.satisfyVersion(
+                                 name = dspec.name,
+                     version_required = dspec.version_req,
+                            available = target_hierarchy,
+                         search_paths = search_dirs,
+                    working_directory = targets_path,
+                     update_installed = ('Update' if update_installed else None),
+                                 type = 'target'
+                )
+            else:
+                t = access.satisfyVersionFromSearchPaths(
+                                 name = dspec.name,
+                     version_required = dspec.version_req,
+                         search_paths = search_dirs,
+                                 type = 'target'
+                )
+        except access_common.Unavailable as e:
+            errors.append(e)
+        if not t:
+            if install_missing:
+                logger.error(
+                    'could not install target %s %s for %s' %
+                    (dspec.name, ver, previous_name)
+                )
+            break
+        else:
+            target_hierarchy.append(t)
+            previous_name = dspec.name
+            dspec = t.baseTargetSpec()
+            if not leaf_target:
+                leaf_target = t
+            if dspec is None:
+                break
+    if leaf_target is None:
+        return (None, errors)
+    else:
+        return (DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
+
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
         ''' Initialise a Target based on a directory. If the directory does not
