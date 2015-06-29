@@ -44,7 +44,7 @@ def _mergeDictionaries(d1, *args):
     subsequent_dict_items = []
     for d in args:
         subsequent_dict_items += d.items()
-    for k, v in d1.items() + subsequent_dict_items:
+    for k, v in list(d1.items()) + subsequent_dict_items:
         if not k in result:
             result[k] = v
         elif isinstance(result[k], dict) and isinstance(v, dict):

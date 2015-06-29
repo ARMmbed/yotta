@@ -17,7 +17,7 @@ from yotta.lib import sourceparse
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component 
-from cli import cli
+from .cli import cli
 
 Test_Files = {
     '.yotta_ignore': '''

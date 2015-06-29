@@ -37,6 +37,7 @@ def sanitizeSymbol(sym):
 
 jinja_environment.filters['replaceBackslashes'] = replaceBackslashes
 jinja_environment.filters['sanitizePreprocessorSymbol'] = sanitizePreprocessorSymbol
+jinja_environment.globals['list'] = list
 
 class SourceFile(object):
     def __init__(self, fullpath, relpath, lang):
@@ -231,7 +232,7 @@ class CMakeGen(object):
 
         add_defs_header += '\n// version definitions\n'
         
-        for dep in all_dependencies.values() + [component]:
+        for dep in list(all_dependencies.values()) + [component]:
             add_defs_header += "#define YOTTA_%s_VERSION_STRING \"%s\"\n" % (sanitizePreprocessorSymbol(dep.getName()), str(dep.getVersion()))
             add_defs_header += "#define YOTTA_%s_VERSION_MAJOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().major())
             add_defs_header += "#define YOTTA_%s_VERSION_MINOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().minor())

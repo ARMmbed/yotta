@@ -170,7 +170,7 @@ def main():
     # complete all the things :)
     argcomplete.autocomplete(
          parser,
-        exclude = short_commands.keys() + ['-d', '--debug', '-v', '--verbose']
+        exclude = list(short_commands.keys()) + ['-d', '--debug', '-v', '--verbose']
     )
 
     # when args are passed directly we need to strip off the program name
