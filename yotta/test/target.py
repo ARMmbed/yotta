@@ -17,19 +17,20 @@ logging.basicConfig(
 class ComponentTestCase(unittest.TestCase):
     def test_mergeDictionaries(self):
         a = OrderedDict([('a', 1), ('b', 2), ('c', 3), ('subdict', OrderedDict([('a',7), ('c',0)]))])
-        b = OrderedDict([('a', 2), ('d', 4), ('e', 5), ('subdict', {'a':12, 'b':8, 'subsubdict':{1:'a', 2:'b'}})])
+        b = OrderedDict([('a', 2), ('d', 4), ('e', 5), ('subdict', OrderedDict([('a',12), ('b',8), ('subsubdict', OrderedDict([(1,'a'), (2,'b')]))]))])
         c = OrderedDict([('subdict', {'subsubdict':{3:'c'}})])
 
         self.assertEqual(target._mergeDictionaries(a, {}), a)
         self.assertEqual(target._mergeDictionaries(b, {}), b)
         self.assertEqual(target._mergeDictionaries(c, {}), c)
+
         self.assertEqual(
             target._mergeDictionaries(a, b),
             OrderedDict([
                 ('a', 1),
                 ('b', 2),
                 ('c', 3),
-                ('subdict', OrderedDict([('a', 7), ('c', 0), ('subsubdict', {1: 'a', 2: 'b'}), ('b', 8)])),
+                ('subdict', OrderedDict([('a', 7), ('c', 0), ('b',8), ('subsubdict', OrderedDict([(1,'a'), (2,'b')]))])),
                 ('d', 4),
                 ('e', 5)
             ])
@@ -40,7 +41,7 @@ class ComponentTestCase(unittest.TestCase):
                 ('a', 1),
                 ('b', 2),
                 ('c', 3),
-                ('subdict', OrderedDict([('a', 7), ('c', 0), ('subsubdict', {1: 'a', 2: 'b', 3:'c'}), ('b', 8)])),
+                ('subdict', OrderedDict([('a', 7), ('c', 0), ('b',8), ('subsubdict', OrderedDict([(1,'a'), (2,'b'), (3,'c')]))])),
                 ('d', 4),
                 ('e', 5)
             ])

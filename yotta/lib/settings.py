@@ -178,8 +178,7 @@ def set(path, value, save_locally=False):
         filename = user_config_file
 
     logging.debug('setProperty: %s %s:%s', path, type(value), value)
-    # use a local parser instance so that we don't copy system-wide settings
-    # into the user config file
+    _ensureParser()
     with parser_lock:
         parser.set(path, value=value, filename=filename)
         parser.write(filename)

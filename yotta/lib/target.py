@@ -12,6 +12,7 @@ import logging
 import string
 import traceback
 import errno
+import itertools
 from collections import OrderedDict
 
 # access, , get components, internal
@@ -38,13 +39,14 @@ def _ignoreSignal(signum, frame):
 def _newPGroup():
     os.setpgrp()
 
-def _mergeDictionaries(d1, *args):
-    # merge dictionaries of dictionaries recursively
-    result = type(d1)()
-    subsequent_dict_items = []
-    for d in args:
-        subsequent_dict_items += d.items()
-    for k, v in d1.items() + subsequent_dict_items:
+def _mergeDictionaries(*args):
+    ''' merge dictionaries of dictionaries recursively, with elements from
+        dictionaries earlier in the argument sequence taking precedence
+    '''
+    # to support merging of OrderedDicts, copy the result type from the first
+    # argument:
+    result = type(args[0])()
+    for k, v in itertools.chain(*[x.items() for x in args]):
         if not k in result:
             result[k] = v
         elif isinstance(result[k], dict) and isinstance(v, dict):
@@ -135,7 +137,7 @@ class Target(pack.Pack):
         '''
         inherits = self.description.get('inherits', {})
         if len(inherits) == 1:
-            return pack.DependencySpec(inherits.items()[0][0], inherits.items()[0][1])
+            return pack.DependencySpec(list(inherits.items())[0][0], list(inherits.items())[0][1])
         elif len(inherits) > 1:
             logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
         return None

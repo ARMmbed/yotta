@@ -88,7 +88,7 @@ add_definitions(-DYOTTA_COMPONENT_VERSION="{{ component.getVersion() }}")
 
 # Provide versions of all the components we depend on, the corresponding
 # preprocessor definitions are generated in yotta_config.h
-{% for dep in active_dependencies.values() + [component] %}
+{% for dep in list(active_dependencies.values()) + [component] %}
 set(YOTTA_{{ dep.getName() | sanitizePreprocessorSymbol }}_VERSION_STRING "{{ dep.getVersion() }}")
 set(YOTTA_{{ dep.getName() | sanitizePreprocessorSymbol }}_VERSION_MAJOR {{ dep.getVersion().major() }})
 set(YOTTA_{{ dep.getName() | sanitizePreprocessorSymbol }}_VERSION_MINOR {{ dep.getVersion().minor() }})
