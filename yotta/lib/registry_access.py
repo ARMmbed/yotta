@@ -79,7 +79,7 @@ def generate_jwt_token(private_key, registry=None):
         serialization.PrivateFormat.PKCS8,
         serialization.NoEncryption()
     )
-    token = jwt.encode(token_fields, private_key_pem, 'RS256').decode('ascii')
+    token = jwt.encode(token_fields, private_key_pem.decode('ascii'), 'RS256').decode('ascii')
     logger.debug('encoded token: %s' % token)
 
     return token
@@ -294,7 +294,7 @@ def _getPrivateKeyObject(registry=None):
         privatekey_pem = privatekey_pem.encode('ascii')
     # if the key doesn't look like PEM, it might be hex-encided-DER (which we
     # used historically), so try loading that:
-    if '-----BEGIN PRIVATE KEY-----' in privatekey_pem:
+    if b'-----BEGIN PRIVATE KEY-----' in privatekey_pem:
         return serialization.load_pem_private_key(
             privatekey_pem, None, default_backend()
         )
@@ -608,7 +608,7 @@ def getPublicKey(registry=None):
         pubkey_pem = pubkey_pem.encode('ascii')
     # if the key doesn't look like PEM, it might be hex-encided-DER (which we
     # used historically), so try loading that:
-    if '-----BEGIN PUBLIC KEY-----' in pubkey_pem:
+    if b'-----BEGIN PUBLIC KEY-----' in pubkey_pem:
         pubkey = serialization.load_pem_public_key(pubkey_pem, default_backend())
     else:
         pubkey_der = binascii.unhexlify(pubkey_pem)        
