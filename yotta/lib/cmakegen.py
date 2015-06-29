@@ -427,7 +427,7 @@ class CMakeGen(object):
             if f.lang in ('c', 'cpp', 'objc', 's'):
                 subrelpath = os.path.relpath(f.relpath, dirname)
                 subdir = fsutils.fullySplitPath(subrelpath)[0]
-                if subdir:
+                if subdir and subdir != subrelpath:
                     subdirs[subdir].append(f)
                 else:
                     toplevel_srcs.append(f)
