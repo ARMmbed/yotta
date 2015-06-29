@@ -110,7 +110,7 @@ class Git(VCS):
         return self.worktree
 
     def _gitCmd(self, *args):
-        return ['git','--work-tree=%s' % self.worktree,'--git-dir=%s'%self.gitdir] + list(args);
+        return ['git','--work-tree=%s' % self.worktree,'--git-dir=%s'%self.gitdir.replace('\\', '/')] + list(args);
     
     @classmethod
     def _execCommands(cls, commands):

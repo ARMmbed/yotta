@@ -11,11 +11,6 @@ import struct
 import binascii
 import sys
 
-# pycrypto, Public Domain, Python Crypto Library, pip install pyCRypto
-import Crypto
-from Crypto.Util.number import long_to_bytes
-
-
 if sys.version_info[0] == 3:
     def bord(x):
         return x
@@ -28,6 +23,36 @@ elif sys.version_info[0] == 2:
     def bchr(x):
         return chr(x)
 
+# long_to_bytes: from PyCrypto (public domain)
+def long_to_bytes(n, blocksize=0):
+    """long_to_bytes(n:long, blocksize:int) : string
+    Convert a long integer to a byte string.
+
+    If optional blocksize is given and greater than zero, pad the front of the
+    byte string with binary zeros so that the length is a multiple of
+    blocksize.
+    """
+    # after much testing, this algorithm was deemed to be the fastest
+    s = b''
+    n = int(n)
+    pack = struct.pack
+    while n > 0:
+        s = pack('>I', n & 0xffffffff) + s
+        n = n >> 32
+    # strip off leading zeros
+    for i in range(len(s)):
+        if s[i] != '\000':
+            break
+    else:
+        # only happens when n == 0
+        s = '\000'
+        i = 0
+    s = s[i:]
+    # add back some pad bytes.  this could be done more efficiently w.r.t. the
+    # de-padding being done above, but sigh...
+    if blocksize > 0 and len(s) % blocksize:
+        s = (blocksize - len(s) % blocksize) * '\000' + s
+    return s
 
 def openSSH(pubkey):
     e = long_to_bytes(pubkey.e)

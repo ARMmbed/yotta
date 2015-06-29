@@ -5,19 +5,31 @@
 
 # standard library modules, , ,
 import logging
+import os
 
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
 import colorama
 
+
+# !!! workaround colorama + posh-git bug, where ANSI emulation is incorrectly
+# disabled:
+restore_env_term = None
+if os.environ.get('POSH_GIT', False) and 'TERM' in os.environ:
+    restore_env_term = os.environ['TERM']
+    del os.environ['TERM']
 
 # colorama replaces stdout and stderr with objects that do switch colour
 # sequences to the appropriate windows ones, we do most of our stdout through
 # logging, so setup that proxying here:
 colorama.init()
 
-class Formatter(logging.Formatter):
+if restore_env_term is not None:
+    os.environ['TERM'] = restore_env_term
+
+
+class FancyFormatter(logging.Formatter):
     def __init__(self):
-        super(Formatter, self).__init__()
+        super(FancyFormatter, self).__init__()
 
     def levelStyle(self, record):
         if record.levelno <= logging.DEBUG:
@@ -56,7 +68,14 @@ class Formatter(logging.Formatter):
         s += colorama.Style.RESET_ALL
         return s
 
-def init(level=0, enable_subsystems=[]):
+class PlainFormatter(logging.Formatter):
+    def __init__(self):
+        super(PlainFormatter, self).__init__()
+
+    def format(self, record):
+        return record.levelname.lower() + ': ' + record.getMessage()
+
+def init(level=0, enable_subsystems=[], plain=False):
     level = int(round(level))
     # once logging.something has been called you have to remove all logging
     # handlers before re-configing...
@@ -67,7 +86,10 @@ def init(level=0, enable_subsystems=[]):
 
     # set new handler with our formatter
     handler = logging.StreamHandler()
-    handler.setFormatter(Formatter())
+    if plain:
+        handler.setFormatter(PlainFormatter())
+    else:
+        handler.setFormatter(FancyFormatter())
     root.addHandler(handler)
     
     # set appropriate levels on subsystem loggers - maybe selective logging

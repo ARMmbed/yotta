@@ -10,6 +10,7 @@ import logging
 import re
 import itertools
 from collections import defaultdict
+from collections import OrderedDict
 
 # bsd licensed - pip install jinja2
 from jinja2 import Environment, FileSystemLoader
@@ -29,7 +30,14 @@ jinja_environment = Environment(loader=FileSystemLoader(Template_Dir), trim_bloc
 
 def replaceBackslashes(s):
     return s.replace('\\', '/')
+def sanitizePreprocessorSymbol(sym):
+    return re.sub('[^a-zA-Z0-9]', '_', str(sym)).upper()
+def sanitizeSymbol(sym):
+    return re.sub('[^a-zA-Z0-9]', '_', str(sym))
+
 jinja_environment.filters['replaceBackslashes'] = replaceBackslashes
+jinja_environment.filters['sanitizePreprocessorSymbol'] = sanitizePreprocessorSymbol
+jinja_environment.globals['list'] = list
 
 class SourceFile(object):
     def __init__(self, fullpath, relpath, lang):
@@ -83,22 +91,29 @@ class CMakeGen(object):
         recursive_deps = component.getDependenciesRecursive(
             available_components = all_components,
                           target = self.target,
-                  available_only = True
+                  available_only = True,
+                            test = True
         )
         dependencies = component.getDependencies(
                   all_components,
                           target = self.target,
-                  available_only = True
+                  available_only = True,
+                            test = True
         )
 
         for name, dep in dependencies.items():
+            # if dep is a test dependency, then it might not be required (if
+            # we're not building tests). We don't actually know at this point 
             if not dep:
-                yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
+                if dep.isTestDependency():
+                    logger.debug('Test dependency "%s" of "%s" is not installed.' % (name, component))
+                else: 
+                    yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
         # ensure this component is assumed to have been installed before we
         # check for its dependencies, in case it has a circular dependency on
         # itself
         processed_components[component.getName()] = component
-        new_dependencies = {name:c for name,c in dependencies.items() if c and not name in processed_components}
+        new_dependencies = OrderedDict([(name,c) for name,c in dependencies.items() if c and not name in processed_components])
         self.generate(builddir, modbuilddir, component, new_dependencies, dependencies, recursive_deps, toplevel)
 
         logger.debug('recursive deps of %s:' % component)
@@ -117,12 +132,6 @@ class CMakeGen(object):
         if err:
             logger.warn(err)
 
-    def _sanitizeTarget(self, targetname):
-        return re.sub('[^a-zA-Z0-9]', '_', targetname).upper()
-
-    def _sanitizeSymbol(self, sym):
-        return re.sub('[^a-zA-Z0-9]', '_', sym)
-
     def _listSubDirectories(self, component):
         ''' return: {
                 manual: [list of subdirectories with manual CMakeLists],
@@ -137,7 +146,7 @@ class CMakeGen(object):
         bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         test_subdirs = []
         resource_subdirs = []
-        for f in os.listdir(component.path):
+        for f in sorted(os.listdir(component.path)):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
             if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
@@ -171,6 +180,77 @@ class CMakeGen(object):
           "resource": resource_subdirs
         }
 
+    def _definitionsForConfig(self, config, key_path=None):
+        if key_path is None:
+            key_path = list()
+        key_prefix = '_'.join([sanitizePreprocessorSymbol(x) for x in key_path])
+        r = []
+        if len(key_prefix):
+            r.append((key_prefix,None))
+        for (k, v) in config.items():
+            if isinstance(v, dict):
+                r += self._definitionsForConfig(v, key_path + [k])
+            else:
+                # Don't validate the value here (we wouldn't know where an
+                # invalid value came from, so the error message would be
+                # unhelpful) - the target schema should validate values, or if
+                # that isn't possible then the target should check when loading
+                if isinstance(v, bool):
+                    # convert bool to 1/0, since we can't know the availability
+                    # of a C bool type
+                    v = 1 if v else 0
+                r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
+        return r
+    
+    def getConfigData(self, all_dependencies, component, builddir):
+        ''' returns (path_to_config_header, cmake_set_definitions) '''
+        add_defs_header = ''
+        set_definitions = ''
+        # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
+        # of the config. NB: THESE WILL GO AWAY
+        definitions = []
+        definitions.append(('TARGET', sanitizePreprocessorSymbol(self.target.getName())))
+        definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(self.target.getName()),None))
+
+        for target in self.target.getSimilarTo_Deprecated():
+            if '*' not in target:
+                definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
+
+        logger.debug('target configuration data: %s', self.target.getMergedConfig())
+        definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
+        
+        add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
+        for k, v in definitions:
+            if v is not None:
+                #add_definitions += '-D%s=%s ' % (k, v)
+                add_defs_header += '#define %s %s\n' % (k, v)
+                set_definitions += 'set(%s %s)\n' % (k, v)
+            else:
+                #add_definitions += '-D%s ' % k
+                add_defs_header += '#define %s\n' % k
+                set_definitions += 'set(%s TRUE)\n' % k
+
+        add_defs_header += '\n// version definitions\n'
+        
+        for dep in list(all_dependencies.values()) + [component]:
+            add_defs_header += "#define YOTTA_%s_VERSION_STRING \"%s\"\n" % (sanitizePreprocessorSymbol(dep.getName()), str(dep.getVersion()))
+            add_defs_header += "#define YOTTA_%s_VERSION_MAJOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().major())
+            add_defs_header += "#define YOTTA_%s_VERSION_MINOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().minor())
+            add_defs_header += "#define YOTTA_%s_VERSION_PATCH %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().patch())
+
+        # use -include <definitions header> instead of lots of separate
+        # defines... this is compiler specific, but currently testing it
+        # out for gcc-compatible compilers only:
+        config_include_file = os.path.join(builddir, 'yotta_config.h')
+        self._writeFile(
+            config_include_file,
+            '#ifndef __YOTTA_CONFIG_H__\n'+
+            '#define __YOTTA_CONFIG_H__\n'+
+            add_defs_header+
+            '#endif // ndef __YOTTA_CONFIG_H__\n'
+        )
+        return (config_include_file, set_definitions)
+
     def generate(
             self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel
         ):
@@ -185,6 +265,8 @@ class CMakeGen(object):
         include_sys_dirs = ''
         include_other_dirs = ''
         for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
+            if c is not component and c.isTestDependency():
+                continue
             include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(c.path)
             dep_sys_include_dirs = c.getExtraSysIncludes()
             for d in dep_sys_include_dirs:
@@ -232,8 +314,12 @@ class CMakeGen(object):
                 else:
                     exe_name = None
                 if f in test_subdirs:
+                    # if this module is a test dependency, then don't recurse
+                    # to building its own tests.
+                    if component.isTestDependency():
+                        continue
                     self.generateTestDirList(
-                        builddir, f, source_files, component, immediate_dependencies
+                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
                 else:
                     self.generateSubDirList(
@@ -243,46 +329,62 @@ class CMakeGen(object):
                 add_own_subdirs.append(
                     (os.path.join(builddir, f), os.path.join(builddir, f))
                 )
+            
+            # from now on, completely forget that this component had any tests
+            # if it is itself a test dependency: 
+            if component.isTestDependency():
+                test_subdirs = []
 
             # if we're not building anything other than tests, then we need to
             # generate a dummy library so that this component can still be linked
             # against
             if len(add_own_subdirs) <= len(test_subdirs):
                 add_own_subdirs.append(self.createDummyLib(
-                    component, builddir, [x for x in immediate_dependencies]
+                    component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
+        
+        set_definitions = ''
+        add_definitions = ''
+        config_include_file = None
+        if toplevel:
+            (config_include_file, set_definitions) = self.getConfigData(all_dependencies, component, builddir)
 
-
-        target_definitions = '-DTARGET=' + self._sanitizeTarget(self.target.getName())  + ' '
-        set_targets_like = 'set(TARGET_LIKE_' + self._sanitizeTarget(self.target.getName()) + ' TRUE)\n'
-        for target in self.target.dependencyResolutionOrder():
-            if '*' not in target:
-                target_definitions += '-DTARGET_LIKE_' + self._sanitizeTarget(target) + ' '
-                set_targets_like += 'set(TARGET_LIKE_' + self._sanitizeTarget(target) + ' TRUE)\n'
-
+        # generate the top-level toolchain file:
+        template = jinja_environment.get_template('toolchain.cmake')
+        file_contents = template.render({
+                               # toolchain files are provided in hierarchy
+                               # order, but the template needs them in reverse
+                               # order (base-first):
+            "toolchain_files": reversed(self.target.getToolchainFiles())
+        })
+        toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
+        self._writeFile(toolchain_file_path, file_contents)
+        
+        # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
         file_contents = template.render({
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
-                    "set_targets_like": set_targets_like,
-                      "toolchain_file": self.target.getToolchainFile(),
-                      "component_name": component.getName(),
+                     "set_definitions": set_definitions,
+                      "toolchain_file": toolchain_file_path,
+                           "component": component,
                      "include_own_dir": include_own_dir,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-            "yotta_target_definitions": target_definitions,
-                   "component_version": component.getVersion(),
+                 "config_include_file": config_include_file,
+           #"yotta_target_definitions": add_definitions,
                          "delegate_to": delegate_to_existing,
-                  "delegate_build_dir": delegate_build_dir
+                  "delegate_build_dir": delegate_build_dir,
+                 "active_dependencies": active_dependencies
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
     
     def createDummyLib(self, component, builddir, link_dependencies):
-        safe_name        = self._sanitizeSymbol(component.getName())
+        safe_name        = sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name
         dummy_cfile_name = 'dummy.c'
         logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
@@ -312,7 +414,7 @@ class CMakeGen(object):
             with open(fname, "w") as f:
                 f.write(contents)
 
-    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies):
+    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
@@ -323,10 +425,10 @@ class CMakeGen(object):
         subdirs = defaultdict(list)
         toplevel_srcs = []
         for f in source_files:
-            if f.lang in ('c', 'cpp', 'objc'):
+            if f.lang in ('c', 'cpp', 'objc', 's'):
                 subrelpath = os.path.relpath(f.relpath, dirname)
-                subdir = os.path.split(subrelpath)[0]
-                if subdir:
+                subdir = fsutils.fullySplitPath(subrelpath)[0]
+                if subdir and subdir != subrelpath:
                     subdirs[subdir].append(f)
                 else:
                     toplevel_srcs.append(f)
@@ -337,7 +439,7 @@ class CMakeGen(object):
                 component.getName(), os.path.basename(os.path.splitext(str(f))[0]).lower()
             )
             tests.append([[str(f)], object_name, [f.lang]])
-        for subdirname, sources in subdirs.items():
+        for subdirname, sources in sorted(subdirs.items(), key=lambda x: x[0]):
             object_name = '%s-test-%s' % (
                 component.getName(), fsutils.fullySplitPath(subdirname)[0].lower()
             )
@@ -360,7 +462,9 @@ class CMakeGen(object):
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
             'link_dependencies':link_dependencies,
-                  'cmake_files': cmake_files
+                  'cmake_files': cmake_files,
+             'exclude_from_all': (not toplevel),
+            'test_dependencies': [x[1] for x in immediate_dependencies.items() if x[1].isTestDependency()]
         })
 
         self._writeFile(fname, file_contents)
@@ -368,7 +472,7 @@ class CMakeGen(object):
     def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name, resource_subdirs):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
-        link_dependencies = [x for x in immediate_dependencies]
+        link_dependencies = [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
         fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
 
         if dirname == 'source' or executable_name:
@@ -387,11 +491,12 @@ class CMakeGen(object):
             resource_files = []
             for f in resource_subdirs:
                 for root, dires, files in os.walk(f):
-                    if root.endswith(".xcassets"):
+                    if root.endswith(".xcassets") or root.endswith(".bundle"):
                         resource_files.append(root)
-                        break;
-                    for f in files:
-                        resource_files.append(os.path.join(root, f))
+                        del dires[:]
+                    else:
+                        for f in files:
+                            resource_files.append(os.path.join(root, f))
 
             # Find cmake files
             cmake_files = []
@@ -422,12 +527,13 @@ class CMakeGen(object):
     def containsSourceFiles(self, directory, component):
         c_exts          = set(('.c',))
         cpp_exts        = set(('.cpp','.cc','.cxx'))
+        asm_exts        = set(('.s',))
         objc_exts       = set(('.m', '.mm'))
         header_exts     = set(('.h',))
 
         sources = []
         for root, dires, files in os.walk(directory):
-            for f in files:
+            for f in sorted(files):
                 name, ext = os.path.splitext(f)
                 ext = ext.lower()
                 fullpath = os.path.join(root, f)
@@ -438,6 +544,8 @@ class CMakeGen(object):
                     sources.append(SourceFile(fullpath, relpath, 'c'))
                 elif ext in cpp_exts:
                     sources.append(SourceFile(fullpath, relpath, 'cpp'))
+                elif ext in asm_exts:
+                    sources.append(SourceFile(fullpath, relpath, 's'))
                 elif ext in objc_exts:
                     sources.append(SourceFile(fullpath, relpath, 'objc'))
                 elif ext in header_exts:

@@ -37,7 +37,8 @@ def execCommand(args, following_args):
     # !!! FIXME: the program should be specified by the description of the
     # current project (or a default value for the program should)
     errcode = None
-    for error in target.debug(builddir, args.program):
+    error = target.debug(builddir, args.program)
+    if error:
         logging.error(error)
         errcode = 1
 

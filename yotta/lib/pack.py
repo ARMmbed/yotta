@@ -34,18 +34,18 @@ import registry_access
 # These patterns are used in addition to any glob expressions defined by the
 # .yotta_ignore file
 Default_Publish_Ignore = [
-    'upload.tar.[gb]z',
-    '.git',
-    '.hg',
-    '.svn',
-    'yotta_modules',
-    'yotta_targets',
-    'build',
+    '/upload.tar.[gb]z',
+    '/.git',
+    '/.hg',
+    '/.svn',
+    '/yotta_modules',
+    '/yotta_targets',
+    '/build',
     '.DS_Store',
     '.sw[ponml]',
-    '~',
-    '.DS_Store',
+    '*~',
     '._.*',
+    '.yotta.json'
 ]
 
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
@@ -53,6 +53,9 @@ Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
 Ignore_List_Fname = '.yotta_ignore'
 
 logger = logging.getLogger('components')
+
+class InvalidDescription(Exception):
+    pass
 
 # OptionalFileWrapper provides a scope object that can wrap a none-existent file
 class OptionalFileWrapper(object):
@@ -85,6 +88,20 @@ class OptionalFileWrapper(object):
     def __bool__(self):
         return bool(self.fname)
 
+
+class DependencySpec(object):
+    def __init__(self, name, version_req, is_test_dependency=False):
+        self.name = name
+        self.version_req = version_req
+        self.is_test_dependency = is_test_dependency
+
+    def __unicode__(self):
+        return u'%s at %s' % (self.name, self.version_req)
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+    def __repr__(self):
+        return self.__unicode__()
+
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
 
@@ -108,18 +125,24 @@ class Pack(object):
         self.description_filename = description_filename
         self.ignore_list_fname = Ignore_List_Fname
         self.ignore_patterns = copy.copy(Default_Publish_Ignore)
-        try:
-            self.description = ordered_json.load(os.path.join(path, description_filename))
-            if self.description:
-                if not 'name' in self.description:
-                    raise Exception('missing "name" in module.json')
-                if 'version' in self.description:
-                    self.version = version.Version(self.description['version'])
-                else:
-                    raise Exception('missing "version" in module.json')
-        except Exception as e:
+        description_file = os.path.join(path, description_filename)
+        if os.path.isfile(description_file):
+            try:
+                self.description = ordered_json.load(description_file)
+                if self.description:
+                    if not 'name' in self.description:
+                        raise Exception('missing "name"')
+                    if 'version' in self.description:
+                        self.version = version.Version(self.description['version'])
+                    else:
+                        raise Exception('missing "version"')
+            except Exception as e:
+                self.description = OrderedDict()
+                logger.debug(self.error)
+                raise InvalidDescription("Description invalid %s: %s" % (description_file, e))
+        else:
+            self.error = "No %s file." % description_filename
             self.description = OrderedDict()
-            self.error = e
         try:
             with open(os.path.join(path, self.ignore_list_fname), 'r') as ignorefile:
                 self.ignore_patterns += self._parseIgnoreFile(ignorefile)
@@ -143,7 +166,7 @@ class Pack(object):
             # for now schema validation errors aren't fatal... will be soon
             # though!
             #if have_errors:
-            #    raise Exception('Invalid %s' % description_filename)
+            #    raise InvalidDescription('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
     def exists(self):
@@ -153,6 +176,12 @@ class Pack(object):
         ''' If this isn't a valid component/target, return some sort of
             explanation about why that is. '''
         return self.error
+    
+    def setError(self, error):
+        ''' Set an error: note that setting an error does not make the module
+            invalid if it would otherwise be valid.
+        '''
+        self.error = error
 
     def getDescriptionFile(self):
         return os.path.join(self.path, self.description_filename)
@@ -217,13 +246,23 @@ class Pack(object):
         return r
 
     def ignores(self, path):
-        ''' Test if this module ignores the file at "path" '''
-        test_path = PurePath(path)
+        ''' Test if this module ignores the file at "path", which must be a
+            path relative to the root of the module.
+
+            If a file is within a directory that is ignored, the file is also
+            ignored.
+        '''
+        test_path = PurePath('/', path)
+        
+        # also check any parent directories of this path against the ignore
+        # patterns:
+        test_paths = tuple([test_path] + list(test_path.parents))
 
         for exp in self.ignore_patterns:
-            if test_path.match(exp):
-                logger.debug('"%s" ignored' % path)
-                return True
+            for tp in test_paths:
+                if tp.match(exp):
+                    logger.debug('"%s" ignored ("%s" matched "%s")', path, tp, exp)
+                    return True
         return False
 
     def setVersion(self, version):
@@ -275,13 +314,14 @@ class Pack(object):
             # no readme files: return an empty file wrapper
             return OptionalFileWrapper()
 
-    def publish(self):
+    def publish(self, registry=None):
         ''' Publish to the appropriate registry, return a description of any
             errors that occured, or None if successful.
             No VCS tagging is performed.
         '''
-        if 'private' in self.description and self.description['private']:
-            return "this %s is private and cannot be published" % (self.description_filename.split('.')[0])
+        if (registry is None) or (registry == registry_access.Registry_Base_URL):
+            if 'private' in self.description and self.description['private']:
+                return "this %s is private and cannot be published" % (self.description_filename.split('.')[0])
         upload_archive = os.path.join(self.path, 'upload.tar.gz')
         fsutils.rmF(upload_archive)
         fd = os.open(upload_archive, os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_BINARY", 0))
@@ -300,8 +340,21 @@ class Pack(object):
                         description_file,
                         tar_file,
                         readme_file_wrapper.file,
-                        readme_file_wrapper.extension().lower()
+                        readme_file_wrapper.extension().lower(),
+                        registry=registry
                     )
+    
+    def unpublish(self, registry=None):
+        ''' Try to un-publish the current version. Return a description of any
+            errors that occured, or None if successful.
+        '''
+        return registry_access.unpublish(
+            self.getRegistryNamespace(),
+            self.getName(),
+            self.getVersion(),
+            registry=registry
+        )
+
 
     @classmethod
     def ensureOrderedDict(cls, sequence=None):

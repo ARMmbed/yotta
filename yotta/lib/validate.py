@@ -10,6 +10,10 @@ import logging
 
 # Component, , represents an installed component, internal
 import component
+# Target, , represents an installed target, internal
+import target
+# Pack, , base class for targets and components, internal
+import pack
 
 
 Source_Dir_Regex = re.compile('^[a-z0-9_-]*$')
@@ -51,9 +55,34 @@ def looksLikeAnEmail(email):
         return False
 
 def currentDirectoryModule():
-    c = component.Component(os.getcwd())
+    try:
+        c = component.Component(os.getcwd())
+    except pack.InvalidDescription as e:
+        logging.error(e)
+        return None
+
     if not c:
         logging.error(str(c.error))
         logging.error('The current directory does not contain a valid module.')
         return None
     return c
+
+def currentDirectoryModuleOrTarget():
+    wd = os.getcwd()
+    errors = []
+    p = None
+    try:
+        p = component.Component(wd)
+    except pack.InvalidDescription as e:
+        errors.append(e)
+    if not p:
+        try:
+            p = target.Target(wd)
+        except pack.InvalidDescription as e:
+            errors.append(e)
+    if not p:
+        for e in errors:
+            logging.debug(e)
+        logging.error('The current directory does not contain a valid module or target.')
+        return None
+    return p

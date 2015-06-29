@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -13,6 +13,8 @@ import re
 from .lib import component
 # access, , get components, internal
 from .lib import access
+# access, , get components, internal
+from .lib import access_common
 
 # folders, , get places to install things, internal
 from .lib import folders
@@ -29,6 +31,10 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Traverse linked modules, and install dependencies needed there too.'
     )
+    parser.add_argument('--test-dependencies', dest='install_test_deps',
+        choices=('none', 'all', 'own'), default='own',
+        help='Control the installation of dependencies necessary for building tests.'
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
         help='Install globally instead of in the current working directory.'
@@ -44,14 +50,27 @@ def addOptions(parser):
 
 
 def execCommand(args, following_args):
+    if not hasattr(args, 'install_test_deps'):
+        vars(args)['install_test_deps'] = 'none'
     cwd = os.getcwd()
     c = component.Component(cwd)
     if args.component is None:
-        installDeps(args, c)
+        return installDeps(args, c)
     elif c or c.exists():
-        installComponentAsDependency(args, c)
+        return installComponentAsDependency(args, c)
     else:
-        installComponent(args)
+        return installComponent(args)
+
+def checkPrintStatus(errors, components):
+    status = 0
+    for error in errors:
+        logging.error(error)
+        status = 1
+    for c in components.values():
+        if c and c.getError():
+            logging.error('%s %s', c.getName(), c.getError())
+            status = 1
+    return status
 
 
 def installDeps(args, current_component):
@@ -85,10 +104,10 @@ def installDeps(args, current_component):
         components, errors = current_component.satisfyDependenciesRecursive(
                           target = target,
                   traverse_links = install_linked,
-            available_components = [(current_component.getName(), current_component)]
+            available_components = [(current_component.getName(), current_component)],
+                            test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
-        for error in errors:
-            logging.error(error)
+        return checkPrintStatus(errors, components)
 
 
 
@@ -108,24 +127,30 @@ def installComponentAsDependency(args, current_component):
     # below), for these the original source should be included in the version
     # spec, too
     github_ref_match = GitHub_Ref_RE.match(args.component)
-    if github_ref_match:
-        component_name = github_ref_match.group(1)
-        installed = access.satisfyVersion(
-                component_name,
-                args.component,
-                     available = {current_component.getName():current_component},
-                  search_paths = [modules_dir],
-             working_directory = modules_dir
-        )
-    else:
-        component_name = args.component
-        installed = access.satisfyVersion(
-                component_name,
-                           '*',
-                     available = {current_component.getName():current_component},
-                  search_paths = [modules_dir],
-             working_directory = modules_dir
-        )
+    try:
+        if github_ref_match:
+            component_name = github_ref_match.group(1)
+            installed = access.satisfyVersion(
+                    component_name,
+                    args.component,
+                         available = {current_component.getName():current_component},
+                      search_paths = [modules_dir],
+                 working_directory = modules_dir
+            )
+        else:
+            component_name = args.component
+            installed = access.satisfyVersion(
+                    component_name,
+                               '*',
+                         available = {current_component.getName():current_component},
+                      search_paths = [modules_dir],
+                 working_directory = modules_dir
+            )
+    except access_common.Unavailable as e:
+        logging.error(e)
+        return 1
+
+
     # always add the component to the dependencies of the current component
     # - but don't write the dependency file back to disk if we're not meant to
     # save it
@@ -142,10 +167,11 @@ def installComponentAsDependency(args, current_component):
     # satisfy dependencies)
     components, errors = current_component.satisfyDependenciesRecursive(
                       target = target,
-        available_components = [(current_component.getName(), current_component)]
+        available_components = [(current_component.getName(), current_component)],
+                        test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
+        
     )
-    for error in errors:
-        logging.error(error)
+    return checkPrintStatus(errors, components)
 
 
 def installComponent(args):
@@ -180,4 +206,4 @@ def installComponent(args):
                working_directory = path
         )
     os.chdir(component_name)
-    installDeps(args, component.Component(os.getcwd()))
+    return installDeps(args, component.Component(os.getcwd()))

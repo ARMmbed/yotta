@@ -46,11 +46,16 @@ def execCommand(args, following_args):
     # different things, however, which is why the uniquing key includes the
     # type)
     count = 0
-    for result in registry_access.search(query=args.query, keywords=args.kw):
+    for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
         if count > args.limit:
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
             print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+    # exit status: success if we found something, otherwise fail
+    if count:
+        return 0
+    else:
+        return 1
 

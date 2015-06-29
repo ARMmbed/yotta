@@ -12,6 +12,17 @@
 import ntfsutils.junction as junction
 import os
 
+def dropRootPrivs(fn):
+    ''' decorator to drop su/sudo privilages before running a function on
+        unix/linux.
+        
+        ** on windows this function does nothing **
+    '''
+    def wrapper(*args, **kwargs):
+        # !!! TODO: what can we do to de-priv on windows?
+        return fn(*args, **kwargs)
+    return wrapper
+
 def isLink(path):
     return junction.isjunction(path)
 
@@ -26,3 +37,8 @@ def _symlink(source, link_name):
 
 def realpath(path):
     return os.path.abspath(tryReadLink(path) or path)
+
+def rmLink(path):
+    # Apparently, it's possible to delete both directory links and file links
+    # with 'rmdir' in Windows
+    os.rmdir(path)

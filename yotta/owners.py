@@ -88,12 +88,12 @@ def execCommand(args, following_args):
 
 def listOwners(args, p):
     if p:
-        print('%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(
-            registry_access.listOwners(p.getRegistryNamespace(), p.getName())
-        ))
+        owners = registry_access.listOwners(p.getRegistryNamespace(), p.getName(), registry=args.registry)
+        if owners is not None:
+            print('%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(owners))
     else:
-        module_owners = registry_access.listOwners(component.Registry_Namespace, args.module)
-        target_owners = registry_access.listOwners(target.Registry_Namespace, args.module)
+        module_owners = registry_access.listOwners(component.Registry_Namespace, args.module, registry=args.registry)
+        target_owners = registry_access.listOwners(target.Registry_Namespace, args.module, registry=args.registry)
         if module_owners:
             print('module "%s" owners:' % args.module, ', '.join(module_owners))
         if target_owners:
@@ -103,14 +103,14 @@ def listOwners(args, p):
 
 def removeOwner(args, p):
     if p:
-        registry_access.removeOwner(p.getRegistryNamespace(), p.getName(), args.email)
+        registry_access.removeOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
     else:
         # !!! FIXME: test which of target/component exist first
-        registry_access.removeOwner(component.Registry_Namespace, args.module, args.email)
+        registry_access.removeOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)
 
 def addOwner(args, p):
     if p:
-        registry_access.addOwner(p.getRegistryNamespace(), p.getName(), args.email)
+        registry_access.addOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
     else:
         # !!! FIXME: test which of target/component exist first
-        registry_access.addOwner(component.Registry_Namespace, args.module, args.email)
+        registry_access.addOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)

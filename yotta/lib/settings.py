@@ -80,7 +80,7 @@ class _JSONConfigParser(object):
 
             returns None if any path element or the property is missing
         '''
-        path = self._splitPath([path])
+        path = _splitPath([path])
         for config in self.configs.values():
             cur = config
             for el in path:
@@ -110,7 +110,7 @@ class _JSONConfigParser(object):
         else:
             config = self.configs[filename]
 
-        path = self._splitPath([path])
+        path = _splitPath([path])
         for el in path[:-1]:
             if el in config:
                 config = config[el]
@@ -135,13 +135,13 @@ class _JSONConfigParser(object):
             return fn, data
         raise ValueError('No configs available.')
 
-    def _splitPath(self, path):
-        r = []
-        for p in path:
-            r += p.split('.')
-        if not len(path):
-            raise ValueError('A path must be specified.')
-        return r
+def _splitPath(path):
+    r = []
+    for p in path:
+        r += p.split('.')
+    if not len(p):
+        raise ValueError('A path must be specified.')
+    return r
 
 def _ensureParser():
     global parser
@@ -150,33 +150,39 @@ def _ensureParser():
             parser = _JSONConfigParser()
             parser.read(config_files)
 
-def _checkEnv(section, name):
-    env_key = 'YOTTA_%s_%s' % (section.upper(), name.upper())
+def _checkEnv(path):
+    env_key = '_'.join(['YOTTA'] + [x.upper() for x in _splitPath(path)])
     try:
         return os.environ[env_key]
     except KeyError:
         return None
 
 # public API
-def getProperty(section, name):
-    value = _checkEnv(section, name)
+
+def get(path):
+    value = _checkEnv(path)
     if value:
-        logging.debug('read property from environment: %s:%s', section, name)
+        logging.debug('read property from environment: %s', path)
         return value
     _ensureParser()
     with parser_lock:
-        return parser.get('.'.join([section, name]))
+        return parser.get(path)
 
-def setProperty(section, name, value, save_locally=False):
+def getProperty(section, name):
+    return get(section + '.' + name)
+
+def set(path, value, save_locally=False):
     if save_locally:
         filename = dir_config_file
     else:
         filename = user_config_file
 
-    logging.debug('setProperty: %s:%s %s:%s', type(name), name, type(value), value)
-    # use a local parser instance so that we don't copy system-wide settings
-    # into the user config file
+    logging.debug('setProperty: %s %s:%s', path, type(value), value)
+    _ensureParser()
     with parser_lock:
-        parser.set('.'.join([section, name]), value=value, filename=filename)
+        parser.set(path, value=value, filename=filename)
         parser.write(filename)
+    
+def setProperty(section, name, value, save_locally=False):
+    set(section+'.'+name, value, save_locally)
 

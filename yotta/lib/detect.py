@@ -10,11 +10,14 @@ import sys
 # settings, , load and save settings, internal
 import settings
 
-def defaultTarget():
+def defaultTarget(ignore_set_target=False):
     set_target = settings.getProperty('build', 'target')
     if set_target:
         return set_target
+    else:
+        return systemDefaultTarget()
 
+def systemDefaultTarget():
     machine = platform.machine()
 
     x86 = machine.find('86') != -1

@@ -52,7 +52,7 @@ drwxr-xr-x  4 james  staff   136B 15 Sep 16:35 simplelog
 drwxr-xr-x  4 james  staff   136B 15 Sep 16:41 source
 drwxr-xr-x  4 james  staff   136B 15 Sep 16:41 test
 ```
-Any source files placed in the `source` directory will be compiled automatically by yotta, when we build, and each source file placed into the `test` directory will be compiled into a separate executable.
+Any source files placed in the `source` directory will be compiled automatically by yotta, when we build, and each source file placed into the `test` directory will be compiled into a separate executable (to learn more about testing with yotta see the [testing tutorial](/tutorial/testing.html).
 
 Headers that define the interface to your module should be placed in the directory with the same name as your module (`simplelog` in this case). This pattern forces headers to be included with their full paths e.g. `#include "simplelog/log.h"`, instead of just `#include "log.h"`, which might be a header name that multiple different modules use.
 

@@ -3,6 +3,10 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+# NOTE: argcomplete must be first!
+# argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
+import argcomplete
+
 # standard library modules, , ,
 import argparse
 import logging
@@ -20,7 +24,9 @@ from . import target
 from . import build
 from . import init
 from . import publish
+from . import unpublish
 from . import debug
+from . import test_subcommand as test
 from . import login
 from . import logout
 from . import list as list_command
@@ -29,6 +35,7 @@ from . import owners
 from . import licenses
 from . import clean
 from . import search
+from . import config
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -76,6 +83,15 @@ def main():
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
     )
 
+    parser.add_argument('--plain', dest='plain',
+        action='store_true', default=False,
+        help="Use a simple output format with no colours"
+    )
+
+    parser.add_argument(
+        '--registry', default=None, dest='registry', help=argparse.SUPPRESS
+    )
+
     def addParser(name, module, description, help=None):
         if help is None:
             help = description
@@ -97,7 +113,11 @@ def main():
     addParser('build', build,
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\
-        'when make is the build tool, run `yotta build -- -j`',
+        'when make is the build tool, run:\n    yotta build -- -j\n\n'+
+        'The programs or libraries to build can be specified (by default '+
+        'only the libraries needed by the current module and the current '+
+        "module's own tests are build. For example, to build the tests of "+
+        'all dependencies, run:\n    yotta build all_tests\n\n',
         'Build the current module.'
     )
     addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
@@ -106,18 +126,29 @@ def main():
     addParser('update', update, 'Update dependencies for the current module, or a specific module.')
     addParser('target', target, 'Set or display the target device.')
     addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
+    addParser('test', test,
+        'Run the tests for the current module on the current target. A build '+
+        'will be run first, and options to the build subcommand are also '+
+        'accepted by test.\nThis subcommand requires the target to provide a '+
+        '"test" script that will be used to run each test. Modules may also '+
+        'define a "testReporter" script, which will be piped the output from '+
+        'each test, and may produce a summary.',
+        'Run the tests for the current module on the current target. Requires target support.'
+    )
     addParser('publish', publish, 'Publish a module or target to the public registry.')
+    addParser('unpublish', unpublish, 'Un-publish a recently published module or target.')
     addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', logout, 'Remove saved authorization token for the current user.')
-    addParser('list', list_command, 'List the dependencies of the current module.')
+    addParser('list', list_command, 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
     addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
     addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
     addParser('clean', clean, 'Remove files created by yotta and the build.')
+    addParser('config', config, 'Display the target configuration info.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
-    subparser.choices.update({
+    short_commands = {
             'up':subparser.choices['update'],
             'in':subparser.choices['install'],
             'ln':subparser.choices['link'],
@@ -127,27 +158,38 @@ def main():
             'rm':subparser.choices['uninstall'],
          'owner':subparser.choices['owners'],
           'lics':subparser.choices['licenses']
-    })
+    }
+    subparser.choices.update(short_commands)
     
     # split the args into those before and after any '--'
     # argument - subcommands get raw access to arguments following '--', and
     # may pass them on to (for example) the build tool being used
     split_args = splitList(sys.argv, '--')
     following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
+    
+    # complete all the things :)
+    argcomplete.autocomplete(
+         parser,
+        exclude = list(short_commands.keys()) + ['-d', '--debug', '-v', '--verbose']
+    )
 
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
 
     loglevel = logLevelFromVerbosity(args.verbosity)
-    logging_setup.init(level=loglevel, enable_subsystems=args.debug)
+    logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
     
     # finally, do stuff!
     if 'command' not in args:
         parser.print_usage()
         sys.exit(0)
 
-    status = args.command(args, following_args)
+    try:
+        status = args.command(args, following_args)
+    except KeyboardInterrupt:
+        logging.warning('interrupted')
+        status = -1
 
     sys.exit(status or 0)
 

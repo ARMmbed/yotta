@@ -22,7 +22,7 @@ mountains, people who are using your code won't be left stranded.
 and improvements, please submit a ticket on the yotta [issue
 tracker](https://github.com/armmbed/yotta/issues).)
 
-
+<a name="versions"></a>
 ## Release Version Numbers
 
 As far as yotta is concerned, you can manage your source code however you like.
@@ -44,7 +44,7 @@ These are the basic rules of [semantic versioning](http://semver.org), there
 are some exceptions for `0.x.x` releases during early development, but if you
 stick to the basics it's hard to go wrong.
 
-
+<a name="branches"></a>
 ## Release Branches
 
 If you increase the major version of your module, you should bear in mind that
@@ -78,4 +78,67 @@ version, before switching back to your master branch:
 ```
 git checkout master
 ```
+<a name="namespaces"></a>
+## Release Namesapces
 
+If your module is written in C++, you should also take advantage of C++
+namespaces to provide backwards compatibility. Namespaces allow you to provide old
+versions of your API alongside new versions, make it obvious which version of
+an API someone is using, and make it easy for your users to switch between
+versions of your API.
+
+In fact, namespaces are such a useful feature of C++ that we'd recommend using
+them even if your module is otherwise C.
+
+For example:
+
+```C++
+// file: mymodule/api.h
+
+namespace mymodule{
+
+  namespace v1{
+    // the old version of foo
+    void foo();
+  } // namespace v1
+  
+  namespace v2{
+    // the new version of foo, which foos in an incompatible way to before
+    void foo();
+  } // namespace v2
+  
+  namespace current {
+      // import all symbols from mymodule::v2 into mymodule::current. Anyone
+      // who wants to live on the bleeding edge can use
+      // mymodule::current::foo()
+      using namespace ::mymodule::v2;
+  } // namespace current
+
+} // namespace mymodule
+```
+
+This allows use of both versions of `foo` in the same program, if that is
+necessary.
+
+```C++
+//#include "mymodule/api.h"
+int main(){
+    // we live on the edge :)
+    using mymodule::current::foo;
+    
+    // calls the foo() we've imported with the using declaration (v2)
+    foo();
+
+    // but sometimes it's nice to have an old friend around:
+    mymodule::v1::foo();
+
+    return 0;
+}
+```
+
+Note that you should **never** use `using namespace xxx` declarations in the
+global scope in header files, as this would pollute the global namespace. 
+
+The `using` declaration in the example above is OK because it only imports
+names from one `mymodule::` namespace into another `mymodule::` namespace, both
+of which are under the control of the module author.
