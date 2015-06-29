@@ -118,7 +118,8 @@ def execCommand(args, following_args):
 
     all_modules = c.getDependenciesRecursive(
                       target = target,
-        available_components = [(c.getName(), c)]
+        available_components = [(c.getName(), c)],
+                        test = True
     )
 
 
