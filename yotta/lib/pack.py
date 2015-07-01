@@ -12,6 +12,7 @@ import re
 import logging
 import errno
 import copy
+import hashlib
 
 # PyPi/standard library > 3.4
 # it has to be PurePath
@@ -328,6 +329,16 @@ class Pack(object):
         with os.fdopen(fd, 'rb+') as tar_file:
             tar_file.truncate()
             self.generateTarball(tar_file)
+            logger.debug('generated tar file of length %s', tar_file.tell())
+            tar_file.seek(0)
+            # calculate the hash of the file before we upload it:
+            shasum = hashlib.sha256()
+            while True:
+                chunk = tar_file.read(1000)
+                if not chunk:
+                    break
+                shasum.update(chunk)
+            logger.debug('generated tar file has hash %s', shasum.hexdigest())
             tar_file.seek(0)
             with self.findAndOpenReadme() as readme_file_wrapper:
                 if not readme_file_wrapper:
