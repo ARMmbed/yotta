@@ -289,7 +289,7 @@ class Pack(object):
         def filterArchive(tarinfo):
             if tarinfo.name.find(archive_name) == 0 :
                 unprefixed_name = tarinfo.name[len(archive_name)+1:]
-                tarinfo.mode &= 0774
+                tarinfo.mode &= 0775
             else:
                 unprefixed_name = tarinfo.name
             if self.ignores(unprefixed_name):
