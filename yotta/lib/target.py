@@ -550,12 +550,18 @@ class DerivedTarget(Target):
             ] + forward_args
             logger.debug('running test: %s', cmd)
             if filter_command:
+                logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
                     cmd, cwd = builddir, stdout = subprocess.PIPE
                 )
-                test_filter = subprocess.Popen(
-                    filter_command, cwd = builddir, stdin = test_child.stdout
-                )
+                try:
+                    test_filter = subprocess.Popen(
+                        filter_command, cwd = builddir, stdin = test_child.stdout
+                    )
+                except OSError as e:
+                    logger.error('error starting test output filter "%s": %s', filter_command, e)
+                    test_child.terminate()
+                    return 1
                 test_filter.communicate()
                 test_child.terminate()
                 test_child.stdout.close()
