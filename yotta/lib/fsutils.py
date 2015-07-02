@@ -39,6 +39,8 @@ def rmRf(path):
     try:
         if isLink(path):
             rmLink(path)
+        elif os.path.isfile(path):
+            rmF(path)
         else:
             shutil.rmtree(path, onerror=fixPermissions)
     except OSError as exception:
