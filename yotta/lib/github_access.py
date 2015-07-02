@@ -119,7 +119,7 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    headers = {'Authorization': 'token ' + settings.getProperty('github', 'authtoken')}
+    headers = {'Authorization': 'token ' + str(settings.getProperty('github', 'authtoken'))}
 
     response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
 

@@ -10,6 +10,7 @@ import os
 import hashlib
 import tempfile
 import shutil
+import sys
 
 # version, , represent versions and specifications, internal
 import version
@@ -48,7 +49,7 @@ class RemoteVersion(version.Version):
     def __repr__(self):
         return u'%s@%s from %s' % (self.name, self.friendly_version, self.friendly_source)
     def __str__(self):
-        return self.__unicode__().encode('utf-8')
+        return self.__unicode__()
     def __unicode__(self):
         return self.__repr__()
 
@@ -72,6 +73,20 @@ class RemoteComponent(object):
         raise NotImplementedError
 
 
+def _openExclusively(name):
+    # in python >=3.3, there's the handy 'x' flag, otherwise we have to use
+    # fdopen:
+    # (tarfile has problems with fdopened files on python 3.3, so this works
+    # around that bug too)
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
+        return open(name, 'bx+')
+    else:
+        fd = os.open(name, os.O_CREAT | os.O_EXCL |
+                           os.O_RDWR | getattr(os, "O_BINARY", 0))
+        return os.fdopen(fd, 'rb+')
+
+
+
 def unpackTarballStream(stream, into_directory, hash=(None, None)):
     ''' Unpack a responses stream that contains a tarball into a directory
     '''
@@ -92,9 +107,7 @@ def unpackTarballStream(stream, into_directory, hash=(None, None)):
     # overwriting our tar archive with something that unpacks to an absolute
     # path when we might be running sudo'd
     try:
-        fd = os.open(download_fname, os.O_CREAT | os.O_EXCL |
-                                     os.O_RDWR | getattr(os, "O_BINARY", 0))
-        with os.fdopen(fd, 'rb+') as f:
+        with _openExclusively(download_fname) as f:
             f.seek(0)
             for chunk in stream.iter_content(1024):
                 f.write(chunk)
