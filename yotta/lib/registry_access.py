@@ -260,8 +260,8 @@ def _generateAndSaveKeys(registry=None):
     )
 
     if _isPublicRegistry(registry):
-        settings.setProperty('keys', 'private', privatekey_pem)
-        settings.setProperty('keys', 'public', pubkey_pem)
+        settings.setProperty('keys', 'private', privatekey_pem.decode('ascii'))
+        settings.setProperty('keys', 'public', pubkey_pem.decode('ascii'))
     else:
         sources = _getSources()
         keys = None
@@ -278,8 +278,8 @@ def _generateAndSaveKeys(registry=None):
                 'url':registry,
                'keys':keys
             })
-        keys['private'] = privatekey_pem
-        keys['public']  = pubkey_pem
+        keys['private'] = privatekey_pem.decode('ascii')
+        keys['public']  = pubkey_pem.decode('ascii')
         settings.set('sources', sources)
     return pubkey_pem, privatekey_pem
 
