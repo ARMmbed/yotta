@@ -49,7 +49,7 @@ class RemoteVersion(version.Version):
     def __repr__(self):
         return u'%s@%s from %s' % (self.name, self.friendly_version, self.friendly_source)
     def __str__(self):
-        return self.__unicode__().encode('utf-8')
+        return self.__unicode__()
     def __unicode__(self):
         return self.__repr__()
 
@@ -79,7 +79,7 @@ def _openExclusively(name):
     # (tarfile has problems with fdopened files on python 3.3, so this works
     # around that bug too)
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
-        return open(name, 'rbx+')
+        return open(name, 'bx+')
     else:
         fd = os.open(name, os.O_CREAT | os.O_EXCL |
                            os.O_RDWR | getattr(os, "O_BINARY", 0))
