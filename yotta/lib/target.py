@@ -222,7 +222,7 @@ class DerivedTarget(Target):
 
     def getToolchainFiles(self):
         return [
-            os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy
+            os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy if 'toolchain' in x.description
         ]
     
     @classmethod
