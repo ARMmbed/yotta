@@ -42,10 +42,6 @@ class LazySubParsersAction(argparse._SubParsersAction):
     def __init__(self, *args, **kwargs):
         super(LazySubParsersAction, self).__init__(*args, **kwargs)
 
-    def add_parser(self, *args, **kwargs):
-        r = argparse._SubParsersAction.add_parser(self, *args, **kwargs)
-        return r
-
     def add_parser_async(self, name, *args, **kwargs):
         if not 'callback' in kwargs:
             raise ValueError('callback=fn(parser) argument must be specified')
