@@ -3,6 +3,8 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+from .lib import lazyregex
+
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
 import argcomplete
@@ -11,31 +13,7 @@ import argcomplete
 import argparse
 import logging
 import sys
-import pkg_resources
 from functools import reduce
-
-# subcommand modules, , add subcommands, internal
-from . import version
-from . import link
-from . import link_target
-from . import install
-from . import update
-from . import target
-from . import build
-from . import init
-from . import publish
-from . import unpublish
-from . import debug
-from . import test_subcommand as test
-from . import login
-from . import logout
-from . import list as list_command
-from . import uninstall
-from . import owners
-from . import licenses
-from . import clean
-from . import search
-from . import config
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -54,6 +32,49 @@ def splitList(l, at_value):
             r[-1].append(x)
     return r
 
+# (instead of subclassing argparse._SubParsersAction, we monkey-patch it,
+#  because argcomplete has special-cases for the _SubParsersAction class that
+#  it's impossible to extend to another class)
+#
+# add a add_parser_async function, which allows a subparser to be added whose
+# options are not evaluated until the subparser has been selected. This allows
+# us to defer loading the modules for all the subcommands until they are
+# actually:
+def _SubParsersAction_addParserAsync(self, name, *args, **kwargs):
+    if not 'callback' in kwargs:
+        raise ValueError('callback=fn(parser) argument must be specified')
+    callback = kwargs['callback']
+    del kwargs['callback']
+    parser = self.add_parser(name, *args, **kwargs)
+    parser._lazy_load_callback = callback
+    return None
+argparse._SubParsersAction.add_parser_async = _SubParsersAction_addParserAsync
+
+def _wrapSubParserActionCall(orig_call):
+    def wrapped_call(self, parser, namespace, values, option_string=None):
+        parser_name = values[0]
+        if parser_name in self._name_parser_map:
+            subparser = self._name_parser_map[parser_name]
+            if hasattr(subparser, '_lazy_load_callback'):
+                # the callback is responsible for adding the subparser's own
+                # arguments:
+                subparser._lazy_load_callback(subparser)
+        # now we can go ahead and call the subparser action: its arguments are
+        # now all set up
+        return orig_call(self, parser, namespace, values, option_string)
+    return wrapped_call
+argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubParsersAction.__call__)
+
+
+# Override the argparse default version action so that we can avoid importing
+# pkg_resources (which is slowww) unless someone has actually asked for the
+# version
+class FastVersionAction(argparse.Action):
+    def __call__(self, parser, args, values, option_string=None):
+        import pkg_resources
+        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n')
+        sys.exit(0)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -62,9 +83,8 @@ def main():
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
     subparser = parser.add_subparsers(metavar='<subcommand>')
-
-    parser.add_argument('--version', dest='show_version', action='version',
-            version=pkg_resources.require("yotta")[0].version,
+    
+    parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
@@ -92,25 +112,29 @@ def main():
         '--registry', default=None, dest='registry', help=argparse.SUPPRESS
     )
 
-    def addParser(name, module, description, help=None):
+    def addParser(name, module_name, description, help=None):
         if help is None:
             help = description
-        parser = subparser.add_parser(
+        def onParserAdded(parser):
+            import importlib
+            module = importlib.import_module('.' + module_name, 'yotta')
+            module.addOptions(parser)
+            parser.set_defaults(command=module.execCommand)
+        subparser.add_parser_async(
             name, description=description, help=help,
-            formatter_class=argparse.RawTextHelpFormatter
+            formatter_class=argparse.RawTextHelpFormatter,
+            callback=onParserAdded
         )
-        module.addOptions(parser)
-        parser.set_defaults(command=module.execCommand)
 
-    addParser('search', search,
+    addParser('search', 'search',
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
         'install --save` for installing modules, and for `yotta target` for '+
         'switching targets.'
     )
-    addParser('init', init, 'Create a new module.')
-    addParser('install', install, 'Install dependencies for the current module, or a specific module.')
-    addParser('build', build,
+    addParser('init', 'init', 'Create a new module.')
+    addParser('install', 'install', 'Install dependencies for the current module, or a specific module.')
+    addParser('build', 'build',
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\
         'when make is the build tool, run:\n    yotta build -- -j\n\n'+
@@ -120,13 +144,13 @@ def main():
         'all dependencies, run:\n    yotta build all_tests\n\n',
         'Build the current module.'
     )
-    addParser('version', version, 'Bump the module version, or (with no arguments) display the current version.')
-    addParser('link', link, 'Symlink a module.')
-    addParser('link-target', link_target, 'Symlink a target.')
-    addParser('update', update, 'Update dependencies for the current module, or a specific module.')
-    addParser('target', target, 'Set or display the target device.')
-    addParser('debug', debug, 'Attach a debugger to the current target.  Requires target support.')
-    addParser('test', test,
+    addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
+    addParser('link', 'link', 'Symlink a module.')
+    addParser('link-target', 'link_target', 'Symlink a target.')
+    addParser('update', 'update', 'Update dependencies for the current module, or a specific module.')
+    addParser('target', 'target', 'Set or display the target device.')
+    addParser('debug', 'debug', 'Attach a debugger to the current target.  Requires target support.')
+    addParser('test', 'test_subcommand',
         'Run the tests for the current module on the current target. A build '+
         'will be run first, and options to the build subcommand are also '+
         'accepted by test.\nThis subcommand requires the target to provide a '+
@@ -135,16 +159,16 @@ def main():
         'each test, and may produce a summary.',
         'Run the tests for the current module on the current target. Requires target support.'
     )
-    addParser('publish', publish, 'Publish a module or target to the public registry.')
-    addParser('unpublish', unpublish, 'Un-publish a recently published module or target.')
-    addParser('login', login, 'Authorize for access to private github repositories and publishing to the yotta registry.')
-    addParser('logout', logout, 'Remove saved authorization token for the current user.')
-    addParser('list', list_command, 'List the dependencies of the current module, or the inherited targets of the current target.')
-    addParser('uninstall', uninstall, 'Remove a specific dependency of the current module.')
-    addParser('owners', owners, 'Add/remove/display the owners of a module or target.')
-    addParser('licenses', licenses, 'List the licenses of the current module and its dependencies.')
-    addParser('clean', clean, 'Remove files created by yotta and the build.')
-    addParser('config', config, 'Display the target configuration info.')
+    addParser('publish', 'publish', 'Publish a module or target to the public registry.')
+    addParser('unpublish', 'unpublish', 'Un-publish a recently published module or target.')
+    addParser('login', 'login', 'Authorize for access to private github repositories and publishing to the yotta registry.')
+    addParser('logout', 'logout', 'Remove saved authorization token for the current user.')
+    addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
+    addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module.')
+    addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
+    addParser('licenses', 'licenses', 'List the licenses of the current module and its dependencies.')
+    addParser('clean', 'clean', 'Remove files created by yotta and the build.')
+    addParser('config', 'config', 'Display the target configuration info.')
 
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
