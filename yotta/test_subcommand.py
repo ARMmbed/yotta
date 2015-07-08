@@ -104,10 +104,10 @@ def execCommand(args, following_args):
         build_status = build.installAndBuild(args, following_args)
         # a generate or build step failure is fatal, but an install-step
         # failure should not prevent attempting tests:
-        if build_status.get('generate_status', 0) != 0:
-            return build_status['generate_status']
-        elif build_status.get('build_status', 0) != 0:
-            return build_status['build_status']
+        if build_status.get('generate_status', 0) != 0 or \
+           build_status.get('build_status', 0) != 0 or \
+           build_status.get('missing_status', 0) != 0:
+            return 1
         else:
             returncode = build_status['status']
 
