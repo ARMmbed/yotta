@@ -38,23 +38,34 @@ def addOptions(parser, add_build_targets=True):
         )
 
 def execCommand(args, following_args):
+    status = installAndBuild(args, following_args)
+    return status['status']
+
+def installAndBuild(args, following_args):
+    ''' Perform the build command, but provide detailed error information.
+        Returns {status:0, build_status:0, generate_status:0, install_status:0} on success.
+        If status: is nonzero there was some sort of error. Other properties
+        are optional, and may not be set if that step was not attempted.
+    '''
+    build_status = generate_status = install_status = 0
+
     if not hasattr(args, 'build_targets'):
         vars(args)['build_targets'] = []
 
     if 'test' in args.build_targets:
         logging.error('Cannot build "test". Use "yotta test" to run tests.')
-        return 1
+        return {'status':1}
 
     cwd = os.getcwd()
     c = validate.currentDirectoryModule()
     if not c:
-        return 1
+        return {'status':1}
 
     target, errors = c.satisfyTarget(args.target)
     if errors:
         for error in errors:
             logging.error(error)
-        return 1
+        return {'status':1}
     
     # run the install command before building, we need to add some options the
     # install command expects to be present to do this:
@@ -77,7 +88,7 @@ def execCommand(args, following_args):
 
     # install may exit non-zero for non-fatal errors (such as incompatible
     # version specs), which it will display
-    errcode = install.execCommand(args, [])
+    install_status = install.execCommand(args, [])
 
     builddir = os.path.join(cwd, 'build', target.getName())
 
@@ -100,7 +111,7 @@ def execCommand(args, following_args):
     generator = cmakegen.CMakeGen(builddir, target)
     for error in generator.generateRecursive(c, all_components, builddir):
         logging.error(error)
-        errcode = 1
+        generate_status = 1
     
     if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
@@ -109,7 +120,13 @@ def execCommand(args, following_args):
         )
         if error:
             logging.error(error)
-            errcode = 1
-
+            build_status = 1
+    
+    return {
+                'status': build_status or generate_status or install_status,
+          'build_status': build_status,
+       'generate_status': generate_status,
+        'install_status': install_status
+    }
     return errcode
 

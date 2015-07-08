@@ -101,10 +101,15 @@ def execCommand(args, following_args):
             vars(args)['build_targets'] = args.tests + ['all_tests']
         else:
             vars(args)['build_targets'] = args.tests
-        returncode = build.execCommand(args, following_args)
-
-    if returncode:
-        logging.warning('build status indicated error, continuing anyway...')
+        build_status = build.installAndBuild(args, following_args)
+        # a generate or build step failure is fatal, but an install-step
+        # failure should not prevent attempting tests:
+        if build_status.get('generate_status', 0) != 0:
+            return build_status['generate_status']
+        elif build_status.get('build_status', 0) != 0:
+            return build_status['build_status']
+        else:
+            returncode = build_status['status']
 
     cwd = os.getcwd()
 
