@@ -11,7 +11,6 @@ import argcomplete
 import argparse
 import logging
 import sys
-import pkg_resources
 from functools import reduce
 
 # logging setup, , setup the logging system, internal
@@ -60,6 +59,15 @@ class LazySubParsersAction(argparse._SubParsersAction):
         # now all set up
         return argparse._SubParsersAction.__call__(self, parser, namespace, values, option_string)
 
+# Override the argparse default version action so that we can avoid importing
+# pkg_resources (which is slowww) unless someone has actually asked for the
+# version
+class FastVersionAction(argparse.Action):
+    def __call__(self, parser, args, values, option_string=None):
+        import pkg_resources
+        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n')
+        sys.exit(0)
+
 
 def main():
     parser = LazyArgumentParser(
@@ -68,9 +76,8 @@ def main():
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
     subparser = parser.add_subparsers(metavar='<subcommand>')
-
-    parser.add_argument('--version', dest='show_version', action='version',
-            version=pkg_resources.require("yotta")[0].version,
+    
+    parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
     parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
