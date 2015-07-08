@@ -59,17 +59,11 @@ def _wrapSubParserActionCall(orig_call):
                 # the callback is responsible for adding the subparser's own
                 # arguments:
                 subparser._lazy_load_callback(subparser)
-                argcomplete.autocomplete(subparser)
         # now we can go ahead and call the subparser action: its arguments are
         # now all set up
         return orig_call(self, parser, namespace, values, option_string)
     return wrapped_call
 argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubParsersAction.__call__)
-
-
-def lazySubParserCompleter(prefix, **kwargs):
-    argcomplete.warn('lazySubParserCompleter %s %s' % (prefix, kwargs))
-    #return argcomplete.completers.ChoicesCompleter(prefix, **kwargs)
 
 
 # Override the argparse default version action so that we can avoid importing
