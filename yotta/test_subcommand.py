@@ -93,6 +93,7 @@ def execCommand(args, following_args):
     if all_tests:
         args.tests.remove('all')
 
+    returncode = 0
     if args.build and not args.list_only:
         # we need to build before testing, make sure that any tests needed are
         # built:
@@ -100,9 +101,10 @@ def execCommand(args, following_args):
             vars(args)['build_targets'] = args.tests + ['all_tests']
         else:
             vars(args)['build_targets'] = args.tests
-        status = build.execCommand(args, following_args)
-        if status:
-            return status
+        returncode = build.execCommand(args, following_args)
+
+    if returncode:
+        logging.warning('build status indicated error, continuing anyway...')
 
     cwd = os.getcwd()
 
@@ -132,7 +134,6 @@ def execCommand(args, following_args):
     # tests, in case the specific test does not belong to this module
     tests = findCTests(builddir, recurse_yotta_modules=(all_tests or len(args.tests)))
 
-    returncode = 0
     passed = 0
     failed = 0
     for dirname, test_exes in tests:
@@ -152,15 +153,17 @@ def execCommand(args, following_args):
             logging.info('test %s: %s', module.getName(), test)
             if args.list_only:
                 continue
-            returncode = target.test(
+            test_returncode = target.test(
                        builddir = dirname, 
                         program = test,
                  filter_command = filter_command,
                    forward_args = following_args
             )
-            if returncode:
+            if test_returncode:
                 logging.error('test %s failed', test)
                 failed += 1
+                if not returncode:
+                    returncode = 1
             else:
                 logging.info('test %s passed', test)
                 passed += 1
