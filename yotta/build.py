@@ -106,7 +106,7 @@ def installAndBuild(args, following_args):
             missing += 1
     if missing:
         logging.error('Missing dependencies prevent build. Use `yotta ls` to list them.')
-        return {'status': 1, 'missing_status': 1}
+        return {'status': 1, 'install_status':install_status, 'missing_status':missing}
 
     generator = cmakegen.CMakeGen(builddir, target)
     for error in generator.generateRecursive(c, all_components, builddir):
