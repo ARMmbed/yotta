@@ -39,18 +39,13 @@ class LazyArgumentParser(argparse.ArgumentParser):
         self.register('action', 'parsers', LazySubParsersAction)
 
 class LazySubParsersAction(argparse._SubParsersAction):
-    def __init__(self, *args, **kwargs):
-        super(LazySubParsersAction, self).__init__(*args, **kwargs)
-
     def add_parser_async(self, name, *args, **kwargs):
         if not 'callback' in kwargs:
             raise ValueError('callback=fn(parser) argument must be specified')
         callback = kwargs['callback']
         del kwargs['callback']
         parser = argparse._SubParsersAction.add_parser(self, name, *args, **kwargs)
-        def bound_callback():
-            return callback(parser)
-        parser._lazy_load_callback = bound_callback
+        parser._lazy_load_callback = callback
         return None
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -60,7 +55,7 @@ class LazySubParsersAction(argparse._SubParsersAction):
             if hasattr(subparser, '_lazy_load_callback'):
                 # the callback is responsible for adding the subparser's own
                 # arguments:
-                subparser._lazy_load_callback()
+                subparser._lazy_load_callback(subparser)
         # now we can go ahead and call the subparser action: its arguments are
         # now all set up
         return argparse._SubParsersAction.__call__(self, parser, namespace, values, option_string)
@@ -72,7 +67,7 @@ def main():
         description='Build software using re-usable components.\n'+
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
-    subparser = parser.add_subparsers(metavar='<subcommand>', )
+    subparser = parser.add_subparsers(metavar='<subcommand>')
 
     parser.add_argument('--version', dest='show_version', action='version',
             version=pkg_resources.require("yotta")[0].version,
