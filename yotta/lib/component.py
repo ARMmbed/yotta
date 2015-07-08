@@ -361,8 +361,14 @@ class Component(pack.Pack):
         # as well as just available ones
         # note that this Component object may still be valid (usable to
         # attempt a build), if a different version was previously installed
-        # on disk at this location
-        r = Component(os.path.join(self.modulesPath(), dspec.name), test_dependency = dspec.is_test_dependency)
+        # on disk at this location (which means we need to check if the
+        # existing version is linked)
+        default_path = os.path.join(self.modulesPath(), dspec.name)
+        r = Component(
+                               default_path,
+             test_dependency = dspec.is_test_dependency,
+            installed_linked = fsutils.isLink(default_path)
+        )
         return r
 
     def getDependenciesRecursive(self,
