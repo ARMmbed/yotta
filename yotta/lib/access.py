@@ -210,8 +210,12 @@ def searchPathsFor(name, spec, search_paths, type='module'):
                    installed_linked = fsutils.isLink(check_path),
             latest_suitable_version = None
         )
-        if instance and spec.match(instance.getVersion()):
-            return instance
+        if instance:
+            logger.debug("got %s v=%s spec %s matches? %s", instance, instance.getVersion(), spec, spec.match(instance.getVersion()))
+            if spec.match(instance.getVersion()):
+                return instance
+        else:
+            logger.debug("got %s", instance)
     return None
 
 def _registryNamespaceForType(type):
