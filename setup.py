@@ -36,12 +36,15 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Environment :: Console",
     ],
-    entry_points={
-        "console_scripts": [
-            "yotta=yotta:main",
-               "yt=yotta:main",
-        ],
-    },
+    # entry points are nice, but add ~100ms to startup time with all the
+    # pkg_resources infrastructure, so we use scripts= instead :(
+    #entry_points={
+    #    "console_scripts": [
+    #        "yotta=yotta:main",
+    #           "yt=yotta:main",
+    #    ],
+    #},
+    scripts=['bin/yt', 'bin/yotta'],
     test_suite = 'yotta.test',
     install_requires=[
         'semantic_version>=2.3.1,<3',
