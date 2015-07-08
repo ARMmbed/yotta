@@ -13,8 +13,20 @@ def read(fname):
 # we need 'ntfsutils' in Windows
 if os.name == 'nt':
     platform_deps = ['ntfsutils>=0.1.3,<0.2']
+    entry_points={
+        "console_scripts": [
+            "yotta=yotta:main",
+               "yt=yotta:main",
+        ],
+    }
+    scripts = []
 else:
     platform_deps = []
+    # entry points are nice, but add ~100ms to startup time with all the
+    # pkg_resources infrastructure, so we use scripts= instead on unix-y
+    # platforms:
+    scripts = ['bin/yotta', 'bin/yt']
+    entry_points = {}
 
 setup(
     name = "yotta",
@@ -36,15 +48,8 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Environment :: Console",
     ],
-    # entry points are nice, but add ~100ms to startup time with all the
-    # pkg_resources infrastructure, so we use scripts= instead :(
-    #entry_points={
-    #    "console_scripts": [
-    #        "yotta=yotta:main",
-    #           "yt=yotta:main",
-    #    ],
-    #},
-    scripts=['bin/yt', 'bin/yotta'],
+    entry_points=entry_points,
+    scripts=scripts,
     test_suite = 'yotta.test',
     install_requires=[
         'semantic_version>=2.3.1,<3',
