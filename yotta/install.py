@@ -27,10 +27,6 @@ def addOptions(parser):
         help='If specified, install this module instead of installing '+
              'the dependencies of the current module.'
     )
-    parser.add_argument('-l', '--install-linked', dest='install_linked',
-        action='store_true', default=False,
-        help='Traverse linked modules, and install dependencies needed there too.'
-    )
     parser.add_argument('--test-dependencies', dest='install_test_deps',
         choices=('none', 'all', 'own'), default='own',
         help='Control the installation of dependencies necessary for building tests.'
@@ -98,12 +94,14 @@ def installDeps(args, current_component):
         # module into the global modules dir
         raise NotImplementedError()
     else:
-        install_linked = False
-        if 'install_linked' in args:
-            install_linked = args.install_linked
+        # satisfyDependenciesRecursive will always prefer to install
+        # dependencies in the yotta_modules directory of the top-level module,
+        # so it's safe to set traverse_links here when we're only *installing*
+        # modules (not updating them). This will never result in
+        # Spooky-Action-Through-A-Symlink.
         components, errors = current_component.satisfyDependenciesRecursive(
                           target = target,
-                  traverse_links = install_linked,
+                  traverse_links = True,
             available_components = [(current_component.getName(), current_component)],
                             test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
