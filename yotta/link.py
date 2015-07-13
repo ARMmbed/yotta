@@ -18,8 +18,6 @@ from .lib import fsutils
 from .lib import validate
 # folders, , get places to install things, internal
 from .lib import folders
-# install, , install subcommand, internal
-from . import install
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
@@ -39,10 +37,6 @@ def execCommand(args, following_args):
         # if the component is already installed, rm it
         fsutils.rmRf(dst)
     else:
-        # run the install command first, if we're being run sudo'd, drop sudo
-        # privileges for this
-        args.act_globally = False
-        fsutils.dropRootPrivs(lambda: install.execCommand(args, following_args))()
         fsutils.mkDirP(folders.globalInstallDirectory())
 
         src = os.getcwd()
