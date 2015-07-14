@@ -139,8 +139,9 @@ class Pack(object):
                         raise Exception('missing "version"')
             except Exception as e:
                 self.description = OrderedDict()
+                self.error = "Description invalid %s: %s" % (description_file, e);
                 logger.debug(self.error)
-                raise InvalidDescription("Description invalid %s: %s" % (description_file, e))
+                raise InvalidDescription(self.error)
         else:
             self.error = "No %s file." % description_filename
             self.description = OrderedDict()

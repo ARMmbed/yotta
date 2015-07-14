@@ -120,7 +120,8 @@ class ComponentDepsFormatter(object):
         indent=u'',
         tee=u'',
         installed_at=u'',
-        test_dep=False
+        test_dep=False,
+        spec=None
     ):
         r = u''
 
@@ -169,7 +170,9 @@ class ComponentDepsFormatter(object):
 
 
         line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
-
+        
+        if spec and not spec.match(component.getVersion()):
+            line += u' ' + RESET + BRIGHT + RED + str(spec) + RESET
         if test_dep:
             line += u' ' + DIM + u'(test dependency)' + RESET
         if len(installed_at):
@@ -220,7 +223,8 @@ class ComponentDepsFormatter(object):
                                  processed,
                                next_indent,
                                   next_tee,
-                                  test_dep = isTestOnly(name)
+                                  test_dep = isTestOnly(name),
+                                      spec = spec
                         )
                     else:
                         r += self.format(
@@ -229,7 +233,8 @@ class ComponentDepsFormatter(object):
                                next_indent,
                                   next_tee,
                               installed_at = relpathIfSubdir(dep.path),
-                                  test_dep = isTestOnly(name)
+                                  test_dep = isTestOnly(name),
+                                      spec = spec
                         )
                 else:
                     r += indent + tee + DIM + name + spec_descr + RESET + '\n'
