@@ -482,6 +482,24 @@ class Component(pack.Pack):
             if r:
                 r.setTestDependency(dspec.is_test_dependency)
                 return r
+            # before resorting to install this module, check if we have an
+            # existing linked module (which wasn't picked up because it didn't
+            # match the version specification) - if we do, then we shouldn't
+            # try to install, but should return that anyway:
+            default_path = os.path.join(self.modulesPath(), dspec.name)
+            if fsutils.isLink(default_path):
+                r = Component(
+                                       default_path,
+                     test_dependency = dspec.is_test_dependency,
+                    installed_linked = fsutils.isLink(default_path)
+                )
+                if r:
+                    assert(r.installedLinked())
+                    return r
+                else:
+                    logger.error('linked module %s is invalid: %s', dspec.name, r.getError())
+                    return r
+
             r = access.satisfyVersionByInstalling(dspec.name, dspec.version_req, self.modulesPath())
             if not r:
                 logger.error('could not install %s' % name)
