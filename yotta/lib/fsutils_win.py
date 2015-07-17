@@ -28,7 +28,13 @@ def isLink(path):
 
 def tryReadLink(path):
     try:
-        return junction.readlink(path)
+        prevPath = path
+        while isLink(path):
+            path = junction.readlink(path)
+            if path == prevPath: # no idea if this can happen, but why risk it
+                break
+            prevPath = path
+        return path
     except:
         return None
 
