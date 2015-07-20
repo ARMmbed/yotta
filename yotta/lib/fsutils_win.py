@@ -28,7 +28,18 @@ def isLink(path):
 
 def tryReadLink(path):
     try:
-        return junction.readlink(path)
+        prevPath, initialPath = path, path
+        readlinkCount, maxReadlinkCount = 0, 100
+        while isLink(path):
+            path = junction.readlink(path)
+            if path == prevPath: # no idea if this can happen, but why risk it
+                break
+            # Prevent infinite loop if circular paths are present (A->B->C->A)
+            readlinkCount = readlinkCount + 1
+            if readlinkCount == maxReadlinkCount:
+                return initialPath
+            prevPath = path
+        return path
     except:
         return None
 
