@@ -47,7 +47,12 @@ project({{ component.getName() }})
 {% if toplevel %}
 # Definitions provided by the target configuration info:
 if(NOT DEFINED YOTTA_FORCE_INCLUDE_FLAG)
-    set(YOTTA_FORCE_INCLUDE_FLAG "-include")
+    # backwards-compatibility hack for ARMCC only: Do not add new compilers here!
+    if("${CMAKE_C_COMPILER_ID}" STREQUAL "ARMCC")
+        set(YOTTA_FORCE_INCLUDE_FLAG "--preinclude")
+    else()
+        set(YOTTA_FORCE_INCLUDE_FLAG "-include")
+    endif()
 endif()
 add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceBackslashes }}\"")
 {% endif %}
