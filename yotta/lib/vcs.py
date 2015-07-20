@@ -183,7 +183,7 @@ class Git(VCS):
         ]
         if tag:
             commands.append(
-                self._gitCmd('tag', tag),
+                self._gitCmd('tag', tag, '-a', '-m', tag),
             )
         self._execCommands(commands)
 
