@@ -185,14 +185,9 @@ class DerivedTarget(Target):
         ''' load the configuration information from the target hierarchy '''
         config_dicts = [t.getConfig() for t in self.hierarchy]
         self.config = _mergeDictionaries(*config_dicts)
-        # !!! merge in the similarTo lists as top-level config values, if such
-        # values do not already exist, for backwards compatibility:
-        #compat_dicts = [
-        #    OrderedDict([(similar_to,True) for similar_to in [t.getName()] + t.description.get('similarTo', [])])
-        #    for t in self.hierarchy
-        #]
-        #self.config = _mergeDictionaries(self.config, *compat_dicts)
-
+        # note that backwards compatibility with the "similarTo" data that used
+        # to be used for target-dependencies is ensured at the point of use. We
+        # don't merge similarTo into the config because it might break things.
 
     def _ensureConfig(self):
         if self.config is None:
