@@ -205,7 +205,7 @@ class DerivedTarget(Target):
 
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
-        config_dicts = [t.getConfig() for t in self.hierarchy] + [self.app_config]
+        config_dicts = [self.app_config] + [t.getConfig() for t in self.hierarchy]
         self.config = _mergeDictionaries(*config_dicts)
         # note that backwards compatibility with the "similarTo" data that used
         # to be used for target-dependencies is ensured at the point of use. We
