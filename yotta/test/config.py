@@ -92,6 +92,12 @@ class ConfigTest(unittest.TestCase):
             with open(os.path.join(path_dir, file_name), 'w') as f:
                 f.write(contents)
         return test_dir
+
+    def setUp(self):
+        self.restore_cwd = os.getcwd()
+        
+    def tearDown(self):
+        os.chdir(self.restore_cwd)
     
     def test_targetConfigMerge(self):
         test_dir = self.writeTestFiles(Test_Target_Config_Merge, True)
