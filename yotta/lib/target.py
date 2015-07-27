@@ -15,6 +15,8 @@ import errno
 import itertools
 from collections import OrderedDict
 
+# Ordered JSON, , read & write json, internal
+import ordered_json
 # access, , get components, internal
 import access
 import access_common
@@ -26,6 +28,7 @@ import pack
 import fsutils
 
 Target_Description_File = 'target.json'
+App_Config_File = 'config.json'
 Registry_Namespace = 'targets'
 Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'target.json')
 
@@ -55,7 +58,13 @@ def _mergeDictionaries(*args):
 
 # API
 
-def getDerivedTarget(target_name_and_version, targets_path, install_missing=True, update_installed=False):
+def getDerivedTarget(
+        target_name_and_version,
+                   targets_path,
+                application_dir = None,
+                install_missing = True,
+               update_installed = False
+    ):
     ''' Get the specified target description, optionally ensuring that it (and
         all dependencies) are installed in targets_path.
 
@@ -113,8 +122,17 @@ def getDerivedTarget(target_name_and_version, targets_path, install_missing=True
                 break
     if leaf_target is None:
         return (None, errors)
-    else:
-        return (DerivedTarget(leaf_target, target_hierarchy[1:]), errors)
+    # if we have a valid target, try to load the app-specific config data (if
+    # any):
+    app_config = {}
+    if application_dir is not None:
+        app_config_fname = os.path.join(application_dir, App_Config_File)
+        if os.path.exists(app_config_fname):
+            try:
+                app_config = ordered_json.load(app_config_fname)
+            except Exception as e:
+                errors.append(Exception("Invalid application config.json: %s" % (e)))
+    return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config), errors)
 
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
@@ -147,16 +165,19 @@ class Target(pack.Pack):
 
     def getConfig(self):
         return self.description.get('config', OrderedDict())
-
     
 class DerivedTarget(Target):
-    def __init__(self, leaf_target, base_targets):
+    def __init__(self, leaf_target, base_targets, app_config):
         ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
             Targets.), given the most-derived Target description, and a set of
             available Targets to compose the rest of the lineage from.
 
             DerivedTarget provides build & debug commands, and access to the
-            derived target config info.
+            derived target config info (merged with the application config
+            info from config.json, if any).
+
+            It's possible to update the application config for an existing
+            DerivedTarget instance.
 
             DerivedTarget can also be used as a stand-in for the most-derived
             (leaf) target in the inheritance hierarchy.
@@ -171,6 +192,7 @@ class DerivedTarget(Target):
         
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
+        self.app_config = app_config
 
         
     # override truthiness to test validity of the entire hierarchy:
@@ -183,7 +205,7 @@ class DerivedTarget(Target):
 
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
-        config_dicts = [t.getConfig() for t in self.hierarchy]
+        config_dicts = [t.getConfig() for t in self.hierarchy] + [self.app_config]
         self.config = _mergeDictionaries(*config_dicts)
         # note that backwards compatibility with the "similarTo" data that used
         # to be used for target-dependencies is ensured at the point of use. We
@@ -192,6 +214,13 @@ class DerivedTarget(Target):
     def _ensureConfig(self):
         if self.config is None:
             self._loadConfig()
+
+    def setApplicationConfig(self, config):
+        ''' set the application-config data to the contents of the
+            dictionary-like object `config`
+        '''
+        self.app_config = config
+        self._loadConfig()
 
     def getConfigValue(self, conf_key):
         self._ensureConfig()

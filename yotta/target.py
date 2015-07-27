@@ -59,9 +59,17 @@ def displayCurrentTarget(args):
 
     line = u''
 
-    derived_target, errors = target.getDerivedTarget(args.target, component.Component(os.getcwd()).targetsPath(), install_missing=False)
+    c = component.Component(os.getcwd())
+    if c.isApplication():
+        app_path = c.path
+    else:
+        app_path = None
+
+    derived_target, errors = target.getDerivedTarget(
+        args.target, c.targetsPath(), application_dir=app_path, install_missing=False
+    )
     for error in errors:
-        logger.error(error)
+        logging.error(error)
     
     if derived_target is None:
         line = BRIGHT + RED + args.target + u' missing' + RESET
