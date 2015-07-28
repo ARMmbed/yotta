@@ -1,3 +1,7 @@
+# Copyright 2014-2015 ARM Limited
+#
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
 #
 # This is a script to install yotta. Eventually I would like to add all OS's to this script
 # but for now it just works on windows. 
@@ -8,11 +12,6 @@
 # throughs. Eventually I would like to hack together some silent installers
 # which would involve some exe brute forcing and some registry hacking. 
 #
-# copyright ARMmbed 2014
-#
-# Author: Austin Blackstone
-# Date: December 17,2014
-
 
 import math
 import sys
