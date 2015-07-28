@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Yotta Command Reference
+title: yotta Command Reference
 section: reference/commands
 ---
 
@@ -327,7 +327,7 @@ To link a module you need to perform two steps. First, in the directory of the d
 yotta link
 ```
 
-This will ensure it has all of its own dependencies installed, and then create a symlink from the global modules directory to the current module.
+This will create a symlink from the global modules directory to the current module.
 
 Then, in the module that you would like to use the linked version of the dependency, run:
 
@@ -435,4 +435,28 @@ occurs in, instead of just once.
 **NOTE:** while yotta can list the licenses that modules have declared in their
 `module.json` files, it can make no warranties about whether modules contain
 code under other licenses that have not been declared.
+
+<a name="yotta-config"></a>
+## yotta config
+
+#### Synopsis
+
+```
+yotta config
+```
+
+#### Description
+Display the merged [config data](/reference/config.html) for the current target
+(and application, if the current module defines an executable application).
+
+The config data is produced by merging the json config data defined by the
+application, the current target, and any targets the current target inherits
+from recursively. Values defined by the application will override those defined
+at the same path by targets, and values defined in targets will override values
+defined by targets they inherit from.
+
+The config data displayed is identical to the data that will be available to
+modules when they are built.
+
+See the [config system reference](/reference/config.html) for more details.
 

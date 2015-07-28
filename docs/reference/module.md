@@ -220,9 +220,33 @@ The `targetDependencies` property makes this possible.
 Each value in the `targetDependencies` is a target identifier defining a set of
 dependencies with the same format as the [`dependencies`](#dependencies) property.
 
-When calculating the dependencies to install, `yotta` uses the first section
+When calculating the dependencies to install, `yotta` uses all sections
 from `targetDependencies` that matches one of the identifiers in the current
-target's [`similarTo` list](../tutorial/targets.html#similarto).
+target's [`similarTo` list](../tutorial/targets.html#similarto), or which match
+properties that are defined to a truthy value in the [configuration
+data](/reference/config.html).
+
+To test nested values from config data, use dot-syntax,
+`"mbed.meshing.supported"` in the following example tests that the "supported"
+value is truthy in config data that looks like this:
+
+```json
+  {
+    "mbed":{
+      "meshing":{
+        "supported":true
+      }
+    }
+  }
+```
+
+A "truthy" json config value is any object or string, or non-zero numbers, or a
+literal `true` boolean value.
+
+**NOTE: in the future support for evaluating simple expressions on config
+values may be added, but this is not currently possible. To choose which
+one-of-n dependencies to use you must define N config values that are either
+true or false, and require that they are set appropriately.**
 
 Example:
 
@@ -231,6 +255,9 @@ Example:
         "k64f": {
             "mbed-hal-freescale": "^3.0.0",
             "mbed": "^3.0.0"
+        },
+        "mbed.meshing.supported": {
+            "mbed-meshing": "^1.2.3"
         }
 	}
 ```
