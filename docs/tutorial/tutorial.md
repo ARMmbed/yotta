@@ -268,7 +268,7 @@ Note that this time we answered **yes** to the last question. This makes `yotta`
 Now we can tell `yotta` that we want to use the module we created earlier, `simplelog`.
 
 ```sh
-> yotta install --save simplelog
+> yotta install simplelog
 info: get versions for x86-osx-native
 info: get versions for simplelog
 info: download simplelog

@@ -129,11 +129,14 @@ def main():
     addParser('search', 'search',
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
-        'install --save` for installing modules, and for `yotta target` for '+
+        'install` for installing modules, and for `yotta target` for '+
         'switching targets.'
     )
     addParser('init', 'init', 'Create a new module.')
-    addParser('install', 'install', 'Install dependencies for the current module, or a specific module.')
+    addParser('install', 'install',
+        'Add a specific module as a dependency, and download it, or install all '+
+        'dependencies for the current module.'
+    )
     addParser('build', 'build',
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\

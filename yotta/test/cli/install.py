@@ -122,8 +122,8 @@ class TestCLIInstall(unittest.TestCase):
         self.assertIn('test-testing-dummy', stdout)
         self.assertIn('test-target-dep', stdout)
 
-        # and test install --save
-        stdout = self.runCheckCommand(['--target', Test_Target, 'install', '--save', 'hg-access-testing'], test_dir)
+        # and test install <modulename>
+        stdout = self.runCheckCommand(['--target', Test_Target, 'install', 'hg-access-testing'], test_dir)
         stdout = self.runCheckCommand(['--target', Test_Target, 'ls'], test_dir)
         self.assertIn('hg-access-testing', stdout)
         rmRf(test_dir)

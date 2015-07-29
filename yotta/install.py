@@ -35,13 +35,14 @@ def addOptions(parser):
     group.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
         help='Install globally instead of in the current working directory.'
     )
+    
+    # Deprecated options, these now do nothing! --save behavior is the default,
+    # and --save-target has been removed.
     group.add_argument('--save', dest='save', action='store_true',
-        default=False,
-        help='Add the specified module to dependencies in module.json'
+        default=False, help=argparse.SUPPRESS
     )
     group.add_argument('--save-target', dest='save_target',
-        action='store_true', default=False,
-        help='Add the specified module to targetDependencies in module.json'
+        action='store_true', default=False, help=argparse.SUPPRESS
     )
 
 
@@ -71,12 +72,6 @@ def checkPrintStatus(errors, components):
 
 def installDeps(args, current_component):
     logging.debug('install deps for %s' % current_component)
-    if hasattr(args, 'save') and args.save:
-        logging.error('must specify a module name when using --save')
-        return 1
-    if hasattr(args, 'save_target') and args.save_target:
-        logging.error('must specify a module name when using --save-target')
-        return 1
     if not current_component:
         logging.debug(str(current_component.getError()))
         logging.error('The current directory does not contain a valid module.')
@@ -128,38 +123,35 @@ def installComponentAsDependency(args, current_component):
     try:
         if github_ref_match:
             component_name = github_ref_match.group(1)
-            installed = access.satisfyVersion(
-                    component_name,
-                    args.component,
-                         available = {current_component.getName():current_component},
-                      search_paths = [modules_dir],
-                 working_directory = modules_dir
-            )
+            component_spec = args.component
         else:
             component_name = args.component
-            installed = access.satisfyVersion(
-                    component_name,
-                               '*',
-                         available = {current_component.getName():current_component},
-                      search_paths = [modules_dir],
-                 working_directory = modules_dir
-            )
+            component_spec = '*'
+        if component_name == current_component.getName():
+            logging.error('will not install module %s as a dependency of itself', component_name)
+            return -1
+        installed = access.satisfyVersion(
+                component_name,
+                component_spec,
+                     available = {current_component.getName():current_component},
+                  search_paths = [modules_dir],
+             working_directory = modules_dir
+        )
     except access_common.Unavailable as e:
         logging.error(e)
         return 1
 
 
-    # always add the component to the dependencies of the current component
-    # - but don't write the dependency file back to disk if we're not meant to
-    # save it
-    if installed and args.save:
-        current_component.saveDependency(installed)
+    # We always add the component to the dependencies of the current component
+    # (if it is not already present), and write that back to disk. Without
+    # writing to disk the dependency wouldn't be usable.
+    if installed and not current_component.hasDependency(component_name):
+        saved_spec = current_component.saveDependency(installed)
         current_component.writeDescription()
-    elif installed and args.save_target:
-        current_component.saveTargetDependency(target, installed) 
-        current_component.writeDescription()
+        logging.info('dependency %s: %s written to module.json', component_name, saved_spec)
     else:
-        current_component.saveDependency(installed)
+        logging.info('dependency %s is already present in module.json', component_name)
+
     # !!! should only install dependencies necessary for the one thing that
     # we're installing (but existing components should be made available to
     # satisfy dependencies)
@@ -175,12 +167,6 @@ def installComponentAsDependency(args, current_component):
 def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
-    if args.save:
-        logging.error('cannot --save unless the current directory is a module')
-        return 1
-    if args.save_target:
-        logging.error('cannot --save-target unless the current directory is a module')
-        return 1
     
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module

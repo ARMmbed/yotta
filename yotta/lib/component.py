@@ -137,6 +137,23 @@ class Component(pack.Pack):
 
         return r
 
+    def hasDependency(self, name, target=None):
+        ''' Check if this module has any dependencies with the specified name
+            in its dependencies list, or in target dependencies for the
+            specified target
+        '''
+        if name in self.description.get('dependencies', {}).keys():
+            return True
+
+        target_deps = self.description.get('targetDependencies', {})
+        if target is not None:
+            for conf_key, target_conf_deps in target_deps.items():
+                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
+                    if name in target_conf_deps:
+                        return True
+        return False
+
+
     def getDependencies(self,
         available_components = None,
                  search_dirs = None,
@@ -618,15 +635,7 @@ class Component(pack.Pack):
         if spec is None:
             spec = self.__saveSpecForComponent(component)
         self.description['dependencies'][component.getName()] = spec
-
-    def saveTargetDependency(self, target, component, spec=None):
-        if not 'targetDependencies' in self.description:
-            self.description['targetDependencies'] = OrderedDict()
-        if not target.getName() in self.description['targetDependencies']:
-            self.description['targetDependencies'][target.getName()] = OrderedDict()
-        if spec is None:
-            spec = self.__saveSpecForComponent(component)
-        self.description['targetDependencies'][target.getName()][component.getName()] = spec
+        return spec
 
     def getTestFilterCommand(self):
         ''' return the test-output filtering command (array of strings) that
