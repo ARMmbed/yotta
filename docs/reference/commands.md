@@ -344,9 +344,10 @@ When you run `yotta link`, links are created in a system-wide directory under
 `YOTTA_PREFIX`, and the links in that directory are then picked up by
 subsequent `yotta link <modulename>` commands.
 
-On linux this defaults to `/usr/local`, and on windows to
-`%PROGRAMFILES/yotta`. To change this directory (e.g. to make yotta link things
-into your home directory), set the `YOTTA_PREFIX` environment variable.
+On linux this defaults to `/usr/local`, and on windows to the python
+installation directory (normally `c:\Python27`). To change this directory (e.g.
+to make yotta link things into your home directory), set the `YOTTA_PREFIX`
+environment variable.
 
 
 <a name="yotta-link-target"></a>
