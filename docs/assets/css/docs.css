@@ -45,14 +45,14 @@ p{
 
 #menu {
   min-height: 800px;
-  width: 200px;
+  width: 180px;
 }
 @media (min-width: 1200px) {
-  width: 200px;
+  width: 180px;
 }
 @media (max-width: 979px) and (min-width: 768px) {
   #menu {
-    width: 200px;
+    width: 180px;
   }
 }
 @media (max-width: 768px) {
@@ -74,8 +74,8 @@ p{
   margin-bottom: 7px;
 }
 #menu li a {
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 #menu li a {
   color: #999;

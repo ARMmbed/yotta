@@ -59,9 +59,17 @@ def displayCurrentTarget(args):
 
     line = u''
 
-    derived_target, errors = target.getDerivedTarget(args.target, component.Component(os.getcwd()).targetsPath(), install_missing=False)
+    c = component.Component(os.getcwd())
+    if c.isApplication():
+        app_path = c.path
+    else:
+        app_path = None
+
+    derived_target, errors = target.getDerivedTarget(
+        args.target, c.targetsPath(), application_dir=app_path, install_missing=False
+    )
     for error in errors:
-        logger.error(error)
+        logging.error(error)
     
     if derived_target is None:
         line = BRIGHT + RED + args.target + u' missing' + RESET
@@ -87,12 +95,12 @@ def displayCurrentTarget(args):
         print(line.encode('utf-8'))
     else:
         print(line)
-
+    return len(errors)
 
 
 def execCommand(args, following_args):
     if args.set_target is None:
-        displayCurrentTarget(args)
+        return displayCurrentTarget(args)
     else:
         if not Target_RE.match(args.set_target):
             logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:
@@ -111,9 +119,11 @@ def execCommand(args, following_args):
             #    yotta target {targetname}
             #
             #''')
+            return 1
         else:
             if args.set_target.find(',') == -1:
                 t = args.set_target + ',*'
             else:
                 t = args.set_target
             settings.setProperty('build', 'target', t, not args.save_global)
+            return 0

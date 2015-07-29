@@ -522,9 +522,13 @@ class Component(pack.Pack):
             github ref or URL) is installed in the targets directory of the
             current component
         '''
+        application_dir = None
+        if self.isApplication():
+            application_dir = self.path
         return target.getDerivedTarget(
             target_name_and_version,
             self.targetsPath(),
+            application_dir = application_dir,
             update_installed = update_installed
         )
 
@@ -536,6 +540,11 @@ class Component(pack.Pack):
             that.
         '''
         return self.installed_dependencies
+
+    def isApplication(self):
+        ''' Return true if this module is an application instead of a reusable
+            library '''
+        return bool(len(self.getBinaries()))
 
     def getBinaries(self):
         ''' Return a dictionary of binaries to compile: {"dirname":"exename"},

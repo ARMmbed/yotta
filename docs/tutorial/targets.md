@@ -42,7 +42,12 @@ the build directory or recompiling unnecessarily, as builds are carried out a
 separate directory for each target: `./build/<targetname>/`.
 
 
+<a name="writing-targets"></a>
 ## Writing Targets
+
+### <a href="#inheriting" name="inheriting">#</a> Inheriting from an Existing Target
+
+> !!! TODO
 
 <a name="toolchainfile"></a>
 ### The Toolchain File
