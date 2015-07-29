@@ -119,6 +119,7 @@ class ConfigTest(unittest.TestCase):
         self.assertIn("d", merged_config['bar'])
         self.assertEqual(merged_config['bar']['d'], "def")
 
+        os.chdir(self.restore_cwd)
         rmRf(test_dir)
 
     def test_targetAppConfigMerge(self):
@@ -143,10 +144,11 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(merged_config['bar']['d'], "ghi")
         self.assertIn("new", merged_config)
         self.assertEqual(merged_config['new'], 123)
-        
+
+        os.chdir(self.restore_cwd)
         rmRf(test_dir)
 
-    def test_moduleConfigInfored(self):
+    def test_moduleConfigIgnored(self):
         test_dir = self.writeTestFiles(Test_Module_Config_Ignored, True)
         
         os.chdir(test_dir)
@@ -156,5 +158,6 @@ class ConfigTest(unittest.TestCase):
 
         self.assertNotIn("new", merged_config)
 
+        os.chdir(self.restore_cwd)
         rmRf(test_dir)
 
