@@ -49,9 +49,9 @@ def addOptions(parser):
 def execCommand(args, following_args):
     if not hasattr(args, 'install_test_deps'):
         vars(args)['install_test_deps'] = 'none'
-    if args.save:
+    if getattr(args, save, None):
         logging.warning('the --save option is now the default and is ignored. It will be removed soon.')
-    if args.save_target:
+    if getattr(args, save_target, None):
         logging.warning('the --save-target is now ignored. It will be removed soon.')
     cwd = os.getcwd()
     c = component.Component(cwd)
