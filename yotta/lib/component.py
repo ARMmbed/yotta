@@ -637,6 +637,13 @@ class Component(pack.Pack):
         self.description['dependencies'][component.getName()] = spec
         return spec
 
+    def removeDependency(self, component):
+        if not component in self.description.get('dependencies', {}):
+            logger.error('%s is not listed as a dependency', component)
+            return False
+        del self.description['dependencies'][component]
+        return True
+
     def getTestFilterCommand(self):
         ''' return the test-output filtering command (array of strings) that
             this module defines, if any. '''
