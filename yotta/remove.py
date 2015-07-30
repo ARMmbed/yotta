@@ -28,15 +28,10 @@ def execCommand(args, following_args):
     c = validate.currentDirectoryModule()
     if not c:
         return 1
-    status = 0
-    if not c.removeDependency(args.component):
-        status = 1
-    else:
-        c.writeDescription()
     path = os.path.join(c.modulesPath(), args.component)
     if fsutils.isLink(path):
         fsutils.rmF(path)
     else:
         fsutils.rmRf(path)
-    return status
+
 

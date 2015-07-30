@@ -71,8 +71,6 @@ def installAndBuild(args, following_args):
     # install command expects to be present to do this:
     vars(args)['component'] = None
     vars(args)['act_globally'] = False
-    vars(args)['save'] = False
-    vars(args)['save_target'] = False
     if not hasattr(args, 'install_test_deps'):
         if 'all_tests' in args.build_targets:
             vars(args)['install_test_deps'] = 'all'

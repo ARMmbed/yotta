@@ -129,11 +129,14 @@ def main():
     addParser('search', 'search',
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
-        'install --save` for installing modules, and for `yotta target` for '+
+        'install` for installing modules, and for `yotta target` for '+
         'switching targets.'
     )
     addParser('init', 'init', 'Create a new module.')
-    addParser('install', 'install', 'Install dependencies for the current module, or a specific module.')
+    addParser('install', 'install',
+        'Add a specific module as a dependency, and download it, or install all '+
+        'dependencies for the current module.'
+    )
     addParser('build', 'build',
         'Build the current module. Options can be passed to the underlying '+\
         'build tool by passing them after --, e.g. to do a parallel build '+\
@@ -164,7 +167,8 @@ def main():
     addParser('login', 'login', 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', 'logout', 'Remove saved authorization token for the current user.')
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
-    addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module.')
+    addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
+    addParser('remove', 'remove', 'Remove the downloaded version of a dependency, or un-link a linked module.')
     addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
     addParser('licenses', 'licenses', 'List the licenses of the current module and its dependencies.')
     addParser('clean', 'clean', 'Remove files created by yotta and the build.')
@@ -178,8 +182,8 @@ def main():
             'ln':subparser.choices['link'],
              'v':subparser.choices['version'],
             'ls':subparser.choices['list'],
-        'unlink':subparser.choices['uninstall'],
-            'rm':subparser.choices['uninstall'],
+            'rm':subparser.choices['remove'],
+        'unlink':subparser.choices['remove'],
          'owner':subparser.choices['owners'],
           'lics':subparser.choices['licenses']
     }

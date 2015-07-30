@@ -192,7 +192,7 @@ Synonyms: `yotta in`, `yotta i`
 ```
 (in a module directory)
 yotta install
-yotta install <module>[@<version>] [--save | --save-target]
+yotta install <module>[@<version>]
 (anywhere)
 yotta install <module>[@<version>] --global
 ```
@@ -203,10 +203,10 @@ Install a module, including modules that it depends on.
 Typical usage is:
 
 ```
-yotta install <module> --save
+yotta install <module>
 ```
 
-Which installs `<module>` and its dependencies, and saves it in the current module's description.
+Which installs `<module>` and its dependencies, and saves it in the current module's description file.
 
 A `<module>` is one of:
  * a name, in which case the module is installed from the public registry (<yottabuild.org>)
@@ -218,10 +218,13 @@ In a module directory, `yotta install` will check for and install any missing de
  * `--install-linked`: also traverse into any linked modules, and install their dependencies. By default linked modules are not modified. Note that without this option all the required dependencies to build may not be installed.
 
 ##### `yotta install <module>` (in a module folder)
-In a module directory, `yotta install <module>` will install the specified module, and any missing dependencies for it. Accepts the following options:
+In a module directory, `yotta install <module>` will install the specified module, and any missing dependencies for it.
 
- * `--save`: saves the installed version of the module to the module.json file. This uses the `^` semantic-version specifier to specify that only minor version updates are allowed to be installed, **unless** the module has a 0.x.x version number, in which case the `~` semantic-version specifier is used restrict updates to patch versions only.
- * `--save-target`: saves the installed version of the module (as `--save`), but only when building for the current target. See the `targetDependencies` section of the [module.json reference](/../reference/module.html).
+The installed version of the module will be saved as a dependency into the
+current module's module.json file. This uses the `^` semantic-version specifier
+to specify that only minor version updates are allowed to be installed,
+**unless** the module has a 0.x.x version number, in which case the `~`
+semantic-version specifier is used restrict updates to patch versions only.
 
 ##### `yotta install <module>` (anywhere)
 Download the specified dependency, and install it in a subdirectory of the current directory. Options:
@@ -232,7 +235,7 @@ Download the specified dependency, and install it in a subdirectory of the curre
 
 ```
 yotta install simpleog
-yotta install ARM-RD/simplelog@0.0.0 --save
+yotta install ARM-RD/simplelog
 ```
 
 <a name="yotta-update"></a>
