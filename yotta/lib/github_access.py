@@ -122,6 +122,7 @@ def _getTarball(url, into_directory):
     headers = {'Authorization': 'token ' + str(settings.getProperty('github', 'authtoken'))}
 
     response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
+    response.raise_for_status()
 
     logger.debug('getting file: %s', url)
     # TODO: there's an MD5 in the response headers, verify it
