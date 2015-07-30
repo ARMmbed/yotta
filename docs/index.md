@@ -133,6 +133,11 @@ curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
 ```
 
+and on Cygwin: <br>
+ - install the windows dependencies <br>
+ - install libffi-developer and openssl-developer as both binary and source <br>
+ - install python and pip <br>
+
 
 Then install yotta itself (you may need to use `sudo` for this, depending on
 your configuration):
