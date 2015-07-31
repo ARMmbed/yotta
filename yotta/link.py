@@ -21,8 +21,8 @@ from .lib import folders
 
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
-        help='Link a globally installed (or globally linked) module into'+
-             'the current module\'s dependencies. If ommited, globally'+
+        help='Link a globally installed (or globally linked) module into '+
+             'the current module\'s dependencies. If ommited, globally '+
              'link the current module.'
     )
 
