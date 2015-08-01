@@ -13,6 +13,9 @@ import os
 from .lib import registry_access
 from .lib import version
 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
 def addOptions(parser):
     parser.add_argument(
         'type', choices=['module', 'target', 'both'], nargs='?', default='both',
@@ -45,6 +48,14 @@ def execCommand(args, following_args):
     # to the user (note that modules and targets may have the same name but be
     # different things, however, which is why the uniquing key includes the
     # type)
+    if not args.plain:
+        DIM    = colorama.Style.DIM
+        BRIGHT = colorama.Style.BRIGHT
+        GREEN  = colorama.Fore.GREEN
+        BLUE   = colorama.Fore.BLUE
+        RESET  = colorama.Style.RESET_ALL
+    else:
+        DIM = BRIGHT = GREEN = RED = RESET = u''
     count = 0
     for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
@@ -52,7 +63,7 @@ def execCommand(args, following_args):
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
-            print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+            print('%s %s: %s' % (GREEN+result['name'], BLUE+result['version'], RESET+lengthLimit(description, 160)))
     # exit status: success if we found something, otherwise fail
     if count:
         return 0
