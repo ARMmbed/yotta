@@ -46,27 +46,29 @@ def execCommand(args, following_args):
     # to the user (note that modules and targets may have the same name but be
     # different things, however, which is why the uniquing key includes the
     # type)
+    success = False
     count = 0
     print('yottabuild.org public registry results:')
     for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
+        success= True
         if count > args.limit:
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
             print('  %s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
     for repo in filter(lambda s: 'type' in s and s['type'] == 'registry', settings.get('sources') or []) :
+        count = 0
+        print('')
         print('%s registry results:' % repo['url'])
         for result in registry_access.search(query=args.query, keywords=args.kw, registry=repo['url']):
             count += 1
+            success= True
             if count > args.limit:
                 break
             if args.type == 'both' or args.type == result['type']:
                 description = result['description'] if 'description' in result else '<no description>'
                 print('  %s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
     # exit status: success if we found something, otherwise fail
-    if count:
-        return 0
-    else:
-        return 1
+    return 0 if success else 1
 
