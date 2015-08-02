@@ -12,6 +12,7 @@ import os
 # Registry Access, , access packages in the registry, internal
 from .lib import registry_access
 from .lib import version
+from .lib import settings
 
 def addOptions(parser):
     parser.add_argument(
@@ -46,13 +47,23 @@ def execCommand(args, following_args):
     # different things, however, which is why the uniquing key includes the
     # type)
     count = 0
+    print('yottabuild.org public registry results:')
     for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
         if count > args.limit:
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
-            print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+            print('  %s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+    for repo in filter(lambda s: 'type' in s and s['type'] == 'registry', settings.get('sources') or []) :
+        print('%s registry results:' % repo['url'])
+        for result in registry_access.search(query=args.query, keywords=args.kw, registry=repo['url']):
+            count += 1
+            if count > args.limit:
+                break
+            if args.type == 'both' or args.type == result['type']:
+                description = result['description'] if 'description' in result else '<no description>'
+                print('  %s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
     # exit status: success if we found something, otherwise fail
     if count:
         return 0
