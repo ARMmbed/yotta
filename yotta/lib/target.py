@@ -56,6 +56,15 @@ def _mergeDictionaries(*args):
             result[k] = _mergeDictionaries(result[k], v)
     return result
 
+def _tryTerminate(process):
+    try:
+        process.terminate()
+    except OSError as e:
+        # if the error is "no such process" then the process probably exited
+        # while we were waiting for it, so don't raise an exception
+        if e.errno != errno.ESRCH:
+            raise
+
 # API
 
 def getDerivedTarget(
@@ -495,10 +504,7 @@ class DerivedTarget(Target):
             raise
         finally:
             if child is not None:
-                try:
-                    child.terminate()
-                except OSError as e:
-                    pass
+                _tryTerminate(child)
 
     @fsutils.dropRootPrivs
     def _debugDeprecated(self, builddir, program):
@@ -584,10 +590,14 @@ class DerivedTarget(Target):
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
-                    test_child.terminate()
+                    _tryTerminate(test_child)
                     return 1
                 test_filter.communicate()
-                test_child.terminate()
+                trailing_output = test_child.stdout.read()
+                logger.debug('test child trailing output: "%s"', trailing_output)
+                if test_child.poll() is None:
+                    logger.warning('test child has not exited and will be terminated')
+                    _tryTerminate(test_child)
                 test_child.stdout.close()
                 returncode = test_filter.returncode
                 test_child = None
@@ -607,8 +617,8 @@ class DerivedTarget(Target):
                     return 1
         finally:
             if test_child is not None:
-                test_child.terminate()
+                _tryTerminate(test_child)
             if test_filter is not None:
-                test_filter.terminate()
+                _tryTerminate(test_filter)
         logger.debug("test %s passed", program)
         return 0
