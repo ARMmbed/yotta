@@ -61,7 +61,7 @@ def execCommand(args, following_args):
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
-            print('%s %s: %s' % (GREEN+result['name'], BLUE+result['version'], RESET+lengthLimit(description, 160)))
+            print('%s%s %s%s%s: %s' % (GREEN, result['name'], RESET+DIM, result['version'], RESET, lengthLimit(description, 160)))
     for repo in filter(lambda s: 'type' in s and s['type'] == 'registry', settings.get('sources') or []) :
         count = 0
         print('')
@@ -73,7 +73,7 @@ def execCommand(args, following_args):
                 break
             if args.type == 'both' or args.type == result['type']:
                 description = result['description'] if 'description' in result else '<no description>'
-                print('  %s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+                print('  %s%s %s%s%s: %s' % (GREEN, result['name'], RESET+DIM, result['version'], RESET, lengthLimit(description, 160)))
     # exit status: success if we found something, otherwise fail
     return 0 if success else 1
 
