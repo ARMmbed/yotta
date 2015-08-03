@@ -14,6 +14,9 @@ from .lib import registry_access
 from .lib import version
 from .lib import settings
 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+import colorama
+
 def addOptions(parser):
     parser.add_argument(
         'type', choices=['module', 'target', 'both'], nargs='?', default='both',
@@ -42,6 +45,14 @@ def lengthLimit(s, l):
 
 def execCommand(args, following_args):
     success = False
+    if not args.plain:
+        DIM    = colorama.Style.DIM
+        BRIGHT = colorama.Style.BRIGHT
+        GREEN  = colorama.Fore.GREEN
+        BLUE   = colorama.Fore.BLUE
+        RESET  = colorama.Style.RESET_ALL
+    else:
+        DIM = BRIGHT = GREEN = RED = RESET = u''
     count = 0
     for result in registry_access.search(query=args.query, keywords=args.kw, registry=args.registry):
         count += 1
@@ -50,7 +61,7 @@ def execCommand(args, following_args):
             break
         if args.type == 'both' or args.type == result['type']:
             description = result['description'] if 'description' in result else '<no description>'
-            print('%s %s: %s' % (result['name'], result['version'], lengthLimit(description, 160)))
+            print('%s %s: %s' % (GREEN+result['name'], BLUE+result['version'], RESET+lengthLimit(description, 160)))
     for repo in filter(lambda s: 'type' in s and s['type'] == 'registry', settings.get('sources') or []) :
         count = 0
         print('')
