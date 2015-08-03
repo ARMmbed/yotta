@@ -55,6 +55,12 @@ def _handleAuth(fn):
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                authorizeUser()
+                return fn(*args, **kwargs)
+            else:
+                raise
         except github.BadCredentialsException:
             logger.debug("github: bad credentials")
             authorizeUser()
@@ -85,14 +91,11 @@ def _getTags(repo):
     logger.debug('tags for %s: %s', repo, [t.name for t in tags])
     return {t.name: t.tarball_url for t in tags}
 
-def _tarballUrlForBranch(master_tarball_url, branchname):
-    branchname_regex = '/[^/?]+(\?.*|)$'
-    replace_value = '/%s\g<1>' % branchname
-    if not re.search(branchname_regex, master_tarball_url):
-        raise Exception(
-            "Don't know how to get archive URL for branch from '%s' master url." % master_tarball_url
-        )
-    return re.sub(branchname_regex, replace_value, master_tarball_url)
+def _tarballUrlForBranch(repo, branchname=None):
+    r = repo.url + u'/tarball'
+    if branchname:
+        r += '/' + branchname
+    return r
 
 @_handleAuth
 def _getBranchHeads(repo):
@@ -100,12 +103,7 @@ def _getBranchHeads(repo):
     repo = g.get_repo(repo)
     branches = repo.get_branches()
 
-    # branch tarball URLs aren't supported by the API, so have to munge the
-    # master tarball URL. Fetch the master tarball URL once (since that
-    # involves a network request), then mumge it for each branch we want:
-    master_tarball_url = repo.get_archive_link('tarball')
-
-    return {b.name:_tarballUrlForBranch(master_tarball_url, b.name) for b in branches}
+    return {b.name:_tarballUrlForBranch(repo, b.name) for b in branches}
 
 
 @_handleAuth
@@ -119,8 +117,12 @@ def _getTipArchiveURL(repo):
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
-    headers = {'Authorization': 'token ' + str(settings.getProperty('github', 'authtoken'))}
+    tok = settings.getProperty('github', 'authtoken')
+    headers = {}
+    if tok is not None:
+        headers['Authorization'] = 'token ' + str(tok)
 
+    logger.debug('GET %s', url)
     response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
     response.raise_for_status()
 
