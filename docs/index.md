@@ -263,7 +263,7 @@ To use yotta to cross-compile binaries to run on embedded hardware, you need to
 first install the [`arm-none-eabi-gcc`
 compiler](https://launchpad.net/gcc-arm-embedded). At the time of writing this,
 the latest version used for cross-compiling with yotta is [gcc
-4.8](https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-4_8-2014q3-20140805-win32.exe).
+4.9](https://launchpad.net/gcc-arm-embedded/4.9/4.9-2015-q2-update/+download/gcc-arm-none-eabi-4_9-2015q2-20150609-win32.exe).
 Download and install it, then add the bin/ subdirectory of the installation
 directory to [your path](#windows-path).  After you do that, you should be able to open cmd.exe
 and run `arm-none-eabi-gcc` from the command prompt. If that doesn't work, make
