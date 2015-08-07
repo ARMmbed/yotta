@@ -50,23 +50,19 @@ def _rmRfNoRetry(path):
             raise
 
 def rmRf(path):
-    try:
-        _rmRfNoRetry(path)
-    except WindowsError as e:
-        # on windows, it seems that various system processes (antivirus, search
-        # indexing, and possibly other things) seem to keep files "open" after
-        # python has closed them, preventing them from being removed if we
-        # later (in the same process) try to remove them, ultimately leading to
-        # this error...
-        if e.errno == 145: # Directory not empty
+    # on windows, it seems that various system processes (antivirus, search
+    # indexing, and possibly other things) seem to keep files "open" after
+    # python has closed them, preventing them from being removed if we
+    # later (in the same process) try to remove them ...
+    for x in range(0, 100):
+        try:
+            _rmRfNoRetry(path)
+            break
+        # ... ultimately leading to this error ...
+        except WindowsError as e:
+            if e.errno != 145: # != Directory not empty
+                raise
             # ... trying again should fix the problem
-            for x in range(0, 100):
-                try:
-                    _rmRfNoRetry(path)
-                    break
-                except WindowsError as e:
-                    if e.errno != 145:
-                        raise
 
 
 def fullySplitPath(path):
