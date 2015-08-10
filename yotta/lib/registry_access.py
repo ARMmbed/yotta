@@ -117,8 +117,9 @@ def _handleAuth(fn):
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == requests.codes.unauthorized:
                 logger.debug('%s unauthorised', fn)
-                github_access.authorizeUser()
-                logger.debug('trying with authtoken: %s', settings.getProperty('github', 'authtoken'))
+                # any provider is sufficient for registry auth
+                github_access.authorizeUser(provider=None)
+                logger.debug('retrying after authentication...')
                 return fn(*args, **kwargs)
             else:
                 raise
@@ -675,7 +676,7 @@ def getAuthData(registry=None):
 def getLoginURL(provider=None, registry=None):
     registry = registry or Registry_Base_URL
     if provider:
-        query = '?provider=github'
+        query = ('?provider=%s' % provider)
     else:
         query = ''
     if not _isPublicRegistry(registry):

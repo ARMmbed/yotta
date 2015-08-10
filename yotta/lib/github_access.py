@@ -133,13 +133,15 @@ def _getTarball(url, into_directory):
 
 def _pollForAuth(registry=None):
     tokens = registry_access.getAuthData(registry=registry)
-    if tokens and 'github' in tokens:
-        settings.setProperty('github', 'authtoken', tokens['github'])
+    if tokens:
+        if 'github' in tokens:
+            settings.setProperty('github', 'authtoken', tokens['github'])
+        # mbed login doesn't send us a token
         return True
     return False
 
 # API
-def authorizeUser(registry=None):
+def authorizeUser(registry=None, provider='github'):
     # poll once with any existing public key, just in case a previous login
     # attempt was interrupted after it completed
     try:
@@ -155,10 +157,12 @@ def authorizeUser(registry=None):
         input = raw_input
     except NameError:
         pass
+    
+    login_instruction = '\nYou need to log in to do this.\n'
+    if provider == 'github':
+        login_instruction = '\nYou need to log in with Github to do this.\n'
 
-    sys.stdout.write(
-        '\nYou need to log in with Github.\n'
-    )
+    sys.stdout.write(login_instruction)
     
     if os.name == 'nt' or os.environ.get('DISPLAY'):
         input(
@@ -169,7 +173,7 @@ def authorizeUser(registry=None):
             colorama.Style.NORMAL+'\n'
         )
 
-        registry_access.openBrowserLogin(provider='github', registry=registry)
+        registry_access.openBrowserLogin(provider=provider, registry=registry)
         
 
         sys.stdout.write('waiting for response...')
@@ -177,7 +181,7 @@ def authorizeUser(registry=None):
             colorama.Style.DIM+
             '\nIf you are unable to use a browser on this machine, please copy and '+
             'paste this URL into a browser:\n'+
-            registry_access.getLoginURL(provider='github', registry=registry)+'\n'+
+            registry_access.getLoginURL(provider=provider, registry=registry)+'\n'+
             colorama.Style.NORMAL
         )
         sys.stdout.flush()
@@ -186,7 +190,7 @@ def authorizeUser(registry=None):
             '\nyotta is unable to open a browser for you to complete login '+
             'on this machine. Please copy and paste this URL into a '
             'browser to complete login:\n'+
-            registry_access.getLoginURL(provider='github', registry=registry)+'\n'
+            registry_access.getLoginURL(provider=provider, registry=registry)+'\n'
         )
         sys.stdout.write('waiting for response...')
         sys.stdout.flush()
