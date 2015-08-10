@@ -149,7 +149,7 @@ def latestSuitableVersion(name, version_required, registry='modules'):
                 return v
             raise access_common.Unavailable(
                 'Github repository "%s" does not have any tags or branches matching "%s"' % (
-                    version_required, spec
+                    version_required, remote_component.tagOrBranchSpec()
                 )
             )
 
