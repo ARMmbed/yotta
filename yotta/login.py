@@ -22,5 +22,5 @@ def execCommand(args, following_args):
     if args.apikey:
         registry_access.setAPIKey(args.registry, args.apikey)
 
-    github_access.authorizeUser(args.registry)
+    github_access.authorizeUser(args.registry, provider=None)
 
