@@ -39,6 +39,7 @@ def displayOutdated(modules, use_colours):
         BRIGHT = colorama.Style.BRIGHT
         YELLOW = colorama.Fore.YELLOW
         RED    = colorama.Fore.RED
+        GREEN  = colorama.Fore.GREEN
         RESET  = colorama.Style.RESET_ALL
     else:
         DIM = BRIGHT = YELLOW = RED = RESET = u''
@@ -59,7 +60,7 @@ def displayOutdated(modules, use_colours):
                 if m.version.major() < latest_v.major():
                     # major versions being outdated might be deliberate, so not
                     # that bad:
-                    colour = u''
+                    colour = GREEN
                 elif m.version.minor() < latest_v.minor():
                     # minor outdated versions is moderately bad
                     colour = YELLOW
