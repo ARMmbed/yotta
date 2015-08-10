@@ -16,6 +16,8 @@ install:
   - chmod +x /tmp/install-cmake.sh
   - sudo /tmp/install-cmake.sh --prefix=/usr/local --exclude-subdir
   - pip install .
+  # install Ninja
+  - sudo apt-get install ninja-build
 before_script:
   - /bin/bash .travis_init.sh
 # command to run tests
