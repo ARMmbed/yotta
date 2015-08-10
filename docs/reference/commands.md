@@ -464,3 +464,15 @@ modules when they are built.
 
 See the [config system reference](/reference/config.html) for more details.
 
+<a name="yotta-outdated"></a>
+## yotta outdated
+
+#### Synopsis
+
+```
+yotta outdated
+```
+
+#### Description
+List modules for which newer versions are available from the yotta registry.
+
