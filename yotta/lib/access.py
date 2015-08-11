@@ -91,7 +91,7 @@ def tagOrBranchVersion(spec, tags, branches, diagnostic_name):
             return v
     return None
 
-def latestSuitableVersion(name, version_required, registry='modules'):
+def latestSuitableVersion(name, version_required, registry='modules', quiet=False):
     ''' Return a RemoteVersion object representing the latest suitable
         version of the named component or target.
 
@@ -99,8 +99,11 @@ def latestSuitableVersion(name, version_required, registry='modules'):
     '''
 
     remote_component = remoteComponentFor(name, version_required, registry)
-
-    logger.info('get versions for ' + name)
+    
+    if quiet:
+        logger.debug('get versions for ' + name)
+    else:
+        logger.info('get versions for ' + name)
 
     if remote_component.remoteType() == 'registry':
         logger.debug('satisfy %s from %s registry' % (name, registry))
