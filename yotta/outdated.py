@@ -31,9 +31,12 @@ def execCommand(args, following_args):
                         test = True
     )
 
-    displayOutdated(dependencies, use_colours=(not args.plain))
+    return displayOutdated(dependencies, use_colours=(not args.plain))
 
 def displayOutdated(modules, use_colours):
+    ''' print information about outdated modules,
+        return 0 if there is nothing to be done and nonzero otherwise
+    '''
     if use_colours:
         DIM    = colorama.Style.DIM
         BRIGHT = colorama.Style.BRIGHT
@@ -43,6 +46,8 @@ def displayOutdated(modules, use_colours):
         RESET  = colorama.Style.RESET_ALL
     else:
         DIM = BRIGHT = YELLOW = RED = RESET = u''
+    
+    status = 0
 
     for name, m in modules.items():
         if m.isTestDependency():
@@ -54,6 +59,7 @@ def displayOutdated(modules, use_colours):
             m_version = DIM + u'@%s' % (m.version)
         if not latest_v:
             print(u'%s%s%s not available from the registry%s' % (RED, name, m_version, RESET))
+            status = 2
             continue
         elif not m or m.version < latest_v:
             if m:
@@ -71,5 +77,8 @@ def displayOutdated(modules, use_colours):
             else:
                 colour = RED
             print(u'%s%s%s latest: %s%s%s' % (name, m_version, RESET, colour, latest_v.version, RESET))
+            if not status:
+                status = 1
+    return status
 
 
