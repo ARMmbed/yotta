@@ -301,9 +301,12 @@ The URL of your module's source code repository (if any). Including this helps
 other people to contribute to your module by making it easy for them to clone
 their own copy and suggest improvements.
 
-**type: String (type)**
+**Note:** this repository field is for information only, to help people find
+and contribute back to your module. It is never use by yotta to download code.
+See the [dependencies](#dependencies) section for information on how to depend
+on modules from source control repositories, instead of from the public modules
+registry.
 
-The type of the repostory specified by the strings "git", "hg" or "svn".
 
 ### `private`
 **type: Boolean**
