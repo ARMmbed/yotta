@@ -84,13 +84,6 @@ add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceB
 get_property(GLOBAL_INCLUDE_DIRS GLOBAL PROPERTY YOTTA_GLOBAL_INCLUDE_DIRS)
 include_directories(${GLOBAL_INCLUDE_DIRS})
 
-# Provide the version of the component being built, in case components want to
-# embed this into compiled libraries
-# !!! WARNING: use of this is deprecated, please use the
-# YOTTA_<MODNAME>_VERSION_STRING / _MAJOR / _MINOR / _PATCH definitions instead
-set(YOTTA_COMPONENT_VERSION "{{ component.getVersion() }}")
-add_definitions(-DYOTTA_COMPONENT_VERSION="{{ component.getVersion() }}")
-
 # Provide versions of all the components we depend on, the corresponding
 # preprocessor definitions are generated in yotta_config.h
 {% for dep in list(active_dependencies.values()) + [component] %}
