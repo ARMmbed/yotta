@@ -108,8 +108,8 @@ def getDerivedTarget(
         if not t:
             if install_missing:
                 logger.error(
-                    'could not install target %s %s for %s' %
-                    (dspec.name, ver, previous_name)
+                    'could not install target %s for %s' %
+                    (dspec, previous_name)
                 )
             break
         else:
