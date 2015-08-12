@@ -200,7 +200,10 @@ a hg URL:
  * `"usefulmodule": "hg+ssh://somwhere.com/anything/anywhere#<version specification>"`
  * `"usefulmodule": "<anything>://somwhere.hg"`
  * `"usefulmodule": "<anything>://somwhere.hg#<version specification>"`
+ * `"usefulmodule": "hg+<anything>://somwhere"`
+ * `"usefulmodule": "hg+<anything>://somwhere#<version specification>"`
 
+Where <version specification> is a tag with a semantic version identifier.
 
 **Note that modules depending on github, ssh, or hg repositories cannot be
 published: they will be rejected by the yotta registry.**
@@ -297,6 +300,13 @@ The URL of your module's homepage (if any).
 The URL of your module's source code repository (if any). Including this helps
 other people to contribute to your module by making it easy for them to clone
 their own copy and suggest improvements.
+
+**Note:** this repository field is for information only, to help people find
+and contribute back to your module. It is never use by yotta to download code.
+See the [dependencies](#dependencies) section for information on how to depend
+on modules from source control repositories, instead of from the public modules
+registry.
+
 
 ### `private`
 **type: Boolean**
