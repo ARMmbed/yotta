@@ -60,7 +60,7 @@ class CMakeGen(object):
         fsutils.mkDirP(dirname)
         self.writeIfDifferent(path, contents)
 
-    def generateRecursive(self, component, all_components, builddir=None, modbuilddir=None, processed_components=None):
+    def generateRecursive(self, component, all_components, builddir=None, modbuilddir=None, processed_components=None, application=None):
         ''' generate top-level CMakeLists for this component and its
             dependencies: the CMakeLists are all generated in self.buildroot,
             which MUST be out-of-source
@@ -114,7 +114,7 @@ class CMakeGen(object):
         # itself
         processed_components[component.getName()] = component
         new_dependencies = OrderedDict([(name,c) for name,c in dependencies.items() if c and not name in processed_components])
-        self.generate(builddir, modbuilddir, component, new_dependencies, dependencies, recursive_deps, toplevel)
+        self.generate(builddir, modbuilddir, component, new_dependencies, dependencies, recursive_deps, application, toplevel)
 
         logger.debug('recursive deps of %s:' % component)
         for d in recursive_deps.values():
@@ -123,7 +123,7 @@ class CMakeGen(object):
         processed_components.update(new_dependencies)
         for name, c in new_dependencies.items():
             for error in self.generateRecursive(
-                c, all_components, os.path.join(modbuilddir, name), modbuilddir, processed_components
+                c, all_components, os.path.join(modbuilddir, name), modbuilddir, processed_components, application=application
             ):
                 yield error
 
@@ -252,16 +252,17 @@ class CMakeGen(object):
         return (config_include_file, set_definitions)
 
     def generate(
-            self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, toplevel
+            self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, application, toplevel
         ):
         ''' active_dependencies is the dictionary of components that need to be
             built for this component, but will not already have been built for
             another component.
         '''
 
-        include_own_dir = 'include_directories("%s")\n' % component.path
-
         include_root_dirs = ''
+        if application is not None and component is not application:
+            include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(application.path)
+
         include_sys_dirs = ''
         include_other_dirs = ''
         for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
@@ -369,7 +370,6 @@ class CMakeGen(object):
                      "set_definitions": set_definitions,
                       "toolchain_file": toolchain_file_path,
                            "component": component,
-                     "include_own_dir": include_own_dir,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
