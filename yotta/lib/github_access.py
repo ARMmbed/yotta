@@ -27,7 +27,7 @@ import registry_access
 # auth, , authenticate users, internal
 import auth
 # globalconf, share global arguments between modules, internal
-import globalconf
+import yotta.lib.globalconf as globalconf
 
 # Constants
 _github_url = 'https://api.github.com'

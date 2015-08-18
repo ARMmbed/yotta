@@ -48,7 +48,7 @@ import exportkey
 # auth, , authenticate users, internal
 import auth
 # globalconf, share global arguments between modules, internal
-import globalconf
+import yotta.lib.globalconf as globalconf
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
 Registry_Auth_Audience = 'http://registry.yottabuild.org'
@@ -461,7 +461,7 @@ def unpublish(namespace, name, version, registry=None):
 @_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
-def listOwners(namespace, name, registry=None, interactive=True):
+def listOwners(namespace, name, registry=None):
     ''' List the owners of a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
@@ -490,7 +490,7 @@ def listOwners(namespace, name, registry=None, interactive=True):
 @_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
-def addOwner(namespace, name, owner, registry=None, interactive=True):
+def addOwner(namespace, name, owner, registry=None):
     ''' Add an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''
@@ -519,7 +519,7 @@ def addOwner(namespace, name, owner, registry=None, interactive=True):
 @_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
-def removeOwner(namespace, name, owner, registry=None, interactive=True):
+def removeOwner(namespace, name, owner, registry=None):
     ''' Remove an owner for a module or target (owners are the people with
         permission to publish versions and add/remove the owners). 
     '''

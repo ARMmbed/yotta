@@ -20,7 +20,7 @@ from .lib import logging_setup
 # detect, , detect things about the system, internal
 from .lib import detect
 # globalconf, share global arguments between modules, internal
-from .lib import globalconf
+import yotta.lib.globalconf as globalconf
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
