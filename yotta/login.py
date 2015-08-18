@@ -6,8 +6,8 @@
 # standard library modules, , ,
 import argparse
 
-# Github Access, , access repositories on github, internal
-from .lib import github_access
+# auth, , authenticate users, internal
+from .lib import auth
 # Registry Access, , access modules in the registry, internal
 from .lib import registry_access
 
@@ -21,6 +21,6 @@ def addOptions(parser):
 def execCommand(args, following_args):
     if args.apikey:
         registry_access.setAPIKey(args.registry, args.apikey)
-
-    github_access.authorizeUser(args.registry, provider=None)
+    
+    auth.authorizeUser(args.registry, provider=None, interactive=args.interactive)
 
