@@ -88,9 +88,9 @@ def listOfWords(string):
 def addOptions(parser):
     pass
 
+
 def execCommand(args, following_args):
-    cwd = os.getcwd()
-    c = component.Component(cwd)
+    c = component.Component(os.getcwd())
     if c:
         logging.info('The current directory already a contains a module: existing description will be modified')
     elif os.path.isfile(c.getDescriptionFile()):
@@ -98,15 +98,68 @@ def execCommand(args, following_args):
         logging.error(c.error)
         return 1
 
-    default_name = c.getName()
-    if not default_name:
-        default_name = validate.componentNameCoerced(os.path.split(cwd)[1])
-    
-    c.setName(getUserInput("Enter the module name:", default_name))
-    c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
+    if args.interactive:
+        return initInteractive(args, c)
+    else:
+        return initNonInteractive(args, c)
 
+def createFolders(c):
+    # default set of folders
+    folders_to_create = ["./source", "./test", "./" + c.getName()]
+    for folder_name in folders_to_create:
+        if not os.path.exists(folder_name):
+            os.mkdir(folder_name)
+
+def defaultDescription():
+    return 'A short description of what your module does goes here.'
+
+def defaultAuthor():
+    return 'Your Name <youremail@yourdomain.com>'
+
+def defaultLicense():
+    return 'Apache-2.0'
+
+def initNonInteractive(args, c):
+    if not 'name' in c.description:
+        c.description['name'] = validate.componentNameCoerced(os.path.split(os.getcwd())[1])
+
+    if not 'version' in c.description:
+        c.setVersion("0.0.0")
+
+    if not 'description' in c.description:
+        c.description['description'] = defaultDescription()
+
+    if not 'keywords' in c.description:
+        c.description['keywords'] = []
+
+    if not 'author' in c.description:
+        c.description['author'] = defaultAuthor()
+
+    if not 'repository' in c.description:
+        c.description['repository'] = repoObject('git@github.com:yourName/%s' % c.description['name'])
+
+    if not 'homepage' in c.description:
+        c.description['homepage'] = '%s-module-homepage.com' % c.description['name']
+
+    if not 'license' in c.description and not 'licenses' in c.description:
+        c.description['license'] = defaultLicense()
+
+    if not 'dependencies' in c.description:
+        c.description['dependencies'] = {}
+
+    createFolders(c)
+    c.writeDescription()
+
+def initInteractive(args, c):
     def current(x):
         return c.description[x] if x in c.description else None
+
+    default_name = c.getName()
+    if not default_name:
+        default_name = validate.componentNameCoerced(os.path.split(os.getcwd())[1])
+
+    c.setName(getUserInput("Enter the module name:", default_name))
+    c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
     c.description['description'] = getUserInput("Short description: ", current('description'))
     c.description['keywords']    = getUserInput("Keywords: ", ' '.join(current('keywords') or []), listOfWords)
@@ -130,18 +183,11 @@ def execCommand(args, following_args):
             c.description['license'] = license
 
     c.description['dependencies']       = current('dependencies') or {}
-    c.description['targetDependencies'] = current('targetDependencies') or {}
 
     isexe = getUserInput("Is this module an executable?", "no", yesNo)
     if isexe:
         c.description['bin'] = './source'
 
-
-    # Create folders while initing
-    folders_to_create = ["./source", "./test", "./" + c.getName()]
-    for folder_name in folders_to_create:
-        if not os.path.exists(folder_name):
-            os.mkdir(folder_name)
-
+    createFolders(c)
     c.writeDescription()
 
