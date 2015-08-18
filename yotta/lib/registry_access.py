@@ -515,6 +515,8 @@ def addOwner(namespace, name, owner, registry=None):
     # re-try if appropriate
     response.raise_for_status()
 
+    return True
+
 
 @_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
@@ -543,6 +545,8 @@ def removeOwner(namespace, name, owner, registry=None):
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
     response.raise_for_status()
+
+    return True
 
 
 def search(query='', keywords=[], registry=None):
