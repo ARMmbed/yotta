@@ -346,7 +346,7 @@ def generateTestMethod(**kwargs):
         self.assertEqual(statuscode, 0)
 
         tstart = time.time()
-        stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir) 
+        stdout, stderr, statuscode = cli.run(['-vvv', '--target', systemDefaultTarget(), 'test'], cwd=test_dir) 
         duration = time.time() - tstart
         
         # useful output for debugging failed tests:
