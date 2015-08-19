@@ -136,7 +136,7 @@ def consumeNonBlocking():
     while buf:
         all_output += buf
         if Verbose:
-            print '[[ >>>', buf, ']]'
+            print('[[ >>>', buf, ']]')
         if '[pass]' in all_output:
             exitcode = 0
             sys.exit(0)
@@ -146,21 +146,21 @@ def consumeNonBlocking():
         buf = sys.stdin.read(1)
 
 if Verbose:
-    print '[[starting consume thread]]'
+    print('[[starting consume thread]]')
 t = threading.Thread(target=consumeNonBlocking)
 t.daemon = True
 t.start()
 
 if Verbose:
-    print '[[thread was started]]'
+    print('[[thread was started]]')
 
 t.join(4.5)
 
 if Verbose:
-    print '[[thread was joined]]'
-    print '[[doing some more stuff before process exit]]'
-    print '[[' + 'verbose'*1000+ ']]'
-    print '[[script args were:', sys.argv[1:], ']]'
+    print('[[thread was joined]]')
+    print('[[doing some more stuff before process exit]]')
+    print('[[' + 'verbose'*1000+ ']]')
+    print('[[script args were:', sys.argv[1:], ']]')
 
 if Delay:
     import time
@@ -340,9 +340,9 @@ def generateTestMethod(**kwargs):
         
         # build first, to make test timing more accurate:
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'build'], cwd=test_dir) 
-        #print 'build:', stdout
-        #print 'build:', stderr
-        #print 'build statuscode was:', statuscode
+        #print('build:', stdout)
+        #print('build:', stderr)
+        #print('build statuscode was:', statuscode)
         self.assertEqual(statuscode, 0)
 
         tstart = time.time()
@@ -353,9 +353,9 @@ def generateTestMethod(**kwargs):
         if bool(statuscode) == bool(kwargs['test_passes']) or \
                 duration >= 4.5 + kwargs['reporter_waits'] or \
                 (kwargs['test_speed'] == 'fast' and (duration >= 1.5 + kwargs['reporter_waits'])):
-            print stdout + stderr
-            print statuscode
-            print 'duration:', duration
+            print(stdout + stderr)
+            print(statuscode)
+            print('duration:', duration)
 
         if kwargs['test_passes']:
             self.assertEqual(statuscode, 0)
@@ -380,4 +380,4 @@ def generateTest(**kwargs):
 if not isWindows():
     forAllReporterTests(generateTest)
 else:
-    print 'WARNING: skipping test reporter tests (cannot build natively on windows)'
+    print('WARNING: skipping test reporter tests (cannot build natively on windows)')
