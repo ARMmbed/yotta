@@ -159,8 +159,8 @@ def execCommand(args, following_args):
             if args.list_only:
                 continue
             test_returncode = target.test(
-                       builddir = dirname, 
-                        program = test,
+                       builddir = builddir, 
+                        program = os.path.join(os.path.relpath(dirname, builddir), test),
                  filter_command = filter_command,
                    forward_args = following_args
             )
