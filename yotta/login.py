@@ -5,6 +5,7 @@
 
 # standard library modules, , ,
 import argparse
+import logging
 
 # auth, , authenticate users, internal
 from .lib import auth
@@ -22,5 +23,9 @@ def execCommand(args, following_args):
     if args.apikey:
         registry_access.setAPIKey(args.registry, args.apikey)
     
-    auth.authorizeUser(args.registry, provider=None, interactive=args.interactive)
+    try:
+        return auth.authorizeUser(args.registry, provider=None, interactive=args.interactive)
+    except auth.AuthTimedOut as e:
+        logging.error("Login failed: %s", e)
+        return 1
 

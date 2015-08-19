@@ -21,6 +21,12 @@ import settings
 
 logger = logging.getLogger('access')
 
+class AuthException(Exception):
+    pass
+
+class AuthTimedOut(AuthException):
+    pass
+
 def _pollForAuth(registry=None):
     tokens = registry_access.getAuthData(registry=registry)
     if tokens:
@@ -39,10 +45,10 @@ def authorizeUser(registry=None, provider='github', interactive=True):
     # attempt was interrupted after it completed
     try:
         if _pollForAuth(registry=registry):
-            return
+            return 0
     except registry_access.AuthError as e:
         logger.error('%s' % e)
-        return
+        return 1
 
     # python 2 + 3 compatibility
     try:
@@ -96,15 +102,16 @@ def authorizeUser(registry=None, provider='github', interactive=True):
             try:
                 if _pollForAuth(registry=registry):
                     sys.stdout.write('\n')
-                    return
+                    return 0
             except registry_access.AuthError as e:
                 logger.error('%s' % e)
-                return
-        raise Exception('Login timed out: please try again.')
+                return 1
+        raise AuthTimedOut('timed out: please try again.')
 
     else:
         logger.error('login required (yotta is running in noninteractive mode)')
         logger.info('login URL: %s', registry_access.getLoginURL(provider=provider, registry=registry))
+        return 1
     
 
 
