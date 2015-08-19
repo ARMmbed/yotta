@@ -592,7 +592,9 @@ class DerivedTarget(Target):
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
                     _tryTerminate(test_child)
                     return 1
+                logger.debug('waiting for filter process')
                 test_filter.communicate()
+                logger.debug('reading test child stdout')
                 trailing_output = test_child.stdout.read()
                 logger.debug('test child trailing output: "%s"', trailing_output)
                 if test_child.poll() is None:
@@ -609,6 +611,7 @@ class DerivedTarget(Target):
                 test_child = subprocess.Popen(
                     cmd, cwd = builddir
                 )
+                logger.debug('waiting for test child')
                 test_child.wait()
                 returncode = test_child.returncode
                 test_child = None
