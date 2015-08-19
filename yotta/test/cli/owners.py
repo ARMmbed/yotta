@@ -43,16 +43,23 @@ class TestCLIOwners(unittest.TestCase):
     def tearDown(self):
         rmRf(self.test_dir)
 
-    # you have have to be authenticated to list owners, so this doesn't work
-    # yet...
-    #def test_listOwners(self):
-    #    stdout = self.runCheckCommand(['owners', 'ls'])
-    #    self.assertTrue(stdout.find('autopulated@gmail.com') != -1)
+    # you have have to be authenticated to list owners, so currently we only
+    # test that the commands fail correctly in noninteractive mode:
 
-    def runCheckCommand(self, args):
-        stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
-        self.assertEqual(statuscode, 0)
-        return stdout or stderr
+    def test_listOwners(self):
+        stdout, stderr, statuscode = cli.run(['-n', 'owners', 'ls'], cwd=self.test_dir)
+        self.assertTrue((stdout+stderr).find('login required') != -1)
+        self.assertNotEqual(statuscode, 0)
+
+    def test_addOwner(self):
+        stdout, stderr, statuscode = cli.run(['-n', 'owners', 'add', 'friend@example.com'], cwd=self.test_dir)
+        self.assertTrue((stdout+stderr).find('login required') != -1)
+        self.assertNotEqual(statuscode, 0)
+
+    def test_rmOwner(self):
+        stdout, stderr, statuscode = cli.run(['-n', 'owners', 'rm', 'friend@example.com'], cwd=self.test_dir)
+        self.assertTrue((stdout+stderr).find('login required') != -1)
+        self.assertNotEqual(statuscode, 0)
 
 
 if __name__ == '__main__':

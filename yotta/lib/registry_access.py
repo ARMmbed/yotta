@@ -16,7 +16,6 @@ import datetime
 import hashlib
 import itertools
 import base64
-import webbrowser
 import os
 try:
     from urllib import quote as quoteURL
@@ -46,6 +45,10 @@ import ordered_json
 import github_access
 # export key, , export pycrypto keys, internal
 import exportkey
+# auth, , authenticate users, internal
+import auth
+# globalconf, share global arguments between modules, internal
+import yotta.lib.globalconf as globalconf
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
 Registry_Auth_Audience = 'http://registry.yottabuild.org'
@@ -112,17 +115,20 @@ def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
+        # if yotta is being run noninteractively, then we never retry, but we
+        # do call auth.authorizeUser, so that a login URL can be displayed:
+        interactive = globalconf.get('interactive')
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == requests.codes.unauthorized:
                 logger.debug('%s unauthorised', fn)
                 # any provider is sufficient for registry auth
-                github_access.authorizeUser(provider=None)
-                logger.debug('retrying after authentication...')
-                return fn(*args, **kwargs)
-            else:
-                raise
+                auth.authorizeUser(provider=None, interactive=interactive)
+                if interactive:
+                    logger.debug('retrying after authentication...')
+                    return fn(*args, **kwargs)
+            raise
     return wrapped
 
 def _friendlyAuthError(fn):
@@ -136,10 +142,24 @@ def _friendlyAuthError(fn):
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == requests.codes.unauthorized:
                 logger.error('insufficient permission')
-                return None
             else:
-                raise
+                logger.error('server returned status %s: %s', e.response.status_code, e.response.text)
+            raise
     return wrapped
+
+def _swallowRequestExceptions(fail_return=None):
+    def __swallowRequestExceptions(fn):
+        ''' Decorator to swallow known exceptions: use with _friendlyAuthError,
+            returns non-None if an exception occurred
+        '''
+        @functools.wraps(fn)
+        def wrapped(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except requests.exceptions.HTTPError as e:
+                return fail_return
+        return wrapped
+    return __swallowRequestExceptions
 
 def _getPrivateRegistryKey():
     if 'YOTTA_PRIVATE_REGISTRY_API_KEY' in os.environ:
@@ -378,6 +398,8 @@ class RegistryThing(access_common.RemoteComponent):
     def remoteType(cls):
         return 'registry'
 
+@_swallowRequestExceptions(fail_return="request exception occurred")
+@_friendlyAuthError
 @_handleAuth
 def publish(namespace, name, version, description_file, tar_file, readme_file,
             readme_file_ext, registry=None):
@@ -410,12 +432,12 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
     headers = _headersForRegistry(registry)
     
     response = requests.put(url, headers=headers, files=body)
-
-    if not response.ok:
-        return "server returned status %s: %s" % (response.status_code, response.text)
+    response.raise_for_status()
 
     return None
 
+@_swallowRequestExceptions(fail_return="request exception occurred")
+@_friendlyAuthError
 @_handleAuth
 def unpublish(namespace, name, version, registry=None):
     ''' Try to unpublish a recently published version. Return any errors that
@@ -432,12 +454,11 @@ def unpublish(namespace, name, version, registry=None):
     
     headers = _headersForRegistry(registry)
     response = requests.delete(url, headers=headers)
-
-    if not response.ok:
-        return "server returned status %s: %s" % (response.status_code, response.text)
+    response.raise_for_status()
 
     return None
 
+@_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
 def listOwners(namespace, name, registry=None):
@@ -458,7 +479,7 @@ def listOwners(namespace, name, registry=None):
 
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace[:-1], name))
-        return []
+        return None
     
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
@@ -466,6 +487,7 @@ def listOwners(namespace, name, registry=None):
 
     return ordered_json.loads(response.text)
 
+@_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
 def addOwner(namespace, name, owner, registry=None):
@@ -493,7 +515,10 @@ def addOwner(namespace, name, owner, registry=None):
     # re-try if appropriate
     response.raise_for_status()
 
+    return True
 
+
+@_swallowRequestExceptions(fail_return=None)
 @_friendlyAuthError
 @_handleAuth
 def removeOwner(namespace, name, owner, registry=None):
@@ -520,6 +545,8 @@ def removeOwner(namespace, name, owner, registry=None):
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
     response.raise_for_status()
+
+    return True
 
 
 def search(query='', keywords=[], registry=None):
@@ -685,6 +712,3 @@ def getLoginURL(provider=None, registry=None):
         query += '&private=1'
     return  Website_Base_URL + '/' + query + '#login/' + getPublicKey(registry)
 
-def openBrowserLogin(provider=None, registry=None):
-    registry = registry or Registry_Base_URL    
-    webbrowser.open(getLoginURL(provider=provider, registry=registry))

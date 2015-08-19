@@ -52,6 +52,13 @@ Private_Module_JSON = '''{
 }
 '''
 
+Public_Module_JSON = '''{
+  "name": "testmod",
+  "version": "0.0.0",
+  "license": "Apache-2.0"
+}'''
+
+
 class TestCLIPublish(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
@@ -66,6 +73,12 @@ class TestCLIPublish(unittest.TestCase):
         self.assertNotEqual(status, 0)
         self.assertTrue('is private and cannot be published' in ('%s %s' % (stdout, stderr)))
 
+    def test_publishNotAuthed(self):
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+            f.write(Public_Module_JSON)
+        stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
+        self.assertTrue((stdout+stderr).find('login required') != -1)
+        self.assertNotEqual(status, 0)
 
 if __name__ == '__main__':
     unittest.main()

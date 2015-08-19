@@ -79,11 +79,11 @@ def execCommand(args, following_args):
         return 1
 
     if sc in ('list', 'ls', ''):
-        listOwners(args, p)
+        return listOwners(args, p)
     elif sc in ('remove', 'rm'):
-        removeOwner(args, p)
+        return removeOwner(args, p)
     elif sc in ('add',):
-        addOwner(args, p)
+        return addOwner(args, p)
 
 
 def listOwners(args, p):
@@ -91,6 +91,8 @@ def listOwners(args, p):
         owners = registry_access.listOwners(p.getRegistryNamespace(), p.getName(), registry=args.registry)
         if owners is not None:
             print('%s "%s" owners:' % (p.getRegistryNamespace(), p.getName()), ', '.join(owners))
+        else:
+            return 1
     else:
         module_owners = registry_access.listOwners(component.Registry_Namespace, args.module, registry=args.registry)
         target_owners = registry_access.listOwners(target.Registry_Namespace, args.module, registry=args.registry)
@@ -100,17 +102,21 @@ def listOwners(args, p):
             print('target "%s" owners:' % args.module, ', '.join(target_owners))
         if not module_owners and not target_owners:
             logging.error('no such module or target')
+            return 1
+    return 0
 
 def removeOwner(args, p):
     if p:
-        registry_access.removeOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
+        success = registry_access.removeOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
     else:
         # !!! FIXME: test which of target/component exist first
-        registry_access.removeOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)
+        success = registry_access.removeOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)
+    return 0 if success else 1
 
 def addOwner(args, p):
     if p:
-        registry_access.addOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
+        success = registry_access.addOwner(p.getRegistryNamespace(), p.getName(), args.email, registry=args.registry)
     else:
         # !!! FIXME: test which of target/component exist first
-        registry_access.addOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)
+        success = registry_access.addOwner(component.Registry_Namespace, args.module, args.email, registry=args.registry)
+    return 0 if success else 1

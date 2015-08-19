@@ -19,6 +19,8 @@ from functools import reduce
 from .lib import logging_setup
 # detect, , detect things about the system, internal
 from .lib import detect
+# globalconf, share global arguments between modules, internal
+import yotta.lib.globalconf as globalconf
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
@@ -106,6 +108,11 @@ def main():
     parser.add_argument('--plain', dest='plain',
         action='store_true', default=False,
         help="Use a simple output format with no colours"
+    )
+
+    parser.add_argument('--noninteractive', '-n', dest='interactive',
+        action='store_false', default=True,
+        help="Do not wait for user interaction (for example to log in), fail instead."
     )
 
     parser.add_argument(
@@ -205,6 +212,10 @@ def main():
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
+    
+    # set global arguments that are shared everywhere and never change
+    globalconf.set('interactive', args.interactive)
+    globalconf.set('plain', args.plain)
 
     loglevel = logLevelFromVerbosity(args.verbosity)
     logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
