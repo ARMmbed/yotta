@@ -117,8 +117,8 @@ def getDerivedTarget(
         if not t:
             if install_missing:
                 logger.error(
-                    'could not install target %s %s for %s' %
-                    (dspec.name, ver, previous_name)
+                    'could not install target %s for %s' %
+                    (dspec, previous_name)
                 )
             break
         else:
@@ -261,7 +261,7 @@ class DerivedTarget(Target):
     @classmethod
     def addBuildOptions(cls, parser):
         parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
-           default=('Unix Makefiles', 'Ninja')[os.name == 'nt'],
+           default='Ninja',
            choices=(
                'Unix Makefiles',
                'Ninja',

@@ -46,6 +46,31 @@ Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema'
 logger = logging.getLogger('components')
 VVVERBOSE_DEBUG = logging.DEBUG - 8
 
+def _truthyConfValue(v):
+    ''' Determine yotta-config truthiness. In yotta config land truthiness is
+        different to python or json truthiness (in order to map nicely only
+        preprocessor and CMake definediness):
+
+          json      -> python -> truthy/falsey
+          false     -> False  -> Falsey
+          null      -> None   -> Falsey
+          undefined -> None   -> Falsey
+          0         -> 0      -> Falsey
+          ""        -> ""     -> Truthy (different from python)
+          "0"       -> "0"    -> Truthy
+          {}        -> {}     -> Truthy (different from python)
+          []        -> []     -> Truthy (different from python)
+          everything else is truthy
+    '''
+    if v is False:
+        return False
+    elif v is None:
+        return False
+    elif v == 0:
+        return False
+    else:
+        # everything else is truthy!
+        return True
 
 # API
 class Component(pack.Pack):
@@ -108,7 +133,7 @@ class Component(pack.Pack):
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
-                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
+                if _truthyConfValue(target.getConfigValue(conf_key)) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
                         'Adding target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
@@ -120,7 +145,7 @@ class Component(pack.Pack):
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
-                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
+                if _truthyConfValue(target.getConfigValue(conf_key)) or conf_key in target.getSimilarTo_Deprecated():
                     logger.debug(
                         'Adding test-target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
@@ -148,7 +173,7 @@ class Component(pack.Pack):
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
-                if target.getConfigValue(conf_key) or conf_key in target.getSimilarTo_Deprecated():
+                if _truthyConfValue(target.getConfigValue(conf_key)) or conf_key in target.getSimilarTo_Deprecated():
                     if name in target_conf_deps:
                         return True
         return False

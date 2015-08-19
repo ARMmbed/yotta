@@ -19,6 +19,8 @@ from functools import reduce
 from .lib import logging_setup
 # detect, , detect things about the system, internal
 from .lib import detect
+# globalconf, share global arguments between modules, internal
+import yotta.lib.globalconf as globalconf
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
@@ -108,6 +110,11 @@ def main():
         help="Use a simple output format with no colours"
     )
 
+    parser.add_argument('--noninteractive', '-n', dest='interactive',
+        action='store_false', default=True,
+        help="Do not wait for user interaction (for example to log in), fail instead."
+    )
+
     parser.add_argument(
         '--registry', default=None, dest='registry', help=argparse.SUPPRESS
     )
@@ -167,6 +174,7 @@ def main():
     addParser('login', 'login', 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', 'logout', 'Remove saved authorization token for the current user.')
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
+    addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
     addParser('remove', 'remove', 'Remove the downloaded version of a dependency, or un-link a linked module.')
     addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
@@ -204,6 +212,10 @@ def main():
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
+    
+    # set global arguments that are shared everywhere and never change
+    globalconf.set('interactive', args.interactive)
+    globalconf.set('plain', args.plain)
 
     loglevel = logLevelFromVerbosity(args.verbosity)
     logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)

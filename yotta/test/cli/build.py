@@ -244,4 +244,4 @@ class TestCLIBuild(unittest.TestCase):
             print(stdout)
             print(stderr)
         self.assertEqual(statuscode, 0)
-        return stdout or stderr
+        return stdout + stderr

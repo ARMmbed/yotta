@@ -7,12 +7,14 @@
 import logging
 import json
 import getpass
-import os
 import re
 import functools
-import datetime
-import time
-import sys
+
+# requests, apache2
+import requests
+# PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
+import github
+from github import Github
 
 # settings, , load and save settings, internal
 import settings
@@ -22,16 +24,10 @@ import version
 import access_common
 # Registry Access, , access packages in the registry, internal
 import registry_access
-
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
-import colorama
-
-# requests, apache2
-import requests
-
-# PyGithub, LGPL, Python library for Github API v3, pip install PyGithub
-import github
-from github import Github
+# auth, , authenticate users, internal
+import auth
+# globalconf, share global arguments between modules, internal
+import yotta.lib.globalconf as globalconf
 
 # Constants
 _github_url = 'https://api.github.com'
@@ -46,38 +42,58 @@ logger = logging.getLogger('access')
 
 # Internal functions
 
-def _userAuthorized():
+def _userAuthedWithGithub():
     return settings.getProperty('github', 'authtoken')
  
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                authorizeUser()
+        # if yotta is being run noninteractively, then we never retry, but we
+        # do call auth.authorizeUser, so that a login URL can be displayed:
+        interactive = globalconf.get('interactive')
+        if not interactive:
+            try:
                 return fn(*args, **kwargs)
-            else:
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 401:
+                    auth.authorizeUser(provider='github', interactive=False)
                 raise
-        except github.BadCredentialsException:
-            logger.debug("github: bad credentials")
-            authorizeUser()
-            logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
-            return fn(*args, **kwargs)
-        except github.UnknownObjectException:
-            logger.debug("github: unknown object")
-            # some endpoints return 404 if the user doesn't have access, maybe
-            # it would be better to prompt for another username and password,
-            # and store multiple tokens that we can try for each request....
-            # but for now we assume that if the user is logged in then a 404
-            # really is a 404
-            if not _userAuthorized():
-                logger.info('failed to fetch Github object, re-trying with authentication...')
-                authorizeUser()
+            except github.BadCredentialsException:
+                logger.debug("github: bad credentials")
+                auth.authorizeUser(provider='github', interactive=False)
+                raise
+            except github.UnknownObjectException:
+                logger.debug("github: unknown object")
+                # some endpoints return 404 if the user doesn't have access:
+                if not _userAuthedWithGithub():
+                    logger.info('failed to fetch Github object, try re-authing...')
+                    auth.authorizeUser(provider='github', interactive=False)
+                raise
+        else:
+            try:
                 return fn(*args, **kwargs)
-            else:
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 401:
+                    auth.authorizeUser(provider='github')
+                    return fn(*args, **kwargs)
+                raise
+            except github.BadCredentialsException:
+                logger.debug("github: bad credentials")
+                auth.authorizeUser(provider='github')
+                logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+                return fn(*args, **kwargs)
+            except github.UnknownObjectException:
+                logger.debug("github: unknown object")
+                # some endpoints return 404 if the user doesn't have access, maybe
+                # it would be better to prompt for another username and password,
+                # and store multiple tokens that we can try for each request....
+                # but for now we assume that if the user is logged in then a 404
+                # really is a 404
+                if not _userAuthedWithGithub():
+                    logger.info('failed to fetch Github object, re-trying with authentication...')
+                    auth.authorizeUser(provider='github')
+                    return fn(*args, **kwargs)
                 raise
     return wrapped
 
@@ -131,81 +147,7 @@ def _getTarball(url, into_directory):
 
     access_common.unpackTarballStream(response, into_directory)
 
-def _pollForAuth(registry=None):
-    tokens = registry_access.getAuthData(registry=registry)
-    if tokens and 'github' in tokens:
-        settings.setProperty('github', 'authtoken', tokens['github'])
-        return True
-    return False
-
 # API
-def authorizeUser(registry=None):
-    # poll once with any existing public key, just in case a previous login
-    # attempt was interrupted after it completed
-    try:
-        if _pollForAuth(registry=registry):
-            return
-    except registry_access.AuthError as e:
-        logger.error('%s' % e)
-        return
-
-    # python 2 + 3 compatibility
-    try:
-        global input
-        input = raw_input
-    except NameError:
-        pass
-
-    sys.stdout.write(
-        '\nYou need to log in with Github.\n'
-    )
-    
-    if os.name == 'nt' or os.environ.get('DISPLAY'):
-        input(
-            colorama.Style.BRIGHT+
-            'Press enter to continue.\n'+
-            colorama.Style.DIM+
-            'Your browser will open to complete login.'+
-            colorama.Style.NORMAL+'\n'
-        )
-
-        registry_access.openBrowserLogin(provider='github', registry=registry)
-        
-
-        sys.stdout.write('waiting for response...')
-        sys.stdout.write(
-            colorama.Style.DIM+
-            '\nIf you are unable to use a browser on this machine, please copy and '+
-            'paste this URL into a browser:\n'+
-            registry_access.getLoginURL(provider='github', registry=registry)+'\n'+
-            colorama.Style.NORMAL
-        )
-        sys.stdout.flush()
-    else:
-        sys.stdout.write(
-            '\nyotta is unable to open a browser for you to complete login '+
-            'on this machine. Please copy and paste this URL into a '
-            'browser to complete login:\n'+
-            registry_access.getLoginURL(provider='github', registry=registry)+'\n'
-        )
-        sys.stdout.write('waiting for response...')
-        sys.stdout.flush()
-
-    poll_start = datetime.datetime.utcnow()
-    while datetime.datetime.utcnow() - poll_start < datetime.timedelta(minutes=5):
-        time.sleep(5)
-        sys.stdout.write('.')
-        sys.stdout.flush()
-        try:
-            if _pollForAuth(registry=registry):
-                sys.stdout.write('\n')
-                return
-        except registry_access.AuthError as e:
-            logger.error('%s' % e)
-            return
-
-    raise Exception('Login timed out: please try again.')
-
 def deauthorize():
     if settings.getProperty('github', 'authtoken'):
         settings.setProperty('github', 'authtoken', '')

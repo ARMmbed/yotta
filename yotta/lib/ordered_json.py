@@ -23,6 +23,7 @@ def dump(path, obj):
     with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as f:
         os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
         json.dump(obj, f, indent=2, separators=(',', ': '))
+        f.write(u'\n')
         f.truncate()
 
 def loads(string):
