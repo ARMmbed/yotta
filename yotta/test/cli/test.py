@@ -253,10 +253,11 @@ def isWindows():
     return os.name == 'nt'
 
 class TestCLITest(unittest.TestCase):
-    def writeTestFiles(self, files, add_space_in_path=False):
-        test_dir = tempfile.mkdtemp()
-        if add_space_in_path:
-            test_dir = test_dir + ' spaces in path'
+    def writeTestFiles(self, files, add_space_in_path=False, test_dir=None):
+        if test_dir is None:
+            test_dir = tempfile.mkdtemp()
+            if add_space_in_path:
+                test_dir = test_dir + ' spaces in path'
 
         for path, contents in files.items():
             path_dir, file_name =  os.path.split(path)
@@ -320,11 +321,22 @@ class TestCLITest(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         return '%s %s' % (stdout, stderr)
 
+# the generated tests share a single test directory, so that the target
+# descriptions etc. don't have to be re-downloaded many times (this makes them
+# much faster)
+class TestCLITestGenerated(TestCLITest):
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp() + 'spaces in path'
+
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
 
 # generate the filter-testing tests dynamically:
 def generateTestMethod(**kwargs):
     def generatedTestMethod(self):
-        test_dir = self.writeTestFiles(filesForReporterTest(**kwargs), True)
+        test_dir = self.writeTestFiles(filesForReporterTest(**kwargs), test_dir=self.test_dir)
         
         # build first, to make test timing more accurate:
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'build'], cwd=test_dir) 
@@ -336,7 +348,8 @@ def generateTestMethod(**kwargs):
         tstart = time.time()
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir) 
         duration = time.time() - tstart
-
+        
+        # useful output for debugging failed tests:
         if bool(statuscode) == bool(kwargs['test_passes']) or \
                 duration >= 4.5 + kwargs['reporter_waits'] or \
                 (kwargs['test_speed'] == 'fast' and (duration >= 1.5 + kwargs['reporter_waits'])):
@@ -356,16 +369,13 @@ def generateTestMethod(**kwargs):
         # if a test isn't slow, then it should run in less than 1 seconds
         if kwargs['test_speed'] == 'fast':
             self.assertTrue(duration < 1.5 + kwargs['reporter_waits'])
-
-        #rmRf(test_dir)
     return generatedTestMethod
 
 def generateTest(**kwargs):
     test_name = "test_" + '_'.join([ '%s_%s' % (k, v) for k, v in kwargs.items()])
     test_method = generateTestMethod(**kwargs)
     test_method.__name__ = test_name
-    #print 'adding test:', test_name
-    setattr(TestCLITest, test_name, test_method)
+    setattr(TestCLITestGenerated, test_name, test_method)
 
 if not isWindows():
     forAllReporterTests(generateTest)
