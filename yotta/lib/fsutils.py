@@ -27,7 +27,7 @@ def rmF(path):
         if exception.errno != errno.ENOENT:
             raise
 
-def rmRf(path):
+def _rmRfNoRetry(path):
     # we may have to make files writable before we can successfully delete
     # them, to do this
     def fixPermissions(fn, path, excinfo):
@@ -48,6 +48,22 @@ def rmRf(path):
             rmF(path)
         elif exception.errno != errno.ENOENT:
             raise
+
+def rmRf(path):
+    # on windows, it seems that various system processes (antivirus, search
+    # indexing, and possibly other things) seem to keep files "open" after
+    # python has closed them, preventing them from being removed if we
+    # later (in the same process) try to remove them ...
+    for x in range(0, 100):
+        try:
+            _rmRfNoRetry(path)
+            break
+        # ... ultimately leading to this error ...
+        except WindowsError as e:
+            if e.errno != 145: # != Directory not empty
+                raise
+            # ... trying again should fix the problem
+
 
 def fullySplitPath(path):
     components = []
