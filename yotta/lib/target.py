@@ -13,6 +13,7 @@ import string
 import traceback
 import errno
 import itertools
+import shlex
 from collections import OrderedDict
 
 # Ordered JSON, , read & write json, internal
@@ -557,30 +558,27 @@ class DerivedTarget(Target):
                         pass
     
     @fsutils.dropRootPrivs
-    def test(self, builddir, program, filter_command, forward_args):
-        if not ('scripts' in self.description and 'debug' in self.description['scripts']):
-            test_command = ['$program']
+    def test(self, cwd, test_command, filter_command, forward_args):
+        if not ('scripts' in self.description and 'test' in self.description['scripts']):
+            cmd = shlex.split(test_command)
         else:
-            test_command = self.description['scripts']['test']
+            cmd = [
+                os.path.expandvars(string.Template(x).safe_substitute(program=test_command))
+                for x in self.description['scripts']['test']
+            ] + forward_args
 
         test_child = None
         test_filter = None
         try:
-            prog_path = os.path.join(builddir, program)
-
-            cmd = [
-                os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
-                for x in test_command
-            ] + forward_args
             logger.debug('running test: %s', cmd)
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = builddir, stdout = subprocess.PIPE
+                    cmd, cwd = cwd, stdout = subprocess.PIPE
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = builddir, stdin = test_child.stdout
+                        filter_command, cwd = cwd, stdin = test_child.stdout
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
@@ -597,7 +595,7 @@ class DerivedTarget(Target):
                     return 1
             else:
                 test_child = subprocess.Popen(
-                    cmd, cwd = builddir
+                    cmd, cwd = cwd
                 )
                 test_child.wait()
                 returncode = test_child.returncode
@@ -610,5 +608,5 @@ class DerivedTarget(Target):
                 test_child.terminate()
             if test_filter is not None:
                 test_filter.terminate()
-        logger.debug("test %s passed", program)
+        logger.debug("test %s passed", test_command)
         return 0
