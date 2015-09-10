@@ -559,6 +559,8 @@ class DerivedTarget(Target):
     
     @fsutils.dropRootPrivs
     def test(self, cwd, test_command, filter_command, forward_args):
+        # we assume that test commands are relative to the current directory.
+        test_command = './' + test_command
         if not ('scripts' in self.description and 'test' in self.description['scripts']):
             cmd = shlex.split(test_command)
         else:
@@ -594,9 +596,15 @@ class DerivedTarget(Target):
                     logger.debug("test filter exited with status %s (=fail)", returncode)
                     return 1
             else:
-                test_child = subprocess.Popen(
-                    cmd, cwd = cwd
-                )
+                try:
+                    test_child = subprocess.Popen(
+                        cmd, cwd = cwd
+                    )
+                except OSError as e:
+                    if e.errno == errno.ENOENT:
+                        logger.error('Error: no such file or directory: "%s"', cmd[0])
+                        return 1
+                    raise
                 test_child.wait()
                 returncode = test_child.returncode
                 test_child = None
