@@ -41,7 +41,6 @@ def _dropPrivsReturnViaQueue(q, fn, args, kwargs):
         e_type, e_message, e_traceback = sys.exc_info()
         q.put(('exception', e_type, e_message))
     finally:
-        logging.debug('wrapped function finished with error...')
         q.put(('finish',))
 
 def dropRootPrivs(fn):
