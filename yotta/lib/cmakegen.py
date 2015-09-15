@@ -54,6 +54,7 @@ class CMakeGen(object):
         self.buildroot = directory
         logger.info("generate for target: %s" % target)
         self.target = target
+        self.config_include_file = None
 
     def _writeFile(self, path, contents):
         dirname = os.path.dirname(path)
@@ -201,7 +202,7 @@ class CMakeGen(object):
                     v = 1 if v else 0
                 r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
         return r
-    
+
     def getConfigData(self, all_dependencies, component, builddir):
         ''' returns (path_to_config_header, cmake_set_definitions) '''
         add_defs_header = ''
@@ -220,13 +221,12 @@ class CMakeGen(object):
         definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
         
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
+
         for k, v in definitions:
             if v is not None:
-                #add_definitions += '-D%s=%s ' % (k, v)
                 add_defs_header += '#define %s %s\n' % (k, v)
                 set_definitions += 'set(%s %s)\n' % (k, v)
             else:
-                #add_definitions += '-D%s ' % k
                 add_defs_header += '#define %s\n' % k
                 set_definitions += 'set(%s TRUE)\n' % k
 
@@ -258,6 +258,10 @@ class CMakeGen(object):
             built for this component, but will not already have been built for
             another component.
         '''
+        
+        set_definitions = ''
+        if self.config_include_file is None:
+            self.config_include_file, set_definitions = self.getConfigData(all_dependencies, component, builddir)
 
         include_root_dirs = ''
         if application is not None and component is not application:
@@ -343,12 +347,6 @@ class CMakeGen(object):
                 add_own_subdirs.append(self.createDummyLib(
                     component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
-        
-        set_definitions = ''
-        add_definitions = ''
-        config_include_file = None
-        if toplevel:
-            (config_include_file, set_definitions) = self.getConfigData(all_dependencies, component, builddir)
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
@@ -375,8 +373,7 @@ class CMakeGen(object):
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-                 "config_include_file": config_include_file,
-           #"yotta_target_definitions": add_definitions,
+                 "config_include_file": self.config_include_file,
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
                  "active_dependencies": active_dependencies
@@ -510,6 +507,7 @@ class CMakeGen(object):
 
             file_contents = subdir_template.render({
                     'source_directory': os.path.join(component.path, dirname),
+                 "config_include_file": self.config_include_file,
                           'executable': executable,
                           'file_names': [str(f) for f in source_files],
                          'object_name': object_name,
