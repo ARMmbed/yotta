@@ -8,7 +8,6 @@ import os
 import subprocess
 import tempfile
 import logging
-import hgapi
 import errno
 
 # fsutils, , misc filesystem utils, internal
@@ -42,6 +41,8 @@ class VCS(object):
     def markForCommit(self, path):
         pass
     def remove(self):
+        raise NotImplementedError()
+    def getCommitId(self):
         raise NotImplementedError()
     def __nonzero__(self):
         raise NotImplementedError()
@@ -105,6 +106,10 @@ class Git(VCS):
 
     def remove(self):
         fsutils.rmRf(self.worktree)
+
+    def getCommitId(self):
+        out, err = self._execCommands([self._gitCmd('rev-parse', 'HEAD')])
+        return out.strip()
 
     def workingDirectory(self):
         return self.worktree
@@ -194,9 +199,18 @@ class Git(VCS):
 # FIXME: hgapi will throw HgException when something goes wrong, it may be worth trying
 # to catch that in some methods
 class HG(VCS):
+    hgapi = None
     def __init__(self, path):
+        self._loadHGApi()
         self.worktree = path
-        self.repo = hgapi.Repo(path)
+        self.repo = self.hgapi.Repo(path)
+
+    @classmethod
+    def _loadHGApi(cls):
+        # only import hgapi on demand, since it is rarely needed
+        if cls.hgapi is None:
+            import hgapi
+            cls.hgapi = hgapi 
 
     @classmethod
     def cloneToTemporaryDir(cls, remote):
@@ -204,13 +218,14 @@ class HG(VCS):
 
     @classmethod
     def cloneToDirectory(cls, remote, directory, tag=None):
+        cls._loadHGApi()
         # hg doesn't automatically create the directories needed by destination
         try:
             os.makedirs(directory)
         except:
             pass
         hg_logger.debug('will clone %s into %s', remote, directory)
-        hgapi.Repo.hg_clone(remote, directory)
+        cls.hgapi.Repo.hg_clone(remote, directory)
         r = HG(directory)
         if tag is not None:
             r.updateToTag(tag)
@@ -218,6 +233,9 @@ class HG(VCS):
 
     def remove(self):
         fsutils.rmRf(self.worktree)
+
+    def getCommitId(self):
+        return self.repo.hg_node()
 
     def workingDirectory(self):
         return self.worktree
