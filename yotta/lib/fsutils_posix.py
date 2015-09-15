@@ -8,7 +8,8 @@ import os
 import pwd
 import multiprocessing
 import logging
-
+import sys
+import traceback
 
 def _getNobodyPidGid():
     entry = pwd.getpwnam('nobody')
@@ -34,6 +35,11 @@ def _dropPrivsReturnViaQueue(q, fn, args, kwargs):
             return
         logging.debug('wrapped function completed...')
         q.put(('return', r))
+    except Exception as e:
+        logging.debug('exception in wrapped function: %s', traceback.format_exc())
+        # the exception info isn't pickleable, so this is the best we can do
+        e_type, e_message, e_traceback = sys.exc_info()
+        q.put(('exception', e_type, e_message))
     finally:
         q.put(('finish',))
 
@@ -53,11 +59,17 @@ def dropRootPrivs(fn):
         p.start()
         
         r = None
+        e = None
         while True:
             msg = q.get()
             if msg[0] == 'return':
                 r = msg[1]
+            if msg[0] == 'exception':
+                e = msg[1](msg[2])
             if msg[0] == 'finish':
+                # if the command raised an exception, propagate this:
+                if e is not None:
+                    raise e
                 return r
 
     return wrapped_fn
