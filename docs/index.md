@@ -117,7 +117,7 @@ support is currently experimental).
 For example on Debian and Ubuntu:
 
 ```sh
-sudo apt-get install python-pip cmake build-essential ninja-build python-dev libffi-dev libssl-dev
+sudo apt-get update && sudo apt-get install python-setuptools  cmake build-essential ninja-build python-dev libffi-dev libssl-dev && easy_install pip
 ```
 
 and on Fedora Linux (tested on FC21):
@@ -205,6 +205,13 @@ sudo apt-get install clang-3.5
 To use this compiler to build a module, you should run `yotta target
 x86-linux-native` before building. This selects the yotta target description for
 the native compiler.
+
+### Solving Common Linux installation problems
+If you are having trouble with pip not installing yotta, try running `sudo pip install -U pip` to update your pip installation. Check that your pip installation is up to date by running `pip -V`, you should get a response of `7.1.2` or greater. 
+
+On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from easy_install by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
+
+You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/stable/installing/) if everything else fails.
 
 
 
