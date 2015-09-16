@@ -217,7 +217,7 @@ class CMakeGen(object):
 
         # make the path to the build-info header available both to CMake and
         # in the preprocessor:
-        full_build_info_header_path = os.path.abspath(build_info_header_path)
+        full_build_info_header_path = replaceBackslashes(os.path.abspath(build_info_header_path))
         logger.debug('build info header include path: "%s"', full_build_info_header_path)
         definitions.append(('YOTTA_BUILD_INFO_HEADER', '"'+full_build_info_header_path+'"'))
 
