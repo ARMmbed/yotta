@@ -7,7 +7,7 @@ section: tutorial/building
 # Building Existing Modules
 This tutorial will guide you through the process of building software that uses
 yotta. You might also want to check out the tutorial to writing your [own
-software](../tutorial/tutorial.html) with yotta.
+software](../tutorial/tutorial.html) with yotta, or the [build system reference](/reference/buildsystem.html).
 
 
 ## Check your installation

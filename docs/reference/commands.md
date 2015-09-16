@@ -53,6 +53,9 @@ to build the tests for all dependency modules.
  4. `yotta` instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
  5. `yotta` instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
 
+For more information on the yotta build process, see the [build system
+reference](/reference/buildsystem.html).
+
 Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
