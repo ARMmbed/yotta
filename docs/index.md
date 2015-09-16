@@ -117,7 +117,7 @@ support is currently experimental).
 For example on Debian and Ubuntu:
 
 ```sh
-sudo apt-get update && sudo apt-get install python-setuptools  cmake build-essential ninja-build python-dev libffi-dev libssl-dev && easy_install pip
+sudo apt-get update && sudo apt-get install python-setuptools  cmake build-essential ninja-build python-dev libffi-dev libssl-dev && sudo easy_install pip
 ```
 
 and on Fedora Linux (tested on FC21):
