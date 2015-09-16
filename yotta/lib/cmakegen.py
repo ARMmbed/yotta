@@ -54,6 +54,9 @@ class CMakeGen(object):
         self.buildroot = directory
         logger.info("generate for target: %s" % target)
         self.target = target
+        self.config_include_file = None
+        self.build_info_include_file = None
+        self.build_uuid = None
 
     def _writeFile(self, path, contents):
         dirname = os.path.dirname(path)
@@ -201,8 +204,8 @@ class CMakeGen(object):
                     v = 1 if v else 0
                 r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
         return r
-    
-    def getConfigData(self, all_dependencies, component, builddir):
+
+    def getConfigData(self, all_dependencies, component, builddir, build_info_header_path):
         ''' returns (path_to_config_header, cmake_set_definitions) '''
         add_defs_header = ''
         set_definitions = ''
@@ -212,6 +215,12 @@ class CMakeGen(object):
         definitions.append(('TARGET', sanitizePreprocessorSymbol(self.target.getName())))
         definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(self.target.getName()),None))
 
+        # make the path to the build-info header available both to CMake and
+        # in the preprocessor:
+        full_build_info_header_path = replaceBackslashes(os.path.abspath(build_info_header_path))
+        logger.debug('build info header include path: "%s"', full_build_info_header_path)
+        definitions.append(('YOTTA_BUILD_INFO_HEADER', '"'+full_build_info_header_path+'"'))
+
         for target in self.target.getSimilarTo_Deprecated():
             if '*' not in target:
                 definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
@@ -220,13 +229,12 @@ class CMakeGen(object):
         definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
         
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
+
         for k, v in definitions:
             if v is not None:
-                #add_definitions += '-D%s=%s ' % (k, v)
                 add_defs_header += '#define %s %s\n' % (k, v)
                 set_definitions += 'set(%s %s)\n' % (k, v)
             else:
-                #add_definitions += '-D%s ' % k
                 add_defs_header += '#define %s\n' % k
                 set_definitions += 'set(%s TRUE)\n' % k
 
@@ -251,6 +259,50 @@ class CMakeGen(object):
         )
         return (config_include_file, set_definitions)
 
+    def getBuildInfo(self, sourcedir, builddir):
+        ''' Write the build info header file, and return (path_to_written_header, set_cmake_definitions) '''
+        cmake_defs = ''
+        preproc_defs = '// yotta build info, #include YOTTA_BUILD_INFO_HEADER to access\n'
+        # standard library modules
+        import datetime
+        # vcs, , represent version controlled directories, internal
+        import vcs
+
+        now = datetime.datetime.utcnow()
+        vcs = vcs.getVCS(sourcedir)
+        if self.build_uuid is None:
+            import uuid
+            self.build_uuid = uuid.uuid4()
+
+        definitions = [
+            ('YOTTA_BUILD_YEAR',   now.year,        'UTC year'),
+            ('YOTTA_BUILD_MONTH',  now.month,       'UTC month 1-12'),
+            ('YOTTA_BUILD_DAY',    now.day,         'UTC day 1-31'),
+            ('YOTTA_BUILD_HOUR',   now.hour,        'UTC hour 0-24'),
+            ('YOTTA_BUILD_MINUTE', now.minute,      'UTC minute 0-59'),
+            ('YOTTA_BUILD_SECOND', now.second,      'UTC second 0-61'),
+            ('YOTTA_BUILD_UUID',   self.build_uuid, 'unique random UUID for each build'),
+        ]
+        if vcs is not None:
+            definitions += [
+                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash')
+                ('YOTTA_BUILD_VCS_CLEAN', vcs.getCommitId(), 'evaluates true if the version control system was clean, otherwise false')
+            ]
+
+        for d in definitions:
+            preproc_defs += '#define %s %s // %s\n' % d
+            cmake_defs   += 'set(%s "%s") # %s\n' % d
+
+        buildinfo_include_file = os.path.join(builddir, 'yotta_build_info.h')
+        self._writeFile(
+            buildinfo_include_file,
+            '#ifndef __YOTTA_BUILD_INFO_H__\n'+
+            '#define __YOTTA_BUILD_INFO_H__\n'+
+            preproc_defs+
+            '#endif // ndef __YOTTA_BUILD_INFO_H__\n'
+        )
+        return (buildinfo_include_file, cmake_defs)
+
     def generate(
             self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, application, toplevel
         ):
@@ -258,6 +310,16 @@ class CMakeGen(object):
             built for this component, but will not already have been built for
             another component.
         '''
+        
+        set_definitions = ''
+        if self.build_info_include_file is None:
+            assert(toplevel)
+            self.build_info_include_file, build_info_definitions = self.getBuildInfo(component.path, builddir)
+            set_definitions += build_info_definitions
+
+        if self.config_include_file is None:
+            self.config_include_file, config_definitions = self.getConfigData(all_dependencies, component, builddir, self.build_info_include_file)
+            set_definitions += config_definitions
 
         include_root_dirs = ''
         if application is not None and component is not application:
@@ -343,12 +405,6 @@ class CMakeGen(object):
                 add_own_subdirs.append(self.createDummyLib(
                     component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
-        
-        set_definitions = ''
-        add_definitions = ''
-        config_include_file = None
-        if toplevel:
-            (config_include_file, set_definitions) = self.getConfigData(all_dependencies, component, builddir)
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
@@ -375,8 +431,7 @@ class CMakeGen(object):
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-                 "config_include_file": config_include_file,
-           #"yotta_target_definitions": add_definitions,
+                 "config_include_file": self.config_include_file,
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
                  "active_dependencies": active_dependencies
@@ -510,6 +565,7 @@ class CMakeGen(object):
 
             file_contents = subdir_template.render({
                     'source_directory': os.path.join(component.path, dirname),
+                 "config_include_file": self.config_include_file,
                           'executable': executable,
                           'file_names': [str(f) for f in source_files],
                          'object_name': object_name,
