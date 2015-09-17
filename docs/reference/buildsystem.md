@@ -1,7 +1,7 @@
 ---
 layout: default
 title: yotta Configuration System Reference
-section: reference/config
+section: reference/buildsystem
 ---
 
 # Build System Reference
