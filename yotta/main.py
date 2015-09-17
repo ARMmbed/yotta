@@ -145,13 +145,14 @@ def main():
         'dependencies for the current module.'
     )
     addParser('build', 'build',
-        'Build the current module. Options can be passed to the underlying '+\
-        'build tool by passing them after --, e.g. to do a parallel build '+\
-        'when make is the build tool, run:\n    yotta build -- -j\n\n'+
+        'Build the current module. Options can be passed to the underlying '+
+        'build tool by passing them after --, e.g. to do a verbose build '+
+        'which will display each command as it is run, use:\n'+
+        '  yotta build -- -v\n\n'+
         'The programs or libraries to build can be specified (by default '+
         'only the libraries needed by the current module and the current '+
-        "module's own tests are build. For example, to build the tests of "+
-        'all dependencies, run:\n    yotta build all_tests\n\n',
+        "module's own tests are built). For example, to build the tests of "+
+        'all dependencies, run:\n  yotta build all_tests\n\n',
         'Build the current module.'
     )
     addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
