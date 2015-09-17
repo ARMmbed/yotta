@@ -80,7 +80,6 @@ class TestCLIPublish(unittest.TestCase):
             f.write(Public_Module_JSON)
         stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
         if status != 0:
-            print(stdout+stderr)
             out = stdout+stderr
             self.assertTrue(out.find('login required') != -1 or out.find('not module owner') != -1)
 
