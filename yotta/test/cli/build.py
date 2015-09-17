@@ -280,7 +280,7 @@ class TestCLIBuild(unittest.TestCase):
 
         build_time = datetime.datetime.utcnow()
         output = subprocess.check_output(['./build/' + systemDefaultTarget().split(',')[0] + '/source/test-trivial-exe'], cwd=test_dir)
-        self.assertIn('vcs clean: 1', output)
+        self.assertIn('vcs clean: 1', output.decode())
 
         # check build timestamp
         self.assertIn('build timestamp: ', output)
