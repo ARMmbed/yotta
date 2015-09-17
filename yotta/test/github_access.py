@@ -15,9 +15,12 @@ from collections import namedtuple
 from yotta.lib import version
 # settings, , load and save settings, internal
 from yotta.lib import settings
+# globalconf, share global arguments between modules, internal
+from yotta.lib import globalconf
 # install, , install components, internal
 from yotta import install
 
+globalconf.set('interactive', False)
 
 Test_Name = 'testing-dummy'
 Test_Deps_Name = "autopulated/github-access-testing"

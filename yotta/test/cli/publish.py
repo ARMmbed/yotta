@@ -60,11 +60,13 @@ Public_Module_JSON = '''{
 
 
 class TestCLIPublish(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
 
     def test_publishPrivate(self):
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
@@ -77,8 +79,9 @@ class TestCLIPublish(unittest.TestCase):
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Public_Module_JSON)
         stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(status, 0)
+        if status != 0:
+            out = stdout+stderr
+            self.assertTrue(out.find('login required') != -1 or out.find('not module owner') != -1)
 
 if __name__ == '__main__':
     unittest.main()

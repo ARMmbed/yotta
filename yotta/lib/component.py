@@ -356,7 +356,7 @@ class Component(pack.Pack):
         _processed.add(self.getName())
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
-        need_recursion = filter(recursionFilter, components.values()) 
+        need_recursion = [x for x in filter(recursionFilter, components.values())]
         available_components.update(components)
         logger.debug('processed %s\nneed recursion: %s\navailable:%s\nsearch dirs:%s' % (self.getName(), need_recursion, available_components, search_dirs))
         if test == 'toplevel':

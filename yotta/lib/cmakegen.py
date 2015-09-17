@@ -285,8 +285,8 @@ class CMakeGen(object):
         ]
         if vcs is not None:
             definitions += [
-                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash')
-                ('YOTTA_BUILD_VCS_CLEAN', vcs.getCommitId(), 'evaluates true if the version control system was clean, otherwise false')
+                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash'),
+                ('YOTTA_BUILD_VCS_CLEAN', int(vcs.isClean()), 'evaluates true if the version control system was clean, otherwise false')
             ]
 
         for d in definitions:

@@ -48,18 +48,18 @@ class TestCLIOwners(unittest.TestCase):
 
     def test_listOwners(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'ls'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
     def test_addOwner(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'add', 'friend@example.com'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
     def test_rmOwner(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'rm', 'friend@example.com'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
 
 if __name__ == '__main__':
