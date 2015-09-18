@@ -51,6 +51,7 @@ setup(
     entry_points=entry_points,
     scripts=scripts,
     test_suite = 'yotta.test',
+    tests_require = ['pylint'],
     install_requires=[
         'semantic_version>=2.3.1,<3',
         'requests>=2.4.3,<3',
