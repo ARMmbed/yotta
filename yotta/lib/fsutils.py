@@ -7,7 +7,6 @@
 import os
 import errno
 import shutil
-import platform
 import stat
 
 def mkDirP(path):

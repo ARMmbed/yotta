@@ -5,8 +5,6 @@
 
 # standard library modules, , ,
 import logging
-import json
-import getpass
 import re
 import functools
 
@@ -18,12 +16,8 @@ from github import Github
 
 # settings, , load and save settings, internal
 import settings
-# version, , represent versions and specifications, internal
-import version
 # access_common, , things shared between different component access modules, internal
 import access_common
-# Registry Access, , access packages in the registry, internal
-import registry_access
 # auth, , authenticate users, internal
 import auth
 # globalconf, share global arguments between modules, internal

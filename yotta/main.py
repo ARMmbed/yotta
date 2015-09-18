@@ -3,7 +3,7 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-from .lib import lazyregex
+from .lib import lazyregex #pylint: disable=unused-import
 
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2

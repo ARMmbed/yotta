@@ -8,7 +8,6 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
 from collections import namedtuple
 
 # hgapi, pip install hgapi, python api to hg command, "Do whatever you want,

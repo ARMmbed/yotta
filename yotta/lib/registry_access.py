@@ -7,14 +7,11 @@
 import re
 import logging
 from collections import OrderedDict
-import uuid
 import functools
-import json
 import binascii
 import calendar
 import datetime
 import hashlib
-import itertools
 import base64
 import os
 try:
@@ -28,7 +25,7 @@ import requests
 # PyJWT, MIT, Jason Web Tokens, pip install PyJWT
 import jwt
 # cryptography, Apache License, Python Cryptography library,
-import cryptography
+#import cryptography
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
@@ -37,12 +34,8 @@ from cryptography.hazmat.primitives import serialization
 import settings
 # access_common, , things shared between different component access modules, internal
 import access_common
-# version, , represent versions and specifications, internal
-import version
 # Ordered JSON, , read & write json, internal
 import ordered_json
-# Github Access, , access repositories on github, internal
-import github_access
 # export key, , export pycrypto keys, internal
 import exportkey
 # auth, , authenticate users, internal

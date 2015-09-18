@@ -7,7 +7,6 @@
 
 # standard library modules, , ,
 import unittest
-import os
 import subprocess
 from collections import namedtuple
 

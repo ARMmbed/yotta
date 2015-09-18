@@ -8,17 +8,13 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
-from collections import namedtuple
 import tempfile
 import re
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
-from yotta.lib import version
 from yotta.lib import settings
-from yotta import install
 
 
 Test_Name = 'testing-dummy'
@@ -90,7 +86,6 @@ def hasGithubConfig():
     return True
 
 class TestCLIInstall(unittest.TestCase):
-    '''
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installRegistryRef(self):
         test_dir = tempfile.mkdtemp()
@@ -271,7 +266,6 @@ class TestCLIInstall(unittest.TestCase):
         self.assertNotIn('test-testdep-k', stdout)
 
         rmRf(test_dir)
-        '''
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_remove(self):

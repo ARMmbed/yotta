@@ -8,12 +8,9 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
-from collections import namedtuple
 import tempfile
 
 # internal modules:
-from yotta.lib import sourceparse
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component

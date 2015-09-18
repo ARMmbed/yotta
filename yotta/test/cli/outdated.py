@@ -8,11 +8,9 @@
 import unittest
 import os
 import tempfile
-import copy
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
-from yotta.lib.detect import systemDefaultTarget
 from . import cli
 
 Test_Outdated = {

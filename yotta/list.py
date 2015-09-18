@@ -5,7 +5,6 @@
 
 # standard library modules, , ,
 from __future__ import print_function
-import argparse
 import logging
 import os
 
@@ -14,11 +13,8 @@ import colorama
 
 # validate, , validate things, internal
 from .lib import validate
-# Target, , represents an installed target, internal
-from .lib import target
 # access, , get components (and check versions), internal
 from .lib import access
-from .lib import access_common
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
 

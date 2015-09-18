@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import json
 import os
 import signal
 import subprocess
@@ -21,8 +20,6 @@ import ordered_json
 # access, , get components, internal
 import access
 import access_common
-# version, , represent versions and specifications, internal
-import version
 # Pack, , common parts of Components/Targets, internal
 import pack
 # fsutils, , misc filesystem utils, internal

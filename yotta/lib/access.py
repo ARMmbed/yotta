@@ -23,8 +23,6 @@ import github_access
 import git_access
 # hg Access, , access repositories via generic mercurial URLs, internal
 import hg_access
-# version, , represent versions and specifications, internal
-import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
 # sourceparse, , parse version source urls, internal

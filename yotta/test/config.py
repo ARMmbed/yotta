@@ -11,10 +11,8 @@ import tempfile
 import logging
 
 # internal modules:
-from yotta.lib import target
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib import validate
-from . import cli
 
 logging.basicConfig(
     level=logging.ERROR

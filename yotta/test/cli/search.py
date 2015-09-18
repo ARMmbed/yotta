@@ -7,7 +7,6 @@
 
 # standard library modules, , ,
 import unittest
-import os
 
 # internal modules:
 from . import cli

@@ -4,8 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import argparse
-import errno
 import logging
 import os
 

@@ -9,8 +9,6 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
 
 
 def addOptions(parser):

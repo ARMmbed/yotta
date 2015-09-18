@@ -12,7 +12,7 @@ import tempfile
 import stat
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
 
 

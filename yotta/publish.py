@@ -4,9 +4,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import argparse
 import logging
-import os
 
 # validate, , validate things, internal
 from .lib import validate

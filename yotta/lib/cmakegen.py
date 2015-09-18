@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import string
 import os
 import logging
 import re

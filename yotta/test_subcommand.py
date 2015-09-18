@@ -10,8 +10,6 @@ import re
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
 # Target, , represents an installed target, internal
 from .lib import target
 # fsutils, , misc filesystem utils, internal

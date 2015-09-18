@@ -5,7 +5,6 @@
 
 # standard library modules, , ,
 import logging
-import re
 
 # version, , represent versions and specifications, internal
 import version

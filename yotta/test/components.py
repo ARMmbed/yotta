@@ -7,16 +7,11 @@
 
 import unittest
 import os
-import shutil
-import errno
 import logging
 import tempfile
-from collections import OrderedDict
 
-from yotta.lib import access
 from yotta.lib import component
-from yotta.lib.pool import pool
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 
 test_json = '''{
   "name": "something",

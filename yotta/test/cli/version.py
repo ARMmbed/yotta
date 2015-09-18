@@ -11,7 +11,7 @@ import os
 import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
 
 
