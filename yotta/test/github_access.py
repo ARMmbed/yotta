@@ -36,7 +36,7 @@ def hasGithubConfig():
 class TestGitHubAccess(unittest.TestCase):
     def setUp(self):
         pass
-        
+
     def tearDown(self):
         pass
 

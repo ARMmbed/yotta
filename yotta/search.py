@@ -14,7 +14,7 @@ from .lib import registry_access
 from .lib import version
 from .lib import settings
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 def addOptions(parser):

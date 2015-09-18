@@ -93,19 +93,19 @@ class TestCLIInstall(unittest.TestCase):
     '''
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installRegistryRef(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Name], test_dir)
         rmRf(test_dir)
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installGithubRef(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         stdout = self.runCheckCommand(['--target', Test_Target, 'install', Test_Github_Name], test_dir)
         rmRf(test_dir)
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installDeps(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)
@@ -169,7 +169,7 @@ class TestCLIInstall(unittest.TestCase):
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_installComplexDeps(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Complex_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)
@@ -217,7 +217,7 @@ class TestCLIInstall(unittest.TestCase):
 
         # also sanity-check listing:
         stdout = self.runCheckCommand(['--target', Test_Target, 'ls', '-a'], test_dir)
-       
+
         self.assertIn('test-testdep-b', stdout)
         self.assertIn('test-testdep-c', stdout)
         self.assertIn('test-testdep-d', stdout)
@@ -275,7 +275,7 @@ class TestCLIInstall(unittest.TestCase):
 
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_remove(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)
@@ -288,10 +288,10 @@ class TestCLIInstall(unittest.TestCase):
         self.assertIn('testing-dummy', stdout)
 
         rmRf(test_dir)
-    
+
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_uninstall(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)
@@ -304,10 +304,10 @@ class TestCLIInstall(unittest.TestCase):
         self.assertNotIn(' testing-dummy', stdout)
 
         rmRf(test_dir)
-    
+
     @unittest.skipIf(not hasGithubConfig(), "a github authtoken must be specified for this test (run yotta login, or set YOTTA_GITHUB_AUTHTOKEN)")
     def test_uninstallNonExistent(self):
-        test_dir = tempfile.mkdtemp() 
+        test_dir = tempfile.mkdtemp()
         with open(os.path.join(test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
         stdout = self.runCheckCommand(['--target', Test_Target, 'install'], test_dir)

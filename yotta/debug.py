@@ -33,7 +33,7 @@ def execCommand(args, following_args):
         return 1
 
     builddir = os.path.join(cwd, 'build', target.getName())
-    
+
     # !!! FIXME: the program should be specified by the description of the
     # current project (or a default value for the program should)
     errcode = None

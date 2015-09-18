@@ -50,7 +50,7 @@ class TestHGAccess(unittest.TestCase):
         self.assertTrue(self.remote_component)
         self.working_copy = self.remote_component.clone()
         self.assertTrue(self.working_copy)
-        
+
     def tearDown(self):
         fsutils.rmRf(self.working_copy.directory)
 

@@ -49,7 +49,7 @@ class VCS(object):
     # python 3 truthiness
     def __bool__(self):
         return self.__nonzero__()
-    
+
 
 class Git(VCS):
     def __init__(self, path):
@@ -59,7 +59,7 @@ class Git(VCS):
     @classmethod
     def cloneToTemporaryDir(cls, remote):
         return cls.cloneToDirectory(remote, tempfile.mkdtemp())
-    
+
     @classmethod
     def cloneToDirectory(cls, remote, directory, tag=None):
         commands = [
@@ -70,11 +70,11 @@ class Git(VCS):
         if tag is not None:
             r.updateToTag(tag)
         return r
-    
+
     def fetchAllBranches(self):
         remote_branches = []
         local_branches = []
-        
+
         # list remote branches
         out, err = self._execCommands([self._gitCmd('branch', '-r')])
 
@@ -86,7 +86,7 @@ class Git(VCS):
             remote_branch = branch_info[0].strip()
             branch = b'/'.join(remote_branch.split(b'/')[1:])
             remote_branches.append((remote_branch, branch))
-        
+
         # list already-existing local branches
         out, err = self._execCommands([self._gitCmd('branch')])
         for line in out.split(b'\n'):
@@ -116,7 +116,7 @@ class Git(VCS):
 
     def _gitCmd(self, *args):
         return ['git','--work-tree=%s' % self.worktree,'--git-dir=%s'%self.gitdir.replace('\\', '/')] + list(args);
-    
+
     @classmethod
     def _execCommands(cls, commands):
         out, err = None, None
@@ -158,14 +158,14 @@ class Git(VCS):
             self._gitCmd('add', os.path.join(self.worktree, relative_path)),
         ]
         self._execCommands(commands)
-    
+
     def updateToTag(self, tag):
         commands = [
             self._gitCmd('checkout', tag),
         ]
         self._execCommands(commands)
 
-    
+
     def tags(self):
         commands = [
             self._gitCmd('tag', '-l')
@@ -210,7 +210,7 @@ class HG(VCS):
         # only import hgapi on demand, since it is rarely needed
         if cls.hgapi is None:
             import hgapi
-            cls.hgapi = hgapi 
+            cls.hgapi = hgapi
 
     @classmethod
     def cloneToTemporaryDir(cls, remote):

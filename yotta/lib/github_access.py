@@ -44,7 +44,7 @@ logger = logging.getLogger('access')
 
 def _userAuthedWithGithub():
     return settings.getProperty('github', 'authtoken')
- 
+
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
@@ -129,7 +129,7 @@ def _getTipArchiveURL(repo):
     repo = g.get_repo(repo)
     return repo.get_archive_link('tarball')
 
-    
+
 @_handleAuth
 def _getTarball(url, into_directory):
     '''unpack the specified tarball url into the specified directory'''
@@ -159,7 +159,7 @@ class GithubComponentVersion(access_common.RemoteVersion):
         super(GithubComponentVersion, self).__init__(
             semver, url, name=name, friendly_version=(semver or tag), friendly_source=('GitHub %s' % github_spec)
         )
-    
+
     def unpackInto(self, directory):
         assert(self.url)
         _getTarball(self.url, directory)
@@ -172,9 +172,9 @@ class GithubComponent(access_common.RemoteComponent):
         self.tag_or_branch = tag_or_branch
         self.tags = None
         self.name = name
-    
+
     @classmethod
-    def createFromSource(cls, vs, name=None):    
+    def createFromSource(cls, vs, name=None):
         ''' returns a github component for any github url (including
             git+ssh:// git+http:// etc. or None if this is not a Github URL.
             For all of these we use the github api to grab a tarball, because
@@ -234,7 +234,7 @@ class GithubComponent(access_common.RemoteComponent):
 
     def tipVersion(self):
         return GithubComponentVersion('', '', _getTipArchiveURL(self.repo), self.name)
-    
+
     @classmethod
     def remoteType(cls):
         return 'github'

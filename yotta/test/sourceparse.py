@@ -70,7 +70,7 @@ test_invalid_urls = [
 class TestGitAccess(unittest.TestCase):
     def setUp(self):
         pass
-        
+
     def tearDown(self):
         pass
 

@@ -27,7 +27,7 @@ import requests
 
 # PyJWT, MIT, Jason Web Tokens, pip install PyJWT
 import jwt
-# cryptography, Apache License, Python Cryptography library, 
+# cryptography, Apache License, Python Cryptography library,
 import cryptography
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -66,7 +66,7 @@ class AuthError(RuntimeError):
 # Internal functions
 
 def generate_jwt_token(private_key, registry=None):
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
     expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
     prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
@@ -110,7 +110,7 @@ def _returnRequestError(fn):
         except requests.exceptions.RequestException as e:
             return "server returned status %s: %s" % (e.response.status_code, e.message)
     return wrapped
- 
+
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
@@ -183,12 +183,12 @@ def _listVersions(namespace, name):
             namespace,
             name
         )
-        
+
         request_headers = _headersForRegistry(registry)
-        
+
         logger.debug("GET %s, %s", url, request_headers)
         response = requests.get(url, headers=request_headers)
-        
+
         if response.status_code == 404:
             continue
 
@@ -209,7 +209,7 @@ def _listVersions(namespace, name):
     return versions
 
 def _tarballURL(namespace, name, version, registry=None):
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
     return '%s/%s/%s/versions/%s/tarball' % (
         registry, namespace, name, version
     )
@@ -219,7 +219,7 @@ def _getTarball(url, directory, sha256):
 
     if not sha256:
         logger.warn('tarball %s has no hash to check' % url)
-    
+
     # figure out which registry we're fetching this tarball from (if any) and
     # add appropriate headers
     registry = Registry_Base_URL
@@ -231,7 +231,7 @@ def _getTarball(url, directory, sha256):
             break
 
     request_headers = _headersForRegistry(registry)
-    
+
     logger.debug('GET %s, %s', url, request_headers)
     response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
     response.raise_for_status()
@@ -265,7 +265,7 @@ def _sourceMatches(source, registry):
              'url' in source and source['url'] == registry)
 
 def _generateAndSaveKeys(registry=None):
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
     k = rsa.generate_private_key(
         public_exponent=65537, key_size=2048, backend=default_backend()
     )
@@ -367,7 +367,7 @@ class RegistryThing(access_common.RemoteComponent):
         self.name = name
         self.spec = version_spec
         self.namespace = namespace
-    
+
     @classmethod
     def createFromSource(cls, vs, name, registry):
         ''' returns a registry component for anything that's a valid package
@@ -393,7 +393,7 @@ class RegistryThing(access_common.RemoteComponent):
 
     def tipVersion(self):
         raise NotImplementedError()
-    
+
     @classmethod
     def remoteType(cls):
         return 'registry'
@@ -408,7 +408,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
         return value by the decorators. (If successful, the decorated function
         returns None)
     '''
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
 
     url = '%s/%s/%s/versions/%s' % (
         registry,
@@ -423,14 +423,14 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
         readme_section_name = 'readme'
     else:
         raise ValueError('unsupported readme type: "%s"' % readne_file_ext)
-    
+
     # description file is in place as text (so read it), tar file is a file
     body = OrderedDict([('metadata', (None, description_file.read(),'application/json')),
                         ('tarball',('tarball', tar_file)),
                         (readme_section_name, (readme_section_name, readme_file))])
 
     headers = _headersForRegistry(registry)
-    
+
     response = requests.put(url, headers=headers, files=body)
     response.raise_for_status()
 
@@ -443,7 +443,7 @@ def unpublish(namespace, name, version, registry=None):
     ''' Try to unpublish a recently published version. Return any errors that
         occur.
     '''
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
 
     url = '%s/%s/%s/versions/%s' % (
         registry,
@@ -451,7 +451,7 @@ def unpublish(namespace, name, version, registry=None):
         name,
         version
     )
-    
+
     headers = _headersForRegistry(registry)
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
@@ -463,10 +463,10 @@ def unpublish(namespace, name, version, registry=None):
 @_handleAuth
 def listOwners(namespace, name, registry=None):
     ''' List the owners of a module or target (owners are the people with
-        permission to publish versions and add/remove the owners). 
+        permission to publish versions and add/remove the owners).
     '''
     registry = registry or Registry_Base_URL
-    
+
     url = '%s/%s/%s/owners' % (
         registry,
         namespace,
@@ -480,7 +480,7 @@ def listOwners(namespace, name, registry=None):
     if response.status_code == 404:
         logger.error('no such %s, "%s"' % (namespace[:-1], name))
         return None
-    
+
     # raise exceptions for other errors - the auth decorators handle these and
     # re-try if appropriate
     response.raise_for_status()
@@ -492,10 +492,10 @@ def listOwners(namespace, name, registry=None):
 @_handleAuth
 def addOwner(namespace, name, owner, registry=None):
     ''' Add an owner for a module or target (owners are the people with
-        permission to publish versions and add/remove the owners). 
+        permission to publish versions and add/remove the owners).
     '''
     registry = registry or Registry_Base_URL
-    
+
     url = '%s/%s/%s/owners/%s' % (
         registry,
         namespace,
@@ -523,10 +523,10 @@ def addOwner(namespace, name, owner, registry=None):
 @_handleAuth
 def removeOwner(namespace, name, owner, registry=None):
     ''' Remove an owner for a module or target (owners are the people with
-        permission to publish versions and add/remove the owners). 
+        permission to publish versions and add/remove the owners).
     '''
     registry = registry or Registry_Base_URL
-    
+
     url = '%s/%s/%s/owners/%s' % (
         registry,
         namespace,
@@ -552,10 +552,10 @@ def removeOwner(namespace, name, owner, registry=None):
 def search(query='', keywords=[], registry=None):
     ''' generator of objects returned by the search endpoint (both modules and
         targets).
-        
+
         Query is a full-text search (description, name, keywords), keywords
         search only the module/target description keywords lists.
-        
+
         If both parameters are specified the search is the intersection of the
         two queries.
     '''
@@ -573,7 +573,7 @@ def search(query='', keywords=[], registry=None):
         params['query'] = query
     if len(keywords):
         params['keywords[]'] = keywords
-    
+
     while True:
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
@@ -584,7 +584,7 @@ def search(query='', keywords=[], registry=None):
             params['skip'] += params['limit']
         else:
             break
-    
+
 
 def deauthorize(registry=None):
     registry = registry or Registry_Base_URL
@@ -639,13 +639,13 @@ def getPublicKey(registry=None):
     if b'-----BEGIN PUBLIC KEY-----' in pubkey_pem:
         pubkey = serialization.load_pem_public_key(pubkey_pem, default_backend())
     else:
-        pubkey_der = binascii.unhexlify(pubkey_pem)        
+        pubkey_der = binascii.unhexlify(pubkey_pem)
         pubkey = serialization.load_der_public_key(pubkey_der, default_backend())
     return _pubkeyWireFormat(pubkey)
 
 
 def testLogin(registry=None):
-    registry = registry or Registry_Base_URL    
+    registry = registry or Registry_Base_URL
     url = '%s/users/me' % (
         registry
     )
@@ -665,7 +665,7 @@ def getAuthData(registry=None):
     url = '%s/tokens' % (
         registry
     )
-    
+
     request_headers = _headersForRegistry(registry)
 
     logger.debug('poll for tokens... %s', request_headers)

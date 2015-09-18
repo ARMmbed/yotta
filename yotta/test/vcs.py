@@ -38,7 +38,7 @@ class TestGit(unittest.TestCase):
                 child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = child.communicate()
         cls.working_copy = vcs.Git.cloneToTemporaryDir(Test_Repo_git)
-        
+
     @classmethod
     def tearDownClass(cls):
         cls.working_copy.remove()
@@ -54,7 +54,7 @@ class TestGit(unittest.TestCase):
         self.assertTrue(self.working_copy.isClean())
         fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'module.json'))
         self.assertFalse(self.working_copy.isClean())
-    
+
     def test_commit(self):
         with open(os.path.join(self.working_copy.workingDirectory(), 'module.json'), "a") as f:
             f.write("\n")

@@ -19,7 +19,7 @@ def execCommand(args, following_args):
     p = validate.currentDirectoryModuleOrTarget()
     if not p:
         return 1
-    
+
     if not p.vcsIsClean():
         logging.error('The working directory is not clean. Commit before publishing!')
         return 1
@@ -28,7 +28,7 @@ def execCommand(args, following_args):
     if error:
         logging.error(error)
         return 1
-    
+
     # tag the version published as 'latest'
     # !!! can't do this, as can't move tags in git?
     #p.commitVCS(tag='latest')

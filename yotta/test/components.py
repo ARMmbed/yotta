@@ -77,10 +77,10 @@ logging.basicConfig(
 )
 
 class ComponentTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        
+
     def tearDown(self):
         rmRf(self.test_dir)
 

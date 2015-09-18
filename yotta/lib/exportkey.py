@@ -23,7 +23,7 @@ elif sys.version_info[0] == 2:
     def bchr(x):
         return chr(x)
 
-# long_to_bytes: from PyCrypto,public domain, a vailable at: 
+# long_to_bytes: from PyCrypto,public domain, a vailable at:
 # https://github.com/dlitz/pycrypto/blob/7acba5f3a6ff10f1424c309d0d34d2b713233019/lib/Crypto/Util/number.py
 def long_to_bytes(n, blocksize=0):
     """long_to_bytes(n:long, blocksize:int) : string

@@ -253,7 +253,7 @@ class TestCLIBuild(unittest.TestCase):
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
 
         rmRf(test_dir)
-    
+
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_buildTests(self):
         test_dir = self.writeTestFiles(Test_Tests, True)

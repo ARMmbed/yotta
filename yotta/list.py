@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # validate, , validate things, internal
@@ -170,7 +170,7 @@ class ComponentDepsFormatter(object):
 
 
         line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
-        
+
         if spec and not spec.match(component.getVersion()):
             line += u' ' + RESET + BRIGHT + RED + str(spec) + RESET
         if test_dep:
@@ -181,12 +181,12 @@ class ComponentDepsFormatter(object):
             line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + fsutils.realpath(component.path) + RESET
 
         r += line + '\n'
-        
+
         deps_here  = [x for x in list(deps.keys()) if (x not in processed)]
         print_deps = [x for x in list(deps.items()) if shouldDisplay(x)]
-        
+
         processed += [x[0] for x in print_deps]
-        
+
 
         for (name, dep), last in islast(print_deps):
             if last:

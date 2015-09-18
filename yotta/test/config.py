@@ -95,13 +95,13 @@ class ConfigTest(unittest.TestCase):
 
     def setUp(self):
         self.restore_cwd = os.getcwd()
-        
+
     def tearDown(self):
         os.chdir(self.restore_cwd)
-    
+
     def test_targetConfigMerge(self):
         test_dir = self.writeTestFiles(Test_Target_Config_Merge, True)
-        
+
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
         target, errors = c.satisfyTarget('bar,')
@@ -124,7 +124,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_targetAppConfigMerge(self):
         test_dir = self.writeTestFiles(Test_Target_Config_Merge_App, True)
-        
+
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
         target, errors = c.satisfyTarget('bar,')
@@ -150,7 +150,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_moduleConfigIgnored(self):
         test_dir = self.writeTestFiles(Test_Module_Config_Ignored, True)
-        
+
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
         target, errors = c.satisfyTarget('bar,')

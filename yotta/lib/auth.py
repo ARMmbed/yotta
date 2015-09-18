@@ -11,7 +11,7 @@ import datetime
 import time
 import webbrowser
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # Registry Access, , access packages in the registry, internal
@@ -56,14 +56,14 @@ def authorizeUser(registry=None, provider='github', interactive=True):
         input = raw_input
     except NameError:
         pass
-    
+
     if interactive:
         login_instruction = '\nYou need to log in to do this.\n'
         if provider == 'github':
             login_instruction = '\nYou need to log in with Github to do this.\n'
 
         sys.stdout.write(login_instruction)
-    
+
         if os.name == 'nt' or os.environ.get('DISPLAY'):
             input(
                 colorama.Style.BRIGHT+
@@ -112,6 +112,6 @@ def authorizeUser(registry=None, provider='github', interactive=True):
         logger.error('login required (yotta is running in noninteractive mode)')
         logger.info('login URL: %s', registry_access.getLoginURL(provider=provider, registry=registry))
         return 1
-    
+
 
 

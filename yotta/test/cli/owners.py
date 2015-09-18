@@ -39,7 +39,7 @@ class TestCLIOwners(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
-        
+
     def tearDown(self):
         rmRf(self.test_dir)
 

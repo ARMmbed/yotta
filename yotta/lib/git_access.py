@@ -87,9 +87,9 @@ class GitComponent(access_common.RemoteComponent):
         # !!! TODO: handle non-semantic spec
         self.spec = semantic_spec
         self.tag_or_branch = tag_or_branch
-    
+
     @classmethod
-    def createFromSource(cls, vs, name=None):    
+    def createFromSource(cls, vs, name=None):
         ''' returns a git component for any git:// url, or None if this is not
             a git component.
 

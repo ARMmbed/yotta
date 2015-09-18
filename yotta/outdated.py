@@ -3,7 +3,7 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # validate, , validate things, internal
@@ -46,7 +46,7 @@ def displayOutdated(modules, use_colours):
         RESET  = colorama.Style.RESET_ALL
     else:
         DIM = BRIGHT = YELLOW = RED = RESET = u''
-    
+
     status = 0
 
     for name, m in modules.items():

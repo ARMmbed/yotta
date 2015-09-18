@@ -85,7 +85,7 @@ def main():
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
     subparser = parser.add_subparsers(metavar='<subcommand>')
-    
+
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
@@ -197,13 +197,13 @@ def main():
           'lics':subparser.choices['licenses']
     }
     subparser.choices.update(short_commands)
-    
+
     # split the args into those before and after any '--'
     # argument - subcommands get raw access to arguments following '--', and
     # may pass them on to (for example) the build tool being used
     split_args = splitList(sys.argv, '--')
     following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
-    
+
     # complete all the things :)
     argcomplete.autocomplete(
          parser,
@@ -213,14 +213,14 @@ def main():
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
-    
+
     # set global arguments that are shared everywhere and never change
     globalconf.set('interactive', args.interactive)
     globalconf.set('plain', args.plain)
 
     loglevel = logLevelFromVerbosity(args.verbosity)
     logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
-    
+
     # finally, do stuff!
     if 'command' not in args:
         parser.print_usage()

@@ -15,7 +15,7 @@ import os
 def dropRootPrivs(fn):
     ''' decorator to drop su/sudo privilages before running a function on
         unix/linux.
-        
+
         ** on windows this function does nothing **
     '''
     def wrapper(*args, **kwargs):
