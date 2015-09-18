@@ -57,7 +57,7 @@ def dropRootPrivs(fn):
         q = multiprocessing.Queue()
         p = multiprocessing.Process(target=_dropPrivsReturnViaQueue, args=(q, fn, args, kwargs))
         p.start()
-        
+
         r = None
         e = None
         while True:

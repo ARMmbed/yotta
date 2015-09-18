@@ -8,11 +8,9 @@
 import unittest
 import os
 import tempfile
-import copy
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
-from yotta.lib.detect import systemDefaultTarget
 from . import cli
 
 Test_Outdated = {
@@ -59,7 +57,7 @@ class TestCLIOutdated(unittest.TestCase):
 
     def test_outdated(self):
         path = self.writeTestFiles(Test_Outdated, True)
-        
+
         stdout, stderr, statuscode = cli.run(['-t', 'x86-linux-native', 'outdated'], cwd=path)
         self.assertNotEqual(statuscode, 0)
         self.assertIn('test-testing-dummy', stdout + stderr)
@@ -68,7 +66,7 @@ class TestCLIOutdated(unittest.TestCase):
 
     def test_notOutdated(self):
         path = self.writeTestFiles(Test_Outdated, True)
-        
+
         stdout, stderr, statuscode = cli.run(['-t', 'x86-linux-native', 'up'], cwd=path)
         self.assertEqual(statuscode, 0)
 

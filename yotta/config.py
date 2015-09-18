@@ -26,8 +26,8 @@ def execCommand(args, following_args):
         for error in errors:
             logging.error(error)
         return 1
-    
+
     config = target.getMergedConfig()
-    
+
     print(json.dumps(config, indent=2, separators=(',', ': ')))
 

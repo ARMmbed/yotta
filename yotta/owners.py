@@ -9,8 +9,6 @@ import argparse
 import logging
 import os
 
-# version, , represent versions and specifications, internal
-from .lib import version
 # Component, , represents an installed component, internal
 from .lib import component
 # Target, , represents an installed target, internal

@@ -4,9 +4,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import argparse
 import logging
-import os
 
 # validate, , validate things, internal
 from .lib import validate
@@ -20,7 +18,7 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Traverse linked modules, and update dependencies found there too.'
     )
-    
+
 
 
 def execCommand(args, following_args):
@@ -43,7 +41,7 @@ def updateDeps(args):
         for error in errors:
             logging.error(error)
         return 1
-    
+
     components, errors = c.satisfyDependenciesRecursive(
                           target = target,
                 update_installed = True,

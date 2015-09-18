@@ -85,7 +85,7 @@ class Version(object):
             raise ValueError('bumptype must be "major", "minor" or "patch"')
         self.version.prerelease = None
         self.version.build = None
-        
+
     def __str__(self):
         return str(self.version)
 

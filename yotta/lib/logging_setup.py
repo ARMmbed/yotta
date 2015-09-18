@@ -7,7 +7,7 @@
 import logging
 import os
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 
@@ -91,7 +91,7 @@ def init(level=0, enable_subsystems=[], plain=False):
     else:
         handler.setFormatter(FancyFormatter())
     root.addHandler(handler)
-    
+
     # set appropriate levels on subsystem loggers - maybe selective logging
     # should use filters instead?
     if enable_subsystems and len(enable_subsystems):

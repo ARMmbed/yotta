@@ -46,5 +46,3 @@ def execCommand(args, following_args):
         for lic in licenses:
             print(lic)
 
-    
-

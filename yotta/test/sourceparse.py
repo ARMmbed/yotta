@@ -7,9 +7,6 @@
 
 # standard library modules, , ,
 import unittest
-import os
-import subprocess
-from collections import namedtuple
 
 # sourceparse, , parse version source urls, internal
 from yotta.lib import sourceparse
@@ -70,7 +67,7 @@ test_invalid_urls = [
 class TestGitAccess(unittest.TestCase):
     def setUp(self):
         pass
-        
+
     def tearDown(self):
         pass
 

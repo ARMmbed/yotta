@@ -11,7 +11,7 @@ import os
 import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
 
 
@@ -39,7 +39,7 @@ class TestCLIOwners(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
-        
+
     def tearDown(self):
         rmRf(self.test_dir)
 

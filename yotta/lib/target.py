@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import json
 import os
 import signal
 import subprocess
@@ -21,8 +20,6 @@ import ordered_json
 # access, , get components, internal
 import access
 import access_common
-# version, , represent versions and specifications, internal
-import version
 # Pack, , common parts of Components/Targets, internal
 import pack
 # fsutils, , misc filesystem utils, internal
@@ -78,7 +75,7 @@ def getDerivedTarget(
         dspec = pack.DependencySpec(name, ver)
     else:
         dspec = pack.DependencySpec(target_name_and_version, "*")
-    
+
     leaf_target      = None
     previous_name    = dspec.name
     search_dirs      = [targets_path]
@@ -149,7 +146,7 @@ class Target(pack.Pack):
                     schema_filename = Schema_File,
             latest_suitable_version = latest_suitable_version
         )
-        
+
     def baseTargetSpec(self):
         ''' returns pack.DependencySpec for the base target of this target (or
             None if this target does not inherit from another target.
@@ -160,13 +157,13 @@ class Target(pack.Pack):
         elif len(inherits) > 1:
             logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
         return None
-    
+
     def getRegistryNamespace(self):
         return Registry_Namespace
 
     def getConfig(self):
         return self.description.get('config', OrderedDict())
-    
+
 class DerivedTarget(Target):
     def __init__(self, leaf_target, base_targets, app_config):
         ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
@@ -190,12 +187,12 @@ class DerivedTarget(Target):
                    installed_linked = leaf_target.installed_linked,
             latest_suitable_version = leaf_target.latest_suitable_version
         )
-        
+
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
         self.app_config = app_config
 
-        
+
     # override truthiness to test validity of the entire hierarchy:
     def __nonzero__(self):
         for t in self.hierarchy:
@@ -249,7 +246,7 @@ class DerivedTarget(Target):
         return [
             os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy if 'toolchain' in x.description
         ]
-    
+
     @classmethod
     def addBuildOptions(cls, parser):
         parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
@@ -446,7 +443,7 @@ class DerivedTarget(Target):
                 return None
         logging.error('could not find program "%s" to debug' %  program)
         return None
-    
+
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
@@ -527,7 +524,7 @@ class DerivedTarget(Target):
                     )
                 else:
                     daemon = None
-                
+
                 cmd = [
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
@@ -556,7 +553,7 @@ class DerivedTarget(Target):
                         daemon.terminate()
                     except OSError as e:
                         pass
-    
+
     @fsutils.dropRootPrivs
     def test(self, cwd, test_command, filter_command, forward_args):
         # we assume that test commands are relative to the current directory.

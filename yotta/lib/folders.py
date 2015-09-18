@@ -10,8 +10,6 @@
 # standard library modules, , ,
 import os
 import sys
-# fsutils, , misc filesystem utils, internal
-import fsutils
 
 def prefix():
     if 'YOTTA_PREFIX' in os.environ:

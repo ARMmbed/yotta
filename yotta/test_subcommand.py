@@ -10,8 +10,6 @@ import re
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
 # Target, , represents an installed target, internal
 from .lib import target
 # fsutils, , misc filesystem utils, internal
@@ -131,7 +129,7 @@ def execCommand(args, following_args):
 
 
     builddir = os.path.join(cwd, 'build', target.getName())
- 
+
     # get the list of tests we need to run, if --all is specified we also run
     # the tests for all of our submodules, otherwise we just run the tests for
     # this module.
@@ -174,6 +172,6 @@ def execCommand(args, following_args):
                 passed += 1
     if not args.list_only:
         logging.info("tests complete: %d passed, %d failed", passed, failed)
-    
+
     return returncode
 

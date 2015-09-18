@@ -119,7 +119,7 @@ class TestCLITest(unittest.TestCase):
             with open(os.path.join(path_dir, file_name), 'w') as f:
                 f.write(contents)
         return test_dir
-    
+
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_tests(self):
         test_dir = self.writeTestFiles(Test_Tests, True)
@@ -158,7 +158,7 @@ class TestCLITest(unittest.TestCase):
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_testOutputFilterNotFound(self):
         test_dir = self.writeTestFiles(Test_Fitler_NotFound, True)
-        stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir) 
+        stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir)
         if statuscode == 0:
             print(stdout)
             print(stderr)

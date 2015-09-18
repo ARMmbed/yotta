@@ -8,16 +8,11 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
-from collections import namedtuple
 import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
-from yotta.lib import version
-from yotta.lib import settings
-from yotta import install
 
 
 Test_Target = "x86-osx-native,*"

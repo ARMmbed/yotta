@@ -8,15 +8,12 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
-from collections import namedtuple
 import tempfile
 
 # internal modules:
-from yotta.lib import sourceparse
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
-from yotta.lib import component 
+from yotta.lib import component
 from .cli import cli
 
 Test_Files = {
@@ -119,7 +116,7 @@ class TestPackIgnores(unittest.TestCase):
             mkDirP(path_dir)
             with open(os.path.join(path_dir, file_name), 'w') as f:
                 f.write(contents)
-        
+
     def tearDown(self):
         rmRf(self.test_dir)
 
@@ -165,7 +162,7 @@ class TestPackIgnores(unittest.TestCase):
         self.assertNotIn('ignoredbyfname', stdout)
         self.assertNotIn('someothertest', stdout)
         self.assertNotIn('sometest', stdout)
-    
+
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         if statuscode != 0:

@@ -4,10 +4,8 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import argparse
 import logging
 import os
-import re
 
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils

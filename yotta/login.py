@@ -22,7 +22,7 @@ def addOptions(parser):
 def execCommand(args, following_args):
     if args.apikey:
         registry_access.setAPIKey(args.registry, args.apikey)
-    
+
     try:
         return auth.authorizeUser(args.registry, provider=None, interactive=args.interactive)
     except auth.AuthTimedOut as e:

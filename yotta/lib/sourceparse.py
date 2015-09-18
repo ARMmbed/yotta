@@ -84,6 +84,6 @@ def parseSourceURL(source_url):
     alternate_github_match = re.match('([a-z0-9_-]+/[a-z0-9_-]+) *@?([~^><=.0-9a-z\*-]*)', source_url, re.I)
     if alternate_github_match:
         return VersionSource('github', alternate_github_match.group(0), alternate_github_match.group(1))
-    
+
     raise ValueError("Invalid version source url: \"%s\"" % (source_url))
 

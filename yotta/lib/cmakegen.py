@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import string
 import os
 import logging
 import re
@@ -106,11 +105,11 @@ class CMakeGen(object):
 
         for name, dep in dependencies.items():
             # if dep is a test dependency, then it might not be required (if
-            # we're not building tests). We don't actually know at this point 
+            # we're not building tests). We don't actually know at this point
             if not dep:
                 if dep.isTestDependency():
                     logger.debug('Test dependency "%s" of "%s" is not installed.' % (name, component))
-                else: 
+                else:
                     yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
         # ensure this component is assumed to have been installed before we
         # check for its dependencies, in case it has a circular dependency on
@@ -227,7 +226,7 @@ class CMakeGen(object):
 
         logger.debug('target configuration data: %s', self.target.getMergedConfig())
         definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
-        
+
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
 
         for k, v in definitions:
@@ -239,7 +238,7 @@ class CMakeGen(object):
                 set_definitions += 'set(%s TRUE)\n' % k
 
         add_defs_header += '\n// version definitions\n'
-        
+
         for dep in list(all_dependencies.values()) + [component]:
             add_defs_header += "#define YOTTA_%s_VERSION_STRING \"%s\"\n" % (sanitizePreprocessorSymbol(dep.getName()), str(dep.getVersion()))
             add_defs_header += "#define YOTTA_%s_VERSION_MAJOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().major())
@@ -310,7 +309,7 @@ class CMakeGen(object):
             built for this component, but will not already have been built for
             another component.
         '''
-        
+
         set_definitions = ''
         if self.build_info_include_file is None:
             assert(toplevel)
@@ -392,9 +391,9 @@ class CMakeGen(object):
                 add_own_subdirs.append(
                     (os.path.join(builddir, f), os.path.join(builddir, f))
                 )
-            
+
             # from now on, completely forget that this component had any tests
-            # if it is itself a test dependency: 
+            # if it is itself a test dependency:
             if component.isTestDependency():
                 test_subdirs = []
 
@@ -416,7 +415,7 @@ class CMakeGen(object):
         })
         toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
         self._writeFile(toolchain_file_path, file_contents)
-        
+
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
@@ -437,7 +436,7 @@ class CMakeGen(object):
                  "active_dependencies": active_dependencies
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
-    
+
     def createDummyLib(self, component, builddir, link_dependencies):
         safe_name        = sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name

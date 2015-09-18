@@ -16,7 +16,7 @@ from yotta.lib.fsutils import rmRf
 
 class TestSettings(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp() 
+        self.test_dir = tempfile.mkdtemp()
         test_files = [
             ('1.json', '{"a":{"b":{"c":"1-value"}}}'),
             ('2.json', '{"a":{"b":{"c":"2-value"}, "b2":"2-value"}}'),
@@ -73,7 +73,7 @@ class TestSettings(unittest.TestCase):
         p.set('someLongNameHere_etc_etc.with.a.path', False, filename=self.filenames[1])
         p.set('someLongNameHere_etc_etc.with.a.path', 7, filename=self.filenames[2])
         p.set('someLongNameHere_etc_etc.with.another.path', 7, filename=self.filenames[2])
-        
+
         # NB: only write settings to the first file
         p.write()
 

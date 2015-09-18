@@ -9,7 +9,7 @@ import re
 import logging
 import os
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # settings, , load and save settings, internal
@@ -70,7 +70,7 @@ def displayCurrentTarget(args):
     )
     for error in errors:
         logging.error(error)
-    
+
     if derived_target is None:
         line = BRIGHT + RED + args.target + u' missing' + RESET
     else:

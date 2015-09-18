@@ -43,7 +43,7 @@ def execCommand(args, following_args):
     else:
         # only needed separate objects in order to display errors
         p = (c or t)
-    
+
     if args.action:
         try:
             if not p.vcsIsClean():
