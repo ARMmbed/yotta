@@ -37,6 +37,7 @@ def sanitizeSymbol(sym):
 jinja_environment.filters['replaceBackslashes'] = replaceBackslashes
 jinja_environment.filters['sanitizePreprocessorSymbol'] = sanitizePreprocessorSymbol
 jinja_environment.globals['list'] = list
+jinja_environment.globals['pathJoin'] = os.path.join
 
 class SourceFile(object):
     def __init__(self, fullpath, relpath, lang):
