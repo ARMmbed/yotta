@@ -207,6 +207,8 @@ def _tarballURL(namespace, name, version, registry=None):
         registry, namespace, name, version
     )
 
+@_friendlyAuthError
+@_handleAuth
 def _getTarball(url, directory, sha256):
     logger.debug('registry: get: %s' % url)
 
