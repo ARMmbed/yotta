@@ -140,6 +140,23 @@ def _friendlyAuthError(fn):
             raise
     return wrapped
 
+def _raiseUnavailableFor401(message):
+    ''' Returns a decorator to swallow a requests exception for modules that
+        are not accessible without logging in, and turn it into an Unavailable
+        exception.
+    '''
+    def __raiseUnavailableFor401(fn):
+        def wrapped(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == requests.codes.unauthorized:
+                    raise access_common.Unavailable(message)
+                else:
+                    raise
+        return wrapped
+    return __raiseUnavailableFor401
+
 def _swallowRequestExceptions(fail_return=None):
     def __swallowRequestExceptions(fn):
         ''' Decorator to swallow known exceptions: use with _friendlyAuthError,
@@ -207,6 +224,7 @@ def _tarballURL(namespace, name, version, registry=None):
         registry, namespace, name, version
     )
 
+@_raiseUnavailableFor401("dependency is not available without logging in")
 @_friendlyAuthError
 @_handleAuth
 def _getTarball(url, directory, sha256):
