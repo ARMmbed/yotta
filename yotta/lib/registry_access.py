@@ -318,12 +318,29 @@ def _getPrivateKeyObject(registry=None):
             privatekey_der, None, default_backend()
         )
 
+_yotta_version = None
+def _getYottaVersion():
+    global _yotta_version
+    if _yotta_version is None:
+        import pkg_resources
+        _yotta_version = pkg_resources.require("yotta")[0].version
+    return _yotta_version
+
+def _getYottaClientUUID():
+    import uuid
+    current_uuid = settings.get('uuid')
+    if current_uuid is None:
+        current_uuid = u'%s' % uuid.uuid4()
+        settings.set('uuid', current_uuid)
+    return current_uuid
 
 def _headersForRegistry(registry):
     registry = registry or Registry_Base_URL
     auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
     r = {
-        'Authorization': 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token,
+        'X-Yotta-Client-Version': _getYottaVersion(),
+        'X-Yotta-Client-ID': _getYottaClientUUID()
     }
     if registry == Registry_Base_URL:
         return r
