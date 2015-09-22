@@ -103,6 +103,46 @@ build system may also define other build artifacts. In this case take care to
 ensure that you name them in a way that minimizes the likelihood of name
 collisions with other modules.
 
+### <a href="#cmakelists" name="cmakelists">#</a> Places CMake Rules Can be Defined
+
+There are various places you can define CMake rules to control the build, these
+each have different effects:
+
+ * **`./CMakeLists.txt` (in the module root)**: if you define a
+   `CMakeLists.txt` file in the root of your module or executable, then yotta
+   completely delegates building your module to this file.
+ * **`./source/CMakeLists.txt`**: defining a `CMakeLists.txt` file in the
+   source directory replaces yotta's default build rules for your library or
+   executable, but yotta will still generate default rules for yout test
+   directory (if any).
+ * **`./source/<anything>.cmake`**: any .cmake files found in the source
+   directory will be included at the *end* of the yotta-generated build rules
+   for the source directory. If you want to make a very simple modification
+   (such as definining a new preprocessor macro that your module needs), then
+   this is the best way to do it. 
+ * **`./test/CMakeLists.txt`**: defining a `CMakeLists.txt` file in the
+   test directory replaces yotta's default build rules for your tests. yotta
+   will build your library or executable from the contents of the source
+   directory as normal.
+ * **`./<anything>/CMakeLists.txt`**: Any subdirectory with a `CMakeLists.txt`
+   file will be included in the build (unless it is ignored in the
+   .yotta_ignore file). There aren't very many good reasons to do this.
+
+
+### <a href="#cmake-definitions" name="cmake-definitions">#</a> Definitions Available in CMake Lists
+
+yotta makes all the definitions which are available to the preprocessor
+available to CMake scripts (including, for example, the path to the build
+information header, and the definitions derived from the config information).
+
+In addition, several other definitions are available, including:
+
+ * `YOTTA_CONFIG_MERGED_JSON_FILE`: This expands to the full path of a file
+   where the current yotta config information has been written. If you want to
+   use the config information for advanced pre-build steps (such as including
+   portions of it in the executable in a parseable form), then this is the file
+   you should read the config information from.
+
 
 ## <a href="#build-products" name="build-products">#</a> Build Products
 
