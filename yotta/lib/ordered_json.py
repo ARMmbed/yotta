@@ -28,3 +28,6 @@ def dump(path, obj):
 
 def loads(string):
     return json.loads(string, object_pairs_hook=OrderedDict)
+
+def dumps(obj):
+    return json.dumps(obj, indent=2, separators=(',', ': '))
