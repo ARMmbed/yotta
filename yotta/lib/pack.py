@@ -171,6 +171,9 @@ class Pack(object):
             #    raise InvalidDescription('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
+    def getRegistryNamespace(self):
+        raise NotImplementedError("must be implemented by subclass")
+
     def exists(self):
         return os.path.exists(self.description_filename)
 

@@ -30,8 +30,6 @@ class VCS(object):
     def cloneToDirectory(cls, remote, directory, tag=None):
         raise NotImplementedError()
 
-    def isClean(self):
-        raise NotImplementedError()
     def commit(self, message, tag=None):
         raise NotImplementedError()
     def isClean(self):

@@ -74,7 +74,7 @@ argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubPars
 class FastVersionAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
         import pkg_resources
-        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n')
+        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
         sys.exit(0)
 
 

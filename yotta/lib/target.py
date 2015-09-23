@@ -113,7 +113,8 @@ def getDerivedTarget(
         else:
             target_hierarchy.append(t)
             previous_name = dspec.name
-            dspec = t.baseTargetSpec()
+            assert(isinstance(t, Target))
+            dspec = t.baseTargetSpec() #pylint: disable=no-member
             if not leaf_target:
                 leaf_target = t
             if dspec is None:
