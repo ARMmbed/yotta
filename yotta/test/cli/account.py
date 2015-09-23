@@ -25,9 +25,6 @@ Test_Module_JSON = '''{
 }
 '''
 
-Test_User_Name = 'yottatest'
-Test_User_Password = 'thispasswordobviouslyisntsecret'
-
 def loggedout(fn):
     # decorator to ensure that we're logged out before running a function
     @functools.wraps(fn)
