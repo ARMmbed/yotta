@@ -18,6 +18,8 @@ from jinja2 import Environment, FileSystemLoader
 import fsutils
 # validate, , validate various things, internal
 import validate
+# ordered_json, , read/write ordered json, internal
+import ordered_json
 
 Template_Dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
 
@@ -225,8 +227,9 @@ class CMakeGen(object):
             if '*' not in target:
                 definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
 
-        logger.debug('target configuration data: %s', self.target.getMergedConfig())
-        definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
+        merged_config = self.target.getMergedConfig()
+        logger.debug('target configuration data: %s', merged_config)
+        definitions += self._definitionsForConfig(merged_config, ['YOTTA', 'CFG'])
 
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
 
@@ -250,12 +253,19 @@ class CMakeGen(object):
         # defines... this is compiler specific, but currently testing it
         # out for gcc-compatible compilers only:
         config_include_file = os.path.join(builddir, 'yotta_config.h')
+        config_json_file    = os.path.join(builddir, 'yotta_config.json')
+        set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"%s\")\n' % replaceBackslashes(os.path.abspath(config_json_file))
+
         self._writeFile(
             config_include_file,
             '#ifndef __YOTTA_CONFIG_H__\n'+
             '#define __YOTTA_CONFIG_H__\n'+
             add_defs_header+
             '#endif // ndef __YOTTA_CONFIG_H__\n'
+        )
+        self._writeFile(
+            config_json_file,
+            ordered_json.dumps(merged_config)
         )
         return (config_include_file, set_definitions)
 
