@@ -18,6 +18,8 @@ from jinja2 import Environment, FileSystemLoader
 import fsutils
 # validate, , validate various things, internal
 import validate
+# ordered_json, , read/write ordered json, internal
+import ordered_json
 
 Template_Dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
 
@@ -225,8 +227,9 @@ class CMakeGen(object):
             if '*' not in target:
                 definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
 
-        logger.debug('target configuration data: %s', self.target.getMergedConfig())
-        definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
+        merged_config = self.target.getMergedConfig()
+        logger.debug('target configuration data: %s', merged_config)
+        definitions += self._definitionsForConfig(merged_config, ['YOTTA', 'CFG'])
 
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
 
@@ -250,12 +253,19 @@ class CMakeGen(object):
         # defines... this is compiler specific, but currently testing it
         # out for gcc-compatible compilers only:
         config_include_file = os.path.join(builddir, 'yotta_config.h')
+        config_json_file    = os.path.join(builddir, 'yotta_config.json')
+        set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"%s\")\n' % replaceBackslashes(os.path.abspath(config_json_file))
+
         self._writeFile(
             config_include_file,
             '#ifndef __YOTTA_CONFIG_H__\n'+
             '#define __YOTTA_CONFIG_H__\n'+
             add_defs_header+
             '#endif // ndef __YOTTA_CONFIG_H__\n'
+        )
+        self._writeFile(
+            config_json_file,
+            ordered_json.dumps(merged_config)
         )
         return (config_include_file, set_definitions)
 
@@ -364,6 +374,10 @@ class CMakeGen(object):
             add_own_subdirs = []
             for f in manual_subdirs:
                 if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
+                    # if this module is a test dependency, then don't recurse
+                    # to building its own tests.
+                    if f in test_subdirs and component.isTestDependency():
+                        continue
                     add_own_subdirs.append(
                         (os.path.join(component.path, f), os.path.join(builddir, f))
                     )
@@ -408,7 +422,7 @@ class CMakeGen(object):
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
-        file_contents = template.render({
+        file_contents = template.render({  #pylint: disable=no-member
                                # toolchain files are provided in hierarchy
                                # order, but the template needs them in reverse
                                # order (base-first):
@@ -420,7 +434,7 @@ class CMakeGen(object):
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
-        file_contents = template.render({
+        file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                      "set_definitions": set_definitions,
@@ -447,7 +461,7 @@ class CMakeGen(object):
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
 
-        dummy_cmakelists = dummy_template.render({
+        dummy_cmakelists = dummy_template.render({ #pylint: disable=no-member
                    "cfile_name": dummy_cfile_name,
                       "libname": component.getName(),
             "link_dependencies": link_dependencies
@@ -513,7 +527,7 @@ class CMakeGen(object):
 
         test_template = jinja_environment.get_template('test_CMakeLists.txt')
 
-        file_contents = test_template.render({
+        file_contents = test_template.render({ #pylint: disable=no-member
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
             'link_dependencies':link_dependencies,
@@ -563,7 +577,7 @@ class CMakeGen(object):
 
             subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
 
-            file_contents = subdir_template.render({
+            file_contents = subdir_template.render({ #pylint: disable=no-member
                     'source_directory': os.path.join(component.path, dirname),
                  "config_include_file": self.config_include_file,
                           'executable': executable,

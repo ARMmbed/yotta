@@ -18,6 +18,8 @@ import colorama
 import registry_access
 # settings, , load and save settings, internal
 import settings
+# globalconf, share global arguments between modules, internal
+import yotta.lib.globalconf as globalconf
 
 logger = logging.getLogger('access')
 
@@ -41,6 +43,13 @@ def _openBrowserLogin(provider=None, registry=None):
     webbrowser.open(registry_access.getLoginURL(provider=provider, registry=registry))
 
 def authorizeUser(registry=None, provider='github', interactive=True):
+    if not globalconf.get('plain'):
+        DIM    = colorama.Style.DIM    #pylint: disable=no-member
+        BRIGHT = colorama.Style.BRIGHT #pylint: disable=no-member
+        NORMAL = colorama.Style.NORMAL #pylint: disable=no-member
+    else:
+        DIM = BRIGHT = NORMAL = u''
+
     # poll once with any existing public key, just in case a previous login
     # attempt was interrupted after it completed
     try:
@@ -66,22 +75,22 @@ def authorizeUser(registry=None, provider='github', interactive=True):
 
         if os.name == 'nt' or os.environ.get('DISPLAY'):
             input(
-                colorama.Style.BRIGHT+
+                BRIGHT+
                 'Press enter to continue.\n'+
-                colorama.Style.DIM+
+                DIM+
                 'Your browser will open to complete login.'+
-                colorama.Style.NORMAL+'\n'
+                NORMAL+'\n'
             )
 
             _openBrowserLogin(provider=provider, registry=registry)
 
             sys.stdout.write('waiting for response...')
             sys.stdout.write(
-                colorama.Style.DIM+
+                DIM+
                 '\nIf you are unable to use a browser on this machine, please copy and '+
                 'paste this URL into a browser:\n'+
                 registry_access.getLoginURL(provider=provider, registry=registry)+'\n'+
-                colorama.Style.NORMAL
+                NORMAL
             )
             sys.stdout.flush()
         else:

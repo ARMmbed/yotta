@@ -17,7 +17,7 @@ import os
 try:
     from urllib import quote as quoteURL
 except ImportError:
-    from urllib.parse import quote as quoteURL
+    from urllib.parse import quote as quoteURL #pylint: disable=no-name-in-module,import-error
 
 # requests, apache2
 import requests
@@ -114,7 +114,7 @@ def _handleAuth(fn):
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == requests.codes.unauthorized:
+            if e.response.status_code == requests.codes.unauthorized: #pylint: disable=no-member
                 logger.debug('%s unauthorised', fn)
                 # any provider is sufficient for registry auth
                 auth.authorizeUser(provider=None, interactive=interactive)
@@ -133,12 +133,29 @@ def _friendlyAuthError(fn):
         try:
             return fn(*args, **kwargs)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == requests.codes.unauthorized:
+            if e.response.status_code == requests.codes.unauthorized: #pylint: disable=no-member
                 logger.error('insufficient permission')
             else:
                 logger.error('server returned status %s: %s', e.response.status_code, e.response.text)
             raise
     return wrapped
+
+def _raiseUnavailableFor401(message):
+    ''' Returns a decorator to swallow a requests exception for modules that
+        are not accessible without logging in, and turn it into an Unavailable
+        exception.
+    '''
+    def __raiseUnavailableFor401(fn):
+        def wrapped(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == requests.codes.unauthorized:
+                    raise access_common.Unavailable(message)
+                else:
+                    raise
+        return wrapped
+    return __raiseUnavailableFor401
 
 def _swallowRequestExceptions(fail_return=None):
     def __swallowRequestExceptions(fn):
@@ -207,6 +224,9 @@ def _tarballURL(namespace, name, version, registry=None):
         registry, namespace, name, version
     )
 
+@_raiseUnavailableFor401("dependency is not available without logging in")
+@_friendlyAuthError
+@_handleAuth
 def _getTarball(url, directory, sha256):
     logger.debug('registry: get: %s' % url)
 
@@ -318,12 +338,29 @@ def _getPrivateKeyObject(registry=None):
             privatekey_der, None, default_backend()
         )
 
+_yotta_version = None
+def _getYottaVersion():
+    global _yotta_version
+    if _yotta_version is None:
+        import pkg_resources
+        _yotta_version = pkg_resources.require("yotta")[0].version
+    return _yotta_version
+
+def _getYottaClientUUID():
+    import uuid
+    current_uuid = settings.get('uuid')
+    if current_uuid is None:
+        current_uuid = u'%s' % uuid.uuid4()
+        settings.set('uuid', current_uuid)
+    return current_uuid
 
 def _headersForRegistry(registry):
     registry = registry or Registry_Base_URL
     auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
     r = {
-        'Authorization': 'Bearer %s' % auth_token
+        'Authorization': 'Bearer %s' % auth_token,
+        'X-Yotta-Client-Version': _getYottaVersion(),
+        'X-Yotta-Client-ID': _getYottaClientUUID()
     }
     if registry == Registry_Base_URL:
         return r
@@ -415,7 +452,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
     elif readme_file_ext == '':
         readme_section_name = 'readme'
     else:
-        raise ValueError('unsupported readme type: "%s"' % readne_file_ext)
+        raise ValueError('unsupported readme type: "%s"' % readme_file_ext)
 
     # description file is in place as text (so read it), tar file is a file
     body = OrderedDict([('metadata', (None, description_file.read(),'application/json')),
@@ -675,10 +712,10 @@ def getAuthData(registry=None):
         logger.debug(str(e))
         return None
 
-    if response.status_code == requests.codes.unauthorized:
+    if response.status_code == requests.codes.unauthorized: #pylint: disable=no-member
         logger.debug('Unauthorised')
         return None
-    elif response.status_code == requests.codes.not_found:
+    elif response.status_code == requests.codes.not_found: #pylint: disable=no-member
         logger.debug('Not Found')
         return None
 

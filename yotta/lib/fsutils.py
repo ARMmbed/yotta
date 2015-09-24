@@ -58,7 +58,7 @@ def rmRf(path):
             _rmRfNoRetry(path)
             break
         # ... ultimately leading to this error ...
-        except WindowsError as e:
+        except WindowsError as e: #pylint: disable=undefined-variable
             if e.errno != 145: # != Directory not empty
                 raise
             # ... trying again should fix the problem

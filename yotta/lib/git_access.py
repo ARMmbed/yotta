@@ -25,7 +25,7 @@ class GitCloneVersion(version.Version):
     def __init__(self, semver, tag, working_copy):
         self.working_copy = working_copy
         self.tag = tag
-        return super(GitCloneVersion, self).__init__(semver)
+        super(GitCloneVersion, self).__init__(semver)
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))

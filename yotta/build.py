@@ -128,5 +128,4 @@ def installAndBuild(args, following_args):
        'generate_status': generate_status,
         'install_status': install_status
     }
-    return errcode
 

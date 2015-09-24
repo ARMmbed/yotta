@@ -75,7 +75,7 @@ def _handleAuth(fn):
             except github.BadCredentialsException:
                 logger.debug("github: bad credentials")
                 auth.authorizeUser(provider='github')
-                logger.debug('trying with authtoken:', settings.getProperty('github', 'authtoken'))
+                logger.debug('trying with authtoken: %s', settings.getProperty('github', 'authtoken'))
                 return fn(*args, **kwargs)
             except github.UnknownObjectException:
                 logger.debug("github: unknown object")

@@ -69,7 +69,7 @@ def dropRootPrivs(fn):
             if msg[0] == 'finish':
                 # if the command raised an exception, propagate this:
                 if e is not None:
-                    raise e
+                    raise e #pylint: disable=raising-bad-type
                 return r
 
     return wrapped_fn
