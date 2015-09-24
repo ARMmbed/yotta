@@ -374,6 +374,10 @@ class CMakeGen(object):
             add_own_subdirs = []
             for f in manual_subdirs:
                 if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
+                    # if this module is a test dependency, then don't recurse
+                    # to building its own tests.
+                    if f in test_subdirs and component.isTestDependency():
+                        continue
                     add_own_subdirs.append(
                         (os.path.join(component.path, f), os.path.join(builddir, f))
                     )
