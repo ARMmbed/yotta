@@ -539,7 +539,7 @@ class Component(pack.Pack):
 
             r = access.satisfyVersionByInstalling(dspec.name, dspec.version_req, self.modulesPath())
             if not r:
-                logger.error('could not install %s' % name)
+                logger.error('could not install %s' % dspec.name)
             if r is not None:
                 r.setTestDependency(dspec.is_test_dependency)
             return r

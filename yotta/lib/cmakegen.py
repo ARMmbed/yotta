@@ -418,7 +418,7 @@ class CMakeGen(object):
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
-        file_contents = template.render({
+        file_contents = template.render({  #pylint: disable=no-member
                                # toolchain files are provided in hierarchy
                                # order, but the template needs them in reverse
                                # order (base-first):
@@ -430,7 +430,7 @@ class CMakeGen(object):
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
-        file_contents = template.render({
+        file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                      "set_definitions": set_definitions,
@@ -457,7 +457,7 @@ class CMakeGen(object):
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
 
-        dummy_cmakelists = dummy_template.render({
+        dummy_cmakelists = dummy_template.render({ #pylint: disable=no-member
                    "cfile_name": dummy_cfile_name,
                       "libname": component.getName(),
             "link_dependencies": link_dependencies
@@ -523,7 +523,7 @@ class CMakeGen(object):
 
         test_template = jinja_environment.get_template('test_CMakeLists.txt')
 
-        file_contents = test_template.render({
+        file_contents = test_template.render({ #pylint: disable=no-member
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
             'link_dependencies':link_dependencies,
@@ -573,7 +573,7 @@ class CMakeGen(object):
 
             subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
 
-            file_contents = subdir_template.render({
+            file_contents = subdir_template.render({ #pylint: disable=no-member
                     'source_directory': os.path.join(component.path, dirname),
                  "config_include_file": self.config_include_file,
                           'executable': executable,

@@ -25,7 +25,7 @@ class HGCloneVersion(version.Version):
     def __init__(self, tag, working_copy):
         self.working_copy = working_copy
         self.tag = tag
-        return super(HGCloneVersion, self).__init__(tag)
+        super(HGCloneVersion, self).__init__(tag)
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from hg repo %s to %s' % (self.version, self.working_copy.directory, directory))
