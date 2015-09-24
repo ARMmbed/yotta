@@ -7,7 +7,7 @@ dependencies:
 
     # setup git so it doesn't prompt
     - git config --global user.email "test@yottabuild.org"
-    - git config --global user.name "Yotta Travis-CI Bot
+    - git config --global user.name "Yotta Travis-CI Bot"
 
     # get an up-to-date CMake
     - sudo apt-get remove -y cmake
