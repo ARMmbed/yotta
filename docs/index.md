@@ -218,9 +218,14 @@ You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/
 
 <br>
 <a name="installing-on-windows"></a>
-## Installing On Windows
+To install yotta on windows you can either use the one shot windows installer or install all the dependencies and yotta manually.
+## yotta Windows Installer
+ 1. Download the latest [**yotta windows installer**](https://github.com/ARMmbed/yotta_windows_installer/releases/latest).
+ 2. Run the installer. 
+ 3. Click on `Run Yotta` shortcut on desktop or in start menu to run session with yotta path temporarily pre-pended to system path. 
 
- 1. **Install [python](https://www.python.org/downloads/release/python-279/)**. You
+## Manual Windows Install
+1. **Install [python](https://www.python.org/downloads/release/python-279/)**. You
     **must** install [python
     2.7.9](https://www.python.org/downloads/release/python-279/) for yotta to
     work on windows. Select either the [x86-64
@@ -233,35 +238,24 @@ You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/
     **During installation, be sure to select the "add to path" option.** This
     will let you run python easily from a command prompt.
  
- 2. We have an experimental script that will install the rest of the
-    dependencies for you, but note that you still need to add some things to
-    your path (instructions [here](#windows-path)) when instructed to by the
-    script.
-
-    To use this script, download
-    [get_yotta.py](https://raw.githubusercontent.com/ARMmbed/yotta/6a652d9095303d595f316b27166677d7db8f2194/get_yotta.py),
-    then run: `python get_yotta.py` in a command prompt.
-
-    **Alternatively**, you can complete steps 3-7 manually:
-
- 3. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
+ 2. **Install [CMake](http://www.cmake.org/download/)**. yotta uses CMake to
     generate makefiles that control the build. Select the latest available
     version, currently 3.2.1 The [32-bit
     version](http://www.cmake.org/files/v3.2/cmake-3.2.1-win32-x86.exe)
     will work on all versions of windows. Be sure to check the "add cmake to
     the path for current user" option during installation.
 
- 4. **Install Ninja**, the small and extremely fast build system that yotta
+ 3. **Install Ninja**, the small and extremely fast build system that yotta
     uses. Download the release archive from the [releases
     page](https://github.com/martine/ninja/releases/download/v1.5.3/ninja-win.zip),
     and extract it to a directory (for example `C:\ninja`).
  
- 5. Add the directory you installed Ninja in to [your path](#windows-path).
+ 4. Add the directory you installed Ninja in to [your path](#windows-path).
 
- 6. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
+ 5. Install the **[arm-none-eabi-gcc](#windows-cross-compile) cross-compiler** in
     order to build software to run on embedded devices.
 
- 7. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
+ 6. Finally, **open cmd.exe and run `pip install -U yotta`** to install yotta
     itself.
 
 <a name="windows-cross-compile"></a>
