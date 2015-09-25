@@ -14,6 +14,7 @@ import argparse
 import logging
 import sys
 from functools import reduce
+import os
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -21,6 +22,12 @@ from .lib import logging_setup
 from .lib import detect
 # globalconf, share global arguments between modules, internal
 import yotta.lib.globalconf as globalconf
+
+# hook to support coverage information when yotta runs itself during tests:
+if 'COVERAGE_PROCESS_START' is os.environ:
+    import coverage
+    coverage.process_startup()
+
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
@@ -74,7 +81,7 @@ argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubPars
 class FastVersionAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
         import pkg_resources
-        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n')
+        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
         sys.exit(0)
 
 

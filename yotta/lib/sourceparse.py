@@ -10,7 +10,7 @@
 try:
     from urlparse import urlsplit
 except ImportError:
-    from urllib.parse import urlsplit
+    from urllib.parse import urlsplit #pylint: disable=no-name-in-module,import-error
 import re
 
 # version, , represent versions and specifications, internal

@@ -49,11 +49,11 @@ def addOptions(parser):
 
 def displayCurrentTarget(args):
     if not args.plain:
-        DIM    = colorama.Style.DIM
-        BRIGHT = colorama.Style.BRIGHT
-        GREEN  = colorama.Fore.GREEN
-        RED    = colorama.Fore.RED
-        RESET  = colorama.Style.RESET_ALL
+        DIM    = colorama.Style.DIM       #pylint: disable=no-member
+        BRIGHT = colorama.Style.BRIGHT    #pylint: disable=no-member
+        GREEN  = colorama.Fore.GREEN      #pylint: disable=no-member
+        RED    = colorama.Fore.RED        #pylint: disable=no-member
+        RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
     else:
         DIM = BRIGHT = GREEN = RED = RESET = u''
 

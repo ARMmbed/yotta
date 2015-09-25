@@ -278,20 +278,11 @@
                 "maxLength": 3000
             }
         },
-        "configString":{
-              "type": "string",
-           "pattern": "^\"([^\"\\\\]|\\\\.)*\"$"
-        },
-        "configToken":{
-              "type": "string",
-           "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
-        },
         "configValues":{
             "oneOf": [ 
                 {"type": "number"},
                 {"type": "boolean"},
-                {"$ref": "#/definitions/configToken"},
-                {"$ref": "#/definitions/configString"}
+                {"type": "string"}
             ]
         },
         "configData":{

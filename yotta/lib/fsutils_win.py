@@ -9,7 +9,7 @@
 # If that'll be required in the future, symlinks (CreateSymbolicLink) must be used instead
 
 # ntfsutils, 2-clause BSD, NTFS link handling, pip install ntfsutils
-import ntfsutils.junction as junction
+import ntfsutils.junction as junction #pylint: disable=import-error
 import os
 
 def dropRootPrivs(fn):
