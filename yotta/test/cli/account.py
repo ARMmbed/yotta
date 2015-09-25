@@ -150,7 +150,7 @@ class TestCLIAccount(unittest.TestCase):
         stdout, stderr, status = cli.run(['whoami'])
         self.assertIn('not logged in', stdout+stderr)
         self.assertNotEqual(status, 0)
-    
+
     # !!! FIXME: test login isn't currently working
     #@loggedin
     #def test_logoutLoggedIn(self):
