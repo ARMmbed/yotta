@@ -219,7 +219,7 @@ You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/
 <br>
 <a name="installing-on-windows"></a>
 ## Installing On Windows
- 1. ** Download the latest [yotta windows installer]**(https://github.com/ARMmbed/yotta_windows_installer/releases/latest).
+ 1. Download the latest [**yotta windows installer**](https://github.com/ARMmbed/yotta_windows_installer/releases/latest).
  2. Run the installer. 
  3. Click on `Run Yotta` shortcut on desktop or in start menu to run session with yotta path temporarily pre-pended to system path. 
 
