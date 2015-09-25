@@ -181,6 +181,7 @@ def main():
     addParser('unpublish', 'unpublish', 'Un-publish a recently published module or target.')
     addParser('login', 'login', 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', 'logout', 'Remove saved authorization token for the current user.')
+    addParser('whoami', 'whoami', 'Display who the currently logged in user is (if any).')
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
@@ -201,7 +202,8 @@ def main():
             'rm':subparser.choices['remove'],
         'unlink':subparser.choices['remove'],
          'owner':subparser.choices['owners'],
-          'lics':subparser.choices['licenses']
+          'lics':subparser.choices['licenses'],
+           'who':subparser.choices['whoami']
     }
     subparser.choices.update(short_commands)
 

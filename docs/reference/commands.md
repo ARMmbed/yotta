@@ -298,6 +298,30 @@ yotta logout
 #### Description
 Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into `yotta` on. If you wish to revoke access tokens you can do so on your GitHub account page.
 
+<a name="yotta-whoami"></a>
+## yotta whoami
+#### Synopsis
+
+```
+yotta whoami
+yotta who
+```
+
+#### Description
+Display the primary email address(es) that you are currently authenticated to.
+If you are not logged in then this will return a non-zero status code,
+otherwise the status code is 0.
+
+# Examples
+```sh
+> yotta whoami
+friend@example.com
+
+> yotta logout
+> yotta whoami
+not logged in
+```
+
 
 <a name="yotta-publish"></a>
 ## yotta publish

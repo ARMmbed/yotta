@@ -30,8 +30,8 @@ import folders
 #
 
 # constants
-user_config_file = os.path.expanduser('~/.yotta/config.json')
-dir_config_file = os.path.join('.','.yotta.json')
+user_config_file = os.path.join(folders.userSettingsDirectory(), 'config.json')
+dir_config_file  = os.path.join('.','.yotta.json')
 
 config_files = [
     dir_config_file,

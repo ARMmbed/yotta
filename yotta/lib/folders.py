@@ -22,6 +22,12 @@ def prefix():
         else:
             return '/usr/local'
 
+def userSettingsDirectory():
+    if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+        return os.environ['YOTTA_USER_SETTINGS_DIR']
+    else:
+        return os.path.expanduser('~/.yotta')
+
 def globalInstallDirectory():
     if os.name == 'nt':
         return os.path.join(prefix(), 'Lib', 'yotta_modules')

@@ -578,6 +578,24 @@ def removeOwner(namespace, name, owner, registry=None):
 
     return True
 
+def whoami(registry=None):
+    registry = registry or Registry_Base_URL
+    url = '%s/users/me' % (
+        registry
+    )
+
+    request_headers = _headersForRegistry(registry)
+
+    logger.debug('test login...')
+    response = requests.get(url, headers=request_headers)
+    if response.status_code == 401:
+        # not logged in
+        return None
+    elif response.status_code != 200:
+        logger.error('error getting user information: %s', response.error)
+        return None
+    return ', '.join(ordered_json.loads(response.text).get('primary_emails', {}).values())
+
 
 def search(query='', keywords=[], registry=None):
     ''' generator of objects returned by the search endpoint (both modules and
@@ -673,18 +691,6 @@ def getPublicKey(registry=None):
         pubkey = serialization.load_der_public_key(pubkey_der, default_backend())
     return _pubkeyWireFormat(pubkey)
 
-
-def testLogin(registry=None):
-    registry = registry or Registry_Base_URL
-    url = '%s/users/me' % (
-        registry
-    )
-
-    request_headers = _headersForRegistry(registry)
-
-    logger.debug('test login...')
-    response = requests.get(url, headers=request_headers)
-    response.raise_for_status()
 
 def getAuthData(registry=None):
     ''' Poll the registry to get the result of a completed authentication
