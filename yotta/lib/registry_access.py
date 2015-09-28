@@ -92,6 +92,41 @@ def _fingerprint(pubkey):
     return ':'.join([khash[i:i+2] for i in range(0, len(khash), 2)])
 
 
+def _retryConnectionErrors(fn):
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        attempts_remaining = 5
+        delay = 0.1
+        while True:
+            attempts_remaining -= 1
+            try:
+                return fn(*args, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                errmessage = e.message
+                import socket
+                # try to format re-packaged get-address-info exceptions
+                # into a nice message (this will be the normal exception
+                # you see if you aren't connected to the internet)
+                try:
+                    errmessage = str(e.message[1])
+                except Exception as e:
+                    pass
+                if attempts_remaining:
+                    logger.warning('connection error: %s, retrying...', errmessage)
+                else:
+                    logger.error('connection error: %s', errmessage)
+                    raise
+            except requests.exceptions.Timeout as e:
+                if attempts_remaining:
+                    logger.warning('request timed out: %s, retrying...', e.message)
+                else:
+                    logger.error('request timed out: %s', e.message)
+                    raise
+            import time
+            time.sleep(delay)
+            delay = delay * 1.6 + 0.1
+    return wrapped
+
 def _returnRequestError(fn):
     ''' Decorator that captures requests.exceptions.RequestException errors
         and returns them as an error message. If no error occurs the reture
@@ -176,6 +211,7 @@ def _getPrivateRegistryKey():
         return os.environ['YOTTA_PRIVATE_REGISTRY_API_KEY']
     return None
 
+@_retryConnectionErrors
 def _listVersions(namespace, name):
     sources = _getSources()
 
@@ -224,6 +260,7 @@ def _tarballURL(namespace, name, version, registry=None):
         registry, namespace, name, version
     )
 
+@_retryConnectionErrors
 @_raiseUnavailableFor401("dependency is not available without logging in")
 @_friendlyAuthError
 @_handleAuth
@@ -429,6 +466,7 @@ class RegistryThing(access_common.RemoteComponent):
         return 'registry'
 
 @_swallowRequestExceptions(fail_return="request exception occurred")
+@_retryConnectionErrors
 @_friendlyAuthError
 @_handleAuth
 def publish(namespace, name, version, description_file, tar_file, readme_file,
@@ -467,6 +505,7 @@ def publish(namespace, name, version, description_file, tar_file, readme_file,
     return None
 
 @_swallowRequestExceptions(fail_return="request exception occurred")
+@_retryConnectionErrors
 @_friendlyAuthError
 @_handleAuth
 def unpublish(namespace, name, version, registry=None):
@@ -489,6 +528,7 @@ def unpublish(namespace, name, version, registry=None):
     return None
 
 @_swallowRequestExceptions(fail_return=None)
+@_retryConnectionErrors
 @_friendlyAuthError
 @_handleAuth
 def listOwners(namespace, name, registry=None):
@@ -518,6 +558,7 @@ def listOwners(namespace, name, registry=None):
     return ordered_json.loads(response.text)
 
 @_swallowRequestExceptions(fail_return=None)
+@_retryConnectionErrors
 @_friendlyAuthError
 @_handleAuth
 def addOwner(namespace, name, owner, registry=None):
@@ -549,6 +590,7 @@ def addOwner(namespace, name, owner, registry=None):
 
 
 @_swallowRequestExceptions(fail_return=None)
+@_retryConnectionErrors
 @_friendlyAuthError
 @_handleAuth
 def removeOwner(namespace, name, owner, registry=None):
@@ -578,6 +620,7 @@ def removeOwner(namespace, name, owner, registry=None):
 
     return True
 
+@_retryConnectionErrors
 def whoami(registry=None):
     registry = registry or Registry_Base_URL
     url = '%s/users/me' % (
@@ -596,7 +639,7 @@ def whoami(registry=None):
         return None
     return ', '.join(ordered_json.loads(response.text).get('primary_emails', {}).values())
 
-
+@_retryConnectionErrors
 def search(query='', keywords=[], registry=None):
     ''' generator of objects returned by the search endpoint (both modules and
         targets).
@@ -691,7 +734,7 @@ def getPublicKey(registry=None):
         pubkey = serialization.load_der_public_key(pubkey_der, default_backend())
     return _pubkeyWireFormat(pubkey)
 
-
+@_retryConnectionErrors
 def getAuthData(registry=None):
     ''' Poll the registry to get the result of a completed authentication
         (which, depending on the authentication the user chose or was directed
