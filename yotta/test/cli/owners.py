@@ -35,13 +35,28 @@ Test_Module_JSON = '''{
 '''
 
 class TestCLIOwners(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp()
+        with open(os.path.join(cls.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
+        cls.saved_settings_dir = None
+        # override the settings directory, so that we can be sure we're not
+        # logged in
+        if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+            cls.saved_settings_dir = os.environ['YOTTA_USER_SETTINGS_DIR']
+        # use a directory called tmp_yotta_settings in the working directory:
+        os.environ['YOTTA_USER_SETTINGS_DIR'] = 'tmp_yotta_settings'
 
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
+        cls.test_dir = None
+        if cls.saved_settings_dir is not None:
+            os.environ['YOTTA_USER_SETTINGS_DIR'] = cls.saved_settings_dir
+            cls.saved_settings_dir = None
+        else:
+            del os.environ['YOTTA_USER_SETTINGS_DIR']
 
     # you have have to be authenticated to list owners, so currently we only
     # test that the commands fail correctly in noninteractive mode:

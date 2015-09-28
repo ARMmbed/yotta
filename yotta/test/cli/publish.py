@@ -71,12 +71,23 @@ class TestCLIPublish(unittest.TestCase):
         self.assertTrue('is private and cannot be published' in ('%s %s' % (stdout, stderr)))
 
     def test_publishNotAuthed(self):
-        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
-            f.write(Public_Module_JSON)
-        stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
-        if status != 0:
-            out = stdout+stderr
-            self.assertTrue(out.find('login required') != -1 or out.find('not module owner') != -1)
+        # ensure we're not logged in by setting a different settings directory:
+        saved_settings_dir = None
+        if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+            saved_settings_dir = os.environ['YOTTA_USER_SETTINGS_DIR']
+        os.environ['YOTTA_USER_SETTINGS_DIR'] = 'tmp_yotta_settings'
+        try:
+            with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+                f.write(Public_Module_JSON)
+            stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
+            if status != 0:
+                out = stdout+stderr
+                self.assertTrue(out.find('login required') != -1 or out.find('not module owner') != -1)
+        finally:
+            if saved_settings_dir is not None:
+                os.environ['YOTTA_USER_SETTINGS_DIR'] = saved_settings_dir
+            else:
+                del os.environ['YOTTA_USER_SETTINGS_DIR']
 
 if __name__ == '__main__':
     unittest.main()
