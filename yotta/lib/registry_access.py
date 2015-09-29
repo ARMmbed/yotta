@@ -298,7 +298,10 @@ def _isPublicRegistry(registry):
     return (registry is None) or (registry == Registry_Base_URL)
 
 def _friendlyRegistryName(registry):
-    return registry
+    if registry == Registry_Base_URL:
+        return 'the public module registry'
+    else:
+        return registry
 
 def _getPrivateKey(registry):
     if _isPublicRegistry(registry):
