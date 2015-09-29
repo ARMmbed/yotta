@@ -148,6 +148,7 @@ class CMakeGen(object):
         '''
         manual_subdirs = []
         auto_subdirs = []
+        header_subdirs = []
         bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         test_subdirs = []
         resource_subdirs = []
@@ -173,6 +174,12 @@ class CMakeGen(object):
                     # tests only supported in the `test` directory for now
                     if f in ('test',):
                         test_subdirs.append(f)
+
+            elif f == component.getName():
+                headers = self.containsSourceFiles(os.path.join(component.path, f), component)
+                if headers:
+                    header_subdirs.append((f, headers))
+
             elif f in ('resource'):
                 resource_subdirs.append(os.path.join(component.path, f))
             elif f.lower() in ('source', 'src', 'test', 'resource'):
@@ -180,6 +187,7 @@ class CMakeGen(object):
         return {
             "manual": manual_subdirs,
               "auto": auto_subdirs,
+           "headers": header_subdirs,
                "bin": bin_subdirs,
               "test": test_subdirs,
           "resource": resource_subdirs
@@ -351,9 +359,13 @@ class CMakeGen(object):
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
             depend_subdir = replaceBackslashes(os.path.join(modbuilddir, name))
-            add_depend_subdirs += 'add_subdirectory("%s" "%s")\n' % (
-                depend_subdir, depend_subdir
-            )
+            relpath = replaceBackslashes(os.path.relpath(depend_subdir, self.buildroot))
+            add_depend_subdirs += \
+                'add_subdirectory(\n' \
+                '   "%s"\n' \
+                '   "${CMAKE_BINARY_DIR}/%s"\n' \
+                ')\n' \
+                % (depend_subdir, relpath)
 
         delegate_to_existing = None
         delegate_build_dir = None
@@ -370,6 +382,7 @@ class CMakeGen(object):
             binary_subdirs      = subdirs['bin']
             test_subdirs        = subdirs['test']
             resource_subdirs    = subdirs['resource']
+            header_subdirs      = subdirs['headers']
 
             add_own_subdirs = []
             for f in manual_subdirs:
@@ -379,7 +392,7 @@ class CMakeGen(object):
                     if f in test_subdirs and component.isTestDependency():
                         continue
                     add_own_subdirs.append(
-                        (os.path.join(component.path, f), os.path.join(builddir, f))
+                        (os.path.join(component.path, f), f)
                     )
 
             # names of all directories at this level with stuff in: used to figure
@@ -399,12 +412,15 @@ class CMakeGen(object):
                         builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
                 else:
+                    for header_dir, header_files in header_subdirs:
+                        source_files.extend(header_files)
+
                     self.generateSubDirList(
                         builddir, f, source_files, component, all_subdirs,
                         immediate_dependencies, exe_name, resource_subdirs
                     )
                 add_own_subdirs.append(
-                    (os.path.join(builddir, f), os.path.join(builddir, f))
+                    (os.path.join(builddir, f), f)
                 )
 
             # from now on, completely forget that this component had any tests
@@ -434,12 +450,15 @@ class CMakeGen(object):
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
+        relpath = os.path.relpath(builddir, self.buildroot)
+
         file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                      "set_definitions": set_definitions,
                       "toolchain_file": toolchain_file_path,
                            "component": component,
+                             "relpath": relpath,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
@@ -469,7 +488,7 @@ class CMakeGen(object):
         self._writeFile(os.path.join(builddir, dummy_dirname, "CMakeLists.txt"), dummy_cmakelists)
         dummy_cfile = "void __yotta_dummy_lib_symbol_%s(){}\n" % safe_name
         self._writeFile(os.path.join(builddir, dummy_dirname, dummy_cfile_name), dummy_cfile)
-        return (os.path.join(builddir, dummy_dirname), os.path.join(builddir, dummy_dirname))
+        return (os.path.join(builddir, dummy_dirname), dummy_dirname)
 
     def writeIfDifferent(self, fname, contents):
         try:
