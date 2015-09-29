@@ -148,6 +148,7 @@ class CMakeGen(object):
         '''
         manual_subdirs = []
         auto_subdirs = []
+        header_subdirs = []
         bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         test_subdirs = []
         resource_subdirs = []
@@ -173,6 +174,12 @@ class CMakeGen(object):
                     # tests only supported in the `test` directory for now
                     if f in ('test',):
                         test_subdirs.append(f)
+
+            elif f == component.getName():
+                headers = self.containsSourceFiles(os.path.join(component.path, f), component)
+                if headers:
+                    header_subdirs.append((f, headers))
+
             elif f in ('resource'):
                 resource_subdirs.append(os.path.join(component.path, f))
             elif f.lower() in ('source', 'src', 'test', 'resource'):
@@ -180,6 +187,7 @@ class CMakeGen(object):
         return {
             "manual": manual_subdirs,
               "auto": auto_subdirs,
+           "headers": header_subdirs,
                "bin": bin_subdirs,
               "test": test_subdirs,
           "resource": resource_subdirs
@@ -374,6 +382,7 @@ class CMakeGen(object):
             binary_subdirs      = subdirs['bin']
             test_subdirs        = subdirs['test']
             resource_subdirs    = subdirs['resource']
+            header_subdirs      = subdirs['headers']
 
             add_own_subdirs = []
             for f in manual_subdirs:
@@ -403,6 +412,9 @@ class CMakeGen(object):
                         builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
                 else:
+                    for header_dir, header_files in header_subdirs:
+                        source_files.extend(header_files)
+
                     self.generateSubDirList(
                         builddir, f, source_files, component, all_subdirs,
                         immediate_dependencies, exe_name, resource_subdirs
