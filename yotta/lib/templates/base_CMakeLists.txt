@@ -106,7 +106,7 @@ add_subdirectory(
 {% for srcdir, workingdir in add_own_subdirs %}
 add_subdirectory(
     "{{ srcdir | replaceBackslashes }}"
-    "{{ workingdir | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ relpath | replaceBackslashes }}/{{ workingdir | replaceBackslashes }}"
 )
 {% endfor %}
 {% endif %}
