@@ -34,7 +34,8 @@ def _pollForAuth(registry=None):
     if tokens:
         if 'github' in tokens:
             settings.setProperty('github', 'authtoken', tokens['github'])
-        # mbed login doesn't send us a token
+        if 'mbed' in tokens:
+            settings.setProperty('mbed', 'authtoken', tokens['mbed'])
         return True
     return False
 

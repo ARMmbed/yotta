@@ -44,7 +44,6 @@ import auth
 import yotta.lib.globalconf as globalconf
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
-Registry_Auth_Audience = 'http://registry.yottabuild.org'
 Website_Base_URL  = 'http://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
@@ -775,8 +774,8 @@ def getAuthData(registry=None):
         raise AuthError(parsed_response['error'])
 
     for token in parsed_response:
-        if token['provider'] == 'github':
-            r['github'] = token['accessToken']
+        if 'provider' in token and token['provider'] and 'accessToken' in token:
+            r[token['provider']] = token['accessToken']
             break
 
     logger.debug('parsed auth tokens %s' % r);
