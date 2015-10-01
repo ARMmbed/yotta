@@ -35,7 +35,7 @@ def addOptions(parser):
     group.add_argument('--global', '-g', dest='act_globally', default=False, action='store_true',
         help='Install globally instead of in the current working directory.'
     )
-    
+
     # Deprecated options, these now do nothing! --save behavior is the default,
     # and --save-target has been removed.
     group.add_argument('--save', dest='save', action='store_true',
@@ -163,7 +163,7 @@ def installComponentAsDependency(args, current_component):
                       target = target,
         available_components = [(current_component.getName(), current_component)],
                         test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
-        
+
     )
     return checkPrintStatus(errors, components)
 
@@ -171,7 +171,7 @@ def installComponentAsDependency(args, current_component):
 def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
-    
+
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module
     github_ref_match = GitHub_Ref_RE.match(args.component)

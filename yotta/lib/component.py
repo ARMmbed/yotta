@@ -4,20 +4,15 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import json
 import os
 import logging
-import os.path as path
 from collections import OrderedDict
-import subprocess
 
 # access, , get components, internal
 import access
 import access_common
 # pool, , shared thread pool, internal
-from pool import pool
-# version, , represent versions and specifications, internal
-import version
+#from pool import pool
 # vcs, , represent version controlled directories, internal
 import vcs
 # fsutils, , misc filesystem utils, internal
@@ -40,7 +35,7 @@ Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
-Registry_Namespace = 'modules' 
+Registry_Namespace = 'modules'
 Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'module.json')
 
 logger = logging.getLogger('components')
@@ -76,14 +71,14 @@ def _truthyConfValue(v):
 class Component(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
         ''' How to use a Component:
-           
+
             Initialise it with the directory into which the component has been
             downloaded, (or with a symlink that points to a directory
             containing the component)
-           
+
             Check that 'if component:' is true, which indicates that the
             download is indeed a valid component.
-           
+
             Check that component.getVersion() returns the version you think
             you've downloaded.
 
@@ -91,7 +86,7 @@ class Component(pack.Pack):
             dependencies of the component, or component.getDependencies() to
             get Component objects (which may not be valid unless the
             dependencies have been installed) for each of the dependencies.
-           
+
         '''
         logger.log(VVVERBOSE_DEBUG, "Component: " +  path +  ' installed_linked=' + str(installed_linked))
         warn_deprecated_filename = False
@@ -128,7 +123,7 @@ class Component(pack.Pack):
             proceeds in a predictable way.
         '''
         deps = []
-        
+
         deps += [pack.DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
@@ -192,7 +187,7 @@ class Component(pack.Pack):
         if search_dirs is None:
             search_dirs = [self.modulesPath()]
         available_components = self.ensureOrderedDict(available_components)
-            
+
         components, errors = self.__getDependenciesWithProvider(
             available_components = available_components,
                      search_dirs = search_dirs,
@@ -263,7 +258,7 @@ class Component(pack.Pack):
                                         search_dirs = None,
                                              target = None,
                                      traverse_links = False,
-                                   update_installed = False,                                     
+                                   update_installed = False,
                                            provider = None,
                                                test = False,
                                          _processed = None
@@ -356,7 +351,7 @@ class Component(pack.Pack):
         _processed.add(self.getName())
         if errors:
             errors = ['Failed to satisfy dependencies of %s:' % self.path] + errors
-        need_recursion = filter(recursionFilter, components.values()) 
+        need_recursion = [x for x in filter(recursionFilter, components.values())]
         available_components.update(components)
         logger.debug('processed %s\nneed recursion: %s\navailable:%s\nsearch dirs:%s' % (self.getName(), need_recursion, available_components, search_dirs))
         if test == 'toplevel':
@@ -378,7 +373,7 @@ class Component(pack.Pack):
             components.update(dep_components)
             errors += dep_errors
         return (components, errors)
-    
+
     def provideInstalled(self,
                         dspec,
          available_components,
@@ -484,7 +479,7 @@ class Component(pack.Pack):
 
                     These directories are searched in order, and finally the
                     current directory is checked.
-                
+
                 update_installed:
                     False (default), or True: whether to check the available
                     versions of installed components, and update if a newer
@@ -499,7 +494,7 @@ class Component(pack.Pack):
                     name and it's similarTo list will be used in resolving
                     dependencies. If None, then only target-independent
                     dependencies will be installed
-                
+
                 test:
                     True, False, or 'toplevel: should test-only dependencies be
                     installed? (yes, no, or only for this module, not its
@@ -544,7 +539,7 @@ class Component(pack.Pack):
 
             r = access.satisfyVersionByInstalling(dspec.name, dspec.version_req, self.modulesPath())
             if not r:
-                logger.error('could not install %s' % name)
+                logger.error('could not install %s' % dspec.name)
             if r is not None:
                 r.setTestDependency(dspec.is_test_dependency)
             return r
@@ -558,7 +553,7 @@ class Component(pack.Pack):
                        provider = provider,
                            test = test
         )
-    
+
     def satisfyTarget(self, target_name_and_version, update_installed=False):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
@@ -575,7 +570,7 @@ class Component(pack.Pack):
         )
 
     def installedDependencies(self):
-        ''' Return true if satisfyDependencies has been called. 
+        ''' Return true if satisfyDependencies has been called.
 
             Note that this is slightly different to when all of the
             dependencies are actually satisfied, but can be used as if it means
@@ -600,7 +595,7 @@ class Component(pack.Pack):
             return {self.description['bin']: self.getName()}
         else:
             return {}
-    
+
     def licenses(self):
         ''' Return a list of licenses that apply to this module. (Strings,
             which may be SPDX identifiers)
@@ -619,7 +614,7 @@ class Component(pack.Pack):
             return [os.path.normpath(x) for x in self.description['extraIncludes']]
         else:
             return []
-    
+
     def getExtraSysIncludes(self):
         ''' Some components (e.g. libc) must export directories of header files
             into the system include search path. They do this by adding a

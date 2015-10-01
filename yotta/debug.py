@@ -9,8 +9,6 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
 
 
 def addOptions(parser):
@@ -33,7 +31,7 @@ def execCommand(args, following_args):
         return 1
 
     builddir = os.path.join(cwd, 'build', target.getName())
-    
+
     # !!! FIXME: the program should be specified by the description of the
     # current project (or a default value for the program should)
     errcode = None

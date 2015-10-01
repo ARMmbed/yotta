@@ -11,7 +11,7 @@ import os
 import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
 
 
@@ -35,31 +35,46 @@ Test_Module_JSON = '''{
 '''
 
 class TestCLIOwners(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp()
+        with open(os.path.join(cls.test_dir, 'module.json'), 'w') as f:
             f.write(Test_Module_JSON)
-        
-    def tearDown(self):
-        rmRf(self.test_dir)
+        cls.saved_settings_dir = None
+        # override the settings directory, so that we can be sure we're not
+        # logged in
+        if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+            cls.saved_settings_dir = os.environ['YOTTA_USER_SETTINGS_DIR']
+        # use a directory called tmp_yotta_settings in the working directory:
+        os.environ['YOTTA_USER_SETTINGS_DIR'] = 'tmp_yotta_settings'
+
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
+        cls.test_dir = None
+        if cls.saved_settings_dir is not None:
+            os.environ['YOTTA_USER_SETTINGS_DIR'] = cls.saved_settings_dir
+            cls.saved_settings_dir = None
+        else:
+            del os.environ['YOTTA_USER_SETTINGS_DIR']
 
     # you have have to be authenticated to list owners, so currently we only
     # test that the commands fail correctly in noninteractive mode:
 
     def test_listOwners(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'ls'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
     def test_addOwner(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'add', 'friend@example.com'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
     def test_rmOwner(self):
         stdout, stderr, statuscode = cli.run(['-n', 'owners', 'rm', 'friend@example.com'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(statuscode, 0)
+        if statuscode != 0:
+            self.assertTrue((stdout+stderr).find('login required') != -1)
 
 
 if __name__ == '__main__':

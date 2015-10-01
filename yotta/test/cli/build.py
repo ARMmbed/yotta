@@ -8,6 +8,10 @@
 import unittest
 import os
 import tempfile
+import subprocess
+import copy
+import re
+import datetime
 
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
@@ -124,7 +128,8 @@ Test_Trivial_Exe = {
     }
   ],
   "dependencies": {
-  }
+  },
+  "bin":"./source"
 }''',
 
 'source/lib.c':'''
@@ -133,6 +138,32 @@ int main(){
 }
 '''
 }
+
+Test_Build_Info = copy.copy(Test_Trivial_Exe)
+Test_Build_Info['source/lib.c'] = '''
+#include "stdio.h"
+#include YOTTA_BUILD_INFO_HEADER
+
+#define STRINGIFY(s) STRINGIFY_INDIRECT(s)
+#define STRINGIFY_INDIRECT(s) #s
+
+int main(){
+    printf("vcs ID: %s\\n", STRINGIFY(YOTTA_BUILD_VCS_ID));
+    printf("vcs clean: %d\\n", YOTTA_BUILD_VCS_CLEAN);
+    printf("build UUID: %s\\n", STRINGIFY(YOTTA_BUILD_UUID));
+    printf(
+        "build timestamp: %.4d-%.2d-%.2d-%.2d-%.2d-%.2d\\n",
+        YOTTA_BUILD_YEAR,
+        YOTTA_BUILD_MONTH,
+        YOTTA_BUILD_DAY,
+        YOTTA_BUILD_HOUR,
+        YOTTA_BUILD_MINUTE,
+        YOTTA_BUILD_SECOND
+    );
+    return 0;
+}
+
+'''
 
 Test_Tests = {
 'module.json':'''{
@@ -222,7 +253,7 @@ class TestCLIBuild(unittest.TestCase):
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
 
         rmRf(test_dir)
-    
+
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_buildTests(self):
         test_dir = self.writeTestFiles(Test_Tests, True)
@@ -236,6 +267,29 @@ class TestCLIBuild(unittest.TestCase):
         self.assertIn('test-g', stdout)
         rmRf(test_dir)
 
+    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    def test_buildInfo(self):
+        test_dir = self.writeTestFiles(Test_Build_Info, True)
+        # commit all the test files to git so that the VCS build info gets
+        # defined:
+        subprocess.check_call(['git', 'init', '-q'], cwd=test_dir)
+        subprocess.check_call(['git', 'add', '.'], cwd=test_dir)
+        subprocess.check_call(['git', 'commit', '-m', 'test build info automated commit', '-q'], cwd=test_dir)
+
+        self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+
+        build_time = datetime.datetime.utcnow()
+        output = subprocess.check_output(['./build/' + systemDefaultTarget().split(',')[0] + '/source/test-trivial-exe'], cwd=test_dir).decode()
+        self.assertIn('vcs clean: 1', output)
+
+        # check build timestamp
+        self.assertIn('build timestamp: ', output)
+        build_timestamp_s = re.search('build timestamp: (.*)\n', output)
+        self.assertTrue(build_timestamp_s)
+        build_timestamp_s = build_timestamp_s.group(1)
+        build_time_parsed = datetime.datetime.strptime(build_timestamp_s, '%Y-%m-%d-%H-%M-%S')
+        build_time_skew = build_time_parsed - build_time
+        self.assertTrue(abs(build_time_skew.total_seconds()) < 3)
 
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)

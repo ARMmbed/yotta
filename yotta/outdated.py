@@ -3,7 +3,10 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# standard library modules
+import logging
+
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # validate, , validate things, internal
@@ -38,15 +41,15 @@ def displayOutdated(modules, use_colours):
         return 0 if there is nothing to be done and nonzero otherwise
     '''
     if use_colours:
-        DIM    = colorama.Style.DIM
-        BRIGHT = colorama.Style.BRIGHT
-        YELLOW = colorama.Fore.YELLOW
-        RED    = colorama.Fore.RED
-        GREEN  = colorama.Fore.GREEN
-        RESET  = colorama.Style.RESET_ALL
+        DIM    = colorama.Style.DIM       #pylint: disable=no-member
+        BRIGHT = colorama.Style.BRIGHT    #pylint: disable=no-member
+        YELLOW = colorama.Fore.YELLOW     #pylint: disable=no-member
+        RED    = colorama.Fore.RED        #pylint: disable=no-member
+        GREEN  = colorama.Fore.GREEN      #pylint: disable=no-member
+        RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
     else:
         DIM = BRIGHT = YELLOW = RED = RESET = u''
-    
+
     status = 0
 
     for name, m in modules.items():

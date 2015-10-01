@@ -17,7 +17,7 @@ import hashlib
 # PyPi/standard library > 3.4
 # it has to be PurePath
 from pathlib import PurePath
- 
+
 # JSON Schema, pip install jsonschema, Verify JSON Schemas, MIT
 import jsonschema
 
@@ -82,7 +82,7 @@ class OptionalFileWrapper(object):
             return os.path.splitext(self.fname)[1]
         else:
             return ''
-    
+
     def __nonzero__(self):
         return bool(self.fname)
     # python 3 truthiness
@@ -148,7 +148,7 @@ class Pack(object):
         try:
             with open(os.path.join(path, self.ignore_list_fname), 'r') as ignorefile:
                 self.ignore_patterns += self._parseIgnoreFile(ignorefile)
-        except IOError as e: 
+        except IOError as e:
             if e.errno != errno.ENOENT:
                 raise
         if self.description and schema_filename and not self.path in self.schema_errors_displayed:
@@ -171,14 +171,17 @@ class Pack(object):
             #    raise InvalidDescription('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
 
+    def getRegistryNamespace(self):
+        raise NotImplementedError("must be implemented by subclass")
+
     def exists(self):
         return os.path.exists(self.description_filename)
-    
+
     def getError(self):
         ''' If this isn't a valid component/target, return some sort of
             explanation about why that is. '''
         return self.error
-    
+
     def setError(self, error):
         ''' Set an error: note that setting an error does not make the module
             invalid if it would otherwise be valid.
@@ -238,7 +241,7 @@ class Pack(object):
             return self.description['name']
         else:
             return None
-    
+
     def _parseIgnoreFile(self, f):
         r = []
         for l in f:
@@ -255,7 +258,7 @@ class Pack(object):
             ignored.
         '''
         test_path = PurePath('/', path)
-        
+
         # also check any parent directories of this path against the ignore
         # patterns:
         test_paths = tuple([test_path] + list(test_path.parents))
@@ -281,7 +284,7 @@ class Pack(object):
         ordered_json.dump(os.path.join(self.path, self.description_filename), self.description)
         if self.vcs:
             self.vcs.markForCommit(self.description_filename)
-    
+
     def generateTarball(self, file_object):
         ''' Write a tarball of the current component/target to the file object
             "file_object", which must already be open for writing at position 0
@@ -300,7 +303,7 @@ class Pack(object):
         with tarfile.open(fileobj=file_object, mode='w:gz') as tf:
             logger.info('generate archive extracting to "%s"' % archive_name)
             tf.add(self.path, arcname=archive_name, filter=filterArchive)
-    
+
     def findAndOpenReadme(self):
         files = os.listdir(self.path)
         readme_files = [x for x in files if Readme_Regex.match(x)]
@@ -356,7 +359,7 @@ class Pack(object):
                         readme_file_wrapper.extension().lower(),
                         registry=registry
                     )
-    
+
     def unpublish(self, registry=None):
         ''' Try to un-publish the current version. Return a description of any
             errors that occured, or None if successful.

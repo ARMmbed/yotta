@@ -6,7 +6,7 @@
 # standard library modules, , ,
 import logging
 import os
-import threading 
+import threading
 from collections import OrderedDict
 
 # fsutils, , misc filesystem utils, internal
@@ -30,8 +30,8 @@ import folders
 #
 
 # constants
-user_config_file = os.path.expanduser('~/.yotta/config.json')
-dir_config_file = os.path.join('.','.yotta.json')
+user_config_file = os.path.join(folders.userSettingsDirectory(), 'config.json')
+dir_config_file  = os.path.join('.','.yotta.json')
 
 config_files = [
     dir_config_file,
@@ -54,7 +54,7 @@ parser_lock = threading.Lock()
 
 # private API
 
-# class for reading JSON config files, 
+# class for reading JSON config files,
 class _JSONConfigParser(object):
     def __init__(self):
         self.configs = OrderedDict()
@@ -118,7 +118,7 @@ class _JSONConfigParser(object):
                 config[el] = OrderedDict()
                 config = config[el]
         config[path[-1]] = value
-    
+
     def write(self, filename=None):
         if filename is None:
             filename, data = self._firstConfig()
@@ -129,7 +129,7 @@ class _JSONConfigParser(object):
         dirname = os.path.dirname(filename)
         fsutils.mkDirP(dirname)
         ordered_json.dump(filename, data)
-    
+
     def _firstConfig(self):
         for fn, data in self.configs.items():
             return fn, data
@@ -182,7 +182,7 @@ def set(path, value, save_locally=False):
     with parser_lock:
         parser.set(path, value=value, filename=filename)
         parser.write(filename)
-    
+
 def setProperty(section, name, value, save_locally=False):
     set(section+'.'+name, value, save_locally)
 

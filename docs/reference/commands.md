@@ -53,6 +53,9 @@ to build the tests for all dependency modules.
  4. `yotta` instructs CMake to generate the make files / ninja files / IDE project file (depending on `--cmake-generator`)
  5. `yotta` instructs CMake to execute the build. The compiler used depends on the CMake Toolchain file provided by the active `yotta target`.
 
+For more information on the yotta build process, see the [build system
+reference](/reference/buildsystem.html).
+
 Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
@@ -294,6 +297,30 @@ yotta logout
 
 #### Description
 Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into `yotta` on. If you wish to revoke access tokens you can do so on your GitHub account page.
+
+<a name="yotta-whoami"></a>
+## yotta whoami
+#### Synopsis
+
+```
+yotta whoami
+yotta who
+```
+
+#### Description
+Display the primary email address(es) that you are currently authenticated to.
+If you are not logged in then this will return a non-zero status code,
+otherwise the status code is 0.
+
+# Examples
+```sh
+> yotta whoami
+friend@example.com
+
+> yotta logout
+> yotta whoami
+not logged in
+```
 
 
 <a name="yotta-publish"></a>

@@ -4,8 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import argparse
-import errno
 import logging
 import os
 
@@ -47,7 +45,7 @@ def execCommand(args, following_args):
         realsrc = fsutils.realpath(src)
         if src == realsrc:
             logging.warning(
-              ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET
+              ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET #pylint: disable=no-member
             )
         else:
             logging.info('%s -> %s -> %s' % (dst, src, realsrc))

@@ -45,7 +45,7 @@ class RemoteVersion(version.Version):
 
     def unpackInto(self, directory):
         raise NotImplementedError
-    
+
     def __repr__(self):
         return u'%s@%s from %s' % (self.name, self.friendly_version, self.friendly_source)
     def __str__(self):

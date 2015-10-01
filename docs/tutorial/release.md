@@ -142,3 +142,23 @@ global scope in header files, as this would pollute the global namespace.
 The `using` declaration in the example above is OK because it only imports
 names from one `mymodule::` namespace into another `mymodule::` namespace, both
 of which are under the control of the module author.
+
+
+<a name="embedded-version-numbers"></a>
+## Embedded Version Numbers
+
+yotta makes the versions of modules available to CMake, and as preprocessor
+definitions. This can be useful to include in built software so that a running
+program can be queried for its version information. The definitions are:
+
+```C
+#define YOTTA_<MODULENAME>_VERSION_STRING "0.2.3"
+#define YOTTA_<MODULENAME>_VERSION_MAJOR 0
+#define YOTTA_<MODULENAME>_VERSION_MINOR 2
+#define YOTTA_<MODULENAME>_VERSION_PATCH 3
+```
+
+These are defined for all modules in the system. Any non-alphanumeric
+characters in the module name are converted to underscores, and the module name
+is uppercase.
+

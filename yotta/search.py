@@ -5,16 +5,12 @@
 
 # standard library modules, , ,
 from __future__ import print_function
-import argparse
-import logging
-import os
 
 # Registry Access, , access packages in the registry, internal
 from .lib import registry_access
-from .lib import version
 from .lib import settings
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 def addOptions(parser):
@@ -46,11 +42,11 @@ def lengthLimit(s, l):
 def execCommand(args, following_args):
     success = False
     if not args.plain:
-        DIM    = colorama.Style.DIM
-        BRIGHT = colorama.Style.BRIGHT
-        GREEN  = colorama.Fore.GREEN
-        BLUE   = colorama.Fore.BLUE
-        RESET  = colorama.Style.RESET_ALL
+        DIM    = colorama.Style.DIM       #pylint: disable=no-member
+        BRIGHT = colorama.Style.BRIGHT    #pylint: disable=no-member
+        GREEN  = colorama.Fore.GREEN      #pylint: disable=no-member
+        BLUE   = colorama.Fore.BLUE       #pylint: disable=no-member
+        RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
     else:
         DIM = BRIGHT = GREEN = RED = RESET = u''
     count = 0

@@ -7,6 +7,7 @@
 import re
 
 # Semantic Versioning, BSD, Represent and compare version strings, pip install -e git://github.com/autopulated/python-semanticversion.git#egg=semantic_version
+# not sure why pylint can't import this...
 import semantic_version
 
 # Parse and match pure version strings and version specifications
@@ -29,7 +30,8 @@ import semantic_version
 # For full details see semantic_version documentation
 #
 
-
+class TipVersion(object):
+    pass
 
 class Version(object):
     def __init__(self, version_string, url=None):
@@ -45,22 +47,26 @@ class Version(object):
         version_string = str(version_string.strip())
         # strip of leading v or = characters, these are permitted in npm's
         # semver, and npm tags versions as v1.2.3
+        self.version = None
         if version_string.startswith('v') or version_string.startswith('='):
             self.version = semantic_version.Version(version_string[1:], partial=False)
         elif not version_string:
-            self.version = 'tip'
+            self.version = TipVersion()
         else:
             self.version = semantic_version.Version(version_string, partial=False)
         self.url = url
 
     def isTip(self):
-        return self.version == 'tip'
+        return isinstance(self.version, TipVersion)
 
     def major(self):
+        assert(not isinstance(self.version, TipVersion))
         return self.version.major
     def minor(self):
+        assert(not isinstance(self.version, TipVersion))
         return self.version.minor
     def patch(self):
+        assert(not isinstance(self.version, TipVersion))
         return self.version.patch
 
     def bump(self, bumptype):
@@ -85,7 +91,7 @@ class Version(object):
             raise ValueError('bumptype must be "major", "minor" or "patch"')
         self.version.prerelease = None
         self.version.build = None
-        
+
     def __str__(self):
         return str(self.version)
 
@@ -105,16 +111,16 @@ class Version(object):
 
         self_is_specific_ver  = isinstance(self.version, semantic_version.Version)
 
-        if self.version == 'tip' and other_is_specific_ver:
+        if isinstance(self.version, TipVersion) and other_is_specific_ver:
             return 1
-        elif (not other_is_unwrapped) and other.version == 'tip' and self_is_specific_ver:
+        elif (not other_is_unwrapped) and isinstance(other.version, TipVersion) and self_is_specific_ver:
             return -1
         elif self_is_specific_ver and other_is_specific_ver:
             if other_is_unwrapped:
                 return semantic_version.Version.__cmp__(self.version, other)
             else:
                 return semantic_version.Version.__cmp__(self.version, other.version)
-        elif self.version == 'tip' and other.version == 'tip':
+        elif isinstance(self.version, TipVersion) and isinstance(other.version, TipVersion):
             raise Exception('Comparing two "tip" versions is undefined')
         else:
             raise Exception('Unsupported version comparison: "%s" vs. "%s"' % (self.version, other.version))

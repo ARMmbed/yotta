@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import json
 import os
 import signal
 import subprocess
@@ -13,6 +12,7 @@ import string
 import traceback
 import errno
 import itertools
+import shlex
 from collections import OrderedDict
 
 # Ordered JSON, , read & write json, internal
@@ -20,8 +20,6 @@ import ordered_json
 # access, , get components, internal
 import access
 import access_common
-# version, , represent versions and specifications, internal
-import version
 # Pack, , common parts of Components/Targets, internal
 import pack
 # fsutils, , misc filesystem utils, internal
@@ -86,7 +84,7 @@ def getDerivedTarget(
         dspec = pack.DependencySpec(name, ver)
     else:
         dspec = pack.DependencySpec(target_name_and_version, "*")
-    
+
     leaf_target      = None
     previous_name    = dspec.name
     search_dirs      = [targets_path]
@@ -124,7 +122,8 @@ def getDerivedTarget(
         else:
             target_hierarchy.append(t)
             previous_name = dspec.name
-            dspec = t.baseTargetSpec()
+            assert(isinstance(t, Target))
+            dspec = t.baseTargetSpec() #pylint: disable=no-member
             if not leaf_target:
                 leaf_target = t
             if dspec is None:
@@ -157,7 +156,7 @@ class Target(pack.Pack):
                     schema_filename = Schema_File,
             latest_suitable_version = latest_suitable_version
         )
-        
+
     def baseTargetSpec(self):
         ''' returns pack.DependencySpec for the base target of this target (or
             None if this target does not inherit from another target.
@@ -168,13 +167,13 @@ class Target(pack.Pack):
         elif len(inherits) > 1:
             logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
         return None
-    
+
     def getRegistryNamespace(self):
         return Registry_Namespace
 
     def getConfig(self):
         return self.description.get('config', OrderedDict())
-    
+
 class DerivedTarget(Target):
     def __init__(self, leaf_target, base_targets, app_config):
         ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
@@ -198,12 +197,12 @@ class DerivedTarget(Target):
                    installed_linked = leaf_target.installed_linked,
             latest_suitable_version = leaf_target.latest_suitable_version
         )
-        
+
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
         self.app_config = app_config
 
-        
+
     # override truthiness to test validity of the entire hierarchy:
     def __nonzero__(self):
         for t in self.hierarchy:
@@ -257,7 +256,7 @@ class DerivedTarget(Target):
         return [
             os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy if 'toolchain' in x.description
         ]
-    
+
     @classmethod
     def addBuildOptions(cls, parser):
         parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
@@ -454,7 +453,7 @@ class DerivedTarget(Target):
                 return None
         logging.error('could not find program "%s" to debug' %  program)
         return None
-    
+
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
@@ -532,7 +531,7 @@ class DerivedTarget(Target):
                     )
                 else:
                     daemon = None
-                
+
                 cmd = [
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                     for x in self.description['debug']
@@ -561,32 +560,31 @@ class DerivedTarget(Target):
                         daemon.terminate()
                     except OSError as e:
                         pass
-    
+
     @fsutils.dropRootPrivs
-    def test(self, builddir, program, filter_command, forward_args):
-        if not ('scripts' in self.description and 'debug' in self.description['scripts']):
-            test_command = ['$program']
+    def test(self, cwd, test_command, filter_command, forward_args):
+        # we assume that test commands are relative to the current directory.
+        test_command = './' + test_command
+        if not ('scripts' in self.description and 'test' in self.description['scripts']):
+            cmd = shlex.split(test_command)
         else:
-            test_command = self.description['scripts']['test']
+            cmd = [
+                os.path.expandvars(string.Template(x).safe_substitute(program=test_command))
+                for x in self.description['scripts']['test']
+            ] + forward_args
 
         test_child = None
         test_filter = None
         try:
-            prog_path = os.path.join(builddir, program)
-
-            cmd = [
-                os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
-                for x in test_command
-            ] + forward_args
             logger.debug('running test: %s', cmd)
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = builddir, stdout = subprocess.PIPE
+                    cmd, cwd = cwd, stdout = subprocess.PIPE
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = builddir, stdin = test_child.stdout
+                        filter_command, cwd = cwd, stdin = test_child.stdout
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
@@ -608,10 +606,16 @@ class DerivedTarget(Target):
                     logger.debug("test filter exited with status %s (=fail)", returncode)
                     return 1
             else:
-                test_child = subprocess.Popen(
-                    cmd, cwd = builddir
-                )
-                logger.debug('waiting for test child')
+                try:
+                    test_child = subprocess.Popen(
+                        cmd, cwd = cwd
+                    )
+                    logger.debug('waiting for test child')
+                except OSError as e:
+                    if e.errno == errno.ENOENT:
+                        logger.error('Error: no such file or directory: "%s"', cmd[0])
+                        return 1
+                    raise
                 test_child.wait()
                 returncode = test_child.returncode
                 test_child = None
@@ -623,5 +627,5 @@ class DerivedTarget(Target):
                 _tryTerminate(test_child)
             if test_filter is not None:
                 _tryTerminate(test_filter)
-        logger.debug("test %s passed", program)
+        logger.debug("test %s passed", test_command)
         return 0

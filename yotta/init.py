@@ -50,7 +50,10 @@ def getUserInput(question, default=None, type_class=str):
             typed_value = type_class(value)
             break
         except:
-            print('"%s" isn\'t a valid "%s" value' % (value, type_class.__name__))
+            allowed_message = ''
+            if hasattr(type_class, '__allowed_message'):
+                allowed_message = type_class.__allowed_message
+            print('"%s" isn\'t a valid "%s" value.%s' % (value, type_class.__name__, allowed_message))
     return typed_value
 
 def yesNo(string):
@@ -61,6 +64,19 @@ def yesNo(string):
     else:
         raise ValueError()
 yesNo.__name__ = "Yes/No"
+yesNo.__allowed_message = ' Please reply "Yes", or "No".'
+
+def isBannedName(name):
+    return name in ('test', 'source', 'include', 'yotta_modules', 'yotta_targets')
+
+def notBannedName(s):
+    if isBannedName(s):
+        raise ValueError('invalid name');
+    else:
+        return s
+
+notBannedName.__name__ = 'module name'
+notBannedName.__allowed_message = ' Names must be lowercase, start with a letter, use only a-z0-9 and -, and not be a reserved name.'
 
 def repoObject(string):
     string = string.strip()
@@ -157,8 +173,10 @@ def initInteractive(args, c):
     default_name = c.getName()
     if not default_name:
         default_name = validate.componentNameCoerced(os.path.split(os.getcwd())[1])
+    if isBannedName(default_name):
+        default_name = 'unnamed'
 
-    c.setName(getUserInput("Enter the module name:", default_name))
+    c.setName(getUserInput("Enter the module name:", default_name, notBannedName))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
 
     c.description['description'] = getUserInput("Short description: ", current('description'))

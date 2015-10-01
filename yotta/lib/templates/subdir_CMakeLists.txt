@@ -16,6 +16,8 @@ set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
     {% endif %}
   {% endfor %}
 )
+# force dependency on the config header for {{ lang }} files, which CMake otherwise wouldn't track:
+set_property(SOURCE ${YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES} PROPERTY OBJECT_DEPENDS "{{ config_include_file | replaceBackslashes }}")
 {% endfor %}
 
 {% if resource_files %}

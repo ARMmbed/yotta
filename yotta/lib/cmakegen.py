@@ -4,7 +4,6 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
-import string
 import os
 import logging
 import re
@@ -19,6 +18,8 @@ from jinja2 import Environment, FileSystemLoader
 import fsutils
 # validate, , validate various things, internal
 import validate
+# ordered_json, , read/write ordered json, internal
+import ordered_json
 
 Template_Dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
 
@@ -38,6 +39,7 @@ def sanitizeSymbol(sym):
 jinja_environment.filters['replaceBackslashes'] = replaceBackslashes
 jinja_environment.filters['sanitizePreprocessorSymbol'] = sanitizePreprocessorSymbol
 jinja_environment.globals['list'] = list
+jinja_environment.globals['pathJoin'] = os.path.join
 
 class SourceFile(object):
     def __init__(self, fullpath, relpath, lang):
@@ -54,6 +56,9 @@ class CMakeGen(object):
         self.buildroot = directory
         logger.info("generate for target: %s" % target)
         self.target = target
+        self.config_include_file = None
+        self.build_info_include_file = None
+        self.build_uuid = None
 
     def _writeFile(self, path, contents):
         dirname = os.path.dirname(path)
@@ -103,11 +108,11 @@ class CMakeGen(object):
 
         for name, dep in dependencies.items():
             # if dep is a test dependency, then it might not be required (if
-            # we're not building tests). We don't actually know at this point 
+            # we're not building tests). We don't actually know at this point
             if not dep:
                 if dep.isTestDependency():
                     logger.debug('Test dependency "%s" of "%s" is not installed.' % (name, component))
-                else: 
+                else:
                     yield 'Required dependency "%s" of "%s" is not installed.' % (name, component)
         # ensure this component is assumed to have been installed before we
         # check for its dependencies, in case it has a circular dependency on
@@ -143,6 +148,7 @@ class CMakeGen(object):
         '''
         manual_subdirs = []
         auto_subdirs = []
+        header_subdirs = []
         bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
         test_subdirs = []
         resource_subdirs = []
@@ -168,6 +174,12 @@ class CMakeGen(object):
                     # tests only supported in the `test` directory for now
                     if f in ('test',):
                         test_subdirs.append(f)
+
+            elif f == component.getName():
+                headers = self.containsSourceFiles(os.path.join(component.path, f), component)
+                if headers:
+                    header_subdirs.append((f, headers))
+
             elif f in ('resource'):
                 resource_subdirs.append(os.path.join(component.path, f))
             elif f.lower() in ('source', 'src', 'test', 'resource'):
@@ -175,6 +187,7 @@ class CMakeGen(object):
         return {
             "manual": manual_subdirs,
               "auto": auto_subdirs,
+           "headers": header_subdirs,
                "bin": bin_subdirs,
               "test": test_subdirs,
           "resource": resource_subdirs
@@ -201,8 +214,8 @@ class CMakeGen(object):
                     v = 1 if v else 0
                 r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
         return r
-    
-    def getConfigData(self, all_dependencies, component, builddir):
+
+    def getConfigData(self, all_dependencies, component, builddir, build_info_header_path):
         ''' returns (path_to_config_header, cmake_set_definitions) '''
         add_defs_header = ''
         set_definitions = ''
@@ -212,26 +225,32 @@ class CMakeGen(object):
         definitions.append(('TARGET', sanitizePreprocessorSymbol(self.target.getName())))
         definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(self.target.getName()),None))
 
+        # make the path to the build-info header available both to CMake and
+        # in the preprocessor:
+        full_build_info_header_path = replaceBackslashes(os.path.abspath(build_info_header_path))
+        logger.debug('build info header include path: "%s"', full_build_info_header_path)
+        definitions.append(('YOTTA_BUILD_INFO_HEADER', '"'+full_build_info_header_path+'"'))
+
         for target in self.target.getSimilarTo_Deprecated():
             if '*' not in target:
                 definitions.append(('TARGET_LIKE_%s' % sanitizePreprocessorSymbol(target),None))
 
-        logger.debug('target configuration data: %s', self.target.getMergedConfig())
-        definitions += self._definitionsForConfig(self.target.getMergedConfig(), ['YOTTA', 'CFG'])
-        
+        merged_config = self.target.getMergedConfig()
+        logger.debug('target configuration data: %s', merged_config)
+        definitions += self._definitionsForConfig(merged_config, ['YOTTA', 'CFG'])
+
         add_defs_header += '// yotta config data (including backwards-compatible definitions)\n'
+
         for k, v in definitions:
             if v is not None:
-                #add_definitions += '-D%s=%s ' % (k, v)
                 add_defs_header += '#define %s %s\n' % (k, v)
                 set_definitions += 'set(%s %s)\n' % (k, v)
             else:
-                #add_definitions += '-D%s ' % k
                 add_defs_header += '#define %s\n' % k
                 set_definitions += 'set(%s TRUE)\n' % k
 
         add_defs_header += '\n// version definitions\n'
-        
+
         for dep in list(all_dependencies.values()) + [component]:
             add_defs_header += "#define YOTTA_%s_VERSION_STRING \"%s\"\n" % (sanitizePreprocessorSymbol(dep.getName()), str(dep.getVersion()))
             add_defs_header += "#define YOTTA_%s_VERSION_MAJOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().major())
@@ -242,6 +261,9 @@ class CMakeGen(object):
         # defines... this is compiler specific, but currently testing it
         # out for gcc-compatible compilers only:
         config_include_file = os.path.join(builddir, 'yotta_config.h')
+        config_json_file    = os.path.join(builddir, 'yotta_config.json')
+        set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"%s\")\n' % replaceBackslashes(os.path.abspath(config_json_file))
+
         self._writeFile(
             config_include_file,
             '#ifndef __YOTTA_CONFIG_H__\n'+
@@ -249,7 +271,55 @@ class CMakeGen(object):
             add_defs_header+
             '#endif // ndef __YOTTA_CONFIG_H__\n'
         )
+        self._writeFile(
+            config_json_file,
+            ordered_json.dumps(merged_config)
+        )
         return (config_include_file, set_definitions)
+
+    def getBuildInfo(self, sourcedir, builddir):
+        ''' Write the build info header file, and return (path_to_written_header, set_cmake_definitions) '''
+        cmake_defs = ''
+        preproc_defs = '// yotta build info, #include YOTTA_BUILD_INFO_HEADER to access\n'
+        # standard library modules
+        import datetime
+        # vcs, , represent version controlled directories, internal
+        import vcs
+
+        now = datetime.datetime.utcnow()
+        vcs = vcs.getVCS(sourcedir)
+        if self.build_uuid is None:
+            import uuid
+            self.build_uuid = uuid.uuid4()
+
+        definitions = [
+            ('YOTTA_BUILD_YEAR',   now.year,        'UTC year'),
+            ('YOTTA_BUILD_MONTH',  now.month,       'UTC month 1-12'),
+            ('YOTTA_BUILD_DAY',    now.day,         'UTC day 1-31'),
+            ('YOTTA_BUILD_HOUR',   now.hour,        'UTC hour 0-24'),
+            ('YOTTA_BUILD_MINUTE', now.minute,      'UTC minute 0-59'),
+            ('YOTTA_BUILD_SECOND', now.second,      'UTC second 0-61'),
+            ('YOTTA_BUILD_UUID',   self.build_uuid, 'unique random UUID for each build'),
+        ]
+        if vcs is not None:
+            definitions += [
+                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash'),
+                ('YOTTA_BUILD_VCS_CLEAN', int(vcs.isClean()), 'evaluates true if the version control system was clean, otherwise false')
+            ]
+
+        for d in definitions:
+            preproc_defs += '#define %s %s // %s\n' % d
+            cmake_defs   += 'set(%s "%s") # %s\n' % d
+
+        buildinfo_include_file = os.path.join(builddir, 'yotta_build_info.h')
+        self._writeFile(
+            buildinfo_include_file,
+            '#ifndef __YOTTA_BUILD_INFO_H__\n'+
+            '#define __YOTTA_BUILD_INFO_H__\n'+
+            preproc_defs+
+            '#endif // ndef __YOTTA_BUILD_INFO_H__\n'
+        )
+        return (buildinfo_include_file, cmake_defs)
 
     def generate(
             self, builddir, modbuilddir, component, active_dependencies, immediate_dependencies, all_dependencies, application, toplevel
@@ -258,6 +328,16 @@ class CMakeGen(object):
             built for this component, but will not already have been built for
             another component.
         '''
+
+        set_definitions = ''
+        if self.build_info_include_file is None:
+            assert(toplevel)
+            self.build_info_include_file, build_info_definitions = self.getBuildInfo(component.path, builddir)
+            set_definitions += build_info_definitions
+
+        if self.config_include_file is None:
+            self.config_include_file, config_definitions = self.getConfigData(all_dependencies, component, builddir, self.build_info_include_file)
+            set_definitions += config_definitions
 
         include_root_dirs = ''
         if application is not None and component is not application:
@@ -279,9 +359,13 @@ class CMakeGen(object):
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():
             depend_subdir = replaceBackslashes(os.path.join(modbuilddir, name))
-            add_depend_subdirs += 'add_subdirectory("%s" "%s")\n' % (
-                depend_subdir, depend_subdir
-            )
+            relpath = replaceBackslashes(os.path.relpath(depend_subdir, self.buildroot))
+            add_depend_subdirs += \
+                'add_subdirectory(\n' \
+                '   "%s"\n' \
+                '   "${CMAKE_BINARY_DIR}/%s"\n' \
+                ')\n' \
+                % (depend_subdir, relpath)
 
         delegate_to_existing = None
         delegate_build_dir = None
@@ -298,12 +382,17 @@ class CMakeGen(object):
             binary_subdirs      = subdirs['bin']
             test_subdirs        = subdirs['test']
             resource_subdirs    = subdirs['resource']
+            header_subdirs      = subdirs['headers']
 
             add_own_subdirs = []
             for f in manual_subdirs:
                 if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
+                    # if this module is a test dependency, then don't recurse
+                    # to building its own tests.
+                    if f in test_subdirs and component.isTestDependency():
+                        continue
                     add_own_subdirs.append(
-                        (os.path.join(component.path, f), os.path.join(builddir, f))
+                        (os.path.join(component.path, f), f)
                     )
 
             # names of all directories at this level with stuff in: used to figure
@@ -323,16 +412,19 @@ class CMakeGen(object):
                         builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
                     )
                 else:
+                    for header_dir, header_files in header_subdirs:
+                        source_files.extend(header_files)
+
                     self.generateSubDirList(
                         builddir, f, source_files, component, all_subdirs,
                         immediate_dependencies, exe_name, resource_subdirs
                     )
                 add_own_subdirs.append(
-                    (os.path.join(builddir, f), os.path.join(builddir, f))
+                    (os.path.join(builddir, f), f)
                 )
-            
+
             # from now on, completely forget that this component had any tests
-            # if it is itself a test dependency: 
+            # if it is itself a test dependency:
             if component.isTestDependency():
                 test_subdirs = []
 
@@ -343,16 +435,10 @@ class CMakeGen(object):
                 add_own_subdirs.append(self.createDummyLib(
                     component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                 ))
-        
-        set_definitions = ''
-        add_definitions = ''
-        config_include_file = None
-        if toplevel:
-            (config_include_file, set_definitions) = self.getConfigData(all_dependencies, component, builddir)
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
-        file_contents = template.render({
+        file_contents = template.render({  #pylint: disable=no-member
                                # toolchain files are provided in hierarchy
                                # order, but the template needs them in reverse
                                # order (base-first):
@@ -360,29 +446,31 @@ class CMakeGen(object):
         })
         toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
         self._writeFile(toolchain_file_path, file_contents)
-        
+
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
 
-        file_contents = template.render({
+        relpath = os.path.relpath(builddir, self.buildroot)
+
+        file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                      "set_definitions": set_definitions,
                       "toolchain_file": toolchain_file_path,
                            "component": component,
+                             "relpath": relpath,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
                   "add_depend_subdirs": add_depend_subdirs,
                      "add_own_subdirs": add_own_subdirs,
-                 "config_include_file": config_include_file,
-           #"yotta_target_definitions": add_definitions,
+                 "config_include_file": self.config_include_file,
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
                  "active_dependencies": active_dependencies
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
-    
+
     def createDummyLib(self, component, builddir, link_dependencies):
         safe_name        = sanitizeSymbol(component.getName())
         dummy_dirname    = 'yotta_dummy_lib_%s' % safe_name
@@ -392,7 +480,7 @@ class CMakeGen(object):
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
 
-        dummy_cmakelists = dummy_template.render({
+        dummy_cmakelists = dummy_template.render({ #pylint: disable=no-member
                    "cfile_name": dummy_cfile_name,
                       "libname": component.getName(),
             "link_dependencies": link_dependencies
@@ -400,7 +488,7 @@ class CMakeGen(object):
         self._writeFile(os.path.join(builddir, dummy_dirname, "CMakeLists.txt"), dummy_cmakelists)
         dummy_cfile = "void __yotta_dummy_lib_symbol_%s(){}\n" % safe_name
         self._writeFile(os.path.join(builddir, dummy_dirname, dummy_cfile_name), dummy_cfile)
-        return (os.path.join(builddir, dummy_dirname), os.path.join(builddir, dummy_dirname))
+        return (os.path.join(builddir, dummy_dirname), dummy_dirname)
 
     def writeIfDifferent(self, fname, contents):
         try:
@@ -458,7 +546,7 @@ class CMakeGen(object):
 
         test_template = jinja_environment.get_template('test_CMakeLists.txt')
 
-        file_contents = test_template.render({
+        file_contents = test_template.render({ #pylint: disable=no-member
              'source_directory':os.path.join(component.path, dirname),
                         'tests':tests,
             'link_dependencies':link_dependencies,
@@ -508,8 +596,9 @@ class CMakeGen(object):
 
             subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
 
-            file_contents = subdir_template.render({
+            file_contents = subdir_template.render({ #pylint: disable=no-member
                     'source_directory': os.path.join(component.path, dirname),
+                 "config_include_file": self.config_include_file,
                           'executable': executable,
                           'file_names': [str(f) for f in source_files],
                          'object_name': object_name,

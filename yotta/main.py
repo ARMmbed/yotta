@@ -3,7 +3,7 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-from .lib import lazyregex
+from .lib import lazyregex #pylint: disable=unused-import
 
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
@@ -14,6 +14,7 @@ import argparse
 import logging
 import sys
 from functools import reduce
+import os
 
 # logging setup, , setup the logging system, internal
 from .lib import logging_setup
@@ -21,6 +22,12 @@ from .lib import logging_setup
 from .lib import detect
 # globalconf, share global arguments between modules, internal
 import yotta.lib.globalconf as globalconf
+
+# hook to support coverage information when yotta runs itself during tests:
+if 'COVERAGE_PROCESS_START' is os.environ:
+    import coverage
+    coverage.process_startup()
+
 
 def logLevelFromVerbosity(v):
     return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
@@ -74,7 +81,7 @@ argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubPars
 class FastVersionAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
         import pkg_resources
-        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n')
+        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
         sys.exit(0)
 
 
@@ -85,7 +92,7 @@ def main():
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
     subparser = parser.add_subparsers(metavar='<subcommand>')
-    
+
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
@@ -145,13 +152,14 @@ def main():
         'dependencies for the current module.'
     )
     addParser('build', 'build',
-        'Build the current module. Options can be passed to the underlying '+\
-        'build tool by passing them after --, e.g. to do a parallel build '+\
-        'when make is the build tool, run:\n    yotta build -- -j\n\n'+
+        'Build the current module. Options can be passed to the underlying '+
+        'build tool by passing them after --, e.g. to do a verbose build '+
+        'which will display each command as it is run, use:\n'+
+        '  yotta build -- -v\n\n'+
         'The programs or libraries to build can be specified (by default '+
         'only the libraries needed by the current module and the current '+
-        "module's own tests are build. For example, to build the tests of "+
-        'all dependencies, run:\n    yotta build all_tests\n\n',
+        "module's own tests are built). For example, to build the tests of "+
+        'all dependencies, run:\n  yotta build all_tests\n\n',
         'Build the current module.'
     )
     addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
@@ -173,6 +181,7 @@ def main():
     addParser('unpublish', 'unpublish', 'Un-publish a recently published module or target.')
     addParser('login', 'login', 'Authorize for access to private github repositories and publishing to the yotta registry.')
     addParser('logout', 'logout', 'Remove saved authorization token for the current user.')
+    addParser('whoami', 'whoami', 'Display who the currently logged in user is (if any).')
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
@@ -193,16 +202,17 @@ def main():
             'rm':subparser.choices['remove'],
         'unlink':subparser.choices['remove'],
          'owner':subparser.choices['owners'],
-          'lics':subparser.choices['licenses']
+          'lics':subparser.choices['licenses'],
+           'who':subparser.choices['whoami']
     }
     subparser.choices.update(short_commands)
-    
+
     # split the args into those before and after any '--'
     # argument - subcommands get raw access to arguments following '--', and
     # may pass them on to (for example) the build tool being used
     split_args = splitList(sys.argv, '--')
     following_args = reduce(lambda x,y: x + ['--'] + y, split_args[1:], [])[1:]
-    
+
     # complete all the things :)
     argcomplete.autocomplete(
          parser,
@@ -212,14 +222,14 @@ def main():
     # when args are passed directly we need to strip off the program name
     # (hence [:1])
     args = parser.parse_args(split_args[0][1:])
-    
+
     # set global arguments that are shared everywhere and never change
     globalconf.set('interactive', args.interactive)
     globalconf.set('plain', args.plain)
 
     loglevel = logLevelFromVerbosity(args.verbosity)
     logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
-    
+
     # finally, do stuff!
     if 'command' not in args:
         parser.print_usage()

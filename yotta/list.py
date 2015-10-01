@@ -5,20 +5,16 @@
 
 # standard library modules, , ,
 from __future__ import print_function
-import argparse
 import logging
 import os
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 # validate, , validate things, internal
 from .lib import validate
-# Target, , represents an installed target, internal
-from .lib import target
 # access, , get components (and check versions), internal
 from .lib import access
-from .lib import access_common
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
 
@@ -126,11 +122,11 @@ class ComponentDepsFormatter(object):
         r = u''
 
         if self.use_colours:
-            DIM    = colorama.Style.DIM
-            BRIGHT = colorama.Style.BRIGHT
-            GREEN  = colorama.Fore.GREEN
-            RED    = colorama.Fore.RED
-            RESET  = colorama.Style.RESET_ALL
+            DIM    = colorama.Style.DIM       #pylint: disable=no-member
+            BRIGHT = colorama.Style.BRIGHT    #pylint: disable=no-member
+            GREEN  = colorama.Fore.GREEN      #pylint: disable=no-member
+            RED    = colorama.Fore.RED        #pylint: disable=no-member
+            RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
         else:
             DIM = BRIGHT = GREEN = RED = RESET = u''
 
@@ -170,7 +166,7 @@ class ComponentDepsFormatter(object):
 
 
         line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
-        
+
         if spec and not spec.match(component.getVersion()):
             line += u' ' + RESET + BRIGHT + RED + str(spec) + RESET
         if test_dep:
@@ -181,12 +177,12 @@ class ComponentDepsFormatter(object):
             line += GREEN + BRIGHT + u' -> ' + RESET + GREEN + fsutils.realpath(component.path) + RESET
 
         r += line + '\n'
-        
+
         deps_here  = [x for x in list(deps.keys()) if (x not in processed)]
         print_deps = [x for x in list(deps.items()) if shouldDisplay(x)]
-        
+
         processed += [x[0] for x in print_deps]
-        
+
 
         for (name, dep), last in islast(print_deps):
             if last:

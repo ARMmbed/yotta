@@ -10,13 +10,13 @@ include_directories("{{ source_directory | replaceBackslashes }}")
 
 {% for component in test_dependencies %}
     {% for d in component.getExtraSysIncludes() %}
-        include_directories(SYSTEM "{{ d | replaceBackslashes }}")
+        include_directories(SYSTEM "{{ pathJoin(component.path, d) | replaceBackslashes }}")
     {% endfor %}
 {% endfor %}
 
 {% for component in test_dependencies %}
     {% for d in component.getExtraIncludes() %}
-        include_directories("{{ d | replaceBackslashes }}")
+        include_directories("{{ pathJoin(component.path, d) | replaceBackslashes }}")
     {% endfor %}
 {% endfor %}
 

@@ -6,6 +6,7 @@
 # standard library modules, , ,
 from __future__ import print_function
 from collections import defaultdict
+import logging
 
 # validate, , validate things, internal
 from .lib import validate
@@ -45,6 +46,4 @@ def execCommand(args, following_args):
                 licenses[lic].append(dep.getName())
         for lic in licenses:
             print(lic)
-
-    
 

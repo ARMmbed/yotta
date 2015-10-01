@@ -10,8 +10,6 @@ import re
 
 # validate, , validate things, internal
 from .lib import validate
-# CMakeGen, , generate build files, internal
-from .lib import cmakegen
 # Target, , represents an installed target, internal
 from .lib import target
 # fsutils, , misc filesystem utils, internal
@@ -41,13 +39,13 @@ def addOptions(parser):
 
 
 def findCTests(builddir, recurse_yotta_modules=False):
-    ''' returns a list of (directory_path, [list of test commands]) '''
+    ''' returns a list of (directory_path, [list of tuples of (test name, test command)]) '''
     # we don't run ctest -N to get the list of tests because unfortunately it
     # only lists the names, not the test commands. The best way to get at these
     # seems to be to parse the CTestTestfile.cmake files, which kinda sucks,
     # but works... Patches welcome.
     tests = []
-    add_test_re = re.compile('add_test\\([^" ]*\s*"(.*)"\\)', flags=re.IGNORECASE)
+    add_test_re = re.compile('add_test\\(([^" ]*)\s*"(.*)"\\)', flags=re.IGNORECASE)
     for root, dirs, files in os.walk(builddir, topdown=True):
         if not recurse_yotta_modules:
             dirs = [d for d in dirs if d != 'ym']
@@ -58,7 +56,7 @@ def findCTests(builddir, recurse_yotta_modules=False):
                     if line.lower().startswith('add_test'):
                         match = add_test_re.search(line)
                         if match:
-                            dir_tests.append(match.group(1))
+                            dir_tests.append((match.group(1), match.group(2)))
                         else:
                             logging.error(
                                 "unknown CTest Syntax '%s', please report this error at http://github.com/ARMmbed/yotta/issues" %
@@ -131,7 +129,7 @@ def execCommand(args, following_args):
 
 
     builddir = os.path.join(cwd, 'build', target.getName())
- 
+
     # get the list of tests we need to run, if --all is specified we also run
     # the tests for all of our submodules, otherwise we just run the tests for
     # this module.
@@ -141,39 +139,39 @@ def execCommand(args, following_args):
 
     passed = 0
     failed = 0
-    for dirname, test_exes in tests:
+    for dirname, test_definitions in tests:
         module = moduleFromDirname(os.path.relpath(dirname, builddir), all_modules, c)
         logging.debug('inferred module %s from path %s', module.getName(), os.path.relpath(dirname, builddir))
         if (not len(args.tests)) and (module is not c) and not all_tests:
             continue
         info_filter = True
         filter_command = module.getTestFilterCommand()
-        for test in test_exes:
-            if len(args.tests) and not test in args.tests:
-                logging.debug('skipping not-listed test %s', test)
+        for test_name, test_command in test_definitions:
+            if len(args.tests) and not test_name in args.tests:
+                logging.debug('skipping not-listed test %s: %s', test_name, test_command)
                 continue
             if info_filter and filter_command:
                 info_filter = False
                 logging.info('using filter "%s" for tests in %s', ' '.join(filter_command), dirname)
-            logging.info('test %s: %s', module.getName(), test)
+            logging.info('test %s: %s', module.getName(), test_name)
             if args.list_only:
                 continue
             test_returncode = target.test(
-                       builddir = builddir, 
-                        program = os.path.join(os.path.relpath(dirname, builddir), test),
+                            cwd = dirname,
+                   test_command = test_command,
                  filter_command = filter_command,
                    forward_args = following_args
             )
             if test_returncode:
-                logging.error('test %s failed', test)
+                logging.error('test %s failed (command: %s)', test_name, test_command)
                 failed += 1
                 if not returncode:
                     returncode = 1
             else:
-                logging.info('test %s passed', test)
+                logging.info('test %s passed', test_name)
                 passed += 1
     if not args.list_only:
         logging.info("tests complete: %d passed, %d failed", passed, failed)
-    
+
     return returncode
 

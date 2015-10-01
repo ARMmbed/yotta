@@ -5,7 +5,6 @@
 
 # standard library modules, , ,
 import logging
-import re
 
 # version, , represent versions and specifications, internal
 import version
@@ -26,7 +25,7 @@ class GitCloneVersion(version.Version):
     def __init__(self, semver, tag, working_copy):
         self.working_copy = working_copy
         self.tag = tag
-        return super(GitCloneVersion, self).__init__(semver)
+        super(GitCloneVersion, self).__init__(semver)
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))
@@ -87,9 +86,9 @@ class GitComponent(access_common.RemoteComponent):
         # !!! TODO: handle non-semantic spec
         self.spec = semantic_spec
         self.tag_or_branch = tag_or_branch
-    
+
     @classmethod
-    def createFromSource(cls, vs, name=None):    
+    def createFromSource(cls, vs, name=None):
         ''' returns a git component for any git:// url, or None if this is not
             a git component.
 

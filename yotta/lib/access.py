@@ -23,8 +23,6 @@ import github_access
 import git_access
 # hg Access, , access repositories via generic mercurial URLs, internal
 import hg_access
-# version, , represent versions and specifications, internal
-import version
 # fsutils, , misc filesystem utils, internal
 import fsutils
 # sourceparse, , parse version source urls, internal
@@ -60,7 +58,7 @@ def remoteComponentFor(name, version_required, registry='modules'):
     '''
 
     vs = sourceparse.parseSourceURL(version_required)
-    
+
     if vs.source_type == 'registry':
         if registry not in ('modules', 'targets'):
             raise Exception('no known registry namespace "%s"' % registry)
@@ -99,7 +97,7 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
     '''
 
     remote_component = remoteComponentFor(name, version_required, registry)
-    
+
     if quiet:
         logger.debug('get versions for ' + name)
     else:
@@ -118,7 +116,7 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
                 )
             )
         return v
-    elif remote_component.remoteType() == 'github': 
+    elif remote_component.remoteType() == 'github':
         logger.debug('satisfy %s from github url' % name)
         spec = remote_component.versionSpec()
         if spec:
@@ -199,9 +197,9 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
             )
         else:
             raise Exception("invalid spec for hg source: tags/branches are not supported yet!")
-    
+
     # !!! FIXME: next: generic http urls to tarballs
-    
+
     return None
 
 def searchPathsFor(name, spec, search_paths, type='module'):
@@ -247,7 +245,7 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
         installed via a symlink).
     '''
     v    = None
-    
+
     try:
         local_version = searchPathsFor(
             name,
@@ -277,7 +275,7 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
                     local_version.getName(), name, local_version.path
                 ))
             return local_version
-        
+
         # otherwise, we need to update the installed component
         logger.info('update outdated: %s@%s -> %s' % (
             name,
@@ -338,15 +336,15 @@ def satisfyVersion(
             Update: replace any existing version with the newest available, if
                     the newest available has a higher version
     '''
-    
+
     r = satisfyFromAvailable(name, available, type=type)
     if r is not None:
         if not sourceparse.parseSourceURL(version_required).semanticSpecMatches(r.getVersion()):
             raise access_common.SpecificationNotMet(
                 "Installed %s %s doesn't match specification %s" % (type, name, version_required)
-            ) 
+            )
         return r
-    
+
     r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update', type=type)
     if r is not None:
         return r

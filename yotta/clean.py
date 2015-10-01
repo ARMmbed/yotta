@@ -22,8 +22,3 @@ def execCommand(args, following_args):
 
     fsutils.rmRf(os.path.join(c.path, 'build'))
 
-    
-
-    
-
-

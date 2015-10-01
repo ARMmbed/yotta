@@ -10,8 +10,6 @@
 # standard library modules, , ,
 import os
 import sys
-# fsutils, , misc filesystem utils, internal
-import fsutils
 
 def prefix():
     if 'YOTTA_PREFIX' in os.environ:
@@ -23,6 +21,12 @@ def prefix():
             return sys.exec_prefix
         else:
             return '/usr/local'
+
+def userSettingsDirectory():
+    if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+        return os.environ['YOTTA_USER_SETTINGS_DIR']
+    else:
+        return os.path.expanduser('~/.yotta')
 
 def globalInstallDirectory():
     if os.name == 'nt':

@@ -7,7 +7,7 @@
 import logging
 import os
 
-# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama 
+# colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
 
 
@@ -28,36 +28,37 @@ if restore_env_term is not None:
 
 
 class FancyFormatter(logging.Formatter):
+    #pylint: disable=no-member
     def __init__(self):
         super(FancyFormatter, self).__init__()
 
     def levelStyle(self, record):
         if record.levelno <= logging.DEBUG:
-            return colorama.Style.DIM + colorama.Fore.RESET
+            return colorama.Style.DIM + colorama.Fore.RESET #pylint: disable=no-member
         elif record.levelno >= logging.CRITICAL:
-            return colorama.Style.BRIGHT + colorama.Fore.RED
+            return colorama.Style.BRIGHT + colorama.Fore.RED #pylint: disable=no-member
         elif record.levelno >= logging.ERROR:
-            return colorama.Style.BRIGHT + colorama.Fore.RED
+            return colorama.Style.BRIGHT + colorama.Fore.RED #pylint: disable=no-member
         elif record.levelno >= logging.WARNING:
-            return colorama.Style.BRIGHT + colorama.Fore.YELLOW
-        return colorama.Style.NORMAL + colorama.Fore.GREEN
+            return colorama.Style.BRIGHT + colorama.Fore.YELLOW #pylint: disable=no-member
+        return colorama.Style.NORMAL + colorama.Fore.GREEN #pylint: disable=no-member
 
     def messageStyle(self, record):
         if record.levelno <= logging.DEBUG:
-            return colorama.Style.DIM + colorama.Fore.RESET
+            return colorama.Style.DIM + colorama.Fore.RESET #pylint: disable=no-member
         elif record.levelno >= logging.CRITICAL:
-            return colorama.Style.BRIGHT + colorama.Fore.RED
+            return colorama.Style.BRIGHT + colorama.Fore.RED #pylint: disable=no-member
         elif record.levelno >= logging.ERROR:
-            return colorama.Style.NORMAL + colorama.Fore.RED
+            return colorama.Style.NORMAL + colorama.Fore.RED #pylint: disable=no-member
         elif record.levelno >= logging.WARNING:
-            return colorama.Style.NORMAL + colorama.Fore.YELLOW
-        return colorama.Style.NORMAL + colorama.Fore.RESET
+            return colorama.Style.NORMAL + colorama.Fore.YELLOW #pylint: disable=no-member
+        return colorama.Style.NORMAL + colorama.Fore.RESET #pylint: disable=no-member
 
     def format(self, record):
         s = ''
         s += self.levelStyle(record)
         s += record.levelname.lower()
-        s += colorama.Fore.RESET + ':'
+        s += colorama.Fore.RESET + ':' #pylint: disable=no-member
         if record.levelno <= logging.DEBUG:
             s += record.name + ': '
         else:
@@ -65,7 +66,7 @@ class FancyFormatter(logging.Formatter):
         s += self.messageStyle(record)
         s += record.getMessage()
 
-        s += colorama.Style.RESET_ALL
+        s += colorama.Style.RESET_ALL #pylint: disable=no-member
         return s
 
 class PlainFormatter(logging.Formatter):
@@ -91,7 +92,7 @@ def init(level=0, enable_subsystems=[], plain=False):
     else:
         handler.setFormatter(FancyFormatter())
     root.addHandler(handler)
-    
+
     # set appropriate levels on subsystem loggers - maybe selective logging
     # should use filters instead?
     if enable_subsystems and len(enable_subsystems):

@@ -8,16 +8,11 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
-from collections import namedtuple
 import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
+from yotta.lib.fsutils import rmRf
 from . import cli
-from yotta.lib import version
-from yotta.lib import settings
-from yotta import install
 
 
 Test_Target = "x86-osx-native,*"
@@ -60,11 +55,13 @@ Public_Module_JSON = '''{
 
 
 class TestCLIPublish(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
 
     def test_publishPrivate(self):
         with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
@@ -74,11 +71,23 @@ class TestCLIPublish(unittest.TestCase):
         self.assertTrue('is private and cannot be published' in ('%s %s' % (stdout, stderr)))
 
     def test_publishNotAuthed(self):
-        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
-            f.write(Public_Module_JSON)
-        stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
-        self.assertTrue((stdout+stderr).find('login required') != -1)
-        self.assertNotEqual(status, 0)
+        # ensure we're not logged in by setting a different settings directory:
+        saved_settings_dir = None
+        if 'YOTTA_USER_SETTINGS_DIR' in os.environ:
+            saved_settings_dir = os.environ['YOTTA_USER_SETTINGS_DIR']
+        os.environ['YOTTA_USER_SETTINGS_DIR'] = 'tmp_yotta_settings'
+        try:
+            with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+                f.write(Public_Module_JSON)
+            stdout, stderr, status = cli.run(['-n', '--target', Test_Target, 'publish'], cwd=self.test_dir)
+            if status != 0:
+                out = stdout+stderr
+                self.assertTrue(out.find('login required') != -1 or out.find('not module owner') != -1)
+        finally:
+            if saved_settings_dir is not None:
+                os.environ['YOTTA_USER_SETTINGS_DIR'] = saved_settings_dir
+            else:
+                del os.environ['YOTTA_USER_SETTINGS_DIR']
 
 if __name__ == '__main__':
     unittest.main()

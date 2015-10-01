@@ -5,7 +5,6 @@
 
 # standard library modules, , ,
 import logging
-import re
 
 # version, , represent versions and specifications, internal
 import version
@@ -26,7 +25,7 @@ class HGCloneVersion(version.Version):
     def __init__(self, tag, working_copy):
         self.working_copy = working_copy
         self.tag = tag
-        return super(HGCloneVersion, self).__init__(tag)
+        super(HGCloneVersion, self).__init__(tag)
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from hg repo %s to %s' % (self.version, self.working_copy.directory, directory))
@@ -39,7 +38,7 @@ class HGCloneVersion(version.Version):
 
         # remove temporary files created by the HGWorkingCopy clone
         self.working_copy.remove()
-        
+
 
 class HGWorkingCopy(object):
     def __init__(self, vcs):
@@ -71,7 +70,7 @@ class HGComponent(access_common.RemoteComponent):
     def __init__(self, url, version_spec=''):
         self.url = url
         self.spec = version.Spec(version_spec)
-    
+
     @classmethod
     def createFromSource(cls, vs, name=None):
         ''' returns a hg component for any hg:// url, or None if this is not
@@ -104,5 +103,5 @@ class HGComponent(access_common.RemoteComponent):
     @classmethod
     def remoteType(cls):
         return 'hg'
-        
+
 

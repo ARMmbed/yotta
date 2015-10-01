@@ -28,7 +28,7 @@ def addOptions(parser, add_build_targets=True):
     # future we probably want to load these from a target instance, rather than
     # from the class
     target.DerivedTarget.addBuildOptions(parser)
-    
+
     if add_build_targets:
         parser.add_argument(
             "build_targets", metavar='MODULE_TO_BUILD', nargs='*', type=str, default=[],
@@ -66,7 +66,7 @@ def installAndBuild(args, following_args):
         for error in errors:
             logging.error(error)
         return {'status':1}
-    
+
     # run the install command before building, we need to add some options the
     # install command expects to be present to do this:
     vars(args)['component'] = None
@@ -111,7 +111,7 @@ def installAndBuild(args, following_args):
     for error in generator.generateRecursive(c, all_components, builddir, application=app):
         logging.error(error)
         generate_status = 1
-    
+
     if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
@@ -120,7 +120,7 @@ def installAndBuild(args, following_args):
         if error:
             logging.error(error)
             build_status = 1
-    
+
     return {
                 'status': build_status or generate_status or install_status,
         'missing_status': missing,
@@ -128,5 +128,4 @@ def installAndBuild(args, following_args):
        'generate_status': generate_status,
         'install_status': install_status
     }
-    return errcode
 

@@ -5,6 +5,7 @@
 
 # standard library modules, , ,
 import json
+import logging
 
 # validate, , validate things, internal
 from .lib import validate
@@ -26,8 +27,8 @@ def execCommand(args, following_args):
         for error in errors:
             logging.error(error)
         return 1
-    
+
     config = target.getMergedConfig()
-    
+
     print(json.dumps(config, indent=2, separators=(',', ': ')))
 
