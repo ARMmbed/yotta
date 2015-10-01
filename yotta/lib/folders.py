@@ -39,3 +39,6 @@ def globalTargetInstallDirectory():
         return os.path.join(prefix(), 'Lib', 'yotta_targets')
     else:
         return os.path.join(prefix(), 'lib', 'yotta_targets')
+
+def cacheDirectory():
+    return os.path.join(userSettingsDirectory(), 'cache')
