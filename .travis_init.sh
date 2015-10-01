@@ -13,7 +13,7 @@ chmod 600 ~/.ssh/*
 # need to be authed to pull from the registry, so stick a set of keys authed to
 # the "yottatest" mbed user in ~/.yotta/config.json:
 mkdir -p ~/.yotta
-chmod 600 ~/.yotta
+chmod 700 ~/.yotta
 cp ./.yotta_test_config.json ~/.yotta/config.json
 
 # set git settings
