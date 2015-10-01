@@ -29,10 +29,7 @@ class GitCloneVersion(version.Version):
 
     def unpackInto(self, directory):
         logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))
-        if self.isTip():
-            tag = None
-        else:
-            tag = self.tag
+        tag = self.tag
         fsutils.rmRf(directory)
         vcs.Git.cloneToDirectory(self.working_copy.directory, directory, tag)
 
