@@ -225,7 +225,7 @@ def cFileForReporterTest(**kwargs):
             r += '  sleep(2);\n'
             if kwargs['test_verbose']:
                 r += '  printf("'+'testverbose1'*77+'");\n'
-        r += ' return 0;\n' if kwargs['test_passes'] else '  return 1;\n'
+        r += ' return 0;\n' if kwargs['test_passes'] else '  return 17;\n'
     r += '}\n'
     return r
 
