@@ -5,6 +5,11 @@ dependencies:
     - chmod 700 ~/.ssh
     - echo -e 'Host bitbucket.org\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
 
+    # set up yotta registry login so that yotta doesn't prompt for authn:
+    - mkdir -p ~/.yotta
+    - chmod 700 ~/.yotta
+    - cp ./.yotta_test_config.json ~/.yotta/config.json
+
     # setup git so it doesn't prompt
     - git config --global user.email "test@yottabuild.org"
     - git config --global user.name "Yotta Travis-CI Bot"
