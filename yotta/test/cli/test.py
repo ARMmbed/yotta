@@ -372,7 +372,7 @@ def generateTestMethod(**kwargs):
     return generatedTestMethod
 
 def generateTest(**kwargs):
-    test_name = "test_" + '_'.join([ '%s_%s' % (k, v) for k, v in kwargs.items()])
+    test_name = "test_" + '_'.join([ '%s_%s' % (k, v) for k, v in sorted(kwargs.items(), key=lambda x: x[0])])
     test_method = generateTestMethod(**kwargs)
     test_method.__name__ = test_name
     setattr(TestCLITestGenerated, test_name, test_method)
