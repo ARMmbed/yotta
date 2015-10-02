@@ -562,8 +562,10 @@ class DerivedTarget(Target):
                         pass
 
     @fsutils.dropRootPrivs
-    def test(self, cwd, test_command, filter_command, forward_args):
-        # we assume that test commands are relative to the current directory.
+    def test(self, test_dir, module_dir, test_command, filter_command, forward_args):
+        # we assume that test commands are relative to the current directory
+        # (filter commands are relative to the module dir to make it possible
+        # to use filter scripts shipped with the module)
         test_command = './' + test_command
         if not ('scripts' in self.description and 'test' in self.description['scripts']):
             cmd = shlex.split(test_command)
@@ -580,11 +582,11 @@ class DerivedTarget(Target):
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = cwd, stdout = subprocess.PIPE
+                    cmd, cwd = test_dir, stdout = subprocess.PIPE
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = cwd, stdin = test_child.stdout
+                        filter_command, cwd = module_dir, stdin = test_child.stdout
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
@@ -608,7 +610,7 @@ class DerivedTarget(Target):
             else:
                 try:
                     test_child = subprocess.Popen(
-                        cmd, cwd = cwd
+                        cmd, cwd = test_dir
                     )
                     logger.debug('waiting for test child')
                 except OSError as e:

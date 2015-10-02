@@ -209,7 +209,7 @@ def cFileForReporterTest(**kwargs):
         # slow reporter tests delay after printing
         if kwargs['test_verbose']:
             r += '  printf("'+'testverbose0'*77+'");\n'
-        r += '  printf("[pass]\\n\\r");\n' if kwargs['test_passes'] else ' printf("[fail]\\n\\r");\n' 
+        r += '  printf("[pass]\\n\\r");\n' if kwargs['test_passes'] else ' printf("[fail]\\n\\r");\n'
         if kwargs['test_verbose']:
             r += '  printf("'+'testverbose1'*22+'");\n'
         if kwargs['test_speed'] == 'slow':
@@ -235,7 +235,7 @@ def filesForReporterTest(**kwargs):
     Test = {
     }
     if kwargs['reporter']:
-        reporter_command = '["python", "../../report.py"'
+        reporter_command = '["python", "./report.py"'
         if kwargs['reporter_verbose']:
             reporter_command += ', "--verbose"'
         if kwargs['reporter_waits']:
@@ -311,7 +311,7 @@ class TestCLITest(unittest.TestCase):
             print(stderr)
         self.assertNotEqual(statuscode, 0)
         rmRf(test_dir)
-    
+
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
         if statuscode != 0:
@@ -337,18 +337,18 @@ class TestCLITestGenerated(TestCLITest):
 def generateTestMethod(**kwargs):
     def generatedTestMethod(self):
         test_dir = self.writeTestFiles(filesForReporterTest(**kwargs), test_dir=self.test_dir)
-        
+
         # build first, to make test timing more accurate:
-        stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'build'], cwd=test_dir) 
+        stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'build'], cwd=test_dir)
         #print('build:', stdout)
         #print('build:', stderr)
         #print('build statuscode was:', statuscode)
         self.assertEqual(statuscode, 0)
 
         tstart = time.time()
-        stdout, stderr, statuscode = cli.run(['-vvv', '--target', systemDefaultTarget(), 'test'], cwd=test_dir) 
+        stdout, stderr, statuscode = cli.run(['-vvv', '--target', systemDefaultTarget(), 'test'], cwd=test_dir)
         duration = time.time() - tstart
-        
+
         # useful output for debugging failed tests:
         if bool(statuscode) == bool(kwargs['test_passes']) or \
                 duration >= 4.5 + kwargs['reporter_waits'] or \
