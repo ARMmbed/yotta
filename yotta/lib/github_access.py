@@ -125,21 +125,45 @@ def _getTipArchiveURL(repo):
 
 
 @_handleAuth
-def _getTarball(url, into_directory):
+def _getTarball(url, into_directory, cache_key):
     '''unpack the specified tarball url into the specified directory'''
-    tok = settings.getProperty('github', 'authtoken')
-    headers = {}
-    if tok is not None:
-        headers['Authorization'] = 'token ' + str(tok)
 
-    logger.debug('GET %s', url)
-    response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
-    response.raise_for_status()
+    try:
+        access_common.unpackFromCache(cache_key, into_directory)
+    except KeyError as e:
+        tok = settings.getProperty('github', 'authtoken')
+        headers = {}
+        if tok is not None:
+            headers['Authorization'] = 'token ' + str(tok)
 
-    logger.debug('getting file: %s', url)
-    # TODO: there's an MD5 in the response headers, verify it
+        logger.debug('GET %s', url)
+        response = requests.get(url, allow_redirects=True, stream=True, headers=headers)
+        response.raise_for_status()
 
-    access_common.unpackTarballStream(response, into_directory)
+        logger.debug('getting file: %s', url)
+        logger.debug('headers: %s', response.headers)
+        response.raise_for_status()
+
+        # github doesn't exposes hashes of the archives being downloaded as far
+        # as I can tell :(
+        access_common.unpackTarballStream(
+                    stream = response,
+            into_directory = into_directory,
+                      hash = {},
+                 cache_key = cache_key
+        )
+
+
+
+def _createCacheKey(*args):
+    # return a hash of the arguments (converted to strings) that can be used as
+    # a cache key:
+    import hashlib
+    h = hashlib.sha256()
+    h.update('this is the _createCacheKey seed')
+    for arg in args:
+        h.update(str(arg))
+    return h.hexdigest()
 
 # API
 def deauthorize():
@@ -147,7 +171,9 @@ def deauthorize():
         settings.setProperty('github', 'authtoken', '')
 
 class GithubComponentVersion(access_common.RemoteVersion):
-    def __init__(self, semver, tag, url, name):
+    def __init__(self, semver, tag, url, name, cache_key=None):
+        # if cache key is None, then we won't cache this version
+        self.cache_key = cache_key
         self.tag = tag
         github_spec = re.search('/(repos|codeload.github.com)/([^/]*/[^/]*)/', url).group(2)
         super(GithubComponentVersion, self).__init__(
@@ -156,7 +182,7 @@ class GithubComponentVersion(access_common.RemoteVersion):
 
     def unpackInto(self, directory):
         assert(self.url)
-        _getTarball(self.url, directory)
+        _getTarball(self.url, directory, self.cache_key)
 
 class GithubComponent(access_common.RemoteComponent):
     def __init__(self, repo, tag_or_branch=None, semantic_spec=None, name=None):
@@ -208,7 +234,7 @@ class GithubComponent(access_common.RemoteComponent):
             if not len(t[0].strip()):
                 continue
             try:
-                r.append(GithubComponentVersion(t[0], t[0], url=t[1], name=self.name))
+                r.append(GithubComponentVersion(t[0], t[0], url=t[1], name=self.name, cache_key=None))
             except ValueError:
                 logger.debug('invalid version tag: %s', t)
 
@@ -217,17 +243,25 @@ class GithubComponent(access_common.RemoteComponent):
     def availableTags(self):
         ''' return a list of GithubComponentVersion objects for all tags
         '''
-        return [GithubComponentVersion('', t[0], t[1], self.name) for t in self._getTags()]
+        return [
+            GithubComponentVersion(
+                '', t[0], t[1], self.name, cache_key=_createCacheKey('tag', t[0], t[1], self.name)
+            ) for t in self._getTags()
+        ]
 
     def availableBranches(self):
         ''' return a list of GithubComponentVersion objects for the tip of each branch
         '''
         return [
-            GithubComponentVersion('', b[0], b[1], self.name) for b in _getBranchHeads(self.repo).items()
+            GithubComponentVersion(
+                '', b[0], b[1], self.name, cache_key=None
+            ) for b in _getBranchHeads(self.repo).items()
         ]
 
     def tipVersion(self):
-        return GithubComponentVersion('', '', _getTipArchiveURL(self.repo), self.name)
+        return GithubComponentVersion(
+            '', '', _getTipArchiveURL(self.repo), self.name, cache_key=None
+        )
 
     @classmethod
     def remoteType(cls):

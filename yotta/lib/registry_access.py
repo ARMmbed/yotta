@@ -269,23 +269,31 @@ def _getTarball(url, directory, sha256):
     if not sha256:
         logger.warn('tarball %s has no hash to check' % url)
 
-    # figure out which registry we're fetching this tarball from (if any) and
-    # add appropriate headers
-    registry = Registry_Base_URL
+    try:
+        access_common.unpackFromCache(sha256, directory)
+    except KeyError as e:
+        # figure out which registry we're fetching this tarball from (if any)
+        # and add appropriate headers
+        registry = Registry_Base_URL
 
-    for source in _getSources():
-        if ('type' in source and source['type'] == 'registry' and
-             'url' in source and url.startswith(source['url'])):
-            registry = source['url']
-            break
+        for source in _getSources():
+            if ('type' in source and source['type'] == 'registry' and
+                 'url' in source and url.startswith(source['url'])):
+                registry = source['url']
+                break
 
-    request_headers = _headersForRegistry(registry)
+        request_headers = _headersForRegistry(registry)
 
-    logger.debug('GET %s, %s', url, request_headers)
-    response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
-    response.raise_for_status()
+        logger.debug('GET %s, %s', url, request_headers)
+        response = requests.get(url, headers=request_headers, allow_redirects=True, stream=True)
+        response.raise_for_status()
 
-    return access_common.unpackTarballStream(response, directory, ('sha256', sha256))
+        access_common.unpackTarballStream(
+                    stream = response,
+            into_directory = directory,
+                      hash = {'sha256':sha256},
+                 cache_key = sha256
+        )
 
 def _getSources():
     sources = settings.get('sources')
