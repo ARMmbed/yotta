@@ -129,6 +129,106 @@ each have different effects:
    .yotta_ignore file). There aren't very many good reasons to do this.
 
 
+### <a href="#cmake-examples" name="cmake-examples">#</a> Custom CMake Examples
+
+All the following examples are using standard [CMake](http://cmake.org) syntax.
+For documentation on the commands used, pleas see the [CMake
+docs](https://cmake.org/documentation/).
+
+General tips for writing CMake:
+
+ * Always wrap expanded `"${VARIABLES}"` in quotes (or expand them insite a
+   quoted string), if they are unquoted then any spaces in the expanded
+   variable will cause it to be split into separate arguments
+
+ * Where possible, avoid overriding yotta's generated CMakeLists.txt, and use
+   the automatically included `.cmake` files to modify what yotta defined
+   instead.
+
+#### <a href="#generating-files" name="generating-files">#</a> Generating Files
+
+If you have a script `./scripts/munge.py <input> <output>` that you want to run on an input file
+`./resources/input.data` to generate an output C file to include in the build,
+you can use a custom CMake file like this:
+
+`./source/CMakeLists.txt`
+
+```cmake
+# construct the output path for our generated file (in the build directory, so
+# that it gets removed by `yotta clean`):
+set(MYMODULE_GENERATED_FILES ${CMAKE_BINARY_DIR}/generated/mymodule)
+
+# ensure that the directory for the generated file exists:
+file(MAKE_DIRECTORY "${MYMODULE_GENERATED_FILES}")
+
+# save the paths to the script, input and output files, for convenience:
+set(MYMODULE_MUNGE_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/../scripts/munge.py")
+set(MYMODULE_MUNGE_INPUT  "${CMAKE_CURRENT_LIST_DIR}/../resources/input.data")
+set(MYMODULE_MUNGE_OUTPUT "${MYMODULE_GENERATED_FILES}/generated.c")
+
+# define the command to generate this file
+add_custom_command(
+    OUTPUT "${MYMODULE_GENERATED_FILES}/generated.c"
+    DEPENDS "${MYMODULE_MUNGE_SCRIPT}"
+            "${MYMODULE_MUNGE_INPUT}"
+    COMMAND python "${MYMODULE_MUNGE_SCRIPT}" "${MYMODULE_MUNGE_INPUT}" "${MYMODULE_MUNGE_OUTPUT}"
+    COMMENT "Munging input into generated.c"
+)
+
+# define the library for this module, using the generated file:
+add_library(mymodule # your module must create a library with its own name
+    sourcefile1.c
+    sourcefile2.c
+    "${MYMODULE_GENERATED_FILES}/generated.c"
+)
+
+# link against the module's dependencies
+target_link_libraries(mymodule
+    mydependency
+    myotherdependency
+)
+
+```
+
+Note that as we're replacing the yotta-generated CMakeLists for the source
+directory, you need to make sure you're still linking against all of your
+module's dependencies
+
+#### <a href="#changing-flags" name="changing-flags">#</a> Changing the Compilation Flags for a module
+
+You can use a `.cmake` file to change the link flags of an existing target
+without having to redefine the automatically generated build rules. For
+example, if your module is called `mymodule`, you could add this:
+
+`./source/override_flags.cmake`:
+
+```CMake
+# add -funroll loops to the compile commands used for the sources in this
+# module... loops deserve some fun too!
+set_target_properties(mymodule COMPILE_FLAGS "-funroll-loops")
+```
+
+Note that here "mymodule" is the name of the static library that your module is
+generating (the CMake "target" that it defines – nothing to do with the yotta
+target). By convention all yotta modules produce a static library with the same
+name as the module
+
+For documentation on the other things that you can set with
+set_target_properties, including preprocessor definitions, see the [CMake
+docs](https://cmake.org/cmake/help/v3.0/command/set_target_properties.html).
+
+#### <a href="#linking-external" name="linking-external">#</a> Linking an External Library
+
+`./source/link_foo.cmake`:
+
+```CMake
+# link ./precompiled/foo.a into mymodule, in addition to its yotta
+# dependencies:
+
+target_link_libraries(mymodule "${CMAKE_CURRENT_LIST_DIR}/../precompiled/foo.a")
+```
+
+
 ### <a href="#cmake-definitions" name="cmake-definitions">#</a> Definitions Available in CMake Lists
 
 yotta makes all the definitions which are available to the preprocessor
