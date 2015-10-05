@@ -23,7 +23,7 @@ And optionally provides information on:
 Each yotta target contains a [target.json](../reference/target.html) file, which
 describes where to find this other information.
 
-### Selecting the Target
+### <a href="#selecting-targets" name="selecting-targets">#</a> Selecting the Target
 
 To view or change the current target, use the `yotta target` subcommand:
 
@@ -42,15 +42,49 @@ the build directory or recompiling unnecessarily, as builds are carried out a
 separate directory for each target: `./build/<targetname>/`.
 
 
-<a name="writing-targets"></a>
-## Writing Targets
+## <a href="#writing-targets" name="writing-targets">#</a> Writing Targets
 
 ### <a href="#inheriting" name="inheriting">#</a> Inheriting from an Existing Target
 
-> !!! TODO
+Target descriptions usually inherit from an existing description. This allows
+you to extend the description that already exists instead of writing everything
+from scratch. With inheritance you override or add only the things that need
+changing.
 
-<a name="toolchainfile"></a>
-### The Toolchain File
+For example, this is a simple target hierarchy from mbed OS:
+
+ * base: [mbed-gcc](https://github.com/armmbed/target-mbed-gcc): this target
+   description describes how to run the arm-none-eabi-gcc cross-compiler, but
+   doesn't say anything about which chip or board is being compiled for.
+ * derived: [frdm-k64f-gcc](https://github.com/armmbed/target-frdm-k64f-gcc):
+   this inherits from mbed-gcc, and adds compilation flags specific to
+   compiling for the FRDM-K64F development board. This target description could
+   actually be further split so that the description of the compilation flags
+   for the main MCU on the board is separate from the description related to the
+   board's peripherals.
+
+If you were building a product derived from the FRDM-K64F development board
+schematic you would choose to inherit from the existing frdm-k64f target.
+
+To make your target description inherit from an existing one define the
+[`inherits` property](/reference/target.html#inherits) in your target.json file:
+
+```json
+  ...
+  "inherits": {
+      "some-base-target": "^1.2.3"
+  }
+  ...
+```
+
+Note the version specification next to the name of the description you inherit
+from. Target descriptions use [semantic versioning](http://semver.org) just
+like modules do: it's normally a good idea to use the `^` version specification
+which allows any compatible version to be used. Just like module version
+specifications this can also be a github, git or mercurial reference if your
+target inherits from another target that hasn't been published yet.
+
+### <a href="#toolchainfile" name="toolchainfile">#</a> The Toolchain File
 `yotta` uses the [CMake](http://www.cmake.org) build system, and targets
 describe how the compiler should be run by providing a CMake [Toolchain
 File](http://www.cmake.org/cmake/help/v3.0/manual/cmake-toolchains.7.html).
@@ -76,10 +110,9 @@ Though the path is actually specified in the `toolchain` property in target.json
   "toolchain": "CMake/toolchain.cmake"
 ```
 
-<a name="similarto"></a>
-### The similarTo List and Target Specific Dependencies
-The most important part of the target description is the list of targets that
-the target should be considered "similar to". This is defined by target.json:
+### <a href="#similarto" name="similarto">#</a> The similarTo List and Target Specific Dependencies
+The similarTo list in a target description is the list of targets that the
+target should be considered "similar to". This is defined by target.json:
 
 ```json
   "similarTo": <list of strings>,
@@ -111,8 +144,13 @@ TARGET_LIKE_FOO
 Where `FOO` is the name in the similarTo list, converted to uppercase, and with
 any non-alphanumeric characters converted to underscores.
 
+### <a href="#config" name="config">#</a> yotta Config Information
+In addition to the `similarTo` data, your target can also define arbitrary JSON
+configuration data that can be used as the basis for including dependencies and
+providing configuration to the modules being built. See the [config system
+reference](/reference/config.html) for details.
 
-### `yotta debug` Support
+### <a href="#yotta-debug" name="yotta-debug">#</a> `yotta debug` Support
 Targets can optionally provide a command that yotta will use to start a
 debugger when the user runs `yotta debug`. They do this by providing a
 `debug` script in target.json. This should be an array of commmand arguments,
@@ -132,7 +170,7 @@ compilation targets use the [`valinor`](http://github.com/ARMmbed/valinor)
 program to achieve this (valinor also detects which debugger is installed on the
 local system, and chooses the preferred one).
 
-### `yotta test` Support
+### <a href="#yotta-test" name="yotta-test">#</a> `yotta test` Support
 To support the `yotta test` command, targets must provide a way of running
 tests, to do this, implement `scripts.test` in target.json. For native
 compilation targets, this can simply run the program in question, for a
@@ -151,7 +189,7 @@ For example:
 ```
 
 
-### Testing targets
+### <a href="#testing-targets" name="testing-targets">#</a> Testing targets
 To test a target locally, without publishing it, you can use
 `yotta link-target` to link it into an existing module, and use it for
 compilation.
@@ -182,7 +220,7 @@ yotta build
 ```
 
 
-### Publishing Targets
+### <a href="#publishing-targets" name="publishing-targets">#</a> Publishing Targets
 Once you've written your target you can publish it:
 
 ```
