@@ -141,6 +141,7 @@ def unpackFrom(tar_file_path, to_directory):
         # the archive
         for m in tf.getmembers():
             split_path = fsutils.fullySplitPath(m.name)
+            logger.debug('process member: %s %s', m.name, split_path)
             if os.path.isabs(m.name) or '..' in split_path:
                 raise ValueError('archive uses invalid paths')
             if not strip_dirname:
