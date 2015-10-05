@@ -18,8 +18,10 @@ def addOptions(parser):
         action='store_true', default=False,
         help='Traverse linked modules, and update dependencies found there too.'
     )
-
-
+    parser.add_argument('--test-dependencies', dest='update_test_deps',
+        choices=('none', 'all', 'own'), default='own',
+        help='Control the update of dependencies necessary for building tests.'
+    )
 
 def execCommand(args, following_args):
     if args.component is None:
@@ -42,11 +44,18 @@ def updateDeps(args):
             logging.error(error)
         return 1
 
+    update_test_deps = {
+         'own': 'toplevel',
+         'all': True,
+        'none': False
+    }[args.update_test_deps]
+
     components, errors = c.satisfyDependenciesRecursive(
                           target = target,
                 update_installed = True,
                   traverse_links = args.update_linked,
-            available_components = [(c.getName(), c)]
+            available_components = [(c.getName(), c)],
+                            test = update_test_deps
         )
     for error in errors:
         logging.error(error)
