@@ -228,7 +228,6 @@ class DerivedTarget(Target):
         try:
             return jsonpointer.resolve_pointer(self.config, conf_key)
         except jsonpointer.JsonPointerException as e:
-            logger.info(':( %s', e)
             # fall back to legacy dot-separated pointers
             key_path = conf_key.split('.');
             c = self.config
