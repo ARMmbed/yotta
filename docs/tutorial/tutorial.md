@@ -69,6 +69,11 @@ For the same reason we prefix everything in the public header with the name of o
 #ifndef SIMPLELOG_LOG_H
 #define SIMPLELOG_LOG_H
 
+// make sure the header works when included from C++
+#ifdef __cplusplus
+extern "C" {
+#endif // def __cplusplus
+
 // Log levels: note that we prefix everything with the module name. It's OK to
 // use various Casing and underscore separated conventions to denote different
 // types of symbols, since module names are forced to be lower case, and cannot
@@ -90,6 +95,10 @@ void simpleLogError(const char* msg);
 void simpleLogWarning(const char* msg);
 void simpleLogInfo(const char* msg);
 void simpleLogDebug(const char* msg);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // def __cplusplus
 
 // end the header inclusion guard
 #endif // ndef SIMPLELOG_LOG_H
@@ -285,7 +294,7 @@ This has saved `simplelog` as a dependency in the `module.json` file, specifying
 `yotta install` also creates a `yotta_modules` directory in the module's directory, which it uses to store your dependencies. This, along with a corresponding `yotta_targets directory`, and the `build` directory, may be overwritten by `yotta` at any time, so generally shouldn't be modified, and you should not create files in them.
 
 ### Implement
-When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable. For this example, use a file called `./source/hello.c`:
+When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable. For this example, use a file called `./source/hello.cpp`:
 
 ```C
 #include "simplelog/log.h"
@@ -307,7 +316,7 @@ info: generate for target: x86-osx-native 0.0.3 at /Dev/helloyotta/yotta_targets
 -- Build files have been written to: /Dev/helloyotta/build/x86-osx-native
 Scanning dependencies of target simplelog
 ...
-[100%] Building C object source/CMakeFiles/helloyotta.dir/Dev/helloyotta/source/hello.c.o
+[100%] Building C object source/CMakeFiles/helloyotta.dir/Dev/helloyotta/source/hello.cpp.o
 Linking C executable helloyotta
 [100%] Built target helloyotta
 ```
