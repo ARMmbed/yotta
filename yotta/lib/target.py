@@ -223,14 +223,20 @@ class DerivedTarget(Target):
 
     def getConfigValue(self, conf_key):
         self._ensureConfig()
-        key_path = conf_key.split('.');
-        c = self.config
-        for part in key_path:
-            if part in c:
-                c = c[part]
-            else:
-                return None
-        return c
+        # jsonpointer, pip install jsonpointer, BSD 3 Clause
+        import jsonpointer
+        try:
+            return jsonpointer.resolve_pointer(self.config, conf_key)
+        except jsonpointer.JsonPointerException as e:
+            # fall back to legacy dot-separated pointers
+            key_path = conf_key.split('.');
+            c = self.config
+            for part in key_path:
+                if part in c:
+                    c = c[part]
+                else:
+                    return None
+            return c
 
     def getSimilarTo_Deprecated(self):
         r = []

@@ -158,9 +158,10 @@ on what configuration may be defined.**
 Config data can be used in the [targetDependencies
 section](/reference/module.html#targetDependencies) of `module.json` files.
 
-If a path in the config data matches the values defined on the left-hand side
+If a path in the config data matches the key defined on the left-hand side
 of the targetDependencies hash, then the dependencies declared in the object on
-the right-hand side will be used.
+the right-hand side will be used. The key is parsed as a standard [JSON
+pointer](https://tools.ietf.org/html/rfc6901).
 
 For example, given the config data:
 
@@ -191,19 +192,19 @@ And the targetDependencies:
 
 ```json
   "targetDependencies": {
-     "a.enable": {
+     "/a/enable": {
        "module-1": "^1.2.3"
      },
-     "b.foobar": {
+     "/b/foobar": {
        "module-2": "^1.2.3"
      },
-     "c.baz": {
+     "/c/baz": {
        "module-3": "^1.2.3"
      },
-     "d.etc": {
+     "/d/etc": {
        "module-4": "^1.2.3"
      },
-     "e.supported": {
+     "/e/supported": {
        "module-5": "^1.2.3"
      }
   }

@@ -109,8 +109,9 @@
         },
         "targetDependencies": {
             "type": "object",
+            "comment": "properties are either JSON pointer, legacy dot separated names, or legacy *",
             "patternProperties": {
-                "(^[a-z]+[a-z0-9-.]*$)|(^[*]$)": {
+                "^((/([^~]|~0|~1)*)?|([a-z]+[a-z0-9-.]*)|([*]))$": {
                     "$ref": "#/definitions/dependencyMap"
                 }
             },
@@ -118,8 +119,9 @@
         },
         "testTargetDependencies": {
             "type": "object",
+            "comment": "properties are either JSON pointer, legacy dot separated names, or legacy *",
             "patternProperties": {
-                "(^[a-z]+[a-z0-9-.]*$)|(^[*]$)": {
+                "^((/([^~]|~0|~1)*)?|([a-z]+[a-z0-9-.]*)|([*]))$": {
                     "$ref": "#/definitions/dependencyMap"
                 }
             },
