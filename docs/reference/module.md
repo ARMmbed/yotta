@@ -229,8 +229,8 @@ target's [`similarTo` list](../tutorial/targets.html#similarto), or which match
 properties that are defined to a truthy value in the [configuration
 data](/reference/config.html).
 
-To test nested values from config data, use dot-syntax,
-`"mbed.meshing.supported"` in the following example tests that the "supported"
+To test nested values from config data, use [JSON pointer syntax](https://tools.ietf.org/html/rfc6901),
+`"/mbed/meshing/supported"` in the following example tests that the "supported"
 value is truthy in config data that looks like this:
 
 ```json
@@ -259,7 +259,7 @@ Example:
             "mbed-hal-freescale": "^3.0.0",
             "mbed": "^3.0.0"
         },
-        "mbed.meshing.supported": {
+        "/mbed/meshing/supported": {
             "mbed-meshing": "^1.2.3"
         }
 	}
