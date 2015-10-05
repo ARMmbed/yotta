@@ -137,7 +137,7 @@ docs](https://cmake.org/documentation/).
 
 General tips for writing CMake:
 
- * Always wrap expanded `"${VARIABLES}"` in quotes (or expand them insite a
+ * Always wrap expanded `"${VARIABLES}"` in quotes (or expand them inside a
    quoted string), if they are unquoted then any spaces in the expanded
    variable will cause it to be split into separate arguments
 
