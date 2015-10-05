@@ -67,13 +67,17 @@ def rmRf(path):
 def fullySplitPath(path):
     components = []
     while True:
-        path, component = os.path.split(path)
-        if component != '':
-            components.append(component)
-        else:
-            if path != '':
-                components.append(path)
+        part, component = os.path.split(path)
+        if part == path:
+            # absolute path
+            components.append(part)
             break
+        elif component == path:
+            components.append(component)
+            break
+        else:
+            components.append(component)
+            path = part
     components.reverse()
     return components
 
