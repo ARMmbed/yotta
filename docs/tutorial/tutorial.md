@@ -11,7 +11,7 @@ We’ll look at creating and publishing a module, then using that module in a si
 
 <a name="Creating a Module"></a>
 ## Creating a Module
-Before creating a module you should always check the [yotta registry](http://yottabuild.org) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
+Before creating a module you should always check the [yotta registry](https://yottabuild.org) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
 
 Let’s create a module that provides a really simple logging framework:
 
