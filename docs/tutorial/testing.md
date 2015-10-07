@@ -23,7 +23,11 @@ yotta supports testing through the `test` directory in every module, and the
 
 Each separate source file in the top level of the test directory will be
 compiled into a separate executable (so each test should either have a `main()`
-function or use a framework that provides a `main()`).
+function or use a framework that provides a `main()`. In [mbed
+OS](https://github.com/ARMmbed/mbed-os), `main` is defined by the system, and
+each test application should define an
+[`app_start`](https://github.com/armmbed/minar#impact) entry point, unless a
+test framework is being used with other requirements.
 
 For more complex tests, composed of a number of files, all of the source files
 under each subdirectory within the test directory will be compiled into a

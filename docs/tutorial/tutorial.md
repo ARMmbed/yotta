@@ -191,6 +191,10 @@ int main(){
 }
 ```
 
+Note that if you are compiling a program for [mbed
+OS](https://github.com/armmbed/mbed-os) with yotta, then the entry point is
+[`app_start`](https://github.com/armmbed/minar#impact), instead of `main`.
+
 Now, when we run `yotta build`, yotta will also build our test:
 
 ```sh
