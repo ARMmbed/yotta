@@ -180,13 +180,13 @@ sudo apt-get update
 Install the compiler package for Ubuntu 14.04:
 
 ```sh
-sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q2-1trusty1
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q3-1trusty1
 ```
 
 or for Ubuntu 14.10:
 
 ```sh
-sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q2-0utopic1
+sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q2-1utopic1
 ```
 
 To use this compiler, you'll need to select a supported cross-compilation
