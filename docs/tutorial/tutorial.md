@@ -9,6 +9,11 @@ There are two sorts of things that `yotta` builds: modules, and executables. Mod
 
 We’ll look at creating and publishing a module, then using that module in a simple command line executable.
 
+This tutorial assumes your are building and running natively on OS X or Linux,
+For a guide to writing cross-compiled programs for mbed OS using yotta, see the
+[mbed OS
+documentation](https://docs.mbed.com/docs/getting-started-mbed-os/en/latest/FirstProjectmbedOS/).
+
 <a name="Creating a Module"></a>
 ## Creating a Module
 Before creating a module you should always check the [yotta registry](http://yottabuild.org) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
