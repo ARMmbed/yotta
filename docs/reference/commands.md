@@ -176,7 +176,7 @@ yotta target <targetname>[,url-or-version-spec] [-g]
 #### Description
 Display or set the current target. `yotta` will look for and install a target description from the `yotta` registry when building or installing dependencies.
 
-Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
+Targets define the options and commands that `yotta` uses to compile modules and executables. 
 
 A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
 
