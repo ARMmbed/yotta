@@ -133,29 +133,36 @@ def unpackFrom(tar_file_path, to_directory):
     into_parent_dir = os.path.dirname(to_directory)
     fsutils.mkDirP(into_parent_dir)
     temp_directory = tempfile.mkdtemp(dir=into_parent_dir)
-
-    with tarfile.open(tar_file_path) as tf:
-        strip_dirname = ''
-        # get the extraction directory name from the first part of the
-        # extraction paths: it should be the same for all members of
-        # the archive
-        for m in tf.getmembers():
-            split_path = fsutils.fullySplitPath(m.name)
-            logger.debug('process member: %s %s', m.name, split_path)
-            if os.path.isabs(m.name) or '..' in split_path:
-                raise ValueError('archive uses invalid paths')
-            if not strip_dirname:
-                if len(split_path) != 1 or not len(split_path[0]):
-                    raise ValueError('archive does not appear to contain a single module')
-                strip_dirname = split_path[0]
-                continue
-            else:
-                if split_path[0] != strip_dirname:
-                    raise ValueError('archive does not appear to contain a single module')
-            m.name = os.path.join(*split_path[1:])
-            tf.extract(m, path=temp_directory)
-    shutil.move(temp_directory, to_directory)
-    logger.debug('extraction complete %s', to_directory)
+    try:
+        with tarfile.open(tar_file_path) as tf:
+            strip_dirname = ''
+            # get the extraction directory name from the first part of the
+            # extraction paths: it should be the same for all members of
+            # the archive
+            for m in tf.getmembers():
+                split_path = fsutils.fullySplitPath(m.name)
+                logger.debug('process member: %s %s', m.name, split_path)
+                if os.path.isabs(m.name) or '..' in split_path:
+                    raise ValueError('archive uses invalid paths')
+                if not strip_dirname:
+                    if len(split_path) != 1 or not len(split_path[0]):
+                        raise ValueError('archive does not appear to contain a single module')
+                    strip_dirname = split_path[0]
+                    continue
+                else:
+                    if split_path[0] != strip_dirname:
+                        raise ValueError('archive does not appear to contain a single module')
+                m.name = os.path.join(*split_path[1:])
+                tf.extract(m, path=temp_directory)
+        # make sure the destination directory doesn't exist:
+        fsutils.rmRf(to_directory)
+        shutil.move(temp_directory, to_directory)
+        temp_directory = None
+        logger.debug('extraction complete %s', to_directory)
+    finally:
+        if temp_directory is not None:
+            # if anything has failed, cleanup
+            fsutils.rmRf(temp_directory)
 
 def unpackFromCache(cache_key, to_directory):
     ''' If the specified cache key exists, unpack the tarball into the
