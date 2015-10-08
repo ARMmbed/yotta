@@ -177,7 +177,33 @@ sudo add-apt-repository ppa:terry.guo/gcc-arm-embedded
 sudo apt-get update
 ```
 
-Install the compiler package for Ubuntu 14.04:
+You can now choose to pin the PPA repository or be explicit about the version
+to install, ensuring the correct package is used.
+Pinning the PPA is a little more involved, but is recommended when scripting
+as it will continue to work if the package changes name as versions increase.
+
+Pin the PPA by writing these contents to ```/etc/apt/preferences.d/gcc-arm-none-eabi```
+
+```
+Explanation: get gcc-arm-none-eabi from ppa
+Package: gcc-arm-none-eabi
+Pin: origin "ppa.launchpad.net"
+Pin-Priority: 1001
+```
+
+e.g.
+
+```sh
+sudo echo -e "Explanation: get gcc-arm-none-eabi from ppa\nPackage: gcc-arm-none-eabi\nPin: origin \"ppa.launchpad.net\"\nPin-Priority: 1001" | sudo tee /etc/apt/preferences.d/gcc-arm-none-eabi'
+```
+
+Then install the package as normal:
+
+```
+sudo apt-get install gcc-arm-none-eabi
+```
+
+Alternatively, to install an explicit version of the compiler package for Ubuntu 14.04:
 
 ```sh
 sudo apt-get install gcc-arm-none-eabi=4.9.3.2015q3-1trusty1
