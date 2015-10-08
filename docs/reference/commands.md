@@ -212,7 +212,7 @@ yotta install <module>
 Which installs `<module>` and its dependencies, and saves it in the current module's description file.
 
 A `<module>` is one of:
- * a name, in which case the module is installed from the public registry (<yottabuild.org>)
+ * a name, in which case the module is installed from the public registry (<https://yotta.mbed.com>)
  * a github spec (username/reponame), in which case the module is installed directly from github. This can include private github URLs.
 
 ##### yotta install (no arguments, in a module folder)
@@ -332,7 +332,7 @@ yotta publish
 ```
 
 #### Description
-Publish the current module or target to the public [`yotta` registry](https://yottabuild.org), where other people will be able to search for and install it.
+Publish the current module or target to the public [`yotta` registry](https://yotta.mbed.com), where other people will be able to search for and install it.
 
 Any files matching lines in the `.yotta_ignore` file (if present) are ignored,
 and will not be included in the published tarball.

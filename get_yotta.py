@@ -60,21 +60,21 @@ def shouldInstall(binName):
 # Cygwin Install Script - TODO
 #
 def cygwin():
-	print("Cygwin is not currently supported. Please install for the windows command line. See  http://docs.yottabuild.org/#installing-on-windows for details.");
+	print("Cygwin is not currently supported. Please install for the windows command line. See  http://yottadocs.mbed.com/#installing-on-windows for details.");
 	return;
 
 #
 # Linux Install Script - TODO
 #
 def linux():
-	print("For Linux install instructions please see http://docs.yottabuild.org/#installing-on-linux");
+	print("For Linux install instructions please see http://yottadocs.mbed.com/#installing-on-linux");
 	return;
 
 #
 # OSX Install Script - TODO
 #
 def osx():
-	print("For OSX install instructions please see http://docs.yottabuild.org/#installing-on-osx");
+	print("For OSX install instructions please see http://yottadocs.mbed.com/#installing-on-osx");
 	return;
 
 #

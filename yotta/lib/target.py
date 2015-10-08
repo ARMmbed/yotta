@@ -311,7 +311,7 @@ class DerivedTarget(Target):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 if cmd[0] == 'cmake':
-                    return 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                    return 'CMake is not installed, please follow the installation instructions at http://yottadocs.mbed.com/#installing'
                 else:
                     return '%s is not installed' % (cmd[0])
             else:
