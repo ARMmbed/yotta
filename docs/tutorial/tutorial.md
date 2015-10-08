@@ -16,7 +16,7 @@ documentation](https://docs.mbed.com/docs/getting-started-mbed-os/en/latest/Firs
 
 <a name="Creating a Module"></a>
 ## Creating a Module
-Before creating a module you should always check the [yotta registry](http://yottabuild.org) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
+Before creating a module you should always check the [yotta registry](https://yotta.mbed.com) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
 
 Let’s create a module that provides a really simple logging framework:
 

@@ -19,18 +19,18 @@ pip install yotta
 
 **Note that yotta needs several non-python dependencies to be installed
 correctly in order to do anything useful.** Please follow the **[detailed
-installation instructions](http://docs.yottabuild.org/#installing)** on the
+installation instructions](http://yottadocs.mbed.com/#installing)** on the
 yotta docs website to ensure you have a working installation.
 
 Exactly which other dependencies (such as compilers and other build tools) are
 required will also depend on the [yotta target
-description](http://docs.yottabuild.org/tutorial/targets.html) that you intend
+description](http://yottadocs.mbed.com/tutorial/targets.html) that you intend
 to use, so please be sure to also check the target description's own
 documentation.
 
 ### Get Started!
 The best way to get started is to [follow the
-tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
+tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html).
 
 ### What `yotta` does
 yotta downloads the software components that your program depends on. It's
@@ -44,10 +44,10 @@ you don't already have installed. It will also update your module's description
 file to reflect the new dependency.
 
 The best way to really understand how yotta works is to [follow the
-tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
+tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html).
 
 ### Further Documentation
-For further documentation see the [yotta docs](http://docs.yottabuild.org)
+For further documentation see the [yotta docs](http://yottadocs.mbed.com)
 website.
 
 ### Tips
