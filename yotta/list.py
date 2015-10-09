@@ -7,6 +7,7 @@
 from __future__ import print_function
 import logging
 import os
+import json
 
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
@@ -21,6 +22,9 @@ from .lib import fsutils
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
         help='Show all dependencies (including repeats, and test-only dependencies)'
+    )
+    parser.add_argument('--json', '-j', dest='json', default=False, action='store_true',
+        help='Output json representation of dependencies.'
     )
 
 def execCommand(args, following_args):
@@ -43,19 +47,40 @@ def execCommand(args, following_args):
         available_components = [(c.getName(), c)],
                         test = True
     )
-
-    putln(
-        ComponentDepsFormatter(
-                           target = target,
-             available_components = dependencies,
-                            plain = args.plain,
-                         list_all = args.show_all
-        ).format(
-            c, [c.getName()]
+    if args.json:
+        putln(formatJsonDeps(target, dependencies, args.show_all))
+    else:
+        putln(
+            ComponentDepsFormatter(
+                               target = target,
+                 available_components = dependencies,
+                                plain = args.plain,
+                             list_all = args.show_all
+            ).format(
+                c, [c.getName()]
+            )
         )
-    )
 
-
+def formatJsonDeps(target, available_components, list_all):
+    d = {}
+    for c in available_components:
+        co = available_components[c]
+        d[c] = {}
+        d[c]['name'] = co.getName()
+        d[c]['version'] = str(co.getVersion())
+        d[c]['dependencies'] = {}
+        for dep in co.getDependencySpecs(target=target):
+            depcomp = available_components[dep.name]
+            spec = access.remoteComponentFor(dep.name, dep.version_req, 'modules').versionSpec()
+            dd = {
+                'verspec':dep.version_req,
+                   'test':dep.is_test_dependency,
+                'missing':not available_components[dep.name],
+               'mismatch':not spec.match(depcomp.getVersion()),
+                   'link':co.installedLinked()
+            }
+            d[c]['dependencies'][dep.name]=dd
+    return json.dumps(d)
 
 def islast(generator):
     next_x = None
@@ -235,4 +260,3 @@ class ComponentDepsFormatter(object):
                 else:
                     r += indent + tee + DIM + name + spec_descr + RESET + '\n'
         return r
-
