@@ -83,19 +83,6 @@ class RemoteComponent(object):
         raise NotImplementedError
 
 
-def _openExclusively(name):
-    # in python >=3.3, there's the handy 'x' flag, otherwise we have to use
-    # fdopen:
-    # (tarfile has problems with fdopened files on python 3.3, so this works
-    # around that bug too)
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
-        return open(name, 'bx+')
-    else:
-        fd = os.open(name, os.O_CREAT | os.O_EXCL |
-                           os.O_RDWR | getattr(os, "O_BINARY", 0))
-        return os.fdopen(fd, 'rb+')
-
-
 def pruneCache():
     ''' Prune the cache '''
     cache_dir = folders.cacheDirectory()
@@ -211,11 +198,12 @@ def downloadToCache(stream, hashinfo={}, cache_key=None):
 
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
-    download_fname = os.path.join(cache_dir, cache_key)
+    cache_as = os.path.join(cache_dir, cache_key)
 
-    with _openExclusively(download_fname) as f:
+    (download_file, download_fname) = tempfile.mkstemp(prefix=cache_dir)
+    with os.fdopen(download_file, 'wb') as f:
         f.seek(0)
-        for chunk in stream.iter_content(1024):
+        for chunk in stream.iter_content(4096):
             f.write(chunk)
             if hash_name:
                 m.update(chunk)
@@ -231,8 +219,16 @@ def downloadToCache(stream, hashinfo={}, cache_key=None):
                 raise Exception('Hash verification failed.')
         logger.debug('wrote tarfile of size: %s to %s', f.tell(), download_fname)
         f.truncate()
+        try:
+            os.rename(download_fname, cache_as)
+        except OSError as e:
+            # if we failed, it's because the file already exists (probably
+            # because another process got there first), so just rm our
+            # temporary file and continue
+            cache_logger.debug('another process downloaded %s first', cache_key)
+            fsutils.rmF(download_fname)
 
-    return (download_fname, cache_key)
+    return (cache_as, cache_key)
 
 @sometimesPruneCache(0.05)
 def unpackTarballStream(stream, into_directory, hash={}, cache_key=None):
