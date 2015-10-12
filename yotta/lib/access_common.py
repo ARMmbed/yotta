@@ -10,7 +10,6 @@ import os
 import hashlib
 import tempfile
 import shutil
-import sys
 import functools
 import random
 import errno
