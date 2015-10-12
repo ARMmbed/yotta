@@ -145,6 +145,11 @@ def unpackFrom(tar_file_path, to_directory):
         shutil.move(temp_directory, to_directory)
         temp_directory = None
         logger.debug('extraction complete %s', to_directory)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            logger.error('failed to extract tarfile %s', e)
+            fsutils.rmF(tar_file_path)
+        raise
     finally:
         if temp_directory is not None:
             # if anything has failed, cleanup
@@ -159,6 +164,7 @@ def unpackFromCache(cache_key, to_directory):
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
     path = os.path.join(cache_dir, cache_key)
+    logger.debug('attempt to unpack from cache %s -> %s', path, to_directory)
     try:
         unpackFrom(path, to_directory)
         cache_logger.debug('unpacked %s from cache into %s', cache_key, to_directory)
@@ -218,14 +224,17 @@ def downloadToCache(stream, hashinfo={}, cache_key=None):
                 raise Exception('Hash verification failed.')
         logger.debug('wrote tarfile of size: %s to %s', f.tell(), download_fname)
         f.truncate()
-        try:
-            os.rename(download_fname, cache_as)
-        except OSError as e:
+    try:
+        os.rename(download_fname, cache_as)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
             # if we failed, it's because the file already exists (probably
             # because another process got there first), so just rm our
             # temporary file and continue
             cache_logger.debug('another process downloaded %s first', cache_key)
             fsutils.rmF(download_fname)
+        else:
+            raise
 
     return (cache_as, cache_key)
 
