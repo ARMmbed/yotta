@@ -129,7 +129,7 @@ class TestPackIgnores(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.test_dir = writeTestFiles(Test_Files)
-    
+
     @classmethod
     def tearDownClass(cls):
         rmRf(cls.test_dir)
