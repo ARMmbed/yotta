@@ -43,7 +43,7 @@ Default_Publish_Ignore = [
     '/yotta_targets',
     '/build',
     '.DS_Store',
-    '.sw[ponml]',
+    '*.sw[ponml]',
     '*~',
     '._.*',
     '.yotta.json'

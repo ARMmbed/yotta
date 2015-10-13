@@ -102,23 +102,37 @@ int main(){
 '''
 }
 
+Default_Test_Files = {
+    'module.json': '''
+{
+  "name": "test-testdep-f",
+  "version": "0.0.6",
+  "license": "Apache-2.0"
+}'''
+}
+
 def isWindows():
     # can't run tests that hit github without an authn token
     return os.name == 'nt'
 
+def writeTestFiles(files):
+    test_dir = tempfile.mkdtemp()
+    for path, contents in files.items():
+        path_dir, file_name =  os.path.split(path)
+        path_dir = os.path.join(test_dir, path_dir)
+        mkDirP(path_dir)
+        with open(os.path.join(path_dir, file_name), 'w') as f:
+            f.write(contents)
+    return test_dir
+
 class TestPackIgnores(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-
-        for path, contents in Test_Files.items():
-            path_dir, file_name =  os.path.split(path)
-            path_dir = os.path.join(self.test_dir, path_dir)
-            mkDirP(path_dir)
-            with open(os.path.join(path_dir, file_name), 'w') as f:
-                f.write(contents)
-
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = writeTestFiles(Test_Files)
+    
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
 
     def test_absolute_ignores(self):
         c = component.Component(self.test_dir)
@@ -142,6 +156,24 @@ class TestPackIgnores(unittest.TestCase):
         self.assertTrue(c.ignores('source/a/b/test.txt'))
         self.assertTrue(c.ignores('test/anothertest/ignoredbyfname.c'))
         self.assertTrue(c.ignores('test/someothertest/alsoignored.c'))
+
+    def test_default_ignores(self):
+        default_test_dir = writeTestFiles(Default_Test_Files)
+        c = component.Component(default_test_dir)
+        self.assertTrue(c.ignores('.something.c.swp'))
+        self.assertTrue(c.ignores('.something.c~'))
+        self.assertTrue(c.ignores('path/to/.something.c.swm'))
+        self.assertTrue(c.ignores('path/to/.something.c~'))
+        self.assertTrue(c.ignores('.DS_Store'))
+        self.assertTrue(c.ignores('.git'))
+        self.assertTrue(c.ignores('.hg'))
+        self.assertTrue(c.ignores('.svn'))
+        self.assertTrue(c.ignores('yotta_modules'))
+        self.assertTrue(c.ignores('yotta_targets'))
+        self.assertTrue(c.ignores('build'))
+        self.assertTrue(c.ignores('.yotta.json'))
+
+        rmRf(default_test_dir)
 
     def test_comments(self):
         c = component.Component(self.test_dir)
