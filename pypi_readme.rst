@@ -11,9 +11,7 @@ While yotta is written in python, to use it to build software you'll need severa
 
 Get Started
 ===========
-The best way to get started is to [follow the
-tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html).
-
+The best way to get started is to `follow the tutorial <http://yottadocs.mbed.com/tutorial/tutorial.html>`_.
 
 License
 =======
