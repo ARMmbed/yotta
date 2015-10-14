@@ -189,15 +189,15 @@ If the target is set both locally and globally, then the locally set target
 takes precedence.
 
 ## <a href="#yotta-install" name="yotta-install">#</a> yotta install
-Synonyms: `yotta in`, `yotta i`
+Synonyms: `yotta in`
 #### Synopsis
 
 ```
-(in a module directory)
+# in a module directory:
 yotta install
 yotta install <module>[@<version>]
-(anywhere)
-yotta install <module>[@<version>] --global
+# anywhere:
+yotta install <module>[@<version>] [--global]
 ```
 
 #### Description
@@ -212,15 +212,16 @@ yotta install <module>
 Which installs `<module>` and its dependencies, and saves it in the current module's description file.
 
 A `<module>` is one of:
- * a name, in which case the module is installed from the public registry (<https://yotta.mbed.com>)
- * a github spec (username/reponame), in which case the module is installed directly from github. This can include private github URLs.
 
-##### yotta install (no arguments, in a module folder)
+  * a name, in which case the module is installed from the public registry (<https://yotta.mbed.com>)
+  * a github spec (username/reponame), in which case the module is installed directly from github. This can include private github URLs.
+
+#### `yotta install` (no arguments, in a module folder)
 In a module directory, `yotta install` will check for and install any missing dependencies of the current module. Options:
 
  * `--install-linked`: also traverse into any linked modules, and install their dependencies. By default linked modules are not modified. Note that without this option all the required dependencies to build may not be installed.
 
-##### `yotta install <module>` (in a module folder)
+#### `yotta install <module>` (in a module folder)
 In a module directory, `yotta install <module>` will install the specified module, and any missing dependencies for it.
 
 The installed version of the module will be saved as a dependency into the
@@ -229,12 +230,12 @@ to specify that only minor version updates are allowed to be installed,
 **unless** the module has a 0.x.x version number, in which case the `~`
 semantic-version specifier is used restrict updates to patch versions only.
 
-##### `yotta install <module>` (anywhere)
+#### `yotta install <module>` (anywhere)
 Download the specified dependency, and install it in a subdirectory of the current directory. Options:
 
  * `--global`: install the specified module into the global modules directory instead.
 
-##### Examples
+#### Examples
 
 ```
 yotta install simpleog
@@ -308,7 +309,7 @@ Display the primary email address(es) that you are currently authenticated to.
 If you are not logged in then this will return a non-zero status code,
 otherwise the status code is 0.
 
-# Examples
+#### Examples
 ```sh
 > yotta whoami
 friend@example.com
