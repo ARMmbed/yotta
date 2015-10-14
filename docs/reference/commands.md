@@ -360,6 +360,13 @@ When you run `yotta build` it will then pick up the linked module.
 
 This works for direct and indirect dependencies: you can link to a module that your module does not use directly, but a dependency of your module does.
 
+**WARNING:** yotta uses directory junctions to provide links on windows. **Some
+command line tools are not aware of directory junctions and will recurse
+through them** (such as the version of `rm` that ships with msys). Be careful
+if you recursively delete your yotta_modules folder. yotta itself will never
+modify or remove files through a link, and windows explorer will also treat
+them correctly.
+
 #### Directories
 When you run `yotta link`, links are created in a system-wide directory under
 `YOTTA_PREFIX`, and the links in that directory are then picked up by
