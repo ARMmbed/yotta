@@ -96,7 +96,7 @@ def execCommand(args, following_args):
         return displayCurrentTarget(args)
     else:
         if not Target_RE.match(args.set_target):
-            logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:
+            logging.error('Invalid target: "%s"' % args.set_target)#, targets must be one of:
             #
             #    a valid name (lowercase letters, numbers, and hyphen)
             #    a github ref (owner/project)
@@ -121,7 +121,11 @@ def execCommand(args, following_args):
             settings.setProperty('build', 'target', t, not args.save_global)
             # if we have a module in the current directory, try to make sure
             # this target is installed
-            c = component.Component(cwd)
-            if c is not None:
+            c = component.Component(os.getcwd())
+            if c:
                 target, errors = c.satisfyTarget(t)
+                for err in errors:
+                    logging.error(err)
+                if len(errors):
+                    logging.error('NOTE: use "yotta link-target" to test a locally modified target prior to publishing.')
             return 0
