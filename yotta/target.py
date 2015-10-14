@@ -39,13 +39,6 @@ def addOptions(parser):
         help='set globally (in the per-user settings) instead of locally to this directory'
     )
 
-    # FIXME: need help that lists possible targets, and we need a walkthrough
-    # guide to forking a new target for an existing board
-    #
-    # (the description of a target should have a list of things that it's
-    #  similar to, e.g. objectador is similar to EFM32gg990f, #  EFM32gg,
-    #  Cortex-M3, ARMv8, ARM)
-
 
 def displayCurrentTarget(args):
     if not args.plain:
@@ -126,4 +119,9 @@ def execCommand(args, following_args):
             else:
                 t = args.set_target
             settings.setProperty('build', 'target', t, not args.save_global)
+            # if we have a module in the current directory, try to make sure
+            # this target is installed
+            c = component.Component(cwd)
+            if c is not None:
+                target, errors = c.satisfyTarget(t)
             return 0
