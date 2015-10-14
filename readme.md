@@ -38,10 +38,10 @@ similar in concept to npm, pip or gem: although because C and C++ are compiled
 languages, yotta also controls the build of your software in order to ensure
 downloaded modules are available to use in your code.
 
-To install a new module, you run `yotta install --save <modulename>`, and yotta
+To add a new module to your program run `yotta install <modulename>`.  yotta
 will install both the module you've specified and any of its dependencies that
-you don't already have installed. It will also update your module's description
-file to reflect the new dependency.
+you don't already have. It will also update your module's description file to
+reflect the new dependency.
 
 The best way to really understand how yotta works is to [follow the
 tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html).
