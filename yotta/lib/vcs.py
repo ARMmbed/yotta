@@ -21,6 +21,9 @@ class VCSError(Exception):
         super(VCSError, self).__init__(message)
         self.returncode = returncode
 
+class VCSNotInstalled(VCSError):
+    pass
+
 class VCS(object):
     @classmethod
     def cloneToTemporaryDir(cls, remote):
@@ -124,11 +127,11 @@ class Git(VCS):
             except OSError as e:
                 if e.errno == errno.ENOENT:
                     if cmd[0] == 'git':
-                        raise VCSError(
+                        raise VCSNotInstalled(
                             'git is not installed, or not in your path. Please follow the installation instructions at http://yottadocs.mbed.com/#installing'
                         )
                     else:
-                        raise VCSError('%s is not installed' % (cmd[0]))
+                        raise VCSNotInstalled('%s is not installed' % (cmd[0]))
                 else:
                     raise VCSError('command %s failed' % (cmd))
             out, err = child.communicate()
