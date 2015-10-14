@@ -287,7 +287,7 @@ class CMakeGen(object):
         import vcs
 
         now = datetime.datetime.utcnow()
-        vcs = vcs.getVCS(sourcedir)
+        vcs_instance = vcs.getVCS(sourcedir)
         if self.build_uuid is None:
             import uuid
             self.build_uuid = uuid.uuid4()
@@ -301,11 +301,19 @@ class CMakeGen(object):
             ('YOTTA_BUILD_SECOND', now.second,      'UTC second 0-61'),
             ('YOTTA_BUILD_UUID',   self.build_uuid, 'unique random UUID for each build'),
         ]
-        if vcs is not None:
-            definitions += [
-                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash'),
-                ('YOTTA_BUILD_VCS_CLEAN', int(vcs.isClean()), 'evaluates true if the version control system was clean, otherwise false')
-            ]
+        if vcs_instance is not None:
+            commit_id = None
+            try:
+                commit_id = vcs_instance.getCommitId()
+            except vcs.VCSNotInstalled as e:
+                logger.warning('%s is not installed, VCS status build info is not available', vcs_instance.__class__.__name__)
+                commit_id = None
+            if commit_id is not None:
+                clean_state = int(vcs_instance.isClean())
+                definitions += [
+                    ('YOTTA_BUILD_VCS_ID',    commit_id,   'git or mercurial hash'),
+                    ('YOTTA_BUILD_VCS_CLEAN', clean_state, 'evaluates true if the version control system was clean, otherwise false')
+                ]
 
         for d in definitions:
             preproc_defs += '#define %s %s // %s\n' % d
