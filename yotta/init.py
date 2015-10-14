@@ -119,9 +119,11 @@ def execCommand(args, following_args):
     else:
         return initNonInteractive(args, c)
 
-def createFolders(c):
+def createFolders(c, moduletype='library'):
     # default set of folders
-    folders_to_create = ["./source", "./test", "./" + c.getName()]
+    folders_to_create = ["./source", "./test"]
+    if moduletype == 'library':
+        folders_to_create.append("./" + c.getName())
     for folder_name in folders_to_create:
         if not os.path.exists(folder_name):
             os.mkdir(folder_name)
@@ -178,7 +180,7 @@ def initInteractive(args, c):
 
     c.setName(getUserInput("Enter the module name:", default_name, notBannedName))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
-    
+
     default_isexe = 'no'
     if current('bin'):
         default_isexe = 'yes'
@@ -198,11 +200,11 @@ def initInteractive(args, c):
         new_repo_url = getUserInput("Repository url (where people can submit bugfixes): ", current_repo_url, repoObject)
         if new_repo_url:
             c.description['repository'] = new_repo_url
-        
+
         new_homepage = getUserInput("Homepage: ", current('homepage'))
-        if not len(new_homepage.strip()) and 'homepage' in c.description:
+        if (not len(new_homepage.strip())) and 'homepage' in c.description:
             del c.description['homepage']
-        else:
+        elif len(new_homepage.strip()):
             c.description['homepage'] = new_homepage
 
     if not current('licenses') or current('license'):
@@ -214,6 +216,9 @@ def initInteractive(args, c):
 
     c.description['dependencies'] = current('dependencies') or {}
 
-    createFolders(c)
+    if isexe:
+        createFolders(c, 'executable')
+    else:
+        createFolders(c, 'library')
     c.writeDescription()
 
