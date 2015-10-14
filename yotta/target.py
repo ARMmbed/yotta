@@ -38,6 +38,10 @@ def addOptions(parser):
         default=False, action='store_true',
         help='set globally (in the per-user settings) instead of locally to this directory'
     )
+    parser.add_argument('-n', '--no-install', dest='no_install',
+        default=False, action='store_true',
+        help='do not immediately download the target description'
+    )
 
 
 def displayCurrentTarget(args):
@@ -119,13 +123,14 @@ def execCommand(args, following_args):
             else:
                 t = args.set_target
             settings.setProperty('build', 'target', t, not args.save_global)
-            # if we have a module in the current directory, try to make sure
-            # this target is installed
-            c = component.Component(os.getcwd())
-            if c:
-                target, errors = c.satisfyTarget(t)
-                for err in errors:
-                    logging.error(err)
-                if len(errors):
-                    logging.error('NOTE: use "yotta link-target" to test a locally modified target prior to publishing.')
+            if not args.no_install:
+                # if we have a module in the current directory, try to make sure
+                # this target is installed
+                c = component.Component(os.getcwd())
+                if c:
+                    target, errors = c.satisfyTarget(t)
+                    for err in errors:
+                        logging.error(err)
+                    if len(errors):
+                        logging.error('NOTE: use "yotta link-target" to test a locally modified target prior to publishing.')
             return 0
