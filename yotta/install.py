@@ -175,23 +175,27 @@ def installComponent(args):
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module
     github_ref_match = GitHub_Ref_RE.match(args.component)
-    if github_ref_match:
-        component_name = github_ref_match.group(1)
-        access.satisfyVersion(
-                  component_name,
-                  args.component,
-                       available = dict(),
-                    search_paths = [path],
-               working_directory = path
-        )
-    else:
-        component_name = args.component
-        access.satisfyVersion(
-                  component_name,
-                             '*',
-                       available = dict(),
-                    search_paths = [path],
-               working_directory = path
-        )
+    try:
+        if github_ref_match:
+            component_name = github_ref_match.group(1)
+            access.satisfyVersion(
+                      component_name,
+                      args.component,
+                           available = dict(),
+                        search_paths = [path],
+                   working_directory = path
+            )
+        else:
+            component_name = args.component
+            access.satisfyVersion(
+                      component_name,
+                                 '*',
+                           available = dict(),
+                        search_paths = [path],
+                   working_directory = path
+            )
+    except access_common.Unavailable as e:
+        logging.error('%s', e)
+        return 1
     os.chdir(component_name)
     return installDeps(args, component.Component(os.getcwd()))
