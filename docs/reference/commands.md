@@ -168,11 +168,14 @@ yotta debug source/helloyotta
 
 ```
 yotta target
-yotta target <targetname>[,url-or-version-spec] [-g]
+yotta target <targetname>[,url-or-version-spec] [-g] [-n]
 ```
 
 #### Description
-Display or set the current target. `yotta` will look for and install a target description from the `yotta` registry when building or installing dependencies.
+Display or set the current target. `yotta` will look for and install a target
+description from the `yotta` registry when building or installing dependencies.
+If you run `yotta target` in an existing module then yotta will attempt to
+download the target description immediately, unless `-n` is specified.
 
 Targets define the options and commands that `yotta` uses to compile modules and executables. 
 

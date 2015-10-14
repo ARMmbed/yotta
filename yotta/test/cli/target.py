@@ -52,7 +52,7 @@ class TestCLITarget(unittest.TestCase):
 
     def test_setTarget(self):
         rmRf(os.path.join(self.test_dir, '.yotta.json'))
-        stdout = self.runCheckCommand(['target', 'testtarget', '-g'])
+        stdout = self.runCheckCommand(['target', 'testtarget', '-g', '-n'])
         stdout = self.runCheckCommand(['target'])
         self.assertTrue(stdout.find('testtarget') != -1)
         stdout = self.runCheckCommand(['target', 'x86-linux-native', '-g'])
@@ -63,7 +63,7 @@ class TestCLITarget(unittest.TestCase):
             )
 
     def test_setTargetLocal(self):
-        stdout = self.runCheckCommand(['target', 'testtarget'])
+        stdout = self.runCheckCommand(['target', 'testtarget', '-n'])
         stdout = self.runCheckCommand(['target'])
         self.assertTrue(stdout.find('testtarget') != -1)
         stdout = self.runCheckCommand(['target', 'x86-linux-native'])
