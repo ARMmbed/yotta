@@ -17,10 +17,10 @@ from .lib import version
 from .lib import validate
 
 Known_Licenses = {
-             'isc': 'https://spdx.org/licenses/ISC',
-      'apache-2.0': 'https://spdx.org/licenses/Apache-2.0',
-             'mit': 'https://spdx.org/licenses/MIT',
-    'bsd-3-clause': 'https://spdx.org/licenses/BSD-3-Clause'
+             'isc': 'ISC',
+      'apache-2.0': 'Apache-2.0',
+             'mit': 'MIT',
+    'bsd-3-clause': 'BSD-3-Clause'
 }
 
 Git_Repo_RE = re.compile("^(git[+a-zA-Z-]*:.*|.*\.git|.*git@.*github\.com.*)$")
@@ -178,33 +178,41 @@ def initInteractive(args, c):
 
     c.setName(getUserInput("Enter the module name:", default_name, notBannedName))
     c.setVersion(getUserInput("Enter the initial version:", str(c.getVersion() or "0.0.0"), version.Version))
+    
+    default_isexe = 'no'
+    if current('bin'):
+        default_isexe = 'yes'
+    isexe = getUserInput("Is this an executable (instead of a re-usable library module)?", default_isexe, yesNo)
+    if isexe:
+        c.description['bin'] = './source'
 
     c.description['description'] = getUserInput("Short description: ", current('description'))
-    c.description['keywords']    = getUserInput("Keywords: ", ' '.join(current('keywords') or []), listOfWords)
+    if not isexe:
+        c.description['keywords']    = getUserInput("Keywords: ", ' '.join(current('keywords') or []), listOfWords)
     c.description['author']      = getUserInput("Author: ", current('author'))
 
-    current_repo_url = current('repository')
-    if isinstance(current_repo_url, dict):
-        current_repo_url = current_repo_url['url']
-    new_repo_url = getUserInput("Repository url: ", current_repo_url, repoObject)
-    if new_repo_url:
-        c.description['repository'] = new_repo_url
-    c.description['homepage']    = getUserInput("Homepage: ", current('homepage'))
+    if not isexe:
+        current_repo_url = current('repository')
+        if isinstance(current_repo_url, dict):
+            current_repo_url = current_repo_url['url']
+        new_repo_url = getUserInput("Repository url (where people can submit bugfixes): ", current_repo_url, repoObject)
+        if new_repo_url:
+            c.description['repository'] = new_repo_url
+        
+        new_homepage = getUserInput("Homepage: ", current('homepage'))
+        if not len(new_homepage.strip()) and 'homepage' in c.description:
+            del c.description['homepage']
+        else:
+            c.description['homepage'] = new_homepage
 
     if not current('licenses') or current('license'):
         license = getUserInput('What is the license for this project (Apache-2.0, ISC, MIT etc.)? ', 'Apache-2.0')
-        license_url = None
         if license.lower().strip() in Known_Licenses:
-            license_url = Known_Licenses[license.lower().strip()]
-            c.description['licenses'] = [{'type':license, 'url':license_url}]
+            c.description['license'] = Known_Licenses[license.lower().strip()]
         else:
             c.description['license'] = license
 
-    c.description['dependencies']       = current('dependencies') or {}
-
-    isexe = getUserInput("Is this module an executable?", "no", yesNo)
-    if isexe:
-        c.description['bin'] = './source'
+    c.description['dependencies'] = current('dependencies') or {}
 
     createFolders(c)
     c.writeDescription()
