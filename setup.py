@@ -6,7 +6,7 @@
 import os
 from setuptools import setup, find_packages
 
-# Utility function to cat in a file (used for the README)
+# Utility function to cat in a file (used for the PyPI readme)
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -41,7 +41,7 @@ setup(
     package_data={
         'yotta': ['lib/schema/*.json', 'lib/templates/*.txt', 'lib/templates/*.cmake']
     },
-    long_description=read('readme.md'),
+    long_description=read('pypi_readme.rst'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
