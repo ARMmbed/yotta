@@ -7,7 +7,6 @@
 from __future__ import print_function
 import logging
 import os
-import json
 
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
@@ -42,18 +41,19 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
-    dependencies = c.getDependenciesRecursive(
+    installed_modules = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
                         test = True
     )
     if args.json:
-        putln(formatJsonDeps(target, dependencies, args.show_all))
+        dependency_graph = resolveDependencyGraph(target, c, installed_modules)
+        print(formatDependencyGraphAsJSON(dependency_graph))
     else:
         putln(
             ComponentDepsFormatter(
                                target = target,
-                 available_components = dependencies,
+                 available_components = installed_modules,
                                 plain = args.plain,
                              list_all = args.show_all
             ).format(
@@ -61,26 +61,43 @@ def execCommand(args, following_args):
             )
         )
 
-def formatJsonDeps(target, available_components, list_all):
-    d = {}
-    for c in available_components:
-        co = available_components[c]
-        d[c] = {}
-        d[c]['name'] = co.getName()
-        d[c]['version'] = str(co.getVersion())
-        d[c]['dependencies'] = {}
-        for dep in co.getDependencySpecs(target=target):
-            depcomp = available_components[dep.name]
-            spec = access.remoteComponentFor(dep.name, dep.version_req, 'modules').versionSpec()
-            dd = {
-                'verspec':dep.version_req,
-                   'test':dep.is_test_dependency,
-                'missing':not available_components[dep.name],
-               'mismatch':not spec.match(depcomp.getVersion()),
-                   'link':co.installedLinked()
-            }
-            d[c]['dependencies'][dep.name]=dd
-    return json.dumps(d)
+def formatDependencyGraphAsJSON(dep_graph):
+    from .lib import ordered_json
+    return ordered_json.dumps(dep_graph)
+
+def resolveDependencyGraph(target, top_component, available_modules, processed=None):
+    from collections import OrderedDict
+    r = OrderedDict()
+
+    if processed is None:
+        processed = set()
+
+    r['name']     = top_component.getName(),
+    r['version']  = str(top_component.getVersion())
+    r['path']     = top_component.path
+    if top_component.installedLinked():
+        r['linkedTo'] = fsutils.realpath(top_component.path)
+
+    specs = dict([(x.name, x) for x in top_component.getDependencySpecs(target=target)])
+    deps = top_component.getDependencies(
+        available_components = available_modules,
+                      target = target,
+                        test = True,
+                    warnings = False
+    )
+    if not top_component:
+        r['errors'] = [top_component.getError()]
+    if not top_component.getName() in processed:
+        processed.add(top_component.getName())
+        dependencies = OrderedDict()
+        for name, dep in deps.items():
+            dependencies[name] = resolveDependencyGraph(target, dep, available_modules, processed=processed)
+            dependencies[name]['specification'] = str(specs[name].version_req)
+            if specs[name].is_test_dependency:
+                dependencies[name]['testOnly'] = True
+        if len(dependencies):
+            r['dependencies'] = dependencies
+    return r
 
 def islast(generator):
     next_x = None
