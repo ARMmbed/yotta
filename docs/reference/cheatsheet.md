@@ -1,8 +1,7 @@
 ---
 layout: default
-title: ARMmbed yotta cheat-sheet
-byline: yotta is the open source modular orchestrator that facilitates building mbedOS and other embedded projects. This cheat sheet summarizes commonly used yotta command line instructions for quick reference.
-leadingpath: ../
+title: Quick reference guide
+section: yotta/cheatsheet
 ---
 
 {% capture colOne %}
@@ -113,11 +112,13 @@ You normally build executables, but you can also build library modules
 
 **`yotta version`**` <major/minor/patch>` - Increment the major, minor or patch version number. 
 
-
 ### Debugging
 
 **`yotta debug`** - Launch a debugger (uses [valinor](https://github.com/armmbed/valinor) to choose the debugger).
 
+### List Dependencies
+
+**`yotta list`** - Display all the dependencies of the current application.
 
 ### Updating Modules
 
@@ -131,14 +132,4 @@ You normally build executables, but you can also build library modules
 {{ colTwo | markdownify }}
 </div>
 <div class="clearfix"></div>
-
----
-
-{% capture colThree %}
-
-
-{% endcapture %}
-<div class="col-md-6">
-{{ colThree | markdownify }}
-</div>
 
