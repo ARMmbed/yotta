@@ -77,47 +77,53 @@ patch versions are used for new features and bugfixes respectively.
 
 `yt` is short for `yotta`, and can be used with all commands.
 
+### Create a New Module
+**`yotta init`** - run in a new empty directory to create a module or
+executable skeleton
+
 ### Find and Install Modules
 
-`yotta search module <search-query>` - search the public registry for modules
+**`yotta search`**` module <search-query>` - search the public registry for modules
 
-`yotta install <dependency-name>` - install the specified module as a dependency
+**`yotta install`**` <dependency-name>` - install the specified module as a dependency
 
 ### Find and Use Targets
 Targets specify hardware specific compiler settings.
 
-`yotta search target <target-name>` - search the online registry for targets.
+**`yotta search`**` target <target-name>` - search the online registry for targets.
 
-`yotta target <target-name>` - set the target for the current directory.
+**`yotta target`**` <target-name>` - set the target for the current directory.
 
-`yotta target `**`--global`**` <target-name>` - set a global target for all yotta projects. 
+**`yotta target --global`**` <target-name>` - set a global target for all yotta projects. 
 
-### Build a Executable or Library Module
-`yotta build` - binaries will be produced in `./build/<targetname>/source`
+### Building
+You normally build executables, but you can also build library modules
 
-`yotta clean` - Remove all temporary build files.
+**`yotta build`** - binaries will be produced in `./build/<targetname>/source`
+
+**`yotta clean`** - Remove all temporary build files.
 
 ### Tests
-`yotta test` - compile and run the tests from your `./test` folder
+**`yotta test`** - compile and run the tests from your `./test` folder
 
 
 ### Publishing Your Modules
 
-`yotta publish` - publish the current library module to the public registry
+**`yotta publish`** - publish the current library module to the public registry
 
-`yotta version <major/minor/patch>` - Increment the major, minor or patch version number. 
+**`yotta version`**` <major/minor/patch>` - Increment the major, minor or patch version number. 
 
 
 ### Debugging
 
-`yotta debug` - Launch a debugger (uses [valinor](https://github.com/armmbed/valinor) to choose the debugger).
+**`yotta debug`** - Launch a debugger (uses [valinor](https://github.com/armmbed/valinor) to choose the debugger).
 
 
 ### Updating Modules
 
-`yotta outdated` - Display modules with newer versions available.
+**`yotta outdated`** - Display modules with newer versions available.
 
-`yotta update` - Update a module(s) to the latest possible versions. 
+**`yotta update`** - Update a module(s) to the latest possible versions. 
 
 
 {% endcapture %}
