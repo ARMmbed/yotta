@@ -125,7 +125,7 @@ class ComponentDepsFormatter(object):
         elif self.use_unicode:
             self.L_Char = u'\u2517'
             self.T_Char = u'\u2523'
-            self.Dash_Char = u'\u2500'
+            self.Dash_Char = u'\u2501'
             self.Pipe_Char = u'\u2503'
         else:
             self.L_Char = u'\\'
