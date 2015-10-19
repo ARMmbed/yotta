@@ -61,7 +61,7 @@ def updateDeps(c, target, args):
         status = 1
         logging.error(error)
     return status
-   
+
 
 def updateComponent(c, target, args):
     # find the specified component in existing dependencies:
