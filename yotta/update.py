@@ -85,13 +85,13 @@ def updateComponent(c, target, args):
 
     update_dependencies = dependencies[args.component].getDependenciesRecursive(
                       target = target,
-        available_components = [(c.getName(), c)] + dependencies.items(),
+        available_components = [(c.getName(), c)] + list(dependencies.items()),
                         test = update_test_deps
     )
 
     components, errors = c.satisfyDependenciesRecursive(
                       target = target,
-            update_installed = set(update_dependencies.keys() + [args.component]),
+            update_installed = set(list(update_dependencies.keys()) + [args.component]),
               traverse_links = args.update_linked,
         available_components = [(c.getName(), c)],
                         test = update_test_deps
