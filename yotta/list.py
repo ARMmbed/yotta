@@ -93,6 +93,8 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
         for name, dep in deps.items():
             dependencies[name] = resolveDependencyGraph(target, dep, available_modules, processed=processed)
             dependencies[name]['specification'] = str(specs[name].version_req)
+            spec = access.remoteComponentFor(name, specs[name].version_req, 'modules').versionSpec()
+            dependencies[name]['satisfiesSpecification'] = spec.match(dep.getVersion())
             if specs[name].is_test_dependency:
                 dependencies[name]['testOnly'] = True
         if len(dependencies):

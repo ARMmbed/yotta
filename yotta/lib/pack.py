@@ -52,6 +52,8 @@ Default_Publish_Ignore = [
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
 
 Ignore_List_Fname = '.yotta_ignore'
+Shrinkwrap_Fname  = 'yotta-shrinkwrap.json'
+Shrinkwrap_Schema = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'shrinkwrap.json')
 
 logger = logging.getLogger('components')
 
@@ -102,6 +104,28 @@ class DependencySpec(object):
         return self.__unicode__().encode('utf-8')
     def __repr__(self):
         return self.__unicode__()
+
+def tryReadJSON(filename, schemaname):
+    r = None
+    try:
+        with open(filename, 'r') as jsonfile:
+            r = ordered_json.load(filename)
+            have_errors = False
+            if schemaname is not None:
+                with open(schemaname, 'r') as schema_file:
+                    schema = json.load(schema_file)
+                    validator = jsonschema.Draft4Validator(schema)
+                    for error in validator.iter_errors(r):
+                        logger.error(
+                            '%s is not valid under the schema: %s value %s',
+                            filename,
+                            u'.'.join([str(x) for x in error.path]),
+                            error.message
+                        )
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
+    return r
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
@@ -169,6 +193,9 @@ class Pack(object):
             # though!
             #if have_errors:
             #    raise InvalidDescription('Invalid %s' % description_filename)
+        self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
+        if self.shrinkwrap:
+            logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
         self.vcs = vcs.getVCS(path)
 
     def getRegistryNamespace(self):

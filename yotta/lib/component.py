@@ -124,7 +124,17 @@ class Component(pack.Pack):
         '''
         deps = []
 
-        deps += [pack.DependencySpec(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
+        def specForDependency(name, version_spec, istest):
+            if self.shrinkwrap is not None and name in self.shrinkwrap:
+                # exact version, and pull from registry:
+                shrinkwrap_ver = self.shrinkwrap[name]['version']
+                logger.info(
+                    'respecting %s shrinkwrap version %s for %s', self.getName(), shrinkwrap_ver, name
+                )
+                version_spec = shrinkwrap_ver
+            return pack.DependencySpec(name, version_spec, istest)
+
+        deps += [specForDependency(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
@@ -133,10 +143,10 @@ class Component(pack.Pack):
                         'Adding target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
                     )
-                    deps += [pack.DependencySpec(x[0], x[1], False) for x in target_conf_deps.items()]
+                    deps += [specForDependency(x[0], x[1], False) for x in target_conf_deps.items()]
 
 
-        deps += [pack.DependencySpec(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
+        deps += [specForDependency(x[0], x[1], True) for x in self.description.get('testDependencies', {}).items()]
         target_deps = self.description.get('testTargetDependencies', {})
         if target is not None:
             for conf_key, target_conf_deps in target_deps.items():
@@ -145,7 +155,7 @@ class Component(pack.Pack):
                         'Adding test-target-dependent dependency specs for target config %s to component %s' %
                         (conf_key, self.getName())
                     )
-                    deps += [pack.DependencySpec(x[0], x[1], True) for x in target_conf_deps.items()]
+                    deps += [specForDependency(x[0], x[1], True) for x in target_conf_deps.items()]
 
         # remove duplicates (use the first occurrence)
         seen = set()
