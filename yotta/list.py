@@ -72,7 +72,7 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     if processed is None:
         processed = set()
 
-    r['name']     = top_component.getName(),
+    r['name']     = top_component.getName()
     r['version']  = str(top_component.getVersion())
     r['path']     = top_component.path
     if top_component.installedLinked():
