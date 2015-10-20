@@ -55,7 +55,7 @@ def formatResult(result, plain=False, short=False, indent=''):
         YELLOW = colorama.Fore.YELLOW     #pylint: disable=no-member
         RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
     else:
-        DIM = BRIGHT = GREEN = RED = RESET = u''
+        DIM = BRIGHT = NORMAL = GREEN = BLUE = RED = YELLOW = RESET = u''
 
     def formatKeyword(keyword):
         if keyword.endswith('official'):
