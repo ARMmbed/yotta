@@ -63,6 +63,12 @@ def formatResult(result, plain=False, short=False, indent=''):
         else:
             return BRIGHT + keyword + NORMAL
 
+    def formatAuthor(author):
+        if isinstance(author, dict):
+            return author.get('name', '<name unknown>') + ' ' + author.get('email', '<email unknown')
+        else:
+            return author
+
     # --short:
     # module-name module-version: description description
 
@@ -102,8 +108,16 @@ def formatResult(result, plain=False, short=False, indent=''):
             indent+(u'    %s\n' % (description))
         if 'keywords' in result and result['keywords']:
             r += indent+(u'    %s\n' % (', '.join([formatKeyword(k) for k in result['keywords']])))
+
         if 'author' in result and result['author']:
-            r += indent+(u'    %s\n' % (DIM + result['author'] + RESET))
+            authors = [result['author']]
+        elif 'maintainers' in result and len(result['maintainers']):
+            authors = result['maintainers']
+        else:
+            authors = []
+        if len(authors):
+            r += indent+(u'    %s\n' % (DIM + (', '.join([formatAuthor(a) for a in authors])) + RESET))
+
         return r.rstrip('\n')
 
 def execCommand(args, following_args):
