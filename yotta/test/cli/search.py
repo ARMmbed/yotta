@@ -13,32 +13,40 @@ from . import cli
 
 class TestCLISearch(unittest.TestCase):
     def test_bothModule(self):
-        stdout = self.runCheckCommand(['search', 'polyfill'])
+        stdout = self.runCheckCommand(['search', 'polyfill', '--short'])
         self.assertTrue(stdout.find('compiler-polyfill') != -1)
 
     def test_bothTarget(self):
-        stdout = self.runCheckCommand(['search', 'frdm-k64f'])
+        stdout = self.runCheckCommand(['search', 'frdm-k64f', '--short'])
         self.assertTrue(stdout.find('frdm-k64f-gcc') != -1)
 
     def test_both(self):
-        stdout = self.runCheckCommand(['search', 'both', 'polyfill'])
+        stdout = self.runCheckCommand(['--plain', 'search', 'both', 'polyfill', '--short'])
         self.assertTrue(stdout.find('compiler-polyfill') != -1)
 
     def test_modules(self):
-        stdout = self.runCheckCommand(['search', 'module', 'polyfill'])
+        stdout = self.runCheckCommand(['search', 'module', 'polyfill', '--short'])
         self.assertTrue(stdout.find('compiler-polyfill') != -1)
 
     def test_targets(self):
-        stdout = self.runCheckCommand(['search', 'target', 'frdm-k64f'])
+        stdout = self.runCheckCommand(['search', 'target', 'frdm-k64f', '--short'])
         self.assertTrue(stdout.find('frdm-k64f-gcc') != -1)
 
     def test_keywords(self):
-        stdout = self.runCheckCommand(['search', 'module', 'polyfill', '-k', 'polyfill'])
+        stdout = self.runCheckCommand(['search', 'module', 'polyfill', '-k', 'polyfill', '--short'])
         self.assertTrue(stdout.find('compiler-polyfill') != -1)
 
     def test_limit(self):
         stdout = self.runCheckCommand(['search', 'module', 'compiler-polyfill', '-l', '5', '-k', 'polyfill'])
         self.assertTrue(stdout.find('compiler-polyfill') != -1)
+
+    def test_author(self):
+        stdout = self.runCheckCommand(['search', 'module', 'compiler-polyfill', '-l', '1', '-k', 'polyfill'])
+        self.assertTrue(stdout.find('james.crosby@arm.com') != -1)
+
+    def test_keywords(self):
+        stdout = self.runCheckCommand(['search', 'module', 'compiler-polyfill', '-l', '1', '-k', 'polyfill'])
+        self.assertTrue(stdout.find('mbed-official') != -1)
 
     def runCheckCommand(self, args):
         stdout, stderr, statuscode = cli.run(args)
