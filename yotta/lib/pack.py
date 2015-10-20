@@ -93,10 +93,11 @@ class OptionalFileWrapper(object):
 
 
 class DependencySpec(object):
-    def __init__(self, name, version_req, is_test_dependency=False):
+    def __init__(self, name, version_req, is_test_dependency=False, shrinkwrapped=False):
         self.name = name
         self.version_req = version_req
         self.is_test_dependency = is_test_dependency
+        self.shrinkwrapped = shrinkwrapped
 
     def __unicode__(self):
         return u'%s at %s' % (self.name, self.version_req)
@@ -139,7 +140,8 @@ class Pack(object):
             description_filename,
             installed_linked,
             schema_filename = None,
-            latest_suitable_version = None
+            latest_suitable_version = None,
+            inherit_shrinkwrap = None
         ):
         self.path = path
         self.installed_linked = installed_linked
@@ -193,10 +195,34 @@ class Pack(object):
             # though!
             #if have_errors:
             #    raise InvalidDescription('Invalid %s' % description_filename)
-        self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
-        if self.shrinkwrap:
-            logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
+        self.inherited_shrinkwrap = None
+        self.shrinkwrap = None
+        # we can only apply shrinkwraps to instances with valid descriptions:
+        # instances do not become valid after being invalid so this is safe
+        # (but it means you cannot trust the shrinkwrap of an invalid
+        # component)
+        # (note that it is unsafe to use the __bool__ operator on self here as
+        # we are not fully constructed)
+        if self.description:
+            if inherit_shrinkwrap is not None:
+                # when inheriting a shrinkwrap, recurse into the section of the
+                # shrinkwrap that applies to this module
+                if not ('dependencies' in inherit_shrinkwrap and \
+                        self.getName() in inherit_shrinkwrap['dependencies']):
+                    raise Exception(
+                        '%s inherited malformed shrinkwrap %s' % (self, inherit_shrinkwrap)
+                    )
+                self.inherited_shrinkwrap = inherit_shrinkwrap['dependencies'][self.getName()]
+            self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
+            if self.shrinkwrap:
+                logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
+                if self.inherited_shrinkwrap:
+                    logger.warning('shrinkwrap in %s overrides inherited shrinkwrap', self.getName())
+        logger.info('%s created with inherited_shrinkwrap %s', self.getName(), self.inherited_shrinkwrap)
         self.vcs = vcs.getVCS(path)
+
+    def getShrinkwrap(self):
+        return self.shrinkwrap or self.inherited_shrinkwrap
 
     def getRegistryNamespace(self):
         raise NotImplementedError("must be implemented by subclass")

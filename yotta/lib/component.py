@@ -69,7 +69,14 @@ def _truthyConfValue(v):
 
 # API
 class Component(pack.Pack):
-    def __init__(self, path, installed_linked=False, latest_suitable_version=None, test_dependency=False):
+    def __init__(
+            self,
+            path,
+            installed_linked = False,
+            latest_suitable_version = None,
+            test_dependency = False,
+            inherit_shrinkwrap = None
+        ):
         ''' How to use a Component:
 
             Initialise it with the directory into which the component has been
@@ -101,7 +108,8 @@ class Component(pack.Pack):
                description_filename = description_filename,
                    installed_linked = installed_linked,
                     schema_filename = Schema_File,
-            latest_suitable_version = latest_suitable_version
+            latest_suitable_version = latest_suitable_version,
+                 inherit_shrinkwrap = inherit_shrinkwrap
         )
         if warn_deprecated_filename:
             logger.warning(
@@ -125,14 +133,16 @@ class Component(pack.Pack):
         deps = []
 
         def specForDependency(name, version_spec, istest):
-            if self.shrinkwrap is not None and name in self.shrinkwrap:
+            shrinkwrap = self.getShrinkwrap()
+            shrinkwrapped = False
+            if shrinkwrap is not None and name in shrinkwrap.get('dependencies', {}):
                 # exact version, and pull from registry:
-                shrinkwrap_ver = self.shrinkwrap[name]['version']
-                logger.info(
+                shrinkwrap_ver = shrinkwrap['dependencies'][name]['version']
+                logger.debug(
                     'respecting %s shrinkwrap version %s for %s', self.getName(), shrinkwrap_ver, name
                 )
-                version_spec = shrinkwrap_ver
-            return pack.DependencySpec(name, version_spec, istest)
+                shrinkwrapped = True
+            return pack.DependencySpec(name, version_spec, istest, shrinkwrapped=shrinkwrapped)
 
         deps += [specForDependency(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
@@ -238,7 +248,7 @@ class Component(pack.Pack):
                   search_dirs,
                   modules_path,
                   update_installed,
-                  self.getName()
+                  self
                 )
                 if r and not sourceparse.parseSourceURL(dspec.version_req).semanticSpecMatches(r.getVersion()):
                     logger.debug('%s does not meet specification %s required by %s' % (r.getName(), dspec.version_req, self.getName()))
@@ -390,15 +400,22 @@ class Component(pack.Pack):
                   search_dirs,
             working_directory,
           update_if_installed,
-                  dep_of_name
+                       dep_of
         ):
+        logger.info('%s provideInstalled: %s', dep_of.getName(), dspec.name)
         r = access.satisfyFromAvailable(dspec.name, available_components)
         if r:
             if r.isTestDependency() and not dspec.is_test_dependency:
                 logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                 r.setTestDependency(False)
             return r
-        r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
+        r = access.satisfyVersionFromSearchPaths(
+            dspec.name,
+            dspec.version_req,
+            search_dirs,
+            update_if_installed,
+            inherit_shrinkwrap = dep_of.getShrinkwrap()
+        )
         if r:
             r.setTestDependency(dspec.is_test_dependency)
             return r
@@ -414,7 +431,8 @@ class Component(pack.Pack):
         r = Component(
                                default_path,
              test_dependency = dspec.is_test_dependency,
-            installed_linked = fsutils.isLink(default_path)
+            installed_linked = fsutils.isLink(default_path),
+          inherit_shrinkwrap = dep_of.getShrinkwrap()
         )
         return r
 
@@ -517,7 +535,7 @@ class Component(pack.Pack):
             search_dirs,
             working_directory,
             update_if_installed,
-            dep_of_name=None
+            dep_of=None
         ):
             r = access.satisfyFromAvailable(dspec.name, available_components)
             if r:
@@ -525,7 +543,13 @@ class Component(pack.Pack):
                     logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                     r.setTestDependency(False)
                 return r
-            r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
+            r = access.satisfyVersionFromSearchPaths(
+                dspec.name,
+                dspec.version_req,
+                search_dirs,
+                update_if_installed,
+                inherit_shrinkwrap = dep_of.getShrinkwrap()
+            )
             if r:
                 r.setTestDependency(dspec.is_test_dependency)
                 return r
@@ -538,7 +562,8 @@ class Component(pack.Pack):
                 r = Component(
                                        default_path,
                      test_dependency = dspec.is_test_dependency,
-                    installed_linked = fsutils.isLink(default_path)
+                    installed_linked = fsutils.isLink(default_path),
+                  inherit_shrinkwrap = dep_of.getShrinkwrap()
                 )
                 if r:
                     assert(r.installedLinked())
@@ -547,7 +572,12 @@ class Component(pack.Pack):
                     logger.error('linked module %s is invalid: %s', dspec.name, r.getError())
                     return r
 
-            r = access.satisfyVersionByInstalling(dspec.name, dspec.version_req, self.modulesPath())
+            r = access.satisfyVersionByInstalling(
+                dspec.name,
+                dspec.version_req,
+                self.modulesPath(),
+                inherit_shrinkwrap = dep_of.getShrinkwrap()
+            )
             if not r:
                 logger.error('could not install %s' % dspec.name)
             if r is not None:
