@@ -44,7 +44,7 @@ class TestCLISearch(unittest.TestCase):
         stdout = self.runCheckCommand(['search', 'module', 'compiler-polyfill', '-l', '1', '-k', 'polyfill'])
         self.assertTrue(stdout.find('james.crosby@arm.com') != -1)
 
-    def test_keywords(self):
+    def test_keyword_display(self):
         stdout = self.runCheckCommand(['search', 'module', 'compiler-polyfill', '-l', '1', '-k', 'polyfill'])
         self.assertTrue(stdout.find('mbed-official') != -1)
 
