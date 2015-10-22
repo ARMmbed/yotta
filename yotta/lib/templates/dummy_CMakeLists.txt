@@ -6,3 +6,6 @@ target_link_libraries({{ libname }}
     {{ link_dependencies | join('\n    ') }}
 )
 
+{% for include in cmake_files %}
+include("{{ include | replaceBackslashes }}")
+{% endfor %}

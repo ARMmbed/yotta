@@ -485,13 +485,22 @@ class CMakeGen(object):
         dummy_cfile_name = 'dummy.c'
         logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
 
+        cmake_files = []
+        source_dir = os.path.join(component.path, 'source')
+        if os.path.exists(source_dir):
+            for root, dires, files in os.walk(os.path.join(component.path, 'source')):
+                for f in files:
+                    name, ext = os.path.splitext(f)
+                    if ext.lower() == '.cmake':
+                        cmake_files.append(os.path.join(root, f))
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
 
         dummy_cmakelists = dummy_template.render({ #pylint: disable=no-member
                    "cfile_name": dummy_cfile_name,
                       "libname": component.getName(),
-            "link_dependencies": link_dependencies
+            "link_dependencies": link_dependencies,
+                  "cmake_files": cmake_files
         })
         self._writeFile(os.path.join(builddir, dummy_dirname, "CMakeLists.txt"), dummy_cmakelists)
         dummy_cfile = "void __yotta_dummy_lib_symbol_%s(){}\n" % safe_name
