@@ -104,7 +104,7 @@ def formatResult(result, plain=False, short=False, indent=''):
     if short:
         return indent+u'%s %s: %s%s' % (name_string, ver_string, description, RESET)
     else:
-        r = indent+(u'%s %s\n' % (name_string, ver_string)) +\
+        r = indent+(u'%s %s:\n' % (name_string, ver_string)) +\
             indent+(u'    %s\n' % (description))
         if 'keywords' in result and result['keywords']:
             r += indent+(u'    %s\n' % (', '.join([formatKeyword(k) for k in result['keywords']])))
