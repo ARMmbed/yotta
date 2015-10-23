@@ -10,6 +10,8 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
+# access_common, , things shared between different component access modules, internal
+from .lib import access_common
 # CMakeGen, , generate build files, internal
 from .lib import cmakegen
 # Target, , represents an installed target, internal
@@ -61,7 +63,11 @@ def installAndBuild(args, following_args):
     if not c:
         return {'status':1}
 
-    target, errors = c.satisfyTarget(args.target)
+    try:
+        target, errors = c.satisfyTarget(args.target)
+    except access_common.AccessException as e:
+        logging.error(e)
+        return {'status':1}
     if errors:
         for error in errors:
             logging.error(error)
