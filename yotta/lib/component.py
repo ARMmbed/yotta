@@ -399,7 +399,7 @@ class Component(pack.Pack):
          available_components,
                   search_dirs,
             working_directory,
-          update_if_installed,
+             update_installed,
                        dep_of
         ):
         logger.info('%s provideInstalled: %s', dep_of.getName(), dspec.name)
@@ -409,6 +409,11 @@ class Component(pack.Pack):
                 logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                 r.setTestDependency(False)
             return r
+        update_if_installed = False
+        if update_installed is True:
+            update_if_installed = True
+        elif update_installed:
+            update_if_installed = dspec.name in update_installed
         r = access.satisfyVersionFromSearchPaths(
             dspec.name,
             dspec.version_req,
@@ -509,9 +514,10 @@ class Component(pack.Pack):
                     current directory is checked.
 
                 update_installed:
-                    False (default), or True: whether to check the available
-                    versions of installed components, and update if a newer
-                    version is available.
+                    False (default), True, or set(): whether to check the
+                    available versions of installed components, and update if a
+                    newer version is available. If this is a set(), only update
+                    things in the specified set.
 
                 traverse_links:
                     False (default) or True: whether to recurse into linked
@@ -534,7 +540,7 @@ class Component(pack.Pack):
             available_components,
             search_dirs,
             working_directory,
-            update_if_installed,
+            update_installed,
             dep_of=None
         ):
             r = access.satisfyFromAvailable(dspec.name, available_components)
@@ -543,6 +549,11 @@ class Component(pack.Pack):
                     logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                     r.setTestDependency(False)
                 return r
+            update_if_installed = False
+            if update_installed is True:
+                update_if_installed = True
+            elif update_installed:
+                update_if_installed = dspec.name in update_installed
             r = access.satisfyVersionFromSearchPaths(
                 dspec.name,
                 dspec.version_req,
