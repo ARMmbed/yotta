@@ -3,7 +3,7 @@
     "title": "yotta target.json schema",
     "properties": {
         "name": {
-            "$ref": "#/definitions/name"
+            "$ref": "#/definitions/targetname"
         },
         "version": {
             "$ref": "#/definitions/semver"
@@ -121,6 +121,12 @@
         "name": {
                 "type": "string",
              "pattern": "^[a-z]+[a-z0-9-]*$",
+           "minLength": 2,
+           "maxLength": 64
+        },
+        "targetname": {
+                "type": "string",
+             "pattern": "^[a-z]+[a-z0-9+-]*$",
            "minLength": 2,
            "maxLength": 64,
                  "not":{"enum":["test", "source", "yotta_modules", "yotta_targets", "include"]}
