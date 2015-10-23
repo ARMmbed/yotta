@@ -48,7 +48,7 @@ def displayOutdated(modules, use_colours):
         GREEN  = colorama.Fore.GREEN      #pylint: disable=no-member
         RESET  = colorama.Style.RESET_ALL #pylint: disable=no-member
     else:
-        DIM = BRIGHT = YELLOW = RED = RESET = u''
+        DIM = BRIGHT = YELLOW = RED = GREEN = RESET = u''
 
     status = 0
 
