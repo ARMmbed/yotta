@@ -24,7 +24,7 @@ from .lib import fsutils
 # OK this is a pretty terrible validation regex... should find a proper module
 # to do this
 Target_RE = re.compile('^('+
-    '[a-z0-9-]+,?('+
+    '[a-z]+[a-z0-9+-]*,?('+
         '[a-zA-Z0-9-]+/[a-zA-Z0-9-]+' +'|'+ '([a-zA-Z0-9_-]*@)?[a-zA-Z0-9_+-]+://.*' + '|' + '[a-z0-9.-]*'+
     ')?'+
 ')$')
