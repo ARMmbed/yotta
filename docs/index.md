@@ -45,7 +45,13 @@ To upgrade an existing installation to a new version, see
 <br>
 <a name="installing-on-osx"></a>
 ## Installing On OS X
+To install yotta on OS X you can either use the packaged [yotta.app](https://github.com/ARMmbed/yotta_osx_installer/releases/latest) or install yotta and its dependencies yourself.
+### Using yotta.app
+Download the latest [**OS X yotta.app**](https://github.com/ARMmbed/yotta_osx_installer/releases/latest), and drag yotta.app from the disk image into your applications folder.
 
+When you run yotta.app, a terminal will open where you can use yotta commands.
+
+### Manual Installation
 First install [homebrew](http://brew.sh), a package manager for OS X that we'll use to
 install all of yotta's dependencies.
 
