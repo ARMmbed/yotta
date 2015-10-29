@@ -569,7 +569,7 @@ class DerivedTarget(Target):
             cmd = shlex.split(test_command)
         else:
             cmd = [
-                os.path.expandvars(string.Template(x).safe_substitute(program=test_command))
+                os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(cwd, test_command))))
                 for x in self.description['scripts']['test']
             ] + forward_args
 
