@@ -22,6 +22,18 @@ def execCommand(args, following_args):
         logging.error('The working directory is not clean. Commit before publishing!')
         return 1
 
+    if p.description.get('bin', None) is not None:
+        logging.warning(
+            'This is an executable application, not a re-usable library module. Other modules will not be able to depend on it!'
+        )
+        # python 2 + 3 compatibility
+        try:
+            global input
+            input = raw_input
+        except NameError:
+            pass
+        raw_input("If you still want to publish it, press [enter] to continue.")
+
     error = p.publish(args.registry)
     if error:
         logging.error(error)
