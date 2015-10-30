@@ -166,10 +166,6 @@ def _createCacheKey(*args):
     return h.hexdigest()
 
 # API
-def deauthorize():
-    if settings.getProperty('github', 'authtoken'):
-        settings.setProperty('github', 'authtoken', '')
-
 class GithubComponentVersion(access_common.RemoteVersion):
     def __init__(self, semver, tag, url, name, cache_key=None):
         # if cache key is None, then we won't cache this version
