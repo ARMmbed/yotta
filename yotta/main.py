@@ -4,6 +4,7 @@
 # See LICENSE file for details.
 
 from .lib import lazyregex #pylint: disable=unused-import
+from .lib import errors #pylint: disable=unused-import
 
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
@@ -242,4 +243,3 @@ def main():
         status = -1
 
     sys.exit(status or 0)
-
