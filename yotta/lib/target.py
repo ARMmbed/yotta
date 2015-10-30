@@ -280,6 +280,15 @@ class DerivedTarget(Target):
         )
 
     @classmethod
+    def _findNinja(cls):
+        # sometimes ninja is called ninja-build
+        for name in ('ninja', 'ninja-build'):
+            if fsutils.which(name) is not None:
+                return name
+        # default to ninja:
+        return 'ninja'
+
+    @classmethod
     def overrideBuildCommand(cls, generator_name, targets=None):
         if targets is None:
             targets = []
@@ -289,7 +298,7 @@ class DerivedTarget(Target):
         try:
             r = {
                 'Unix Makefiles': ['make'],
-                'Ninja': ['ninja']
+                'Ninja': [cls._findNinja()]
             }[generator_name]
             # all of the above build programs take the build targets (e.g.
             # "all") as the last arguments
