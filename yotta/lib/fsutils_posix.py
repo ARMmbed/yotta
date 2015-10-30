@@ -91,3 +91,22 @@ def realpath(path):
 
 def rmLink(path):
     os.unlink(path)
+
+def which(program):
+    ''' look for "program" in PATH, and return the path to it, or None if it
+        was not found
+    '''
+    # if this is an absolute path:
+    if os.path.split(program)[0]:
+        if os.path.exists(program) and os.access(program, os.X_OK):
+            return program
+    else:
+        # check in PATH:
+        for path in os.environ['PATH'].split(os.pathsep):
+            progpath = os.path.join(path, program)
+            if os.path.exists(progpath) and os.access(progpath, os.X_OK):
+                return progpath
+    # not found
+    return None
+
+

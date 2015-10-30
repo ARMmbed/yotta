@@ -82,13 +82,14 @@ def fullySplitPath(path):
     return components
 
 # Some functions are platform-dependent
-_platform_dep = __import__("fsutils_win" if os.name == 'nt' else "fsutils_posix", globals(), locals(), ['*'])
-isLink = _platform_dep.isLink
-tryReadLink = _platform_dep.tryReadLink
-_symlink = _platform_dep._symlink
-realpath = _platform_dep.realpath
-dropRootPrivs = _platform_dep.dropRootPrivs
-rmLink = _platform_dep.rmLink
+_platform_fsutils = __import__("fsutils_win" if os.name == 'nt' else "fsutils_posix", globals(), locals(), ['*'])
+isLink        = _platform_fsutils.isLink
+tryReadLink   = _platform_fsutils.tryReadLink
+_symlink      = _platform_fsutils._symlink
+realpath      = _platform_fsutils.realpath
+dropRootPrivs = _platform_fsutils.dropRootPrivs
+rmLink        = _platform_fsutils.rmLink
+which         = _platform_fsutils.which
 
 # !!! FIXME: the logic in the "except" block below probably doesn't work in Windows
 def symlink(source, link_name):
