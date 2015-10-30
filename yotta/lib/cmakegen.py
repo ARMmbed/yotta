@@ -303,11 +303,19 @@ class CMakeGen(object):
         ]
         if vcs_instance is not None:
             commit_id = None
+            repotype = vcs_instance.__class__.__name__
             try:
                 commit_id = vcs_instance.getCommitId()
             except vcs.VCSNotInstalled as e:
-                logger.warning('%s is not installed, VCS status build info is not available', vcs_instance.__class__.__name__)
+                logger.warning('%s is not installed, VCS status build info is not available', repotype)
                 commit_id = None
+            except vcs.VCSError as e:
+                logger.debug('%s', e)
+                logger.warning(
+                    'error detecting build info: "%s", build info is not available to the build. Please check that this is a valid %s repository!',
+                    str(e).split('\n')[0],
+                    repotype
+                )
             if commit_id is not None:
                 clean_state = int(vcs_instance.isClean())
                 definitions += [
