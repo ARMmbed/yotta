@@ -58,10 +58,15 @@ def rmRf(path):
             _rmRfNoRetry(path)
             break
         # ... ultimately leading to this error ...
-        except WindowsError as e: #pylint: disable=undefined-variable
-            if e.errno != 145: # != Directory not empty
-                raise
-            # ... trying again should fix the problem
+        except OSError as e:
+            if getattr(__builtins__, "WindowsError", None) is not None:
+                # 145 = Directory not empty
+                if isinstance(e, WindowsError):
+                    if e.errno == 145: #pylint: disable=undefined-variable
+                        continue
+                        # ... trying again should fix the problem
+            # in all other cases, raise the exception
+            raise
 
 
 def fullySplitPath(path):
