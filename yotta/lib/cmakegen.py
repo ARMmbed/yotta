@@ -444,13 +444,16 @@ class CMakeGen(object):
             if component.isTestDependency():
                 test_subdirs = []
 
-            # if we're not building anything other than tests, then we need to
-            # generate a dummy library so that this component can still be linked
-            # against
+            # if we're not building anything other than tests, and this is a
+            # library module (not a binary) then we need to generate a dummy
+            # library so that this component can still be linked against
             if len(add_own_subdirs) <= len(test_subdirs):
-                add_own_subdirs.append(self.createDummyLib(
-                    component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
-                ))
+                if len(binary_subdirs):
+                    logger.warning('nothing to build!')
+                else:
+                    add_own_subdirs.append(self.createDummyLib(
+                        component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
+                    ))
 
         # generate the top-level toolchain file:
         template = jinja_environment.get_template('toolchain.cmake')
