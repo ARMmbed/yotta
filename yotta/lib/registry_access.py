@@ -404,11 +404,14 @@ def _getYottaClientUUID():
 def _headersForRegistry(registry):
     registry = registry or Registry_Base_URL
     auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
+    mbed_user_id = os.environ.get('MBED_USER_ID', None)
     r = {
         'Authorization': 'Bearer %s' % auth_token,
         'X-Yotta-Client-Version': _getYottaVersion(),
         'X-Yotta-Client-ID': _getYottaClientUUID()
     }
+    if mbed_user_id is not None:
+        r['X-Yotta-MBED-User-ID'] = mbed_user_id
     if registry == Registry_Base_URL:
         return r
     for s in _getSources():

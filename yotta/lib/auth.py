@@ -43,6 +43,12 @@ def _pollForAuth(registry=None):
 def _openBrowserLogin(provider=None, registry=None):
     webbrowser.open(registry_access.getLoginURL(provider=provider, registry=registry))
 
+def deauthorize():
+    if settings.getProperty('github', 'authtoken'):
+        settings.setProperty('github', 'authtoken', '')
+    if settings.getProperty('mbed', 'authtoken'):
+        settings.setProperty('mbed', 'authtoken', '')
+
 def authorizeUser(registry=None, provider='github', interactive=True):
     if not globalconf.get('plain'):
         DIM    = colorama.Style.DIM    #pylint: disable=no-member

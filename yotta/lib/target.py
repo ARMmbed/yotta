@@ -209,6 +209,15 @@ class DerivedTarget(Target):
     def __bool__(self):
         return self.__nonzero__()
 
+    def getScript(self, scriptname):
+        ''' return the specified script if one exists (possibly inherited from
+            a base target)
+        '''
+        for t in self.hierarchy:
+            if 'scripts' in t.description and scriptname in t.description['scripts']:
+                return t.description['scripts'][scriptname]
+        return None
+
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
         config_dicts = [self.app_config] + [t.getConfig() for t in self.hierarchy]
@@ -257,6 +266,9 @@ class DerivedTarget(Target):
         return self.config
 
     def getToolchainFiles(self):
+        ''' return a list of toolchain file paths in override order (starting
+            at the bottom/leaf of the hierarchy and ending at the base)
+        '''
         return [
             os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy if 'toolchain' in x.description
         ]
@@ -275,6 +287,15 @@ class DerivedTarget(Target):
         )
 
     @classmethod
+    def _findNinja(cls):
+        # sometimes ninja is called ninja-build
+        for name in ('ninja', 'ninja-build'):
+            if fsutils.which(name) is not None:
+                return name
+        # default to ninja:
+        return 'ninja'
+
+    @classmethod
     def overrideBuildCommand(cls, generator_name, targets=None):
         if targets is None:
             targets = []
@@ -284,7 +305,7 @@ class DerivedTarget(Target):
         try:
             r = {
                 'Unix Makefiles': ['make'],
-                'Ninja': ['ninja']
+                'Ninja': [cls._findNinja()]
             }[generator_name]
             # all of the above build programs take the build targets (e.g.
             # "all") as the last arguments
@@ -466,7 +487,7 @@ class DerivedTarget(Target):
         '''
         try:
             signal.signal(signal.SIGINT, _ignoreSignal);
-            if 'scripts' in self.description and 'debug' in self.description['scripts']:
+            if self.getScript('debug') is not None:
                 return self._debugWithScript(builddir, program)
             elif 'debug' in self.description:
                 logger.warning(
@@ -491,7 +512,7 @@ class DerivedTarget(Target):
 
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
-                for x in self.description['scripts']['debug']
+                for x in self.getScript('debug')
             ]
             logger.debug('starting debugger: %s', cmd)
             child = subprocess.Popen(
@@ -572,12 +593,13 @@ class DerivedTarget(Target):
     def test(self, cwd, test_command, filter_command, forward_args):
         # we assume that test commands are relative to the current directory.
         test_command = './' + test_command
-        if not ('scripts' in self.description and 'test' in self.description['scripts']):
+        test_script = self.getScript('test')
+        if test_script is None:
             cmd = shlex.split(test_command)
         else:
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=test_command))
-                for x in self.description['scripts']['test']
+                for x in test_script
             ] + forward_args
 
         test_child = None

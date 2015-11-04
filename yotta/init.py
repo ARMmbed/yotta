@@ -187,8 +187,17 @@ def initInteractive(args, c):
     isexe = getUserInput("Is this an executable (instead of a re-usable library module)?", default_isexe, yesNo)
     if isexe:
         c.description['bin'] = './source'
+        # set exe modules to private by default, to prevent publishing
+        # applications
+        if current('private') is None:
+            c.description['private'] = True
 
-    c.description['description'] = getUserInput("Short description: ", current('description'))
+    description = getUserInput("Short description: ", current('description'))
+    if len(description):
+        c.description['description'] = description
+    elif 'description' in c.description:
+        del c.description['description']
+
     if not isexe:
         c.description['keywords']    = getUserInput("Keywords: ", ' '.join(current('keywords') or []), listOfWords)
     c.description['author']      = getUserInput("Author: ", current('author'))
