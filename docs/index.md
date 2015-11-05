@@ -46,6 +46,9 @@ operating system below:
 To upgrade an existing installation to a new version, see
 [upgrading](#upgrading) (the same for all systems).
 
+If you have a restrictive firewall setup, then for yotta to be fully
+functional you may also need to ensure that it can access
+the [required domains](/reference/registry.html#network-access).
 
 <br>
 <br>
