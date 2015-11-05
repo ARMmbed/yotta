@@ -17,14 +17,20 @@ install as a dependency of their own project.
 Before you can publish a module (or a target description), yotta will ask you
 to log in. When you do, your email address(es) from the account you log in with
 on the webpage are associated with the keys stored in your local yotta
-settings. This allows you to publish updates to the same module in the future:
-if you switch to a different computer then you'll need to log in again to
-regain access to your modules.
+settings.
+
+These keys are used to sign requests made to the registry, proving to the
+registry that you control the email address in question. This allows you to
+publish updates to the same module in the future: if you switch to a different
+computer then you'll need to log in again to regain access to publish your
+modules.
+
+To remove the stored keys from your settings, use the [`yotta logout`]() command.
 
 The [`yotta owners`](/reference/commands.html#yotta-owners) subcommands (`yotta
 owners list`, `yotta owner add` and `yotta owner remove`) allow you to add or
-remove other people from those allowed to publish new versions (and modify
-ownership) of your modules and targets. 
+remove other people (by email address) from those allowed to publish new
+versions (and modify ownership) of your modules and targets.
 
 ## <a href="#network-access" name="network-access">#</a> Network Access
 In order to use the yotta registry, yotta needs access to several different
