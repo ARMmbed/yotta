@@ -1,6 +1,6 @@
 ---
 layout: default
-title: yotta
+title: The yotta Public Registry Reference
 section: yotta/registry
 ---
 
