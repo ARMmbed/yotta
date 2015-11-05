@@ -379,11 +379,12 @@ The supported scripts are:
    success/failure of a test, and should exit with a status 0 if the test
    passed, or a status 1 if the test failed.
 
-For example, the scripts for a module that uses the "mbedgt" test framework,
-would use the `mbedgt` helper program to parse and verify the test output:
+For example, the scripts for a module that uses the
+[greentea](https://github.com/ARMmbed/greentea) test framework, would use the
+`greentea` helper program to parse and verify the test output:
 
 ```json
    "scripts": {
-      "testReporter": ["mbedgt", "--digest", "stdin", "-v", "-V"]
+      "testReporter": ["greentea", "--digest", "stdin", "-v", "-V"]
    }
 ```
