@@ -13,13 +13,13 @@ up differently. If however it *is* necessary to use circular dependencies,
 that's something that yotta supports. In this case there are some guidelines
 that can help you handle circular dependencies successfully.
 
-## Alternatives to Circular Dependency Patterns
+## <a name="alternatives" href="#alternatives">#</a> Alternatives to Circular Dependency Patterns
 
 If you can separate your modules in ways that avoid circular dependencies, then
 this is preferred. Some common circular dependency patterns have simple
 alternatives:
 
-### Interdependent Modules
+### <a name="interdependent-modules" href="#interdependent-modules">#</a> Interdependent Modules
 
 ![illustration of interdependent modules](/assets/img/interdependent-circle.png)
 
@@ -40,7 +40,7 @@ cycle:
 ![illustration of separated module](/assets/img/interdependent-separated.png)
 
 
-### Abstract API with Multiple Implementations
+### <a name="abstract-and-impl" href="#abstract-and-impl">#</a> Abstract API with Multiple Implementations
 Sometimes you have an API that has multiple possible implementations (which
 might be for different hardware platforms, or different network transports, for
 example).
@@ -66,8 +66,8 @@ the`foo-api` module's existence).
 
 ![illustration of resolving circular dependencies](/assets/img/foo-api-nocircle.png)
 
-## Handling Circular Dependencies Successfully
-### Version Specifications
+## <a name="guidelines" href="#guidelines">#</a> Handling Circular Dependencies Successfully
+### <a name="version-specifications" href="#version-specifications">#</a> Version Specifications
 
 If you have a set of modules which depend on each other in a cycle, and which
 all impose [version specifications](/reference/module.html#dependencies) around
