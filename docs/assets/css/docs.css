@@ -86,3 +86,10 @@ p{
   color: #fff;
 }
 
+.docs-content img {
+    max-height: 240px;
+    max-width: 400px;
+    margin: 12px auto 12px auto;
+    display: block;
+    text-align: center;
+}
