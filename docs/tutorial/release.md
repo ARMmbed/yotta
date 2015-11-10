@@ -162,7 +162,7 @@ characters in the module name are converted to underscores, and the module name
 is uppercase.
 
 
-## <a name="dependency-updates" href="##dependency-updates">#</a> Handling Updates to Dependencies
+## <a name="dependency-updates" href="#dependency-updates">#</a> Handling Updates to Dependencies
 
 The [Semantic Versioning](https://semver.org) rules clearly explain how to
 increment the version number of your module when its functionality changes, but
