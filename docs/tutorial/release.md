@@ -170,7 +170,7 @@ they don't offer a clear guide to how to handle breaking changes made in
 dependencies of your module. In this case there are some guidelines you can
 follow to minimise the disruption to users of your module:
 
-### <a name="impl-update" href="#impl-update">#</a> Breaking Changes in Private Implementation
+### <a name="impl-update" href="#impl-update">#</a> Breaking Changes in Private Dependencies
 One common pattern is for a yotta module to have private "implementation"
 modules, which implement the functionality for different compilation targets,
 with the right implementation module included based on [config
@@ -208,12 +208,92 @@ It's possible to do this because the app (or any other module depending on foo)
 The implementation modules should have warnings in their README's that they
 should not be depended on directly: if someone depends on them then it will not
 be possible to just update the minor version of foo (this is the [next
-case](#exposed-impl-update)).
+case](#shared-deps-update)).
 
-### <a name="exposed-impl-update" href="#exposed-impl-update">#</a> Breaking Changes in Exposed Implementation
+### <a name="shared-deps-update" href="#shared-deps-update">#</a> Breaking Changes in Shared Dependencies
+Another pattern is that our module might rely on another module for its
+implementation which is **not** solely used by your own module. This might be
+the case if, for example, you depend on a utility library that other modules
+and applications also depend on. For example:
 
-#### <a name="exposed-impl-compatible-update" href="#exposed-impl-compatible-update">#</a> Handled in a Backwards Compatible Way
-#### <a name="exposed-impl-noncompatible-update" href="#exposed-impl-noncompatible-update">#</a> Handled in a Backwards Incompatible Way
+![illustration of depending on a shared utility library](/assets/img/foo-utility-dependency.png)
 
-### <a name="shared-impl-update" href="#shared-impl-update">#</a> Breaking Changes in Shared Implementation
+In this case, the sequence of events when the shared module (`utility` in this
+example) makes a new major release with breaking changes is:
+
+ * **(1)** A new major version of utility with the breaking changes is published
+           (`3.0.0`).
+    
+      As before, neither foo, nor our hypothetical application use the new
+      version at this point, because their ^2.0.0` [dependency
+      specifications](/reference/module.html#dependencies) restrict the
+      versions that will be used to compatible ones.
+
+ * Update foo to use the new `utility` version, at this point there are
+   two possibilities:
+   * **(2A)** it's possible to make foo support **both** the old and new versions
+     of `utility` (perhaps by `#ifdef`ing on the `YOTTA_<MODULENAME>_VERSION_MAJOR`
+     definition which yotta will make available for every module).
+   * **(2B)** it's **only** possible to support one of the major versions of
+     `utility` at a time
+
+#### <a name="exposed-dep-compatible-update" href="#exposed-dep-compatible-update">#</a> Handled in a Backwards Compatible Way
+If **(A)** is possible, then:
+
+  * **(3A)** publish a new minor version of foo which is compatible with both
+             version `2.x` and `3.x` of utility, with a corresponding
+             dependency specification: `">=2.0.0,<4.0.0"`
+
+  * **(4A)** when applications update, they will get the new `utility` version unless
+      they have other dependencies on an older version
+ 
+#### <a name="exposed-dep-noncompatible-update" href="#exposed-dep-noncompatible-update">#</a> Handled in a Backwards Incompatible Way
+In case **(B)** things are harder:
+
+  * **(3B)** Publish a new **major** version of `foo`, with dependency specification on
+             3.x of `utility`.
+
+  * **(4B)** The app still won't use either the new version of `foo`, or the new version
+             of `utility`.
+
+  * **(5B)** The app (or any other module which uses both `utility` and
+             `foo`) must increase its dependency specs for both `foo` and
+             `utility` before being able to update.
+
+     Anything else that depends on either `foo` or `utility` needs to
+     repeat the process from **(2)**, to determine whether its own
+     major version needs to be updated. For a module which updated its version
+     only because 
+
+### <a name="shared-private-dep" href="#shared-private-dep">#</a> Synchronised Updates
+
+Case (B) above is bad because it potentially forces major version updates of
+lots of modules, and places a high burden on users. Fortunately there are cases
+even where (B) applies that we can avoid a major version bump to `foo`.
+
+![shared synchronised dependencies](/assets/img/shared-private-dep.png)
+
+If the shared dependency (`utility` in this case) is depended on not directly
+by applications, but instead it is depended on *only* by another module(s)
+`bar`, then we can avoid the major update to `foo` with a synchronised update to
+`foo` and `bar`:
+
+(This is possible, for example, in internal modules in [`mbed
+OS`](https://github.com/armmbed/mbed-os), where the only other things that
+depend on them are also internal mbed OS modules. It's also common in private
+modules shared only within your own applications.)
+
+ * **(3C)** Update both `foo` and `bar` to use the new major version of `utility`.
+            Review and test these changes together using `yotta link`.
+ * **(4C)** Publish **minor** updates of both `foo` and `bar` simultaneously,
+            which depend on the new major version of `utility`.
+ * **(5C)** Any user who updates or installs will either get new versions of *both* 
+            `foo` and `bar`, or old versions of both of them: both of which are
+            working configurations.
+
+Note that this is compatible with semantic versioning since the APIs of neither
+`foo` nor `bar` have changed in a backwards incompatible way. In the future a
+smarter dependency solver in yotta should also make this case automatic, by
+solving for a working set of dependencies globally, rather than locally at each
+point in the dependency graph.
 
