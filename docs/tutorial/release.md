@@ -22,8 +22,7 @@ mountains, people who are using your code won't be left stranded.
 and improvements, please submit a ticket on the yotta [issue
 tracker](https://github.com/armmbed/yotta/issues).)
 
-<a name="versions"></a>
-## Release Version Numbers
+## <a name="versions" href="#versions">#</a> Release Version Numbers
 
 As far as yotta is concerned, you can manage your source code however you like.
 When you run `yotta publish`, the version number will be read from your
@@ -44,8 +43,10 @@ These are the basic rules of [semantic versioning](http://semver.org), there
 are some exceptions for `0.x.x` releases during early development, but if you
 stick to the basics it's hard to go wrong.
 
-<a name="branches"></a>
-## Release Branches
+See [handling updates to dependencies](#dependency-updates) for guidance on how
+to deal with breaking changes in your dependencies.
+
+## <a name="branches" href="#branches">#</a> Release Branches
 
 If you increase the major version of your module, you should bear in mind that
 people may continue to use the previous version for some time. So it's a good
@@ -78,8 +79,7 @@ version, before switching back to your master branch:
 ```
 git checkout master
 ```
-<a name="namespaces"></a>
-## Release Namesapces
+## <a name="namespaces" href="#namespaces">#</a> Release Namesapces
 
 If your module is written in C++, you should also take advantage of C++
 namespaces to provide backwards compatibility. Namespaces allow you to provide old
@@ -144,8 +144,7 @@ names from one `mymodule::` namespace into another `mymodule::` namespace, both
 of which are under the control of the module author.
 
 
-<a name="embedded-version-numbers"></a>
-## Embedded Version Numbers
+## <a name="embedded-version-numbers" href="#embedded-version-numbers">#</a> Embedded Version Numbers
 
 yotta makes the versions of modules available to CMake, and as preprocessor
 definitions. This can be useful to include in built software so that a running
@@ -161,4 +160,60 @@ program can be queried for its version information. The definitions are:
 These are defined for all modules in the system. Any non-alphanumeric
 characters in the module name are converted to underscores, and the module name
 is uppercase.
+
+
+## <a name="dependency-updates" href="##dependency-updates">#</a> Handling Updates to Dependencies
+
+The [Semantic Versioning](https://semver.org) rules clearly explain how to
+increment the version number of your module when its functionality changes, but
+they don't offer a clear guide to how to handle breaking changes made in
+dependencies of your module. In this case there are some guidelines you can
+follow to minimise the disruption to users of your module:
+
+### <a name="impl-update" href="#impl-update">#</a> Breaking Changes in Private Implementation
+One common pattern is for a yotta module to have private "implementation"
+modules, which implement the functionality for different compilation targets,
+with the right implementation module included based on [config
+information](/reference/config.html).
+
+In these cases the base module (`foo` below) is the only module on which users
+will depend: the implementation modules are not depended on directly by
+anything other than the main module.
+
+![illustration of API with implementation modules](/assets/img/foo-impl-simple.png)
+
+In this case, to handle a backwards incompatible change being made to the
+`foo-impl-1` implementation module, perform the following steps:
+
+ 1. make the changes to the `-impl` module, and publish a new major version 3.0
+   (following the [semver](http://semver.org) rule for incrementing the major
+   version on a breaking change)
+
+     At this point foo does not yet use the new version, because its `^2.0.0`
+     [dependency specification](/reference/module.html#dependencies) restricts
+     it to compatible versions.
+
+ 2. Update foo to use the new implementation, and update its dependency
+    specification on `foo-impl-1` accordingly to `^3.0.0`.
+
+ 3. Publish a new **minor** version of foo, increasing its version from `1.0.0`
+    to `1.1.0`.
+
+ 4. Now, when applications [update](/reference/commands.html#yotta-update) they will
+    get a new minor version of foo, and new major version of foo-impl.
+
+It's possible to do this because the app (or any other module depending on foo)
+**does not depend on the implementation modules directly**. It only depends on them via foo.
+
+The implementation modules should have warnings in their README's that they
+should not be depended on directly: if someone depends on them then it will not
+be possible to just update the minor version of foo (this is the [next
+case](#exposed-impl-update)).
+
+### <a name="exposed-impl-update" href="#exposed-impl-update">#</a> Breaking Changes in Exposed Implementation
+
+#### <a name="exposed-impl-compatible-update" href="#exposed-impl-compatible-update">#</a> Handled in a Backwards Compatible Way
+#### <a name="exposed-impl-noncompatible-update" href="#exposed-impl-noncompatible-update">#</a> Handled in a Backwards Incompatible Way
+
+### <a name="shared-impl-update" href="#shared-impl-update">#</a> Breaking Changes in Shared Implementation
 
