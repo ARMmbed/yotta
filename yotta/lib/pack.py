@@ -117,7 +117,8 @@ class Pack(object):
             schema_filename = None,
             latest_suitable_version = None
         ):
-        self.path = path
+        # resolve links at creation time, to minimise path lengths:
+        self.path = fsutils.realpath(path)
         self.installed_linked = installed_linked
         self.vcs = None
         self.error = None
