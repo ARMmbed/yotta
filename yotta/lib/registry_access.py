@@ -292,7 +292,8 @@ def _getTarball(url, directory, sha256):
                     stream = response,
             into_directory = directory,
                       hash = {'sha256':sha256},
-                 cache_key = sha256
+                 cache_key = sha256,
+               origin_info = {'url':url}
         )
 
 def _getSources():

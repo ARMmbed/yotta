@@ -134,7 +134,7 @@ def _getTipArchiveURL(repo):
 
 
 @_handleAuth
-def _getTarball(url, into_directory, cache_key):
+def _getTarball(url, into_directory, cache_key, origin_info=None):
     '''unpack the specified tarball url into the specified directory'''
 
     try:
@@ -159,7 +159,8 @@ def _getTarball(url, into_directory, cache_key):
                     stream = response,
             into_directory = into_directory,
                       hash = {},
-                 cache_key = cache_key
+                 cache_key = cache_key,
+               origin_info = origin_info
         )
 
 
@@ -181,13 +182,18 @@ class GithubComponentVersion(access_common.RemoteVersion):
         self.cache_key = cache_key
         self.tag = tag
         github_spec = re.search('/(repos|codeload.github.com)/([^/]*/[^/]*)/', url).group(2)
+        self.origin_info = {
+            'url':('github://'+github_spec+'#'+(semver or tag))
+        }
         super(GithubComponentVersion, self).__init__(
             semver, url, name=name, friendly_version=(semver or tag), friendly_source=('GitHub %s' % github_spec)
         )
 
     def unpackInto(self, directory):
         assert(self.url)
-        _getTarball(self.url, directory, self.cache_key)
+        _getTarball(
+            self.url, directory, self.cache_key, origin_info=self.origin_info
+        )
 
 class GithubComponent(access_common.RemoteComponent):
     def __init__(self, repo, tag_or_branch=None, semantic_spec=None, name=None):
