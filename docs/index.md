@@ -386,7 +386,7 @@ permission is denied.
 ## <a href="#tabcomplete" name="tabcomplete">#</a> Setting up Tab Completion
 yotta uses [argcomplete](https://github.com/kislyuk/argcomplete) to provide tab
 completion, so you can set up completion on Linux and OS X by adding the
-following to your .bashrc file:
+following to your .bashrc or .bash_profile file:
 
 ```sh
 eval "$(register-python-argcomplete yotta)"
