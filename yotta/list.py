@@ -18,10 +18,16 @@ from .lib import validate
 from .lib import access
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
+# Registry Access, , access packages in the registry, internal
+from .lib.registry_access import friendlyRegistryName
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
         help='Show all dependencies (including repeats, and test-only dependencies)'
+    )
+    parser.add_argument('--display-origin', '-i', dest='display_origin',
+        default=False, action='store_true',
+        help='Display where modules were originally downloaded from (implied by --all).'
     )
     parser.add_argument('--json', '-j', dest='json', default=False, action='store_true',
         help='Output json representation of dependencies.'
@@ -42,6 +48,9 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
+    if args.show_all:
+        args.display_origin = True
+
     dependencies = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
@@ -55,7 +64,8 @@ def execCommand(args, following_args):
                                target = target,
                  available_components = dependencies,
                                 plain = args.plain,
-                             list_all = args.show_all
+                             list_all = args.show_all,
+                       display_origin = args.display_origin
             ).format(
                 c, [c.getName()]
             )
@@ -108,7 +118,7 @@ def relpathIfSubdir(path):
         return relpath
 
 class ComponentDepsFormatter(object):
-    def __init__(self, target=None, available_components=None, list_all=False, plain=False):
+    def __init__(self, target=None, available_components=None, list_all=False, plain=False, display_origin=False):
         # don't even try to do Unicode on windows. Even if we can encode it
         # correctly, the default terminal fonts don't support Unicode
         # characters :(
@@ -117,6 +127,7 @@ class ComponentDepsFormatter(object):
         self.target    = target
         self.list_all  = list_all
         self.available = available_components
+        self.display_origin = display_origin
         if plain:
             self.L_Char = u' '
             self.T_Char = u' '
@@ -189,8 +200,16 @@ class ComponentDepsFormatter(object):
             # everything else shouldn't be displayed here
             return False
 
+        origin_descr = ''
+        if self.display_origin:
+            origin = component.origin()
+            if origin is not None:
+                if origin.startswith('github://'):
+                    origin_descr = ' (' + origin[9:] + ')'
+                else:
+                    origin_descr = ' (' + friendlyRegistryName(origin, short=True) + ')'
 
-        line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + RESET
+        line = indent[:-2] + tee + component.getName() + u' ' + DIM + str(component.getVersion()) + origin_descr + RESET
 
         if spec and not spec.match(component.getVersion()):
             line += u' ' + RESET + BRIGHT + RED + str(spec) + RESET
@@ -253,7 +272,7 @@ class ComponentDepsFormatter(object):
                                  processed,
                                next_indent,
                                   next_tee,
-                              installed_at = relpathIfSubdir(dep.path),
+                              installed_at = relpathIfSubdir(dep.unresolved_path),
                                   test_dep = isTestOnly(name),
                                       spec = spec
                         )

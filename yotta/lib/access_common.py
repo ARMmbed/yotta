@@ -178,7 +178,7 @@ def unpackFromCache(cache_key, to_directory):
     try:
         unpackFrom(path, to_directory)
         if os.path.exists(path + '.json'):
-            shutil.copy(path + '.json', os.path.join(to_directory, '.module-origin.json'))
+            shutil.copy(path + '.json', os.path.join(to_directory, '.yotta_origin.json'))
         cache_logger.debug('unpacked %s from cache into %s', cache_key, to_directory)
         return
     except IOError as e:

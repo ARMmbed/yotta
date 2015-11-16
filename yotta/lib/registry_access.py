@@ -305,9 +305,12 @@ def _getSources():
 def _isPublicRegistry(registry):
     return (registry is None) or (registry == Registry_Base_URL)
 
-def _friendlyRegistryName(registry):
-    if registry == Registry_Base_URL:
-        return 'the public module registry'
+def friendlyRegistryName(registry, short=False):
+    if registry.startswith(Registry_Base_URL):
+        if short:
+            return 'public registry'
+        else:
+            return 'the public module registry'
     else:
         return registry
 
@@ -436,7 +439,7 @@ class RegistryThingVersion(access_common.RemoteVersion):
             self.sha256 = None
         url = _tarballURL(self.namespace, self.name, version, registry)
         super(RegistryThingVersion, self).__init__(
-            version, url, name=name, friendly_source=_friendlyRegistryName(registry)
+            version, url, name=name, friendly_source=friendlyRegistryName(registry)
         )
 
     def unpackInto(self, directory):

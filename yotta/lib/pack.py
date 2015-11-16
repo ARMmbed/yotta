@@ -52,6 +52,7 @@ Default_Publish_Ignore = [
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
 
 Ignore_List_Fname = '.yotta_ignore'
+Origin_Info_Fname = '.yotta_origin.json'
 
 logger = logging.getLogger('components')
 
@@ -118,6 +119,7 @@ class Pack(object):
             latest_suitable_version = None
         ):
         # resolve links at creation time, to minimise path lengths:
+        self.unresolved_path = path
         self.path = fsutils.realpath(path)
         self.installed_linked = installed_linked
         self.vcs = None
@@ -127,6 +129,7 @@ class Pack(object):
         self.description_filename = description_filename
         self.ignore_list_fname = Ignore_List_Fname
         self.ignore_patterns = copy.copy(Default_Publish_Ignore)
+        self.origin_info = None
         description_file = os.path.join(path, description_filename)
         if os.path.isfile(description_file):
             try:
@@ -171,6 +174,17 @@ class Pack(object):
             #if have_errors:
             #    raise InvalidDescription('Invalid %s' % description_filename)
         self.vcs = vcs.getVCS(path)
+
+    def origin(self):
+        ''' Read the .yotta_origin.json file (if present), and return the value
+            of the 'url' property '''
+        if self.origin_info is None:
+            self.origin_info = {}
+            try:
+                self.origin_info = ordered_json.load(os.path.join(self.path, Origin_Info_Fname))
+            except IOError:
+                pass
+        return self.origin_info.get('url', None)
 
     def getRegistryNamespace(self):
         raise NotImplementedError("must be implemented by subclass")
