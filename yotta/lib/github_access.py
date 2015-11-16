@@ -39,6 +39,15 @@ logger = logging.getLogger('access')
 def _userAuthedWithGithub():
     return settings.getProperty('github', 'authtoken')
 
+def _ensureDomainPrefixed(url):
+    if not re.match(r"^https?://[^/]+\.[^/]+", url):
+        if not url.startswith('/'):
+            return _github_url + '/' + url
+        else:
+            return _github_url + url
+    else:
+        return url
+
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
@@ -108,10 +117,10 @@ def _getTags(repo):
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     logger.debug('tags for %s: %s', repo, [t.name for t in tags])
-    return {t.name: t.tarball_url for t in tags}
+    return {t.name: _ensureDomainPrefixed(t.tarball_url) for t in tags}
 
 def _tarballUrlForBranch(repo, branchname=None):
-    r = repo.url + u'/tarball'
+    r = _ensureDomainPrefixed(repo.url) + u'/tarball'
     if branchname:
         r += '/' + branchname
     return r
