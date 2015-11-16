@@ -29,7 +29,7 @@ class TestSettings(unittest.TestCase):
             cls.filenames.append(os.path.join(cls.test_dir, fn))
             with open(cls.filenames[-1], 'w') as f:
                 f.write(s)
-    
+
     @classmethod
     def tearDownClass(cls):
         rmRf(cls.test_dir)
@@ -114,7 +114,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(p5.get('foo'), None)
         self.assertEqual(p5.get('someLongNameHere_etc_etc.with.a.path'), 7)
         self.assertEqual(p5.get('someLongNameHere_etc_etc.with.another.path'), 7)
-    
+
     def test_envvars(self):
         testval = str(random.randint(1,100000))
         os.environ['YOTTA_SETTINGS_TEST_VARIABLE'] = testval
