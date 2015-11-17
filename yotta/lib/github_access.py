@@ -181,7 +181,7 @@ def _createCacheKey(*args):
     h = hashlib.sha256()
     h.update(u'this is the _createCacheKey seed'.encode())
     for arg in args:
-        h.update(str(arg))
+        h.update((u'%s' % (arg)).encode())
     return h.hexdigest()
 
 # API
