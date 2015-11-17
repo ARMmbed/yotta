@@ -179,7 +179,7 @@ def _createCacheKey(*args):
     # a cache key:
     import hashlib
     h = hashlib.sha256()
-    h.update('this is the _createCacheKey seed')
+    h.update(u'this is the _createCacheKey seed'.encode())
     for arg in args:
         h.update(str(arg))
     return h.hexdigest()
