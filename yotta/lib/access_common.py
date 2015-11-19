@@ -103,8 +103,9 @@ def pruneCache():
             [f for f in os.listdir(cache_dir) if
                 os.path.isfile(fullpath(f)) and not f.endswith('.json')
             ],
-            key = lambda f: os.stat(fullpath(f)).st_mtime
-        )[max_cached_modules]:
+            key = lambda f: os.stat(fullpath(f)).st_mtime,
+            reverse = True
+        )[max_cached_modules:]:
         cache_logger.debug('cleaning up cache file %s', f)
         removeFromCache(f)
     cache_logger.debug('cache pruned to %s items', max_cached_modules)
