@@ -14,7 +14,7 @@ import copy
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from . import cli
-
+from . import util
 
 Test_Tests = {
 'module.json':'''{
@@ -107,22 +107,9 @@ def isWindows():
     return os.name == 'nt'
 
 class TestCLITest(unittest.TestCase):
-    def writeTestFiles(self, files, add_space_in_path=False):
-        test_dir = tempfile.mkdtemp()
-        if add_space_in_path:
-            test_dir = test_dir + ' spaces in path'
-
-        for path, contents in files.items():
-            path_dir, file_name =  os.path.split(path)
-            path_dir = os.path.join(test_dir, path_dir)
-            mkDirP(path_dir)
-            with open(os.path.join(path_dir, file_name), 'w') as f:
-                f.write(contents)
-        return test_dir
-
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_tests(self):
-        test_dir = self.writeTestFiles(Test_Tests, True)
+        test_dir = util.writeTestFiles(Test_Tests, True)
         output = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
         output = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
         self.assertIn('test-a passed', output)
@@ -135,13 +122,13 @@ class TestCLITest(unittest.TestCase):
 
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_testOutputFilterPassing(self):
-        test_dir = self.writeTestFiles(Test_Fitler_Pass, True)
+        test_dir = util.writeTestFiles(Test_Fitler_Pass, True)
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
         rmRf(test_dir)
 
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_testOutputFilterFailing(self):
-        test_dir = self.writeTestFiles(Test_Fitler_Fail, True)
+        test_dir = util.writeTestFiles(Test_Fitler_Fail, True)
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir)
         if statuscode == 0:
             print(stdout)
@@ -157,7 +144,7 @@ class TestCLITest(unittest.TestCase):
 
     @unittest.skipIf(isWindows(), "can't build natively on windows yet")
     def test_testOutputFilterNotFound(self):
-        test_dir = self.writeTestFiles(Test_Fitler_NotFound, True)
+        test_dir = util.writeTestFiles(Test_Fitler_NotFound, True)
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir)
         if statuscode == 0:
             print(stdout)

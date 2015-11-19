@@ -15,6 +15,7 @@ from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component
 from .cli import cli
+from .cli import util
 
 Test_Files = {
     '.yotta_ignore': '''
@@ -115,20 +116,10 @@ def isWindows():
     # can't run tests that hit github without an authn token
     return os.name == 'nt'
 
-def writeTestFiles(files):
-    test_dir = tempfile.mkdtemp()
-    for path, contents in files.items():
-        path_dir, file_name =  os.path.split(path)
-        path_dir = os.path.join(test_dir, path_dir)
-        mkDirP(path_dir)
-        with open(os.path.join(path_dir, file_name), 'w') as f:
-            f.write(contents)
-    return test_dir
-
 class TestPackIgnores(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.test_dir = writeTestFiles(Test_Files)
+        cls.test_dir = util.writeTestFiles(Test_Files)
 
     @classmethod
     def tearDownClass(cls):
@@ -158,7 +149,7 @@ class TestPackIgnores(unittest.TestCase):
         self.assertTrue(c.ignores('test/someothertest/alsoignored.c'))
 
     def test_default_ignores(self):
-        default_test_dir = writeTestFiles(Default_Test_Files)
+        default_test_dir = util.writeTestFiles(Default_Test_Files)
         c = component.Component(default_test_dir)
         self.assertTrue(c.ignores('.something.c.swp'))
         self.assertTrue(c.ignores('.something.c~'))
