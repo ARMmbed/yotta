@@ -22,13 +22,11 @@ import fsutils
 import folders
 # Ordered JSON, , read & write json, internal
 import ordered_json
+# settings, , load and save settings, internal
+import settings
 
 logger = logging.getLogger('access')
 cache_logger = logging.getLogger('cache')
-
-# arbitrary default setting for download caching. Later maybe this can be a
-# setting:
-Max_Cached_Modules = 100
 
 class AccessException(Exception):
     pass
@@ -83,6 +81,14 @@ class RemoteComponent(object):
     def remoteType(cls):
         raise NotImplementedError
 
+_max_cached_modules = None
+def getMaxCachedModules():
+    global _max_cached_modules
+    if _max_cached_modules is None:
+        _max_cached_modules = settings.get('maxCachedModules')
+        if _max_cached_modules is None:
+            # arbitrary default value
+            _max_cached_modules = 200
 
 def pruneCache():
     ''' Prune the cache '''
@@ -91,15 +97,16 @@ def pruneCache():
         return os.path.join(cache_dir, f)
     # ensure cache exists
     fsutils.mkDirP(cache_dir)
+    max_cached_modules = getMaxCachedModules()
     for f in sorted(
             [f for f in os.listdir(cache_dir) if
                 os.path.isfile(fullpath(f)) and not f.endswith('.json')
             ],
             key = lambda f: os.stat(fullpath(f)).st_mtime
-        )[Max_Cached_Modules:]:
+        )[max_cached_modules]:
         cache_logger.debug('cleaning up cache file %s', f)
         removeFromCache(f)
-    cache_logger.debug('cache pruned to %s items', Max_Cached_Modules)
+    cache_logger.debug('cache pruned to %s items', max_cached_modules)
 
 def sometimesPruneCache(p):
     ''' return decorator to prune cache after calling fn with a probability of p'''
@@ -177,8 +184,13 @@ def unpackFromCache(cache_key, to_directory):
     logger.debug('attempt to unpack from cache %s -> %s', path, to_directory)
     try:
         unpackFrom(path, to_directory)
-        if os.path.exists(path + '.json'):
+        try:
             shutil.copy(path + '.json', os.path.join(to_directory, '.yotta_origin.json'))
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
         cache_logger.debug('unpacked %s from cache into %s', cache_key, to_directory)
         return
     except IOError as e:
