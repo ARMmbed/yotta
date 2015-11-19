@@ -13,7 +13,7 @@ import logging
 # internal modules:
 from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib import validate
-from . import util
+from .cli import util
 
 logging.basicConfig(
     level=logging.ERROR
