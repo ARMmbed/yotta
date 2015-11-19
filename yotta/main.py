@@ -145,7 +145,8 @@ def main():
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
         'install` for installing modules, and for `yotta target` for '+
-        'switching targets.'
+        'switching targets.',
+        'Search for published modules and targets'
     )
     addParser('init', 'init', 'Create a new module.')
     addParser('install', 'install',
@@ -164,8 +165,20 @@ def main():
         'Build the current module.'
     )
     addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
-    addParser('link', 'link', 'Symlink a module.')
-    addParser('link-target', 'link_target', 'Symlink a target.')
+    addParser('link', 'link',
+        'Symlink a module to be used in another module. Use "yotta link" '+
+        '(with no arguments) to link the current module globally. Or use '+
+        '"yotta link module-name" To use a module that was previously linked '+
+        'globally in the current module.',
+        'Symlink a module'
+    )
+    addParser('link-target', 'link_target',
+        'Symlink a target to be used in another module. Use "yotta link-target" '+
+        '(with no arguments) to link the current target globally. Or use '+
+        '"yotta link-target target-name" To use a target that was previously linked '+
+        'globally in the current module.',
+        'Symlink a target'
+    )
     addParser('update', 'update', 'Update dependencies for the current module, or a specific module.')
     addParser('target', 'target', 'Set or display the target device.')
     addParser('debug', 'debug', 'Attach a debugger to the current target.  Requires target support.')
@@ -186,7 +199,12 @@ def main():
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
-    addParser('remove', 'remove', 'Remove the downloaded version of a dependency, or un-link a linked module.')
+    addParser('remove', 'remove',
+        'Remove the downloaded version of a dependency module or target, or '+
+        'un-link a linked module or target (see yotta link --help for details '+
+        'of linking). This command does not modify your module.json file.',
+        'Remove or unlink a dependency without removing it from module.json.'
+    )
     addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
     addParser('licenses', 'licenses', 'List the licenses of the current module and its dependencies.')
     addParser('clean', 'clean', 'Remove files created by yotta and the build.')
