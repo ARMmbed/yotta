@@ -92,7 +92,7 @@ def main():
         description='Build software using re-usable components.\n'+
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
-    subparser = parser.add_subparsers(metavar='<subcommand>')
+    subparser = parser.add_subparsers(dest='subcommand_name', metavar='<subcommand>')
 
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
@@ -195,16 +195,17 @@ def main():
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
     short_commands = {
-            'up':subparser.choices['update'],
-            'in':subparser.choices['install'],
-            'ln':subparser.choices['link'],
-             'v':subparser.choices['version'],
-            'ls':subparser.choices['list'],
-            'rm':subparser.choices['remove'],
-        'unlink':subparser.choices['remove'],
-         'owner':subparser.choices['owners'],
-          'lics':subparser.choices['licenses'],
-           'who':subparser.choices['whoami']
+                'up':subparser.choices['update'],
+                'in':subparser.choices['install'],
+                'ln':subparser.choices['link'],
+                 'v':subparser.choices['version'],
+                'ls':subparser.choices['list'],
+                'rm':subparser.choices['remove'],
+            'unlink':subparser.choices['remove'],
+     'unlink-target':subparser.choices['remove'],
+             'owner':subparser.choices['owners'],
+              'lics':subparser.choices['licenses'],
+               'who':subparser.choices['whoami']
     }
     subparser.choices.update(short_commands)
 
