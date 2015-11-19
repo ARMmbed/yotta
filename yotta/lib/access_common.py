@@ -89,6 +89,7 @@ def getMaxCachedModules():
         if _max_cached_modules is None:
             # arbitrary default value
             _max_cached_modules = 200
+    return _max_cached_modules
 
 def pruneCache():
     ''' Prune the cache '''
