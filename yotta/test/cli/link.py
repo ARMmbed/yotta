@@ -18,8 +18,6 @@ from . import util
 
 Test_Target = 'x86-linux-native'
 
-print 'link.py imported!'
-
 class TestCLILink(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
