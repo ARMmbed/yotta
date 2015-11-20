@@ -28,11 +28,15 @@ def execCommand(args, following_args):
     else:
         return removeGlobally(module_or_target)
 
-def rmLinkOrDirectory(path):
+def rmLinkOrDirectory(path, nonexistent_warning):
+    if not os.path.exists(path):
+        logging.warning(nonexistent_warning)
+        return 1
     if fsutils.isLink(path):
         fsutils.rmF(path)
     else:
         fsutils.rmRf(path)
+    return 0
 
 def removeGlobally(module_or_target):
     # folders, , get places to install things, internal
@@ -46,8 +50,7 @@ def removeGlobally(module_or_target):
     if p is None:
         return 1
     path = os.path.join(global_dir, p.getName())
-    rmLinkOrDirectory(path)
-    return 0
+    return rmLinkOrDirectory(path, ('%s is not linked globally' % p.getName()))
 
 def removeDependency(args, module_or_target):
     c = validate.currentDirectoryModule()
@@ -63,7 +66,6 @@ def removeDependency(args, module_or_target):
         logging.error(err)
         return 1
     path = os.path.join(subdir, args.module)
-    rmLinkOrDirectory(path)
-    return 0
+    return rmLinkOrDirectory(path, '%s %s not found' % (('dependency', 'target')[module_or_target=='target'], args.module))
 
 
