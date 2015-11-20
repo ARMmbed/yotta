@@ -6,16 +6,12 @@
 
 # standard library modules, , ,
 import unittest
-import os
-import tempfile
 import subprocess
 import copy
 import re
 import datetime
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
-from yotta.lib.detect import systemDefaultTarget
 from . import cli
 from . import util
 
@@ -151,58 +147,54 @@ int foo(){
 'test/g/a/a/b/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }'
 }
 
-def isWindows():
-    # can't run tests that hit github without an authn token
-    return os.name == 'nt'
-
 
 class TestCLIBuild(unittest.TestCase):
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildTrivialLib(self):
         test_dir = util.writeTestFiles(util.Test_Trivial_Lib)
 
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
 
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildTrivialExe(self):
         test_dir = util.writeTestFiles(util.Test_Trivial_Exe)
 
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
 
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildComplex(self):
         test_dir = util.writeTestFiles(Test_Complex)
 
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
 
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildComplexSpaceInPath(self):
         test_dir = util.writeTestFiles(Test_Complex, True)
 
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
 
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildTests(self):
         test_dir = util.writeTestFiles(Test_Tests, True)
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
-        stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'test'], test_dir)
         self.assertIn('test-a', stdout)
         self.assertIn('test-c', stdout)
         self.assertIn('test-d', stdout)
         self.assertIn('test-e', stdout)
         self.assertIn('test-f', stdout)
         self.assertIn('test-g', stdout)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
-    @unittest.skipIf(isWindows(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildInfo(self):
         test_dir = util.writeTestFiles(Test_Build_Info, True)
         # commit all the test files to git so that the VCS build info gets
@@ -211,10 +203,10 @@ class TestCLIBuild(unittest.TestCase):
         subprocess.check_call(['git', 'add', '.'], cwd=test_dir)
         subprocess.check_call(['git', 'commit', '-m', 'test build info automated commit', '-q'], cwd=test_dir)
 
-        self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
+        self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
 
         build_time = datetime.datetime.utcnow()
-        output = subprocess.check_output(['./build/' + systemDefaultTarget().split(',')[0] + '/source/test-trivial-exe'], cwd=test_dir).decode()
+        output = subprocess.check_output(['./build/' + util.nativeTarget().split(',')[0] + '/source/test-trivial-exe'], cwd=test_dir).decode()
         self.assertIn('vcs clean: 1', output)
 
         # check build timestamp

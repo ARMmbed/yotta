@@ -6,12 +6,9 @@
 
 # standard library modules, , ,
 import unittest
-import os
-import tempfile
 
 # internal modules:
 from . import util
-from yotta.lib.fsutils import mkDirP, rmRf
 from . import cli
 
 Test_Outdated = {
@@ -50,7 +47,7 @@ class TestCLIOutdated(unittest.TestCase):
         self.assertNotEqual(statuscode, 0)
         self.assertIn('test-testing-dummy', stdout + stderr)
 
-        rmRf(path)
+        util.rmRf(path)
 
     def test_notOutdated(self):
         path = util.writeTestFiles(Test_Outdated, True)
@@ -62,4 +59,4 @@ class TestCLIOutdated(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         self.assertNotIn('test-testing-dummy', stdout + stderr)
 
-        rmRf(path)
+        util.rmRf(path)

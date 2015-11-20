@@ -25,7 +25,7 @@ from .lib import detect
 import yotta.lib.globalconf as globalconf
 
 # hook to support coverage information when yotta runs itself during tests:
-if 'COVERAGE_PROCESS_START' is os.environ:
+if 'COVERAGE_PROCESS_START' in os.environ:
     import coverage
     coverage.process_startup()
 

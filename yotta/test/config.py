@@ -7,11 +7,9 @@
 import unittest
 import copy
 import os
-import tempfile
 import logging
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib import validate
 from .cli import util
 
@@ -106,7 +104,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(merged_config['bar']['d'], "def")
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
     def test_targetAppConfigMerge(self):
         test_dir = util.writeTestFiles(Test_Target_Config_Merge_App, True)
@@ -132,7 +130,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(merged_config['new'], 123)
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
     def test_moduleConfigIgnored(self):
         test_dir = util.writeTestFiles(Test_Module_Config_Ignored, True)
@@ -145,5 +143,5 @@ class ConfigTest(unittest.TestCase):
         self.assertNotIn("new", merged_config)
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 

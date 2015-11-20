@@ -6,11 +6,8 @@
 
 # standard library modules, , ,
 import unittest
-import os
-import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
 from . import cli
 from . import util
 
@@ -50,7 +47,7 @@ class TestCLIUpdate(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         self.assertIn('download test-testing-dummy', stdout + stderr)
 
-        rmRf(path)
+        util.rmRf(path)
 
     def test_updateExplicit(self):
         path = util.writeTestFiles(Test_Outdated, True)
@@ -59,7 +56,7 @@ class TestCLIUpdate(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         self.assertIn('download test-testing-dummy', stdout + stderr)
 
-        rmRf(path)
+        util.rmRf(path)
 
     def test_updateNothing(self):
         path = util.writeTestFiles(Test_Outdated, True)
@@ -72,4 +69,4 @@ class TestCLIUpdate(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         self.assertNotIn('download test-testing-dummy', stdout + stderr)
 
-        rmRf(path)
+        util.rmRf(path)

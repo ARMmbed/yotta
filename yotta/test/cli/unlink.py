@@ -16,15 +16,40 @@ from . import cli
 from . import util
 
 class TestCLIUnLink(unittest.TestCase):
-    pass
-    # TODO: test
-    #   unlinking dependency
-    #   unlink target
-    #   unlink globally in a module
-    #   unlink globally in a target
-    #   unlink unknown dependency (what is expected behavior?)
-    #   unlink unknown target (what is expected behavior?)
-    #   unlink when not linked globally (what is expected behaviour?)
+    def testUnlinkModule(self):
+        pass
 
+    def testUnlinkNonexistentModule(self):
+        pass
+    
+    def testUnlinkNotLinkedModuleGlobally(self):
+        pass
+
+    def testUnlinkModuleGlobally(self):
+        pass
+
+    def testUnlinkTargetGlobally(self):
+        pass
+
+    def testUnlinkNotLinkedTargetGlobally(self):
+        pass
+
+    def testUnlinkTarget(self):
+        linked_in_target = util.writeTestFiles(util.getNativeTargetDescription(), True)
+        test_module = util.writeTestFiles(util.Test_Testing_Trivial_Lib_Dep, True)
+
+        stdout, stderr, statuscode = cli.run(['-t', 'test-native-target', '--plain', 'link-target'], cwd=linked_in_target)
+        self.assertEqual(statuscode, 0)
+        stdout, stderr, statuscode = cli.run(['-t', 'test-native-target', '--plain', 'link-target', 'test-native-target'], cwd=test_module)
+        self.assertEqual(statuscode, 0)
+        stdout, stderr, statuscode = cli.run(['-t', 'test-native-target', '--plain', 'build'], cwd=test_module)
+        print(stdout+stderr)
+        self.assertEqual(statuscode, 0)
+
+        util.rmRf(test_module)
+        util.rmRf(linked_in_module)
+
+    def testUnlinkNonexistentTarget(self):
+        pass
 
 

@@ -8,10 +8,8 @@
 # standard library modules, , ,
 import unittest
 import os
-import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component
 from .cli import cli
@@ -123,7 +121,7 @@ class TestPackIgnores(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        rmRf(cls.test_dir)
+        util.rmRf(cls.test_dir)
 
     def test_absolute_ignores(self):
         c = component.Component(self.test_dir)
@@ -164,7 +162,7 @@ class TestPackIgnores(unittest.TestCase):
         self.assertTrue(c.ignores('build'))
         self.assertTrue(c.ignores('.yotta.json'))
 
-        rmRf(default_test_dir)
+        util.rmRf(default_test_dir)
 
     def test_comments(self):
         c = component.Component(self.test_dir)
