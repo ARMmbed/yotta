@@ -101,7 +101,7 @@ Test_Fitler_NotFound['module.json'] = '''{
 }'''
 
 class TestCLITest(unittest.TestCase):
-    @unittest.skipIf(util.canBuildNatively(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_tests(self):
         test_dir = util.writeTestFiles(Test_Tests, True)
         output = self.runCheckCommand(['--target', systemDefaultTarget(), 'build'], test_dir)
@@ -114,13 +114,13 @@ class TestCLITest(unittest.TestCase):
         self.assertIn('test-g passed', output)
         util.rmRf(test_dir)
 
-    @unittest.skipIf(util.canBuildNatively(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_testOutputFilterPassing(self):
         test_dir = util.writeTestFiles(Test_Fitler_Pass, True)
         stdout = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
         util.rmRf(test_dir)
 
-    @unittest.skipIf(util.canBuildNatively(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_testOutputFilterFailing(self):
         test_dir = util.writeTestFiles(Test_Fitler_Fail, True)
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir)
@@ -136,7 +136,7 @@ class TestCLITest(unittest.TestCase):
         self.assertNotEqual(statuscode, 0)
         util.rmRf(test_dir)
 
-    @unittest.skipIf(util.canBuildNatively(), "can't build natively on windows yet")
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_testOutputFilterNotFound(self):
         test_dir = util.writeTestFiles(Test_Fitler_NotFound, True)
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'test'], cwd=test_dir)
