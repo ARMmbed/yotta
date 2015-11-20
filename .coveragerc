@@ -1,6 +1,6 @@
 [run]
 parallel=True
-concurrency=multiprocessing
+#concurrency=multiprocessing
 
 [report]
 include=./yotta/*
