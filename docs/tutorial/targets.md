@@ -210,6 +210,13 @@ cd ../path/to/my/module
 yotta link-target my-target
 ```
 
+You should also select your new target from the module directory before
+attempting to build for it for the first time.
+
+```sh
+yotta target my-target
+```
+
 Now when you build, your new target description will be used. Note that
 currently you need to remove the build directory after editing the target's
 toolchain file, as CMake does not add dependency rules on the toolchain:
