@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -29,6 +29,10 @@ def execCommand(args, following_args):
     if not c:
         return 1
     if args.component:
+        err = validate.componentNameValidationError(args.component)
+        if err:
+            logging.error(err)
+            return 1
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_modules'))
         src = os.path.join(folders.globalInstallDirectory(), args.component)
         dst = os.path.join(os.getcwd(), 'yotta_modules', args.component)

@@ -49,7 +49,7 @@ def componentNameValidationError(component_name):
 
 def targetNameValidationError(target_name):
     if not re.match(Target_Name_Regex, target_name):
-        return 'Module name "%s" is invalid - must contain only lowercase a-z, 0-9 and hyphen, with no spaces.' % target_name
+        return 'Target name "%s" is invalid - must contain only lowercase a-z, 0-9, + and hyphen, with no spaces.' % target_name
     return None
 
 def componentNameCoerced(component_name):
