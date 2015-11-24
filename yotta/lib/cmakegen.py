@@ -459,7 +459,7 @@ class CMakeGen(object):
             # library so that this component can still be linked against
             if module_is_empty:
                 if len(binary_subdirs):
-                    logger.warning('nothing to build!') 
+                    logger.warning('nothing to build!')
                 else:
                     add_own_subdirs.append(self.createDummyLib(
                         component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
