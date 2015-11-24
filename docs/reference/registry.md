@@ -46,3 +46,31 @@ to allow access to these domains though your firewall:
 **Note** that all of these domains may use multiple IP addresses, and each may
 share their IP addresses with other domains.
 
+## <a href="#disputes" name="disputes">#</a> Disputes and Names
+Please open an issue on the [Github issue
+tracker](https://github.com/armmbed/yotta/issues) for any disputes arising over
+module ownership. Do not publish an empty module in order to "reserve" a name
+for your future use - either implement something useful, or let someone else do
+the same. If someone else wants to publish a useful module under a name you
+have published only an empty module to then ownership of your module will be
+granted to them.
+
+If you use a trademark belonging to a company in your module name (e.g. a
+silicon vendor's name) and that company later wants to support their hardware
+or software in yotta, you may be asked to let them contribute to your module,
+or take over maintenance of it.
+
+To take over ownership of a module abandoned by its owner please open an issue
+on Github, it is likely that these requests will be granted if contact cannot
+be re-established with the owner within a reasonable amount of time.
+
+## <a href="#terms" name="terms">#</a> Terms of Use
+The yotta registry is for yotta modules (that's software that can usefully be
+used with other yotta modules to build an application for at least one target).
+yotta modules can support any target hardware (ARM or otherwise), but we
+reserve the right to remove anything from the registry which isn't a useful
+yotta module.
+
+The [mbed terms of use](http://www.mbed.com/about-mbed/terms-use) apply to
+your use of the yotta registry, and the content you upload.
+
