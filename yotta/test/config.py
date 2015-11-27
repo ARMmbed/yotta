@@ -7,12 +7,11 @@
 import unittest
 import copy
 import os
-import tempfile
 import logging
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib import validate
+from .cli import util
 
 logging.basicConfig(
     level=logging.ERROR
@@ -78,19 +77,6 @@ Test_Module_Config_Ignored['module.json'] = '''{
 }'''
 
 class ConfigTest(unittest.TestCase):
-    def writeTestFiles(self, files, add_space_in_path=False):
-        test_dir = tempfile.mkdtemp()
-        if add_space_in_path:
-            test_dir = test_dir + ' spaces in path'
-
-        for path, contents in files.items():
-            path_dir, file_name =  os.path.split(path)
-            path_dir = os.path.join(test_dir, path_dir)
-            mkDirP(path_dir)
-            with open(os.path.join(path_dir, file_name), 'w') as f:
-                f.write(contents)
-        return test_dir
-
     def setUp(self):
         self.restore_cwd = os.getcwd()
 
@@ -98,7 +84,7 @@ class ConfigTest(unittest.TestCase):
         os.chdir(self.restore_cwd)
 
     def test_targetConfigMerge(self):
-        test_dir = self.writeTestFiles(Test_Target_Config_Merge, True)
+        test_dir = util.writeTestFiles(Test_Target_Config_Merge, True)
 
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
@@ -118,10 +104,10 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(merged_config['bar']['d'], "def")
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
     def test_targetAppConfigMerge(self):
-        test_dir = self.writeTestFiles(Test_Target_Config_Merge_App, True)
+        test_dir = util.writeTestFiles(Test_Target_Config_Merge_App, True)
 
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
@@ -144,10 +130,10 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(merged_config['new'], 123)
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 
     def test_moduleConfigIgnored(self):
-        test_dir = self.writeTestFiles(Test_Module_Config_Ignored, True)
+        test_dir = util.writeTestFiles(Test_Module_Config_Ignored, True)
 
         os.chdir(test_dir)
         c = validate.currentDirectoryModule()
@@ -157,5 +143,5 @@ class ConfigTest(unittest.TestCase):
         self.assertNotIn("new", merged_config)
 
         os.chdir(self.restore_cwd)
-        rmRf(test_dir)
+        util.rmRf(test_dir)
 

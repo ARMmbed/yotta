@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -10,10 +10,10 @@ import os
 # colorama, BSD 3-Clause license, color terminal output, pip install colorama
 import colorama
 
-# Target, , represents an installed target, internal
-from .lib import target
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
+# validate, , validate things, internal
+from .lib import validate
 # folders, , get places to install things, internal
 from .lib import folders
 
@@ -26,20 +26,25 @@ def addOptions(parser):
 
 def execCommand(args, following_args):
     if args.target:
+        c = validate.currentDirectoryModule()
+        if not c:
+            return 1
+        err = validate.targetNameValidationError(args.target)
+        if err:
+            logging.error(err)
+            return 1
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_targets'))
         src = os.path.join(folders.globalTargetInstallDirectory(), args.target)
         dst = os.path.join(os.getcwd(), 'yotta_targets', args.target)
         # if the target is already installed, rm it
         fsutils.rmRf(dst)
     else:
-        c = target.Target(os.getcwd())
-        if not c:
-            logging.debug(str(c.error))
-            logging.error('The current directory does not contain a valid target.')
+        t = validate.currentDirectoryTarget()
+        if not t:
             return 1
         fsutils.mkDirP(folders.globalTargetInstallDirectory())
         src = os.getcwd()
-        dst = os.path.join(folders.globalTargetInstallDirectory(), c.getName())
+        dst = os.path.join(folders.globalTargetInstallDirectory(), t.getName())
 
     if args.target:
         realsrc = fsutils.realpath(src)

@@ -410,10 +410,20 @@ class CMakeGen(object):
                     add_own_subdirs.append(
                         (os.path.join(component.path, f), f)
                     )
-
             # names of all directories at this level with stuff in: used to figure
             # out what to link automatically
             all_subdirs = manual_subdirs + [x[0] for x in autogen_subdirs]
+
+            # first check if this module is empty:
+            module_is_empty = False
+            if component.isTestDependency():
+                if len(autogen_subdirs) + len(add_own_subdirs) == 0:
+                    module_is_empty = True
+            else:
+                if len(autogen_subdirs) + len(add_own_subdirs) <= len(test_subdirs):
+                    module_is_empty = True
+
+            # autogenerate CMakeLists for subdirectories as appropriate:
             for f, source_files in autogen_subdirs:
                 if f in binary_subdirs:
                     exe_name = binary_subdirs[f]
@@ -425,7 +435,7 @@ class CMakeGen(object):
                     if component.isTestDependency():
                         continue
                     self.generateTestDirList(
-                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
+                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel, module_is_empty=module_is_empty
                     )
                 else:
                     for header_dir, header_files in header_subdirs:
@@ -447,7 +457,7 @@ class CMakeGen(object):
             # if we're not building anything other than tests, and this is a
             # library module (not a binary) then we need to generate a dummy
             # library so that this component can still be linked against
-            if len(add_own_subdirs) <= len(test_subdirs):
+            if module_is_empty:
                 if len(binary_subdirs):
                     logger.warning('nothing to build!')
                 else:
@@ -530,7 +540,7 @@ class CMakeGen(object):
             with open(fname, "w") as f:
                 f.write(contents)
 
-    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False):
+    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False, module_is_empty=False):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
@@ -562,7 +572,8 @@ class CMakeGen(object):
             tests.append([[str(f) for f in sources], object_name, [f.lang for f in sources]])
 
         # link tests against the main executable
-        link_dependencies.append(component.getName())
+        if not module_is_empty:
+            link_dependencies.append(component.getName())
 
         # Find cmake files
         cmake_files = []

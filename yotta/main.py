@@ -25,7 +25,7 @@ from .lib import detect
 import yotta.lib.globalconf as globalconf
 
 # hook to support coverage information when yotta runs itself during tests:
-if 'COVERAGE_PROCESS_START' is os.environ:
+if 'COVERAGE_PROCESS_START' in os.environ:
     import coverage
     coverage.process_startup()
 
@@ -92,7 +92,7 @@ def main():
         description='Build software using re-usable components.\n'+
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
-    subparser = parser.add_subparsers(metavar='<subcommand>')
+    subparser = parser.add_subparsers(dest='subcommand_name', metavar='<subcommand>')
 
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
@@ -145,7 +145,8 @@ def main():
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
         'install` for installing modules, and for `yotta target` for '+
-        'switching targets.'
+        'switching targets.',
+        'Search for published modules and targets'
     )
     addParser('init', 'init', 'Create a new module.')
     addParser('install', 'install',
@@ -164,8 +165,20 @@ def main():
         'Build the current module.'
     )
     addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
-    addParser('link', 'link', 'Symlink a module.')
-    addParser('link-target', 'link_target', 'Symlink a target.')
+    addParser('link', 'link',
+        'Symlink a module to be used in another module. Use "yotta link" '+
+        '(with no arguments) to link the current module globally. Or use '+
+        '"yotta link module-name" To use a module that was previously linked '+
+        'globally in the current module.',
+        'Symlink a module'
+    )
+    addParser('link-target', 'link_target',
+        'Symlink a target to be used in another module. Use "yotta link-target" '+
+        '(with no arguments) to link the current target globally. Or use '+
+        '"yotta link-target target-name" To use a target that was previously linked '+
+        'globally in the current module.',
+        'Symlink a target'
+    )
     addParser('update', 'update', 'Update dependencies for the current module, or a specific module.')
     addParser('target', 'target', 'Set or display the target device.')
     addParser('debug', 'debug', 'Attach a debugger to the current target.  Requires target support.')
@@ -186,7 +199,12 @@ def main():
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
-    addParser('remove', 'remove', 'Remove the downloaded version of a dependency, or un-link a linked module.')
+    addParser('remove', 'remove',
+        'Remove the downloaded version of a dependency module or target, or '+
+        'un-link a linked module or target (see yotta link --help for details '+
+        'of linking). This command does not modify your module.json file.',
+        'Remove or unlink a dependency without removing it from module.json.'
+    )
     addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
     addParser('licenses', 'licenses', 'List the licenses of the current module and its dependencies.')
     addParser('clean', 'clean', 'Remove files created by yotta and the build.')
@@ -195,16 +213,17 @@ def main():
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
     short_commands = {
-            'up':subparser.choices['update'],
-            'in':subparser.choices['install'],
-            'ln':subparser.choices['link'],
-             'v':subparser.choices['version'],
-            'ls':subparser.choices['list'],
-            'rm':subparser.choices['remove'],
-        'unlink':subparser.choices['remove'],
-         'owner':subparser.choices['owners'],
-          'lics':subparser.choices['licenses'],
-           'who':subparser.choices['whoami']
+                'up':subparser.choices['update'],
+                'in':subparser.choices['install'],
+                'ln':subparser.choices['link'],
+                 'v':subparser.choices['version'],
+                'ls':subparser.choices['list'],
+                'rm':subparser.choices['remove'],
+            'unlink':subparser.choices['remove'],
+     'unlink-target':subparser.choices['remove'],
+             'owner':subparser.choices['owners'],
+              'lics':subparser.choices['licenses'],
+               'who':subparser.choices['whoami']
     }
     subparser.choices.update(short_commands)
 

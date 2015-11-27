@@ -80,7 +80,7 @@ class _JSONConfigParser(object):
 
             returns None if any path element or the property is missing
         '''
-        path = _splitPath([path])
+        path = _splitPath(path)
         for config in self.configs.values():
             cur = config
             for el in path:
@@ -110,7 +110,7 @@ class _JSONConfigParser(object):
         else:
             config = self.configs[filename]
 
-        path = _splitPath([path])
+        path = _splitPath(path)
         for el in path[:-1]:
             if el in config:
                 config = config[el]
@@ -136,10 +136,8 @@ class _JSONConfigParser(object):
         raise ValueError('No configs available.')
 
 def _splitPath(path):
-    r = []
-    for p in path:
-        r += p.split('.')
-    if not len(p):
+    r = path.split('.')
+    if not len(r):
         raise ValueError('A path must be specified.')
     return r
 
@@ -185,4 +183,3 @@ def set(path, value, save_locally=False):
 
 def setProperty(section, name, value, save_locally=False):
     set(section+'.'+name, value, save_locally)
-
