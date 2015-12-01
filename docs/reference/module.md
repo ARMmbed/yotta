@@ -90,19 +90,22 @@ For a complete guide to semantic versioning, see [semver.org](http://semver.org)
 
 
 
-### `licenses` *required*
-**type: Array of objects: `{"url":"<URL to full license>", "type":"<SPDX license identifier>" }`**
+### `license` *required*
+**type: String** `"<SPDX license identifier>"`**
 
 The licenses property in module.json should include all of the licenses that
 affect code in your module. For example:
 
 ```json
-  "licenses": [
-    {
-      "url": "https://spdx.org/licenses/Apache-2.0",
-      "type": "Apache-2.0"
-    }
-  ]
+  "license": "Apache-2.0"
+```
+
+The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
+
+According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses should be entered as:
+
+```json
+  "license": "LicenseRef-LICENSE.pdf"
 ```
 
 If you're starting a completely new module, and have freedom to choose the
@@ -113,6 +116,7 @@ open source license which provides clarity over the scope of patent grants.
 
 When you run `yotta init` to initialise a new module, yotta will suggest some
 licenses, and automatically fill in the license URL for those options.
+
 
 <a name="dependencies"></a>
 ### `dependencies`
@@ -146,13 +150,13 @@ Version specifications can take any of the following forms:
    recommended)
  * `^1.2.3`: any compatible version (exact version for `0.x.x` versions, or any
    version greater than the specified version with the same major version
-   number for versions > 1. 
+   number for versions > 1.
  * `~1.2.3`: any version with the same major and minor versions, and an equal
-   or greater patch version. 
+   or greater patch version.
  * `>1.2.3`: any version greater than `1.2.3`. `>=`, `<`, and `<=` are also
    possible.
  * `*`: any version (useful for development)
-  
+
 The `^` and `~` specifiers are recommended, as these provide some guarantee of
 compatibility without rigidly constraining the version (which would cause
 problems if two separate modules depend on different versions).
@@ -170,7 +174,7 @@ To specify a dependency on a github module, use one of the following forms:
     the head of the default branch if no tagged versions are available.
 
  * `"usefulmodule": "username/repositoryname#^1.2.3"`
- 
+
     Uses the highest tagged version matching the version specification.
 
  * `"usefulmodule": "username/repositoryname#tag-name"`
@@ -178,7 +182,7 @@ To specify a dependency on a github module, use one of the following forms:
     Uses the specific tagged version.
 
  * `"usefulmodule": "username/repositoryname#branch-name"`
-    
+
     Uses the latest committed version on the specified branch.
 
 #### Depending on git Modules
@@ -287,7 +291,7 @@ example code.
 ### `keywords`
 **type: Array of String**
 
-Keywords describe what your module does, and help other people to find it. 
+Keywords describe what your module does, and help other people to find it.
 
 ### `homepage`
 **type: String (url)**
