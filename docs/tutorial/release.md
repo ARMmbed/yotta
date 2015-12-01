@@ -9,7 +9,7 @@ section: tutorial/releasing
 At its simplest, the lifecycle of a yotta module is three steps:
 
  1. Write some code
- 2. Commit it to version control (our favourite is [Github](http://github/com))
+ 2. Commit it to version control (our favourite is [Github](http://github.com))
  3. Publish your module to the yotta registry
 
 The yotta registry, which hosts released versions of yotta modules and makes
