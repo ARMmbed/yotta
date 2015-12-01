@@ -15,6 +15,7 @@ when building for different targets.
 {
   "name": "frdm-k64f-gcc",
   "version": "0.0.7",
+  "license": "Apache-2.0",
   "inherits": {
     "mbed-gcc": "~0.1.2"
   },
@@ -97,11 +98,13 @@ from `targetDependencies` that matches one of the identifiers in this list.
 The identifiers are arbitrary strings, and do not need to be the names of other
 targets.
 
-### <a href="#licenses" name="licenses">#</a> `licenses` *required*
-**type: Array of objects: `{"url":"<URL to full license>", "type":"<SPDX license identifier>" }`**
 
-The licenses property in module.json should include all of the licenses that
-affect code in your module. For example:
+### <a href="#licenses" name="licenses">#</a> `licenses` *deprecated*
+See also: [`license`](#license). The `licenses` property was formerly a method
+of specifying that multiple licenses applied to a target. It's now preferred to
+use a single `license` field containing a SPDX license expression.
+
+`licenses` example:
 
 ```json
   "licenses": [
@@ -109,14 +112,29 @@ affect code in your module. For example:
       "url": "https://spdx.org/licenses/Apache-2.0",
       "type": "Apache-2.0"
     }
-  ]
+  ],
 ```
 
-If you're starting a completely new module, and have freedom to choose the
-license yourself, `yotta`'s preferred license is
-[Apache-2.0](http://spdx.org/licenses/Apache-2.0), a permissive OSI-approved
-open source license which provides clarity over the scope of patent grants.
-`yotta` itself is also licensed under Apache-2.0.
+
+### <a href="#license" name="license">#</a> `license` *required*
+**type: String** `"<SPDX license identifier>"`**
+
+The license property in target.json should include all of the licenses that
+affect code in your target. For example:
+
+```json
+  "license": "Apache-2.0"
+```
+
+The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
+SPDX license expressions can be used for compound licenses.
+
+According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses in a file should be entered as:
+
+```json
+  "license": "LicenseRef-LICENSE.pdf"
+```
+
 
 ### <a href="#description" name="description">#</a> `description`
 **type: String**

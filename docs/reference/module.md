@@ -25,12 +25,7 @@ use `yotta init` to populate the file by answering a sequence of questions.
     "url": "git@github.com:ARMmbed/helloyotta.git",
     "type": "git"
   },
-  "licenses": [
-    {
-      "url": "https://spdx.org/licenses/Apache-2.0",
-      "type": "Apache-2.0"
-    }
-  ],
+  "license": "Apache-2.0",
   "dependencies": {
     "simplelog": "~0.0.0"
   },
@@ -89,11 +84,27 @@ For `1+.x.x` versions, semantic versioning defines the following rules:
 For a complete guide to semantic versioning, see [semver.org](http://semver.org).
 
 
+### `licenses` *deprecated*
+See also: [`license`](#license). The `licenses` property was formerly a method
+of specifying that multiple licenses applied to a module. It's now preferred to
+use a single `license` field containing a SPDX license expression.
 
+`licenses` example:
+
+```json
+  "licenses": [
+    {
+      "url": "https://spdx.org/licenses/Apache-2.0",
+      "type": "Apache-2.0"
+    }
+  ],
+```
+
+<a name="license"></a>
 ### `license` *required*
 **type: String** `"<SPDX license identifier>"`**
 
-The licenses property in module.json should include all of the licenses that
+The license property in module.json should include all of the licenses that
 affect code in your module. For example:
 
 ```json
@@ -101,8 +112,9 @@ affect code in your module. For example:
 ```
 
 The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
+SPDX license expressions can be used for compound licenses.
 
-According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses should be entered as:
+According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses in a file should be entered as:
 
 ```json
   "license": "LicenseRef-LICENSE.pdf"
@@ -115,8 +127,10 @@ open source license which provides clarity over the scope of patent grants.
 `yotta` itself is also licensed under Apache-2.0.
 
 When you run `yotta init` to initialise a new module, yotta will suggest some
-licenses, and automatically fill in the license URL for those options.
+licenses, and automatically fill in the license field for those options.
 
+**Remember: some people will find it much harder to use your module if you
+don't use a standard permissive license.**
 
 <a name="dependencies"></a>
 ### `dependencies`
