@@ -25,12 +25,7 @@ use `yotta init` to populate the file by answering a sequence of questions.
     "url": "git@github.com:ARMmbed/helloyotta.git",
     "type": "git"
   },
-  "licenses": [
-    {
-      "url": "https://spdx.org/licenses/Apache-2.0",
-      "type": "Apache-2.0"
-    }
-  ],
+  "license": "Apache-2.0",
   "dependencies": {
     "simplelog": "~0.0.0"
   },
@@ -89,12 +84,12 @@ For `1+.x.x` versions, semantic versioning defines the following rules:
 For a complete guide to semantic versioning, see [semver.org](http://semver.org).
 
 
+### `licenses` *deprecated*
+See also: [`license`](#license). The `licenses` property was formerly a method
+of specifying that multiple licenses applied to a module. It's now preferred to
+use a single `license` field containing a SPDX license expression.
 
-### `licenses` *required*
-**type: Array of objects: `{"url":"<URL to full license>", "type":"<SPDX license identifier>" }`**
-
-The licenses property in module.json should include all of the licenses that
-affect code in your module. For example:
+`licenses` example:
 
 ```json
   "licenses": [
@@ -102,7 +97,27 @@ affect code in your module. For example:
       "url": "https://spdx.org/licenses/Apache-2.0",
       "type": "Apache-2.0"
     }
-  ]
+  ],
+```
+
+<a name="license"></a>
+### `license` *required*
+**type: String** `"<SPDX license identifier>"`**
+
+The license property in module.json should include all of the licenses that
+affect code in your module. For example:
+
+```json
+  "license": "Apache-2.0"
+```
+
+The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
+SPDX license expressions can be used for compound licenses.
+
+According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses in a file should be entered as:
+
+```json
+  "license": "LicenseRef-LICENSE.pdf"
 ```
 
 If you're starting a completely new module, and have freedom to choose the
@@ -112,7 +127,10 @@ open source license which provides clarity over the scope of patent grants.
 `yotta` itself is also licensed under Apache-2.0.
 
 When you run `yotta init` to initialise a new module, yotta will suggest some
-licenses, and automatically fill in the license URL for those options.
+licenses, and automatically fill in the license field for those options.
+
+**Remember: some people will find it much harder to use your module if you
+don't use a standard permissive license.**
 
 <a name="dependencies"></a>
 ### `dependencies`
@@ -146,13 +164,13 @@ Version specifications can take any of the following forms:
    recommended)
  * `^1.2.3`: any compatible version (exact version for `0.x.x` versions, or any
    version greater than the specified version with the same major version
-   number for versions > 1. 
+   number for versions > 1.
  * `~1.2.3`: any version with the same major and minor versions, and an equal
-   or greater patch version. 
+   or greater patch version.
  * `>1.2.3`: any version greater than `1.2.3`. `>=`, `<`, and `<=` are also
    possible.
  * `*`: any version (useful for development)
-  
+
 The `^` and `~` specifiers are recommended, as these provide some guarantee of
 compatibility without rigidly constraining the version (which would cause
 problems if two separate modules depend on different versions).
@@ -170,7 +188,7 @@ To specify a dependency on a github module, use one of the following forms:
     the head of the default branch if no tagged versions are available.
 
  * `"usefulmodule": "username/repositoryname#^1.2.3"`
- 
+
     Uses the highest tagged version matching the version specification.
 
  * `"usefulmodule": "username/repositoryname#tag-name"`
@@ -178,7 +196,7 @@ To specify a dependency on a github module, use one of the following forms:
     Uses the specific tagged version.
 
  * `"usefulmodule": "username/repositoryname#branch-name"`
-    
+
     Uses the latest committed version on the specified branch.
 
 #### Depending on git Modules
@@ -287,7 +305,7 @@ example code.
 ### `keywords`
 **type: Array of String**
 
-Keywords describe what your module does, and help other people to find it. 
+Keywords describe what your module does, and help other people to find it.
 
 ### `homepage`
 **type: String (url)**
