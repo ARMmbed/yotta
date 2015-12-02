@@ -66,7 +66,7 @@ def generate_jwt_token(private_key, registry=None):
         "iss": 'yotta',
         "aud": registry,
         "prn": prn,
-        "exp": str(expires)
+        "exp": expires
     }
     logger.debug('token fields: %s' % token_fields)
     private_key_pem = private_key.private_bytes(
