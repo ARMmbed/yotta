@@ -17,10 +17,13 @@ import sys
 from functools import reduce
 import os
 
-# logging setup, , setup the logging system, internal
-from .lib import logging_setup
 # detect, , detect things about the system, internal
 from .lib import detect
+# logging setup, , setup the logging system, internal
+from .lib import logging_setup
+# options, , common argument parser options, internal
+import options
+
 # globalconf, share global arguments between modules, internal
 import yotta.lib.globalconf as globalconf
 
@@ -29,9 +32,6 @@ if 'COVERAGE_PROCESS_START' in os.environ:
     import coverage
     coverage.process_startup()
 
-
-def logLevelFromVerbosity(v):
-    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
 
 def splitList(l, at_value):
     r = [[]]
@@ -87,6 +87,8 @@ class FastVersionAction(argparse.Action):
 
 
 def main():
+    logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description='Build software using re-usable components.\n'+
@@ -97,25 +99,13 @@ def main():
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
-    parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
-        default=0,
-        help='increase verbosity: can be used multiple times'
-    )
-    parser.add_argument('-d', '--debug', dest='debug', action='append',
-        metavar='SUBSYS',
-        help=argparse.SUPPRESS
-        #help='specify subsystems to debug: use in conjunction with -v to '+
-        #     'increase the verbosity only for specified subsystems'
-    )
+    options.verbosity.addTo(parser)
+    options.debug.addTo(parser)
+    options.plain.addTo(parser)
 
     parser.add_argument('-t', '--target', dest='target',
         default=detect.defaultTarget(),
         help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
-    )
-
-    parser.add_argument('--plain', dest='plain',
-        action='store_true', default=False,
-        help="Use a simple output format with no colours"
     )
 
     parser.add_argument('--noninteractive', '-n', dest='interactive',
@@ -246,9 +236,6 @@ def main():
     # set global arguments that are shared everywhere and never change
     globalconf.set('interactive', args.interactive)
     globalconf.set('plain', args.plain)
-
-    loglevel = logLevelFromVerbosity(args.verbosity)
-    logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
 
     # finally, do stuff!
     if 'command' not in args:
