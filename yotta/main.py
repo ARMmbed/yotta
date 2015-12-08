@@ -53,7 +53,7 @@ def main():
     import options
 
     logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
-    
+
     # we override many argparse things to make options more re-usable across
     # subcommands, and allow lazy loading of subcommand modules:
     parser = options.parser.ArgumentParser(
