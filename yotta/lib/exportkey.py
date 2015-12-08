@@ -65,6 +65,9 @@ def openSSH(pubkey):
     if bord(n[0]) & 0x80:
         n = bchr(0) + n
 
-    key_bytes = struct.pack('>I', 7) + b'ssh-rsa' + struct.pack('>I', len(e)) + e + struct.pack('>I', len(n)) + n
-    
-    return b'ssh-rsa ' + binascii.b2a_base64(key_bytes)[:-1]
+    key_type = b'ssh-rsa'
+    key_bytes = struct.pack('>I', len(key_type)) + key_type +\
+                struct.pack('>I', len(e)) + e +\
+                struct.pack('>I', len(n)) + n
+
+    return key_type + b' ' + binascii.b2a_base64(key_bytes)[:-1]
