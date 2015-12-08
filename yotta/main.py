@@ -12,17 +12,8 @@ import argcomplete
 
 # standard library modules, , ,
 import argparse
-import logging
 import sys
-from functools import reduce
 import os
-
-# detect, , detect things about the system, internal
-from .lib import detect
-# logging setup, , setup the logging system, internal
-from .lib import logging_setup
-# options, , common argument parser options, internal
-import options
 
 # globalconf, share global arguments between modules, internal
 import yotta.lib.globalconf as globalconf
@@ -42,40 +33,6 @@ def splitList(l, at_value):
             r[-1].append(x)
     return r
 
-# (instead of subclassing argparse._SubParsersAction, we monkey-patch it,
-#  because argcomplete has special-cases for the _SubParsersAction class that
-#  it's impossible to extend to another class)
-#
-# add a add_parser_async function, which allows a subparser to be added whose
-# options are not evaluated until the subparser has been selected. This allows
-# us to defer loading the modules for all the subcommands until they are
-# actually:
-def _SubParsersAction_addParserAsync(self, name, *args, **kwargs):
-    if not 'callback' in kwargs:
-        raise ValueError('callback=fn(parser) argument must be specified')
-    callback = kwargs['callback']
-    del kwargs['callback']
-    parser = self.add_parser(name, *args, **kwargs)
-    parser._lazy_load_callback = callback
-    return None
-argparse._SubParsersAction.add_parser_async = _SubParsersAction_addParserAsync
-
-def _wrapSubParserActionCall(orig_call):
-    def wrapped_call(self, parser, namespace, values, option_string=None):
-        parser_name = values[0]
-        if parser_name in self._name_parser_map:
-            subparser = self._name_parser_map[parser_name]
-            if hasattr(subparser, '_lazy_load_callback'):
-                # the callback is responsible for adding the subparser's own
-                # arguments:
-                subparser._lazy_load_callback(subparser)
-        # now we can go ahead and call the subparser action: its arguments are
-        # now all set up
-        return orig_call(self, parser, namespace, values, option_string)
-    return wrapped_call
-argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubParsersAction.__call__)
-
-
 # Override the argparse default version action so that we can avoid importing
 # pkg_resources (which is slowww) unless someone has actually asked for the
 # version
@@ -85,11 +42,21 @@ class FastVersionAction(argparse.Action):
         sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
         sys.exit(0)
 
-
 def main():
-    logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
+    # standard library modules, , ,
+    import logging
+    from functools import reduce
 
-    parser = argparse.ArgumentParser(
+    # logging setup, , setup the logging system, internal
+    from .lib import logging_setup
+    # options, , common argument parser options, internal
+    import options
+
+    logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
+    
+    # we override many argparse things to make options more re-usable across
+    # subcommands, and allow lazy loading of subcommand modules:
+    parser = options.parser.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description='Build software using re-usable components.\n'+
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
@@ -99,23 +66,14 @@ def main():
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
+
+    # add re-usable top-level options which subcommands may also accept
     options.verbosity.addTo(parser)
     options.debug.addTo(parser)
     options.plain.addTo(parser)
-
-    parser.add_argument('-t', '--target', dest='target',
-        default=detect.defaultTarget(),
-        help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
-    )
-
-    parser.add_argument('--noninteractive', '-n', dest='interactive',
-        action='store_false', default=True,
-        help="Do not wait for user interaction (for example to log in), fail instead."
-    )
-
-    parser.add_argument(
-        '--registry', default=None, dest='registry', help=argparse.SUPPRESS
-    )
+    options.noninteractive.addTo(parser)
+    options.registry.addTo(parser)
+    options.target.addTo(parser)
 
     def addParser(name, module_name, description, help=None):
         if help is None:
