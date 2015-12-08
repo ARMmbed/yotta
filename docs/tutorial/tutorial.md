@@ -46,6 +46,11 @@ What is the license for this project (Apache-2.0, ISC, MIT etc.)?  <Apache-2.0>
 > 
 ```
 
+**Note:** you can use any valid [SPDX license
+expression](/reference/licenses.html) for the license of your module, although
+simple permissive open-source licenses like Apache-2.0 are encouraged, and will
+make it easier for people to use your module and contribute improvements.
+
 ### Module Structure
 `yotta init` also creates some directories for us to put things in:
 
