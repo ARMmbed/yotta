@@ -74,6 +74,7 @@ def main():
     options.noninteractive.addTo(parser)
     options.registry.addTo(parser)
     options.target.addTo(parser)
+    options.config.addTo(parser)
 
     def addParser(name, module_name, description, help=None):
         if help is None:
