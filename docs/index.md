@@ -128,17 +128,18 @@ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip insta
 <br>
 <br>
 ## <a href="#installing-on-linux" name="installing-on-linux">#</a> Installing On Linux
+### <a href="#dependencies-linux" name="dependencies-linux">#</a> Installing Dependencies
 First install yotta's dependencies using your system's package manager. Use
 whatever 2.7.* python version is provided by your distribution (python 3
 support is currently experimental).
 
-For example on Debian and Ubuntu:
+**on Debian and Ubuntu:**
 
 ```sh
 sudo apt-get update && sudo apt-get install python-setuptools  cmake build-essential ninja-build python-dev libffi-dev libssl-dev && sudo easy_install pip
 ```
 
-and on Fedora Linux (tested on FC21):
+**and on Fedora Linux (tested on FC21):**
 
 ```sh
 # install development tool dependencies
@@ -151,7 +152,7 @@ curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
 ```
 
-or under cygwin (on windows), which presents a linux-like environment to yotta:
+**or under cygwin (on windows)**, which presents a linux-like environment to yotta:
 
  * install the [windows dependencies](#installing-on-windows)
  * install the libffi-developer and openssl-developer cygwin modules as both
@@ -159,8 +160,10 @@ or under cygwin (on windows), which presents a linux-like environment to yotta:
  * install python and pip in cygwin
 
 
-Then install yotta itself (you may need to use `sudo` for this, depending on
-your configuration):
+### <a href="#yotta-itself-linux" name="yotta-itself-linux">#</a> Install yotta Itself 
+
+After installing the dependencies, install yotta itself using pip (you may need
+to use `sudo` for this, depending on your configuration):
 
 ```sh
 pip install yotta
@@ -258,7 +261,7 @@ the native compiler.
 ### <a href="#linux-common-issues" name="linux-common-issues">#</a> Solving Common Linux installation problems
 If you are having trouble with pip not installing yotta, try running `sudo pip install -U pip` to update your pip installation. Check that your pip installation is up to date by running `pip -V`, you should get a response of `7.1.2` or greater. 
 
-On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from easy_install by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
+On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from `easy_install` by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
 
 You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/stable/installing/) if everything else fails.
 
