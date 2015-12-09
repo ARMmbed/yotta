@@ -127,7 +127,7 @@ affect code in your target. For example:
 ```
 
 The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
-SPDX license expressions can be used for compound licenses.
+[SPDX license expressions](/reference/licenses.html) can be used for compound licenses.
 
 According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses in a file should be entered as:
 
