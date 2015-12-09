@@ -270,12 +270,26 @@ class DerivedTarget(Target):
     def addBuildOptions(cls, parser):
         parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
            default='Ninja',
+           help='CMake generator to use (defaults to Ninja). You can use this '+
+           'to generate IDE project files instead, see cmake --help for '+
+           'possible generator names. Note that only Ninja or Unix Makefile '+
+           'based generators will work correctly with yotta.',
+           metavar='CMAKE_GENERATOR',
            choices=(
                'Unix Makefiles',
                'Ninja',
                'Xcode',
                'Sublime Text 2 - Ninja',
                'Sublime Text 2 - Unix Makefiles'
+               'CodeBlocks - Ninja',
+               'CodeBlocks - Unix Makefiles',
+               'CodeLite - Ninja',
+               'CodeLite - Unix Makefiles',
+               'Eclipse CDT4 - Ninja',
+               'Eclipse CDT4 - Unix Makefiles',
+               'KDevelop3 - Unix Makefiles',
+               'Kate - Ninja',
+               'Kate - Unix Makefiles',
            )
         )
 
