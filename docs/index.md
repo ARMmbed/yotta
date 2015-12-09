@@ -43,6 +43,10 @@ operating system below:
  * [Mac](#installing-on-osx)
  * [Linux](#installing-on-linux)
 
+If you have a complex python setup on your system, you may want to consider
+installing yotta in a [virtualenv](#virtualenv-install), in order to separate
+its dependencies from other python programs on your system.
+
 To upgrade an existing installation to a new version, see
 [upgrading](#upgrading) (the same for all systems).
 
@@ -124,17 +128,18 @@ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip insta
 <br>
 <br>
 ## <a href="#installing-on-linux" name="installing-on-linux">#</a> Installing On Linux
+### <a href="#dependencies-linux" name="dependencies-linux">#</a> Installing Dependencies
 First install yotta's dependencies using your system's package manager. Use
 whatever 2.7.* python version is provided by your distribution (python 3
 support is currently experimental).
 
-For example on Debian and Ubuntu:
+**on Debian and Ubuntu:**
 
 ```sh
 sudo apt-get update && sudo apt-get install python-setuptools  cmake build-essential ninja-build python-dev libffi-dev libssl-dev && sudo easy_install pip
 ```
 
-and on Fedora Linux (tested on FC21):
+**and on Fedora Linux (tested on FC21):**
 
 ```sh
 # install development tool dependencies
@@ -147,18 +152,26 @@ curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
 ```
 
-and on Cygwin: <br>
- - install the windows dependencies <br>
- - install libffi-developer and openssl-developer as both binary and source <br>
- - install python and pip <br>
+**or under cygwin (on windows)**, which presents a linux-like environment to yotta:
+
+ * install the [windows dependencies](#installing-on-windows)
+ * install the libffi-developer and openssl-developer cygwin modules as both
+   binary and source
+ * install python and pip in cygwin
 
 
-Then install yotta itself (you may need to use `sudo` for this, depending on
-your configuration):
+### <a href="#yotta-itself-linux" name="yotta-itself-linux">#</a> Install yotta Itself 
+
+After installing the dependencies, install yotta itself using pip (you may need
+to use `sudo` for this, depending on your configuration):
 
 ```sh
 pip install yotta
 ```
+
+If you experience problems with a systemwide yotta installation on linux, you
+can try installing yotta in a [virtualenv](https://virtualenv.pypa.io) by
+following [these instructions](#virtualenv-install).
 
 You can use the following commands to allow the current user to override module
 dependencies using [`yotta link`](/reference/commands.html#yotta-link) without
@@ -248,7 +261,7 @@ the native compiler.
 ### <a href="#linux-common-issues" name="linux-common-issues">#</a> Solving Common Linux installation problems
 If you are having trouble with pip not installing yotta, try running `sudo pip install -U pip` to update your pip installation. Check that your pip installation is up to date by running `pip -V`, you should get a response of `7.1.2` or greater. 
 
-On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from easy_install by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
+On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from `easy_install` by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
 
 You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/stable/installing/) if everything else fails.
 
@@ -356,6 +369,45 @@ add things to your path:
     this can cause commands to fail later.
 
  6. **finally,** close then re-open any open cmd.exe windows
+
+
+<br>
+## <a href="#virtualenv-install" name="virtualenv-install">#</a> Installing in a Virtualenv
+
+[Virtualenv](https://virtualenv.pypa.io/en/latest/) is a way of separating
+different python programs installed on the same system from each other. If you
+have a complex python environment on your system it's recommended that you
+install yotta inside a virtualenv. To do this, first install the non-python
+dependencies following the normal instructions for your platform, then:
+
+1.  Ensure you have virtualenv itself installed. It can be installed with:
+
+        pip install virtualenv
+
+    Check that your installation is succesful by running `virtualenv --version`.
+
+2.  Create a directory to use for the yotta virtualenv:
+
+        mkdir yotta-venv
+        virtualenv ./yotta-venv
+
+3.  activate the new virtualenv:
+
+        source ./yotta-venv/bin/activate
+
+4.  install yotta in the virtualenv:
+
+        pip install yotta
+
+5.  (optional) add the binary directory of your virtualenv to your PATH: (if
+    you omit this step, you will need to run yotta as
+    `../path/to/yotta-venv/bin/yotta` instead of simply `yotta`.
+
+        export PATH="/path/to/yotta-venv/bin:$PATH"
+
+Now yotta should work as normal. You will need to activate the virtualenv
+any time you want to run yotta commands (you can deactivate it afterwards, by
+simply running `deactivate`). 
 
 
 <br>
