@@ -75,3 +75,26 @@ natively using the x86-osx-native target:
 [info] Hello yotta!
 ```
 
+## Building with an IDE
+
+Because yotta uses [CMake](https://cmake.org) to describe what to build, it can
+also generate project files for some of the [IDEs that CMake
+can](https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html)
+(currently support is limited to generators that use an underlying Makefile or
+Ninja-based build system, as other IDEs do not respect yotta's target
+descriptions).
+
+For example, to build with sublime text project files:
+
+```
+yotta build -G "Sublime Text 2 - Ninja"
+```
+
+(if you get an error that you previously built using a different generator, you
+need to run `yotta clean` first)
+
+Or to build Eclipse CDT project files:
+
+```
+yotta build -G "Eclipse CDT4 - Ninja"
+```
