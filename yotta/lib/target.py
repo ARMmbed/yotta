@@ -275,22 +275,7 @@ class DerivedTarget(Target):
            'possible generator names. Note that only Ninja or Unix Makefile '+
            'based generators will work correctly with yotta.',
            metavar='CMAKE_GENERATOR',
-           choices=(
-               'Unix Makefiles',
-               'Ninja',
-               'Xcode',
-               'Sublime Text 2 - Ninja',
-               'Sublime Text 2 - Unix Makefiles'
-               'CodeBlocks - Ninja',
-               'CodeBlocks - Unix Makefiles',
-               'CodeLite - Ninja',
-               'CodeLite - Unix Makefiles',
-               'Eclipse CDT4 - Ninja',
-               'Eclipse CDT4 - Unix Makefiles',
-               'KDevelop3 - Unix Makefiles',
-               'Kate - Ninja',
-               'Kate - Unix Makefiles',
-           )
+           type=str
         )
 
     @classmethod
@@ -323,19 +308,25 @@ class DerivedTarget(Target):
             return None
 
     def hintForCMakeGenerator(self, generator_name, component):
+        if generator_name in ('Ninja', 'Unix Makefiles'):
+            return None
         try:
             name = self.getName()
             component_name = component.getName()
             return {
                 'Xcode':
-                    'to open the built project, run:\nopen ./build/%s/%s.xcodeproj' % (name, component_name),
+                    'a project file has been generated at ./build/%s/%s.xcodeproj' % (name, component_name),
                 'Sublime Text 2 - Ninja':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name),
+                    'a project file has been generated at ./build/%s/%s.sublime-project' % (name, component_name),
                 'Sublime Text 2 - Unix Makefiles':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name)
+                    'a project file has been generated at ./build/%s/%s.sublime-project' % (name, component_name),
+                'Eclipse CDT4 - Ninja':
+                    'a project file has been generated at ./build/%s/.project' % name,
+                'Eclipse CDT4 - Unix Makefiles':
+                    'a project file has been generated at ./build/%s/.project' % name
             }[generator_name]
         except KeyError:
-            return None
+            return 'project files for %s have been generated in ./build/%s' % (component_name, name)
 
     def exec_helper(self, cmd, builddir):
         ''' Execute the given command, returning an error message if an error occured
