@@ -20,8 +20,11 @@ from .lib import access
 from .lib import fsutils
 # Registry Access, , access packages in the registry, internal
 from .lib.registry_access import friendlyRegistryName
+# --config option, , , internal
+from . import options
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
         help='Show all dependencies (including repeats, and test-only dependencies)'
     )
@@ -42,7 +45,7 @@ def execCommand(args, following_args):
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
 
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

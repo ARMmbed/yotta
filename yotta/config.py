@@ -9,9 +9,11 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
+# --config option, , , internal
+from . import options
 
 def addOptions(parser):
-    pass
+    options.config.addTo(parser)
 
 def execCommand(args, following_args):
     c = validate.currentDirectoryModule()
@@ -22,7 +24,7 @@ def execCommand(args, following_args):
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
 
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

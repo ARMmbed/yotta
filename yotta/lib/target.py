@@ -61,7 +61,8 @@ def getDerivedTarget(
                    targets_path,
                 application_dir = None,
                 install_missing = True,
-               update_installed = False
+               update_installed = False,
+              additional_config = None
     ):
     ''' Get the specified target description, optionally ensuring that it (and
         all dependencies) are installed in targets_path.
