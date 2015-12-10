@@ -14,6 +14,8 @@ import colorama
 
 # validate, , validate things, internal
 from .lib import validate
+# utils, , miscellaneous utilities, internal
+from .lib.utils import islast
 # access, , get components (and check versions), internal
 from .lib import access
 # fsutils, , misc filesystem utils, internal
@@ -94,17 +96,6 @@ def formatJsonDeps(target, available_components, list_all):
             }
             d[c]['dependencies'][dep.name]=dd
     return json.dumps(d)
-
-def islast(generator):
-    next_x = None
-    first = True
-    for x in generator:
-        if not first:
-            yield (next_x, False)
-        next_x = x
-        first = False
-    if not first:
-        yield (next_x, True)
 
 def putln(x):
     if u'unicode' in str(type(x)):

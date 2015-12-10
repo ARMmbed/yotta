@@ -54,6 +54,18 @@ def _mergeDictionaries(*args):
             result[k] = _mergeDictionaries(result[k], v)
     return result
 
+def _mirrorStructure(dictionary, value):
+    ''' create a new nested dictionary object with the same structure as
+        'dictionary', but with all scalar values replaced with 'value'
+    '''
+    result = type(dictionary)()
+    for k in dictionary.keys():
+        if isinstance(dictionary[k], dict):
+            result[k] = _mirrorStructure(dictionary[k], value)
+        else:
+            result[k] = value
+    return result
+
 # API
 
 def loadAdditionalConfig(config_path):
@@ -79,7 +91,7 @@ def loadAdditionalConfig(config_path):
                 error = "Invalid syntax in literal JSON: %s" % e
             else:
                 error = "File \"%s\" does not exist" % config_path
-    logger.info('read additional config: %s', config)
+    logger.debug('read additional config: %s', config)
     return (error, config)
 
 def getDerivedTarget(
@@ -218,6 +230,7 @@ class DerivedTarget(Target):
 
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
+        self.config_blame = None
         self.app_config = app_config
         self.additional_config = additional_config or {}
 
@@ -242,10 +255,22 @@ class DerivedTarget(Target):
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
         config_dicts = [self.additional_config, self.app_config] + [t.getConfig() for t in self.hierarchy]
+        # create an identical set of dictionaries, but with the names of the
+        # sources in place of the values. When these are merged they will show
+        # where each merged property came from:
+        config_blame = [
+            _mirrorStructure(self.additional_config, 'command-line config'),
+            _mirrorStructure(self.app_config, 'application\'s config.json'),
+        ] + [
+            _mirrorStructure(t.getConfig(), t.getName()) for t in self.hierarchy
+        ]
+
         self.config = _mergeDictionaries(*config_dicts)
+        self.config_blame = _mergeDictionaries(*config_blame)
         # note that backwards compatibility with the "similarTo" data that used
         # to be used for target-dependencies is ensured at the point of use. We
-        # don't merge similarTo into the config because it might break things.
+        # don't merge similarTo into the config because it might break things
+        # in the config (clobber objects with scalar values, for example)
 
     def _ensureConfig(self):
         if self.config is None:
@@ -278,6 +303,10 @@ class DerivedTarget(Target):
     def getMergedConfig(self):
         self._ensureConfig()
         return self.config
+
+    def getConfigBlame(self):
+        self._ensureConfig()
+        return self.config_blame
 
     def getToolchainFiles(self):
         ''' return a list of toolchain file paths in override order (starting
