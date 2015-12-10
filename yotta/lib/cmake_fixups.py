@@ -22,7 +22,7 @@ def fixupEclipseProject(builddir, component):
     done = False
     for line in fileinput.input(proj_file, inplace=1):
         sys.stdout.write(line)
-        if '<linkedResources>' in line and not done:
+        if line.strip() == '<linkedResources>' and not done:
             done = True
             # insert:
             #<link>
@@ -35,7 +35,7 @@ def fixupEclipseProject(builddir, component):
 \t\t\t<name>%s-source</name>
 \t\t\t<type>2</type>
 \t\t\t<location>%s</location>
-\t\t</link>''' % (component.getName(), os.path.join(component.path, 'source'))
+\t\t</link>\n''' % (component.getName(), os.path.join(component.path, 'source'))
             )
 
 def fixupNinjaBackslashes(builddir):
