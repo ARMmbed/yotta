@@ -16,7 +16,7 @@ class TargetAction(Action):
         super(TargetAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, False)
+        setattr(namespace, self.dest, values[0])
 
 def addTo(parser):
     parser.add_argument('-t', '--target', dest='target',
