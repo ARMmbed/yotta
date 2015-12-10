@@ -21,6 +21,12 @@ Additional Options that can be used with all subcommands:
 
  * `yotta --plain <subcommand>`: Don't use coloured output.
  * `yotta --noninteractive <subcommand>`: Don't wait for user input.
+ * `yotta --target <targetname>`: Override the currently set target for this
+   command (useful when isolating several instances of yotta)
+ * `yotta --config <configfile or JSON>`: Override the target and
+   application-defined [configuration](/reference/config.html). This is useful
+   in CI infrastructure to easily change the configuration for a particular
+   build.
 
 ## <a href="#yotta-init" name="yotta-init">#</a> yotta init
 #### Synopsis
@@ -142,6 +148,7 @@ Options:
 yotta test
 yotta test --list all
 yotta test -n my-test
+yotta test --config="path/to/test-config.json"
 ```
    
 
