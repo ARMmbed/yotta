@@ -56,6 +56,32 @@ def _mergeDictionaries(*args):
 
 # API
 
+def loadAdditionalConfig(config_path):
+    ''' returns (error, config)
+    '''
+    error = None
+    config = {}
+    if not config_path:
+        return (error, config)
+    if os.path.isfile(config_path):
+        try:
+            config = ordered_json.load(config_path)
+        except Exception as e:
+            error = "Invalid syntax in file %s: %s" % (config_path, e)
+    else:
+        # try to interpret the argument as literal JSON
+        try:
+            config = ordered_json.loads(config_path)
+        except Exception as e:
+            # if this fails too, guess whether it was intended to be JSON or
+            # not, and display an appropriate error message
+            if '{' in config_path or '}' in config_path:
+                error = "Invalid syntax in literal JSON: %s" % e
+            else:
+                error = "File \"%s\" does not exist" % config_path
+    logger.info('read additional config: %s', config)
+    return (error, config)
+
 def getDerivedTarget(
         target_name_and_version,
                    targets_path,
@@ -132,7 +158,7 @@ def getDerivedTarget(
                 app_config = ordered_json.load(app_config_fname)
             except Exception as e:
                 errors.append(Exception("Invalid application config.json: %s" % (e)))
-    return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config), errors)
+    return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config, additional_config), errors)
 
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
@@ -167,7 +193,7 @@ class Target(pack.Pack):
         return self.description.get('config', OrderedDict())
 
 class DerivedTarget(Target):
-    def __init__(self, leaf_target, base_targets, app_config):
+    def __init__(self, leaf_target, base_targets, app_config, additional_config):
         ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
             Targets.), given the most-derived Target description, and a set of
             available Targets to compose the rest of the lineage from.
@@ -193,6 +219,7 @@ class DerivedTarget(Target):
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
         self.app_config = app_config
+        self.additional_config = additional_config or {}
 
 
     # override truthiness to test validity of the entire hierarchy:
@@ -214,7 +241,7 @@ class DerivedTarget(Target):
 
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
-        config_dicts = [self.app_config] + [t.getConfig() for t in self.hierarchy]
+        config_dicts = [self.additional_config, self.app_config] + [t.getConfig() for t in self.hierarchy]
         self.config = _mergeDictionaries(*config_dicts)
         # note that backwards compatibility with the "similarTo" data that used
         # to be used for target-dependencies is ensured at the point of use. We
@@ -223,13 +250,6 @@ class DerivedTarget(Target):
     def _ensureConfig(self):
         if self.config is None:
             self._loadConfig()
-
-    def setApplicationConfig(self, config):
-        ''' set the application-config data to the contents of the
-            dictionary-like object `config`
-        '''
-        self.app_config = config
-        self._loadConfig()
 
     def getConfigValue(self, conf_key):
         self._ensureConfig()

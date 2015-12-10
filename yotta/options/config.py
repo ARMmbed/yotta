@@ -4,7 +4,7 @@
 # See LICENSE file for details.
 
 # standard library options
-from argparse import Action
+from argparse import Action, ArgumentError
 
 
 class ConfigAction(Action):
@@ -14,7 +14,15 @@ class ConfigAction(Action):
         super(ConfigAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, values[0])
+        # delay importing target module until this option is used, as the
+        # import would otherwise be unnecessary, and drag the target module
+        # into being synchrously imported into main
+        from yotta.lib import target
+        error, config = target.loadAdditionalConfig(values[0])
+        if error:
+            raise ArgumentError(self, error)
+        else:
+            setattr(namespace, self.dest, config)
 
 def addTo(parser):
     parser.add_argument(
