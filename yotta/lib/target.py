@@ -363,27 +363,12 @@ class DerivedTarget(Target):
         res = self.exec_helper(cmd, builddir)
         if res is not None:
             return res
-        # cmake error: the generated Ninja build file will not work on windows when arguments are read from
-        # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
-        # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
-        if args.cmake_generator == "Ninja" and os.name == 'nt':
-            logger.debug("Converting back-slashes in build.ninja to forward-slashes")
-            build_file = os.path.join(builddir, "build.ninja")
-            # We want to convert back-slashes to forward-slashes, except in macro definitions, such as
-            # -DYOTTA_COMPONENT_VERSION = \"0.0.1\". So we use a little trick: first we change all \"
-            # strings to an unprintable ASCII char that can't appear in build.ninja (in this case \1),
-            # then we convert all the back-slashed to forward-slashes, then we convert '\1' back to \".
-            try:
-                f = open(build_file, "r+t")
-                data = f.read()
-                data = data.replace('\\"', '\1')
-                data = data.replace('\\', '/')
-                data = data.replace('\1', '\\"')
-                f.seek(0)
-                f.write(data)
-                f.close()
-            except:
-                return 'Unable to update "%s", aborting' % build_file
+
+        # work-around various yotta-specific issues with the generated
+        # Ninja/project files:
+        import cmake_fixups
+        cmake_fixups.applyFixupsForFenerator(args.cmake_generator, builddir, component)
+
         build_command = self.overrideBuildCommand(args.cmake_generator, targets=targets)
         if build_command:
             cmd = build_command + build_args
