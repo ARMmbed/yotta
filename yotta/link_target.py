@@ -18,24 +18,24 @@ from .lib import validate
 from .lib import folders
 
 def addOptions(parser):
-    parser.add_argument('target', default=None, nargs='?',
+    parser.add_argument('link_target', default=None, nargs='?',
         help='Link a globally installed (or globally linked) target into '+
              'the current target\'s dependencies. If ommited, globally '+
              'link the current target.'
     )
 
 def execCommand(args, following_args):
-    if args.target:
+    if args.link_target:
         c = validate.currentDirectoryModule()
         if not c:
             return 1
-        err = validate.targetNameValidationError(args.target)
+        err = validate.targetNameValidationError(args.link_target)
         if err:
             logging.error(err)
             return 1
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_targets'))
-        src = os.path.join(folders.globalTargetInstallDirectory(), args.target)
-        dst = os.path.join(os.getcwd(), 'yotta_targets', args.target)
+        src = os.path.join(folders.globalTargetInstallDirectory(), args.link_target)
+        dst = os.path.join(os.getcwd(), 'yotta_targets', args.link_target)
         # if the target is already installed, rm it
         fsutils.rmRf(dst)
     else:
@@ -46,7 +46,7 @@ def execCommand(args, following_args):
         src = os.getcwd()
         dst = os.path.join(folders.globalTargetInstallDirectory(), t.getName())
 
-    if args.target:
+    if args.link_target:
         realsrc = fsutils.realpath(src)
         if src == realsrc:
             logging.warning(
