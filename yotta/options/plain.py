@@ -22,6 +22,6 @@ class PlainAction(Action):
 
 def addTo(parser):
     parser.add_argument('--plain', dest='plain', action=PlainAction,
-        default=False, help="Use a simple output format with no colours"
+        default=None, help="Use a simple output format with no colours"
     )
 

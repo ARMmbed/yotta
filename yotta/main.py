@@ -50,7 +50,7 @@ def main():
     # logging setup, , setup the logging system, internal
     from .lib import logging_setup
     # options, , common argument parser options, internal
-    import options
+    import yotta.options as options
 
     logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
 
