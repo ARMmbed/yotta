@@ -11,11 +11,15 @@ import logging
 from .lib import auth
 # Registry Access, , access modules in the registry, internal
 from .lib import registry_access
+# --registry option, , , internal
+from . import options
 
 def addOptions(parser):
-    # set the registry URL to save an API key for (this argument is also a
-    # top-level one, use a different dest here so we can distinguish)
-    parser.add_argument('--registry', dest='_registry', help=argparse.SUPPRESS)
+    # accept top-level registry option at subcommand level too
+    options.registry.addTo(parser)
+    options.noninteractive.addTo(parser)
+    options.plain.addTo(parser)
+
     # pass the API key for logging into this registry (it will be saved, and
     # used for future requests to this registry)
     parser.add_argument('--apikey', '-k', dest='apikey', help=argparse.SUPPRESS)
@@ -31,10 +35,9 @@ def addOptions(parser):
     )
 
 def execCommand(args, following_args):
-    registry = args._registry or args.registry
+    registry = args.registry
     if args.apikey:
         registry_access.setAPIKey(registry, args.apikey)
-
     try:
         provider = None
         if args.github_login:

@@ -8,8 +8,11 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
+# --config option, , , internal
+from . import options
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('component', default=None, nargs='?',
         help='If specified, update (and if necessary install) this module '+
              'instead of updating the dependencies of the current module.'
@@ -31,7 +34,7 @@ def execCommand(args, following_args):
     if not args.target:
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
-    target, errors = c.satisfyTarget(args.target, update_installed=True)
+    target, errors = c.satisfyTarget(args.target, update_installed=True, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

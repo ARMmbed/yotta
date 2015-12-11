@@ -14,14 +14,19 @@ import colorama
 
 # validate, , validate things, internal
 from .lib import validate
+# utils, , miscellaneous utilities, internal
+from .lib.utils import islast
 # access, , get components (and check versions), internal
 from .lib import access
 # fsutils, , misc filesystem utils, internal
 from .lib import fsutils
 # Registry Access, , access packages in the registry, internal
 from .lib.registry_access import friendlyRegistryName
+# --config option, , , internal
+from . import options
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('--all', '-a', dest='show_all', default=False, action='store_true',
         help='Show all dependencies (including repeats, and test-only dependencies)'
     )
@@ -42,7 +47,7 @@ def execCommand(args, following_args):
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
 
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)
@@ -91,17 +96,6 @@ def formatJsonDeps(target, available_components, list_all):
             }
             d[c]['dependencies'][dep.name]=dd
     return json.dumps(d)
-
-def islast(generator):
-    next_x = None
-    first = True
-    for x in generator:
-        if not first:
-            yield (next_x, False)
-        next_x = x
-        first = False
-    if not first:
-        yield (next_x, True)
 
 def putln(x):
     if u'unicode' in str(type(x)):

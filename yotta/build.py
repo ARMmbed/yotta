@@ -18,8 +18,11 @@ from .lib import cmakegen
 from .lib import target
 # install, , install subcommand, internal
 from . import install
+# --config option, , , internal
+from . import options
 
 def addOptions(parser, add_build_targets=True):
+    options.config.addTo(parser)
     parser.add_argument('-g', '--generate-only', dest='generate_only',
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
@@ -64,7 +67,7 @@ def installAndBuild(args, following_args):
         return {'status':1}
 
     try:
-        target, errors = c.satisfyTarget(args.target)
+        target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     except access_common.AccessException as e:
         logging.error(e)
         return {'status':1}

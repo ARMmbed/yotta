@@ -565,7 +565,7 @@ class Component(pack.Pack):
                            test = test
         )
 
-    def satisfyTarget(self, target_name_and_version, update_installed=False):
+    def satisfyTarget(self, target_name_and_version, update_installed=False, additional_config=None):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
             current component
@@ -574,10 +574,11 @@ class Component(pack.Pack):
         if self.isApplication():
             application_dir = self.path
         return target.getDerivedTarget(
-            target_name_and_version,
-            self.targetsPath(),
-            application_dir = application_dir,
-            update_installed = update_installed
+                                target_name_and_version,
+                                self.targetsPath(),
+              application_dir = application_dir,
+             update_installed = update_installed,
+            additional_config = additional_config
         )
 
     def installedDependencies(self):
