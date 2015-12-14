@@ -126,9 +126,13 @@ class _JSONConfigParser(object):
             data = self.configs[filename]
         else:
             raise ValueError('No such file.')
-        dirname = os.path.dirname(filename)
-        fsutils.mkDirP(dirname)
-        ordered_json.dump(filename, data)
+        dirname = os.path.normpath(os.path.dirname(filename))
+        logging.debug('write settings to "%s" (will ensure directory "%s" exists)', filename, dirname)
+        try:
+            fsutils.mkDirP(dirname)
+            ordered_json.dump(filename, data)
+        except OSError as e:
+            logging.error('Failed to save user settings to %s/%s, please check that the path exists and is writable.', dirname, filename)
 
     def _firstConfig(self):
         for fn, data in self.configs.items():
