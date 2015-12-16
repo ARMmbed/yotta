@@ -65,7 +65,7 @@ def applyFixupsForFenerator(cmake_generator, builddir, component):
     # arguments are read from a file (@file) instead of the command line, since
     # '\' in @file is interpreted as an escape sequence.
     #!!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
-    if cmake_generator == "Ninja" and os.name == 'nt':
+    if ('Ninja' in cmake_generator) and os.name == 'nt':
         fixupNinjaBackslashes(builddir)
 
     # both fixups may apply, so don't use elif
