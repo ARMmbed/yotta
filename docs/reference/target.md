@@ -32,6 +32,10 @@ when building for different targets.
     }
   },
   "toolchain": "CMake/toolchain.cmake",
+  "cmakeIncludes": [
+    "CMake/enableXXX.cmake",
+    "CMake/debugYYY.cmake"
+  ]
   "scripts": {
     "debug": ["valinor", "--target", "K64F", "$program" ],
     "test": [ "mbed_test_wrapper", "--target", "K64F", "$program" ]
@@ -158,6 +162,18 @@ with the mbed target name of the development board.
 Path to the target's CMake toolchain file. If this target [inherits](#inherits)
 from another target that provides a functioning toolchain this property is
 optional.
+
+### <a href="#cmakeIncludes" name="cmakeIncludes">#</a> `cmakeIncludes`
+**type: Array of String (paths relative to target root directory)**
+
+List of CMake files which should be included in every module built. These can
+be used to modify the rules for building libraries/executables as necessary.
+For example, a target description might provide the ability to produce
+selected code-coverage information by appending code-coverage flags when
+compiling some selected subset of modules.
+
+The name of the library being built by the current module is available in the
+included cmake files as `YOTTA_MODULE_NAME`.
 
 ### <a href="#scripts" name="scripts">#</a> `scripts`
 **type: hash of script-name to command**

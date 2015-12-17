@@ -93,6 +93,10 @@ set(YOTTA_{{ dep.getName() | sanitizePreprocessorSymbol }}_VERSION_MINOR {{ dep.
 set(YOTTA_{{ dep.getName() | sanitizePreprocessorSymbol }}_VERSION_PATCH {{ dep.getVersion().patch() }})
 {% endfor %}
 
+# provide the name of the current module so that it's available to custom CMake
+# even if custom CMake does weird things with project()
+set(YOTTA_MODULE_NAME {{ component.getName() }})
+
 {% if delegate_to %}
 # delegate to an existing CMakeLists.txt:
 add_subdirectory(
@@ -108,5 +112,16 @@ add_subdirectory(
     "{{ srcdir | replaceBackslashes }}"
     "${CMAKE_BINARY_DIR}/{{ relpath | replaceBackslashes }}/{{ workingdir | replaceBackslashes }}"
 )
+{% endfor %}
+{% endif %}
+
+# make YOTTA_MODULE_NAME available as a preprocessor symbol when
+# compiling this module:
+target_compile_definitions({{ component.getName() }} PRIVATE "-DYOTTA_MODULE_NAME={{ component.getName() }}")
+
+{% if cmake_includes %}
+# include .cmake files provided by the target:
+{% for f in cmake_includes %}
+include("{{ f }}")
 {% endfor %}
 {% endif %}

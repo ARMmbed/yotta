@@ -465,16 +465,17 @@ class CMakeGen(object):
                         component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
                     ))
 
-        # generate the top-level toolchain file:
-        template = jinja_environment.get_template('toolchain.cmake')
-        file_contents = template.render({  #pylint: disable=no-member
-                               # toolchain files are provided in hierarchy
-                               # order, but the template needs them in reverse
-                               # order (base-first):
-            "toolchain_files": reversed(self.target.getToolchainFiles())
-        })
         toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
-        self._writeFile(toolchain_file_path, file_contents)
+        if toplevel:
+            # generate the top-level toolchain file:
+            template = jinja_environment.get_template('toolchain.cmake')
+            file_contents = template.render({  #pylint: disable=no-member
+                                   # toolchain files are provided in hierarchy
+                                   # order, but the template needs them in reverse
+                                   # order (base-first):
+                "toolchain_files": self.target.getToolchainFiles()
+            })
+            self._writeFile(toolchain_file_path, file_contents)
 
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
@@ -496,7 +497,8 @@ class CMakeGen(object):
                  "config_include_file": self.config_include_file,
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
-                 "active_dependencies": active_dependencies
+                 "active_dependencies": active_dependencies,
+                      "cmake_includes": self.target.getAdditionalIncludes()
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
 

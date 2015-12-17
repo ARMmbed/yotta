@@ -35,7 +35,7 @@ def fixupEclipseProject(builddir, component):
 \t\t\t<name>%s-source</name>
 \t\t\t<type>2</type>
 \t\t\t<location>%s</location>
-\t\t</link>\n''' % (component.getName(), os.path.join(component.path, 'source'))
+\t\t</link>\n''' % (component.getName(), os.path.abspath(os.path.join(component.path, 'source')))
             )
 
 def fixupNinjaBackslashes(builddir):
