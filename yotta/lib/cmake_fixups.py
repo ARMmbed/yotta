@@ -30,12 +30,14 @@ def fixupEclipseProject(builddir, component):
             #	<type>2</type>
             #	<location>/absolute/path/to/source/location>
             #</link>
+            # Note that the path must use forward slashes as separators on
+            # windows.
             sys.stdout.write(
                 '''\t\t<link>
 \t\t\t<name>%s-source</name>
 \t\t\t<type>2</type>
 \t\t\t<location>%s</location>
-\t\t</link>\n''' % (component.getName(), os.path.abspath(os.path.join(component.path, 'source')))
+\t\t</link>\n''' % (component.getName(), os.path.abspath(os.path.join(component.path, 'source')).replace('\\', '/'))
             )
 
 def fixupNinjaBackslashes(builddir):
