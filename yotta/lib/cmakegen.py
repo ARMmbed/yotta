@@ -498,6 +498,7 @@ class CMakeGen(object):
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
                  "active_dependencies": active_dependencies,
+                     "module_is_empty": module_is_empty,
                       "cmake_includes": self.target.getAdditionalIncludes()
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)

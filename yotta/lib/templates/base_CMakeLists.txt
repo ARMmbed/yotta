@@ -115,9 +115,14 @@ add_subdirectory(
 {% endfor %}
 {% endif %}
 
+{% if not module_is_empty %}
 # make YOTTA_MODULE_NAME available as a preprocessor symbol when
 # compiling this module:
 target_compile_definitions({{ component.getName() }} PRIVATE "-DYOTTA_MODULE_NAME={{ component.getName() }}")
+{% else %}
+# (not setting YOTTA_MODULE_NAME preprocessor definition as this module doesn't
+# have any sources to build)
+{% endif %}
 
 {% if cmake_includes %}
 # include .cmake files provided by the target:
