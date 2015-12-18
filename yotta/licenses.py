@@ -36,14 +36,27 @@ def execCommand(args, following_args):
         available_components = [(c.getName(), c)]
     )
 
+    errors = []
     if args.list_all:
-        for dep in dependencies.values():
-            print(u'%s: %s' % (dep.getName(), u', '.join(dep.licenses())))
+        for name, dep in dependencies.items():
+            if not dep:
+                errors.append(u'%s is missing: license unknown!' % name)
+            else:
+                print(u'%s: %s' % (name, u', '.join(dep.licenses())))
     else:
         licenses = defaultdict(list)
-        for dep in dependencies.values():
-            for lic in dep.licenses():
-                licenses[lic].append(dep.getName())
+        for name, dep in dependencies.items():
+            if not dep:
+                errors.append(u'%s is missing: license unknown!' % name)
+            else:
+                for lic in dep.licenses():
+                    licenses[lic].append(name)
         for lic in licenses:
             print(lic)
+
+    if len(errors):
+        for err in errors:
+            logging.error(err)
+        return 1
+    return 0
 
