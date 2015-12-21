@@ -127,6 +127,6 @@ target_compile_definitions({{ component.getName() }} PRIVATE "-DYOTTA_MODULE_NAM
 {% if cmake_includes %}
 # include .cmake files provided by the target:
 {% for f in cmake_includes %}
-include("{{ f }}")
+include("{{ f  | replaceBackslashes }}")
 {% endfor %}
 {% endif %}
