@@ -218,6 +218,30 @@ class TestCLIBuild(unittest.TestCase):
         build_time_skew = build_time_parsed - build_time
         self.assertTrue(abs(build_time_skew.total_seconds()) < 3)
 
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_extraCMakeBuild(self):
+        test_dir = util.writeTestFiles(util.Test_Extra_CMake_Lib, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customCMakeBuild(self):
+        test_dir = util.writeTestFiles(util.Test_Custom_CMake_Lib, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_extraCMakeBuildExe(self):
+        test_dir = util.writeTestFiles(util.Test_Extra_CMake_Exe, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customCMakeBuildExe(self):
+        test_dir = util.writeTestFiles(util.Test_Custom_CMake_Exe, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        util.rmRf(test_dir)
+
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
         if statuscode != 0:

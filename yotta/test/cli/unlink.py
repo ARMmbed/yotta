@@ -45,6 +45,7 @@ class TestCLIUnLink(unittest.TestCase):
         self.assertNotEqual(statuscode, 0)
         util.rmRf(test_module)
 
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def testUnlinkNotLinkedTargetGlobally(self):
         test_target = util.writeTestFiles(util.getNativeTargetDescription(), True)
         stdout, stderr, statuscode = cli.run(['-t', Test_Target, '--plain', 'unlink'], cwd=test_target)
@@ -67,6 +68,7 @@ class TestCLIUnLink(unittest.TestCase):
         self.assertEqual(statuscode, 0)
         util.rmRf(test_target)
 
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def testUnlinkModule(self):
         linked_in_module = util.writeTestFiles(util.Test_Trivial_Lib, True)
         test_module = util.writeTestFiles(util.Test_Testing_Trivial_Lib_Dep, True)

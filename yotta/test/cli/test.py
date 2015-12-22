@@ -154,3 +154,17 @@ class TestCLITest(unittest.TestCase):
             print(stderr)
         self.assertEqual(statuscode, 0)
         return '%s %s' % (stdout, stderr)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_testCustomCMake(self):
+        test_dir = util.writeTestFiles(util.Test_Test_Custom_CMake, True)
+        output = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
+        self.assertIn('test-trivial-lib-maintest passed', output)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_testAdditionalCMake(self):
+        test_dir = util.writeTestFiles(util.Test_Test_Extra_CMake, True)
+        output = self.runCheckCommand(['--target', systemDefaultTarget(), 'test'], test_dir)
+        self.assertIn('test-trivial-lib-test-main passed', output)
+        util.rmRf(test_dir)
