@@ -386,7 +386,10 @@ class CMakeGen(object):
         delegate_to_existing = None
         delegate_build_dir = None
 
+        module_is_empty = False
         if os.path.isfile(os.path.join(component.path, 'CMakeLists.txt')):
+            # adding custom CMake is a promise to generate a library: so the
+            # module is never empty in this case.
             delegate_to_existing = component.path
             add_own_subdirs = []
             logger.debug("delegate to build dir: %s", builddir)
@@ -415,7 +418,6 @@ class CMakeGen(object):
             all_subdirs = manual_subdirs + [x[0] for x in autogen_subdirs]
 
             # first check if this module is empty:
-            module_is_empty = False
             if component.isTestDependency():
                 if len(autogen_subdirs) + len(add_own_subdirs) == 0:
                     module_is_empty = True
