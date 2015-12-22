@@ -78,6 +78,164 @@ for k, v in Test_Trivial_Lib.items():
     Test_Testing_Trivial_Lib_Dep_Preinstalled['yotta_modules/test-trivial-lib/' + k] = v
 
 
+Test_Custom_CMake_Exe = {
+'module.json':'''{
+  "name": "test-trivial-exe",
+  "version": "1.0.0",
+  "description": "Module to test trivial exe compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  },
+  "bin":"./source"
+}''',
+'source/lib.c':'''
+int main(){ return 0; }
+''',
+'source/CMakeLists.txt':'''
+add_executable(test-trivial-exe "lib.c")
+'''
+}
+
+Test_Extra_CMake_Exe = {
+  'module.json':'''{
+  "name": "test-trivial-exe",
+  "version": "1.0.0",
+  "description": "Module to test trivial exe compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  },
+  "bin":"./source"
+}''',
+'source/lib.c':'''
+#if TEST_MUST_BE_DEFINED != 1
+#error "additional CMake not included correctly"
+#endif
+int main(){ return 0; }
+''',
+'source/addNeededDefinition.cmake':'''
+target_compile_definitions(test-trivial-exe PRIVATE "-DTEST_MUST_BE_DEFINED=1")
+'''
+}
+
+Test_Custom_CMake_Lib = {
+  'module.json':'''{
+  "name": "test-trivial-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  }
+}''',
+
+'test-trivial-lib/lib.h': '''
+int foo();
+''',
+
+'source/lib.c':'''
+#include "test-trivial-lib/lib.h"
+int foo(){ return 7; }
+''',
+'source/CMakeLists.txt':'''
+add_library(test-trivial-lib "lib.c")
+'''
+}
+
+Test_Extra_CMake_Lib = {
+'module.json':'''{
+  "name": "test-trivial-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  }
+}''',
+'test-trivial-lib/lib.h': '''
+int foo();
+''',
+'source/lib.c':'''
+#include "test-trivial-lib/lib.h"
+#if TEST_MUST_BE_DEFINED != 1
+#error "additional CMake not included correctly"
+#endif
+int foo(){ return 7; }
+''',
+'source/addNeededDefinition.cmake':'''
+target_compile_definitions(test-trivial-lib PRIVATE "-DTEST_MUST_BE_DEFINED=1")
+'''
+}
+
+Test_Test_Custom_CMake = {
+  'module.json':'''{
+  "name": "test-trivial-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  }
+}''',
+
+'test-trivial-lib/lib.h': '''
+int foo();
+''',
+'source/lib.c':'''
+#include "test-trivial-lib/lib.h"
+int foo(){ return 7; }
+''',
+'test/main.c':'''
+#include "test-trivial-lib/lib.h"
+int main(){
+    if(foo() == 7){
+        return 0;
+    }else{
+        return -1;
+    }
+}
+''',
+'test/CMakeLists.txt':'''
+add_executable(test-trivial-lib-maintest main.c)
+target_link_libraries(test-trivial-lib-maintest test-trivial-lib)
+add_test(test-trivial-lib-maintest test-trivial-lib-maintest)
+add_dependencies(all_tests test-trivial-lib-maintest)
+'''
+}
+
+Test_Test_Extra_CMake = {
+  'module.json':'''{
+  "name": "test-trivial-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "dependencies": {
+  }
+}''',
+
+'test-trivial-lib/lib.h': '''
+int foo();
+''',
+'source/lib.c':'''
+#include "test-trivial-lib/lib.h"
+int foo(){ return 7; }
+''',
+'test/main.c':'''
+#include "test-trivial-lib/lib.h"
+#if TEST_MUST_BE_DEFINED != 1
+#error "additional CMake not included correctly"
+#endif
+int main(){
+    if(foo() == 7){
+        return 0;
+    }else{
+        return -1;
+    }
+}
+''',
+'test/addNeededDefinition.cmake':'''
+target_compile_definitions(test-trivial-lib-test-main PRIVATE "-DTEST_MUST_BE_DEFINED=1")
+'''
+}
+
+
+
 def getNativeTargetDescription():
     # actually returns a trivial target which inherits from the native target
     native_target = nativeTarget()
