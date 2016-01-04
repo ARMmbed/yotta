@@ -31,7 +31,9 @@ def _rmRfNoRetry(path):
     # them, to do this
     def fixPermissions(fn, path, excinfo):
         if os.access(path, os.W_OK):
-            raise
+            # there should always be an active exception when this function is
+            # called, so a bare raise should be safe:
+            raise #pylint: disable=misplaced-bare-raise
         else:
             os.chmod(path, stat.S_IWUSR)
             fn(path)
