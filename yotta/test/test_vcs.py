@@ -8,7 +8,6 @@
 # standard library modules, , ,
 import unittest
 import os
-import subprocess
 import hgapi
 
 # vcs, , represent version controlled directories, internal
