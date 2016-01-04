@@ -126,6 +126,8 @@ def setupGitUser():
     # override the git user for subprocesses:
     os.environ['GIT_COMMITTER_NAME'] = 'Yotta Test'
     os.environ['GIT_COMMITTER_EMAIL'] = 'test@yottabuild.org'
+    os.environ['GIT_AUTHOR_NAME'] = 'Yotta Test'
+    os.environ['GIT_AUTHOR_EMAIL'] = 'test@yottabuild.org'
 
 #expose rmRf for convenience
 rmRf = fsutils.rmRf
