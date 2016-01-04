@@ -122,5 +122,10 @@ def nativeTarget():
     assert(canBuildNatively())
     return systemDefaultTarget()
 
+def setupGitUser():
+    # override the git user for subprocesses:
+    os.environ['GIT_COMMITTER_NAME'] = 'Yotta Test'
+    os.environ['GIT_COMMITTER_EMAIL'] = 'test@yottabuild.org'
+
 #expose rmRf for convenience
 rmRf = fsutils.rmRf

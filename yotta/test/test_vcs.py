@@ -16,6 +16,7 @@ from yotta.lib import vcs
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 
+from yotta.test.cli import util
 
 Test_Repo_git = "git@github.com:autopulated/testing-dummy.git"
 Test_Repo_hg  = "ssh://hg@bitbucket.org/autopulated/hg-testing-dummy"
@@ -23,20 +24,9 @@ Test_Repo_hg  = "ssh://hg@bitbucket.org/autopulated/hg-testing-dummy"
 class TestGit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # test if we have a git user set up, if not we need to set one
-        child = subprocess.Popen([
-                'git','config', '--global', 'user.email'
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        out, err = child.communicate()
-        if not len(out):
-            commands = [
-                ['git','config', '--global', 'user.email', 'test@yottabuild.org'],
-                ['git','config', '--global', 'user.name', 'Yotta Test']
-            ]
-            for cmd in commands:
-                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = child.communicate()
+        # set up the git user environment variables so that git doesn't barf
+        # if we try to commit without a user:
+        util.setupGitUser()
         cls.working_copy = vcs.Git.cloneToTemporaryDir(Test_Repo_git)
 
     @classmethod
