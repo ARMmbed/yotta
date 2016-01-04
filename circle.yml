@@ -37,3 +37,7 @@ dependencies:
 test:
   override:
     - tox
+
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit
+    - find . -name "*nosetests.xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;

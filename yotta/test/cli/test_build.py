@@ -199,6 +199,8 @@ class TestCLIBuild(unittest.TestCase):
         test_dir = util.writeTestFiles(Test_Build_Info, True)
         # commit all the test files to git so that the VCS build info gets
         # defined:
+        # (set up the git user env vars so we can run git commit without barfing)
+        util.setupGitUser()
         subprocess.check_call(['git', 'init', '-q'], cwd=test_dir)
         subprocess.check_call(['git', 'add', '.'], cwd=test_dir)
         subprocess.check_call(['git', 'commit', '-m', 'test build info automated commit', '-q'], cwd=test_dir)
