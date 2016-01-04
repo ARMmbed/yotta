@@ -124,7 +124,7 @@ class Git(VCS):
         out, err = None, None
         for cmd in commands:
             try:
-                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ)
             except OSError as e:
                 if e.errno == errno.ENOENT:
                     if cmd[0] == 'git':
