@@ -80,7 +80,7 @@ class ComponentTestCase(unittest.TestCase):
         rmRf(self.test_dir)
 
 
-    def test_component_init(self):
+    def test_creation(self):
         # test things about components that don't (and shouldn't) require
         # hitting the network
 

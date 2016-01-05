@@ -59,14 +59,14 @@ class AuthError(RuntimeError):
 
 def generate_jwt_token(private_key, registry=None):
     registry = registry or Registry_Base_URL
-    expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
+    expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(minutes=2)).timetuple())
     prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
     token_fields = {
         "iss": 'yotta',
         "aud": registry,
         "prn": prn,
-        "exp": str(expires)
+        "exp": expires
     }
     logger.debug('token fields: %s' % token_fields)
     private_key_pem = private_key.private_bytes(
@@ -292,7 +292,8 @@ def _getTarball(url, directory, sha256):
                     stream = response,
             into_directory = directory,
                       hash = {'sha256':sha256},
-                 cache_key = sha256
+                 cache_key = sha256,
+               origin_info = {'url':url}
         )
 
 def _getSources():
@@ -304,9 +305,12 @@ def _getSources():
 def _isPublicRegistry(registry):
     return (registry is None) or (registry == Registry_Base_URL)
 
-def _friendlyRegistryName(registry):
-    if registry == Registry_Base_URL:
-        return 'the public module registry'
+def friendlyRegistryName(registry, short=False):
+    if registry.startswith(Registry_Base_URL):
+        if short:
+            return 'public registry'
+        else:
+            return 'the public module registry'
     else:
         return registry
 
@@ -435,7 +439,7 @@ class RegistryThingVersion(access_common.RemoteVersion):
             self.sha256 = None
         url = _tarballURL(self.namespace, self.name, version, registry)
         super(RegistryThingVersion, self).__init__(
-            version, url, name=name, friendly_source=_friendlyRegistryName(registry)
+            version, url, name=name, friendly_source=friendlyRegistryName(registry)
         )
 
     def unpackInto(self, directory):

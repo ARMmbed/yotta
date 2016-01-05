@@ -9,9 +9,12 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
+# --config option, , , internal
+from . import options
 
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('program', default=None,
         help='name of the program to be debugged'
     )
@@ -24,7 +27,7 @@ def execCommand(args, following_args):
     if not c:
         return 1
 
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

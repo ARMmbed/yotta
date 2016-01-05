@@ -30,7 +30,7 @@ else:
 
 setup(
     name = "yotta",
-    version = "0.9.2",
+    version = "0.12.2",
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -62,7 +62,7 @@ setup(
         'PyJWT>=1.0,<2.0',
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
-        'argcomplete>=0.8.0,<1.0',
+        'argcomplete>=0.8.0,<=1.0',
         'mbed_test_wrapper>=0.0.2,<0.1.0',
         'valinor>=0.0.0,<1.0',
         'intelhex>=2.0,<3.0',

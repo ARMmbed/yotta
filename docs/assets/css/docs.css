@@ -1,8 +1,11 @@
 
 body {
   font-family: 'Open Sans', sans-serif;
-  padding-bottom: 40px;
   line-height: 165%;
+}
+
+footer {
+    margin-top: 40px;
 }
 
 splash {
@@ -86,3 +89,10 @@ p{
   color: #fff;
 }
 
+.docs-content img {
+    max-height: 240px;
+    max-width: 400px;
+    margin: 12px auto 12px auto;
+    display: block;
+    text-align: center;
+}

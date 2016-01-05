@@ -18,11 +18,14 @@ from .lib import access_common
 
 # folders, , get places to install things, internal
 from .lib import folders
+# --config option, , , internal
+from . import options
 
 GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
 
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('component', default=None, nargs='?',
         help='If specified, install this module instead of installing '+
              'the dependencies of the current module.'
@@ -83,7 +86,7 @@ def installDeps(args, current_component):
     if not args.target:
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
-    target, errors = current_component.satisfyTarget(args.target)
+    target, errors = current_component.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)
@@ -114,7 +117,7 @@ def installComponentAsDependency(args, current_component):
         logging.debug(str(current_component.getError()))
         logging.error('The current directory does not contain a valid module.')
         return -1
-    target, errors = current_component.satisfyTarget(args.target)
+    target, errors = current_component.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

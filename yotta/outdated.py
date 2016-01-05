@@ -11,8 +11,6 @@ import colorama
 
 # validate, , validate things, internal
 from .lib import validate
-# access, , get components, internal
-from .lib import access
 
 def addOptions(parser):
     pass
@@ -42,6 +40,7 @@ def displayOutdated(modules, use_colours):
     '''
     if use_colours:
         DIM    = colorama.Style.DIM       #pylint: disable=no-member
+        NORMAL = colorama.Style.NORMAL    #pylint: disable=no-member
         BRIGHT = colorama.Style.BRIGHT    #pylint: disable=no-member
         YELLOW = colorama.Fore.YELLOW     #pylint: disable=no-member
         RED    = colorama.Fore.RED        #pylint: disable=no-member
@@ -52,16 +51,24 @@ def displayOutdated(modules, use_colours):
 
     status = 0
 
+    # access, , get components, internal
+    from .lib import access
+    from .lib import access_common
+
     for name, m in modules.items():
         if m.isTestDependency():
             continue
-        latest_v = access.latestSuitableVersion(name, '*', registry='modules', quiet=True)
+        try:
+            latest_v = access.latestSuitableVersion(name, '*', registry='modules', quiet=True)
+        except access_common.Unavailable as e:
+            latest_v = None
+
         if not m:
             m_version = u' ' + RESET + BRIGHT + RED + u"missing" + RESET
         else:
             m_version = DIM + u'@%s' % (m.version)
         if not latest_v:
-            print(u'%s%s%s not available from the registry%s' % (RED, name, m_version, RESET))
+            print(u'%s%s%s%s not available from the registry%s' % (RED, name, m_version, NORMAL, RESET))
             status = 2
             continue
         elif not m or m.version < latest_v:

@@ -80,7 +80,7 @@ class _JSONConfigParser(object):
 
             returns None if any path element or the property is missing
         '''
-        path = _splitPath([path])
+        path = _splitPath(path)
         for config in self.configs.values():
             cur = config
             for el in path:
@@ -110,7 +110,7 @@ class _JSONConfigParser(object):
         else:
             config = self.configs[filename]
 
-        path = _splitPath([path])
+        path = _splitPath(path)
         for el in path[:-1]:
             if el in config:
                 config = config[el]
@@ -126,9 +126,13 @@ class _JSONConfigParser(object):
             data = self.configs[filename]
         else:
             raise ValueError('No such file.')
-        dirname = os.path.dirname(filename)
-        fsutils.mkDirP(dirname)
-        ordered_json.dump(filename, data)
+        dirname = os.path.normpath(os.path.dirname(filename))
+        logging.debug('write settings to "%s" (will ensure directory "%s" exists)', filename, dirname)
+        try:
+            fsutils.mkDirP(dirname)
+            ordered_json.dump(filename, data)
+        except OSError as e:
+            logging.error('Failed to save user settings to %s/%s, please check that the path exists and is writable.', dirname, filename)
 
     def _firstConfig(self):
         for fn, data in self.configs.items():
@@ -136,10 +140,8 @@ class _JSONConfigParser(object):
         raise ValueError('No configs available.')
 
 def _splitPath(path):
-    r = []
-    for p in path:
-        r += p.split('.')
-    if not len(p):
+    r = path.split('.')
+    if not len(r):
         raise ValueError('A path must be specified.')
     return r
 
@@ -185,4 +187,3 @@ def set(path, value, save_locally=False):
 
 def setProperty(section, name, value, save_locally=False):
     set(section+'.'+name, value, save_locally)
-

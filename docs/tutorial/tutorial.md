@@ -34,17 +34,22 @@ First create a directory with the name we want, and `cd` into it.
 
 ```sh
 > yotta init
-Enter the module name: <simplelog>
-Enter the initial version: <0.0.0>
+Enter the module name: <simplelog> 
+Enter the initial version: <0.0.0> 
+Is this an executable (instead of a re-usable library module)? <no> 
 Short description: Really simple logging.
-Keywords: <> logging
+Keywords:  <> logging, simple, example
 Author: James Crosby <james.crosby@arm.com>
-Repository url: ssh://git@github.com/ARM-RD/simplelog
-Homepage: http://github.com/ARM-RD/simplelog
-What is the license for this project (ISC, MIT, Apache-2 etc.)?  <ISC>
-Is this module an executable? <no>
+Repository url (where people can submit bugfixes): ssh://git@github.com/ARMmbed/simplelog
+Homepage: http://github.com/ARMmbed/simplelog
+What is the license for this project (Apache-2.0, ISC, MIT etc.)?  <Apache-2.0> 
 > 
 ```
+
+**Note:** you can use any valid [SPDX license
+expression](/reference/licenses.html) for the license of your module, although
+simple permissive open-source licenses like Apache-2.0 are encouraged, and will
+make it easier for people to use your module and contribute improvements.
 
 ### Module Structure
 `yotta init` also creates some directories for us to put things in:

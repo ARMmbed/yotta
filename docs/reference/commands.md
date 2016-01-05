@@ -21,6 +21,12 @@ Additional Options that can be used with all subcommands:
 
  * `yotta --plain <subcommand>`: Don't use coloured output.
  * `yotta --noninteractive <subcommand>`: Don't wait for user input.
+ * `yotta --target <targetname>`: Override the currently set target for this
+   command (useful when isolating several instances of yotta)
+ * `yotta --config <configfile or JSON>`: Override the target and
+   application-defined [configuration](/reference/config.html). This is useful
+   in CI infrastructure to easily change the configuration for a particular
+   build.
 
 ## <a href="#yotta-init" name="yotta-init">#</a> yotta init
 #### Synopsis
@@ -62,19 +68,48 @@ Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
  * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
- * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by `yotta` targets without additional plugins. The available generators depend on whether `yotta` is running on OS X, Linux, or Windows.
+ * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs.
  * `name ...`: one or more modules may be specified, in which case only these
    modules and their dependencies will be built. Use `all_tests` to cause all
    tests to be built.
  * `-- ...`: any options specified after `--` are passed unmodified on to the tool being used for building (e.g. Ninja, or make)
 
+#### Generating IDE Project Files
+The `-G`/`--cmake-generator` option can be used to generate project files for
+various IDE and text editors. This option is passed through to CMake, but note
+that only IDE project files which use Ninja or Makefile build systems will
+correctly support cross-compilation for yotta targets.
+
+To see the [CMake generators](https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html)
+available on your platform see `cmake --help`.
+
+
 #### Examples
 
-```
+Build this module and its tests:
+
+```sh
 yotta build
+```
+
+Build the tests for all dependencies:
+
+```sh
 yotta build -d all_tests
+```
+
+Generating IDE project files:
+
+```sh
 yotta build -d -G "Sublime Text 2 - Ninja"
+yotta build -d -G "Eclipse CDT4 - Ninja"
+```
+
+Passing options through to the build system:
+
+```sh
 yotta build -G "Unix Makefiles" -- -j 4
+yotta build -- -v
 ```
 
 ## <a href="#yotta-search" name="yotta-search">#</a> yotta search
@@ -142,6 +177,7 @@ Options:
 yotta test
 yotta test --list all
 yotta test -n my-test
+yotta test --config="path/to/test-config.json"
 ```
    
 
