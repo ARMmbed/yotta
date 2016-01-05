@@ -222,7 +222,7 @@ class Pack(object):
                 logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
                 if self.inherited_shrinkwrap:
                     logger.warning('shrinkwrap in %s overrides inherited shrinkwrap', self.getName())
-        logger.info('%s created with inherited_shrinkwrap %s', self.getName(), self.inherited_shrinkwrap)
+        #logger.info('%s created with inherited_shrinkwrap %s', self.getName(), self.inherited_shrinkwrap)
         self.vcs = vcs.getVCS(path)
 
     def getShrinkwrap(self):

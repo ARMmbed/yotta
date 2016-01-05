@@ -402,7 +402,7 @@ class Component(pack.Pack):
              update_installed,
                        dep_of
         ):
-        logger.info('%s provideInstalled: %s', dep_of.getName(), dspec.name)
+        #logger.info('%s provideInstalled: %s', dep_of.getName(), dspec.name)
         r = access.satisfyFromAvailable(dspec.name, available_components)
         if r:
             if r.isTestDependency() and not dspec.is_test_dependency:
