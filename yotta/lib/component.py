@@ -133,13 +133,13 @@ class Component(pack.Pack):
         deps = []
 
         def specForDependency(name, version_spec, istest):
-            shrinkwrap = self.getShrinkwrap()
+            shrinkwrap = self.getShrinkwrapMapping()
             shrinkwrapped = False
-            if shrinkwrap is not None and name in shrinkwrap.get('dependencies', {}):
+            if name in shrinkwrap:
                 # exact version, and pull from registry:
-                shrinkwrap_ver = shrinkwrap['dependencies'][name]['version']
+                version_spec = shrinkwrap[name]
                 logger.debug(
-                    'respecting %s shrinkwrap version %s for %s', self.getName(), shrinkwrap_ver, name
+                    'respecting %s shrinkwrap version %s for %s', self.getName(), version_spec, name
                 )
                 shrinkwrapped = True
             return pack.DependencySpec(name, version_spec, istest, shrinkwrapped=shrinkwrapped)

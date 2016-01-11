@@ -32,18 +32,19 @@ def execCommand(args, following_args):
                         test = True
     )
 
-    dependency_graph = yotta_list.resolveDependencyGraph(target, c, installed_modules)
+    dependency_list = yotta_list.resolveDependencyGraph(target, c, installed_modules)
 
     # !!! TODO: missing dependencies, or unmet specifications should cause failure
 
     with open('yotta-shrinkwrap.json', 'w') as f:
-        f.write(ordered_json.dumps(filterForShrinkwrap(dependency_graph)))
+        f.write(ordered_json.dumps(filterForShrinkwrap(dependency_list)))
 
-def filterForShrinkwrap(graph):
-    r = { k: graph[k] for k in ('version', 'specification', 'name', 'dependencies') if k in graph}
+def filterForShrinkwrap(dependency_list):
+    def filterModule(mod):
+        return { k: mod[k] for k in ('name', 'version') if k in mod }
 
-    if 'dependencies' in graph:
-        for d in graph['dependencies']:
-            graph['dependencies'][d] = filterForShrinkwrap(graph['dependencies'][d])
+    dependency_list['modules'] = [
+        filterModule(mod) for mod in dependency_list['modules']
+    ]
 
-    return r
+    return dependency_list

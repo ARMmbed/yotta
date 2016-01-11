@@ -34,7 +34,7 @@ def addOptions(parser):
         help='Display where modules were originally downloaded from (implied by --all).'
     )
     parser.add_argument('--json', '-j', dest='json', default=False, action='store_true',
-        help='Output json representation of dependencies.'
+        help='Output json representation of dependencies (implies --all).'
     )
 
 def execCommand(args, following_args):
@@ -86,33 +86,43 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     if processed is None:
         processed = set()
 
-    r['name']     = top_component.getName()
-    r['version']  = str(top_component.getVersion())
-    r['path']     = top_component.path
+    if not 'modules' in r:
+        r['modules'] = []
+
+    module_description = OrderedDict([
+        ('name',    top_component.getName()),
+        ('version', str(top_component.getVersion())),
+        ('path',    top_component.path),
+    ])
     if top_component.installedLinked():
-        r['linkedTo'] = fsutils.realpath(top_component.path)
+         module_description['linkedTo'] = fsutils.realpath(top_component.path)
+    if top_component.is_test_dependency:
+         module_description['testOnly'] = True
 
     specs = dict([(x.name, x) for x in top_component.getDependencySpecs(target=target)])
     deps = top_component.getDependencies(
-        available_components = available_modules,
-                      target = target,
-                        test = True,
-                    warnings = False
+         available_components = available_modules,
+                       target = target,
+                         test = True,
+                     warnings = False
     )
     if not top_component:
-        r['errors'] = [top_component.getError()]
-    if not top_component.getName() in processed:
-        processed.add(top_component.getName())
-        dependencies = OrderedDict()
-        for name, dep in deps.items():
-            dependencies[name] = resolveDependencyGraph(target, dep, available_modules, processed=processed)
-            dependencies[name]['specification'] = str(specs[name].version_req)
-            spec = access.remoteComponentFor(name, specs[name].version_req, 'modules').versionSpec()
-            dependencies[name]['satisfiesSpecification'] = spec.match(dep.getVersion())
-            if specs[name].is_test_dependency:
-                dependencies[name]['testOnly'] = True
-        if len(dependencies):
-            r['dependencies'] = dependencies
+        module_description['errors'] = [top_component.getError()]
+
+    specifications = OrderedDict()
+    for name, dep in deps.items():
+        specifications[name] = str(specs[name].version_req)
+
+    if len(specifications):
+        module_description['specifications'] = specifications
+
+    processed.add(top_component.getName())
+    r['modules'].append(module_description)
+
+    for name, dep in deps.items():
+        if not name in processed:
+            r['modules'] += resolveDependencyGraph(target, dep, available_modules, processed)['modules']
+
     return r
 
 def putln(x):

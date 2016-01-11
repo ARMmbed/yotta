@@ -209,14 +209,11 @@ class Pack(object):
         # we are not fully constructed)
         if self.description:
             if inherit_shrinkwrap is not None:
-                # when inheriting a shrinkwrap, recurse into the section of the
-                # shrinkwrap that applies to this module
-                if not ('dependencies' in inherit_shrinkwrap and \
-                        self.getName() in inherit_shrinkwrap['dependencies']):
-                    raise Exception(
-                        '%s inherited malformed shrinkwrap %s' % (self, inherit_shrinkwrap)
-                    )
-                self.inherited_shrinkwrap = inherit_shrinkwrap['dependencies'][self.getName()]
+                # when inheriting a shrinkwrap, check that this module is
+                # listed in the shrinkwrap, otherwise emit a warning:
+                if next((x for x in inherit_shrinkwrap.get('modules', []) if x['name'] == self.getName()), None) is None:
+                    logger.warning("%s missing from shrinkwrap", self.getName())
+                self.inherited_shrinkwrap = inherit_shrinkwrap
             self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
             if self.shrinkwrap:
                 logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
@@ -227,6 +224,15 @@ class Pack(object):
 
     def getShrinkwrap(self):
         return self.shrinkwrap or self.inherited_shrinkwrap
+
+    def getShrinkwrapMapping(self):
+        shrinkwrap = self.getShrinkwrap()
+        if shrinkwrap and 'modules' in shrinkwrap:
+            return {
+                x['name']: x['version'] for x in shrinkwrap['modules']
+            }
+        else:
+            return {}
 
     def origin(self):
         ''' Read the .yotta_origin.json file (if present), and return the value

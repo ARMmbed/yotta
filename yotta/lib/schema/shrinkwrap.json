@@ -3,7 +3,10 @@
   "id": "https://registry.yottabuild.org/schema/shrinkwrap",
   "title": "yotta-shrinkwrap.json schema",
   "properties": {
-    "$ref": "#/definitions/module"
+    "modules": {
+       "$ref": "#/definitions/modulesArray"
+      },
+    "additionalProperties": false
   },
   "definitions": {
     "module": {
@@ -13,28 +16,12 @@
           "$ref": "#/definitions/name"
         },
         "version": {
-          "$ref": "#/definitions/semver"
-        },
-        "path": {
-          "$ref": "#/definitions/path"
-        },
-        "linkedTo": {
-          "$ref": "#/definitions/path"
-        },
-        "dependencies": {
-          "$ref": "#/definitions/dependencyMap"
-        },
-        "specification": {
           "$ref": "#/definitions/semverSpecification"
-        },
-        "testOnly": {
-          "type": "boolean"
         }
       },
       "required": [
         "name",
-        "version",
-        "path"
+        "version"
       ]
     },
     "name": {
@@ -55,7 +42,7 @@
     "path": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 260,
+      "maxLength": 4000,
       "pattern": "^[a-zA-Z0-9 ()._/-]*$"
     },
     "semver": {
@@ -67,13 +54,11 @@
       "type": "string",
       "pattern": ".*"
     },
-    "dependencyMap": {
-      "patternProperties": {
-        "^((/([^~]|~0|~1)*)?|([a-z]+[a-z0-9-.]*)|([*]))$": {
-          "$ref": "#/definitions/module"
-        }
-      },
-      "additionalProperties": false
+    "modulesArray": {
+      "type": "array",
+      "items":{
+        "$ref": "#/definitions/module"
+      }
     }
   }
 }
