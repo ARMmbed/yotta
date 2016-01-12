@@ -11,6 +11,7 @@ from . import noninteractive
 from . import registry
 from . import target
 from . import config
+from . import force
 
 # this modifies argparse when it's imported:
 from . import parser
