@@ -257,6 +257,12 @@ class Pack(object):
         else:
             return None
 
+    def getKeywords(self):
+        if self.description:
+            return self.description.get('keywords', [])
+        else:
+            return []
+
     def _parseIgnoreFile(self, f):
         r = []
         for l in f:
