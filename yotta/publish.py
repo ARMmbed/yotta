@@ -13,7 +13,6 @@ import yotta.options as options
 
 def addOptions(parser):
     options.force.addTo(parser)
-    options.noninteractive.addTo(parser)
 
 # python 2 + 3 compatibility
 try:
@@ -44,7 +43,7 @@ def prePublishCheck(p, force=False, interactive=True):
                 )
             )
 
-    if not interactive:
+    if need_ok and not interactive:
         logging.error('--noninteractive prevents user confirmation. Please re-run with --force')
         return 1
 
