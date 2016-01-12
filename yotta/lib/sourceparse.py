@@ -40,6 +40,8 @@ class VersionSource(object):
         return self.semantic_spec or version.Spec('*')
 
     def semanticSpecMatches(self, v):
+        if isinstance(v, str):
+            v = version.Version(v)
         if self.semantic_spec is None:
             return True
         else:
