@@ -109,9 +109,15 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     if not top_component:
         module_description['errors'] = [top_component.getError()]
 
-    specifications = OrderedDict()
+    specifications = []
     for name, dep in deps.items():
-        specifications[name] = str(specs[name].version_req)
+        spec_info = {
+            'name': name,
+            'version': str(specs[name].version_req),
+        }
+        if specs[name].is_test_dependency:
+            spec_info['testOnly'] = True
+        specifications.append(spec_info)
 
     if len(specifications):
         module_description['specifications'] = specifications

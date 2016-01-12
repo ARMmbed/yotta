@@ -39,7 +39,7 @@ def execCommand(args, following_args):
     installed_modules = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
-                        test = True
+                        test = False
     )
 
     dependency_list = yotta_list.resolveDependencyGraph(target, c, installed_modules)
@@ -70,7 +70,12 @@ def checkDependenciesForShrinkwrap(dependency_list):
     # now check that the available versions satisfy all of the specifications
     # from other modules:
     for mod in dependency_list.get('modules', []):
-        for name, spec in mod.get('specifications', {}).items():
+        for spec_info in mod.get('specifications', []):
+            name = spec_info['name']
+            spec = spec_info['version']
+            if spec_info.get('testOnly', False):
+                # test-only specifications are ignored for shrinkwrap
+                continue
             if not name in available_versions:
                 errors.append('dependency %s (required by %s) is missing' % (
                     name, mod['name']
@@ -91,7 +96,7 @@ def filterForShrinkwrap(dependency_list):
         return { k: mod[k] for k in ('name', 'version') if k in mod }
 
     dependency_list['modules'] = [
-        filterModule(mod) for mod in dependency_list['modules']
+        filterModule(mod) for mod in dependency_list['modules'] if not mod.get('testOnly', False)
     ]
 
     return dependency_list
