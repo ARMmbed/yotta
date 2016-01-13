@@ -18,9 +18,11 @@ import pack
 
 Source_Dir_Regex = re.compile('^[a-z0-9_-]*$')
 Source_Dir_Invalid_Regex = re.compile('[^a-z0-9_-]*')
-Component_Name_Regex = re.compile('^[a-z0-9-]*$')
 Component_Name_Replace_With_Dash = re.compile('[^a-z0-9]+')
 Looks_Like_An_Email = re.compile('^[^@]+@[^@]+\.[^@]+$')
+
+Component_Name_Regex = r'^[a-z]+[a-z0-9-]*$'
+Target_Name_Regex = r'^[a-z]+[a-z0-9+-]*$'
 
 # return an error string describing the validation failure, or None if there is
 # no error
@@ -41,8 +43,13 @@ def sourceDirValidationError(dirname, component_name):
         return None
 
 def componentNameValidationError(component_name):
-    if not Component_Name_Regex.match(component_name):
+    if not re.match(Component_Name_Regex, component_name):
         return 'Module name "%s" is invalid - must contain only lowercase a-z, 0-9 and hyphen, with no spaces.' % component_name
+    return None
+
+def targetNameValidationError(target_name):
+    if not re.match(Target_Name_Regex, target_name):
+        return 'Target name "%s" is invalid - must contain only lowercase a-z, 0-9, + and hyphen, with no spaces.' % target_name
     return None
 
 def componentNameCoerced(component_name):
@@ -66,6 +73,18 @@ def currentDirectoryModule():
         logging.error('The current directory does not contain a valid module.')
         return None
     return c
+
+def currentDirectoryTarget():
+    try:
+        t = target.Target(os.getcwd())
+    except pack.InvalidDescription as e:
+        logging.error(e)
+        return None
+    if not t:
+        logging.error(str(t.error))
+        logging.error('The current directory does not contain a valid target.')
+        return None
+    return t
 
 def currentDirectoryModuleOrTarget():
     wd = os.getcwd()

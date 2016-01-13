@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2015 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -29,6 +29,10 @@ def execCommand(args, following_args):
     if not c:
         return 1
     if args.component:
+        err = validate.componentNameValidationError(args.component)
+        if err:
+            logging.error(err)
+            return 1
         fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_modules'))
         src = os.path.join(folders.globalInstallDirectory(), args.component)
         dst = os.path.join(os.getcwd(), 'yotta_modules', args.component)
@@ -40,9 +44,11 @@ def execCommand(args, following_args):
         src = os.getcwd()
         dst = os.path.join(folders.globalInstallDirectory(), c.getName())
 
+    broken_link = False
     if args.component:
         realsrc = fsutils.realpath(src)
         if src == realsrc:
+            broken_link = True
             logging.warning(
               ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET #pylint: disable=no-member
             )
@@ -51,5 +57,11 @@ def execCommand(args, following_args):
     else:
         logging.info('%s -> %s' % (dst, src))
 
-    fsutils.symlink(src, dst)
+    try:
+        fsutils.symlink(src, dst)
+    except Exception as e:
+        if broken_link:
+            logging.error('failed to create link (create the first half of the link first)')
+        else:
+            logging.error('failed to create link: %s', e)
 

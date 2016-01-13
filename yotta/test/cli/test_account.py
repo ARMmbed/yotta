@@ -52,7 +52,7 @@ def loggedin(fn):
         # first load the login URL, so the registry knows about this
         # authentication flow:
         registry_response = session.get(
-            'http://yottabuild.org/#login/' + login_url_data
+            'https://yotta.mbed.com/#login/' + login_url_data
         )
         assert(registry_response.status_code == 200)
         # now get the mbed login URL:

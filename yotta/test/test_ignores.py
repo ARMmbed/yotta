@@ -8,13 +8,12 @@
 # standard library modules, , ,
 import unittest
 import os
-import tempfile
 
 # internal modules:
-from yotta.lib.fsutils import mkDirP, rmRf
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component
 from .cli import cli
+from .cli import util
 
 Test_Files = {
     '.yotta_ignore': '''
@@ -102,23 +101,27 @@ int main(){
 '''
 }
 
+Default_Test_Files = {
+    'module.json': '''
+{
+  "name": "test-testdep-f",
+  "version": "0.0.6",
+  "license": "Apache-2.0"
+}'''
+}
+
 def isWindows():
     # can't run tests that hit github without an authn token
     return os.name == 'nt'
 
 class TestPackIgnores(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = util.writeTestFiles(Test_Files)
 
-        for path, contents in Test_Files.items():
-            path_dir, file_name =  os.path.split(path)
-            path_dir = os.path.join(self.test_dir, path_dir)
-            mkDirP(path_dir)
-            with open(os.path.join(path_dir, file_name), 'w') as f:
-                f.write(contents)
-
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def tearDownClass(cls):
+        util.rmRf(cls.test_dir)
 
     def test_absolute_ignores(self):
         c = component.Component(self.test_dir)
@@ -142,6 +145,24 @@ class TestPackIgnores(unittest.TestCase):
         self.assertTrue(c.ignores('source/a/b/test.txt'))
         self.assertTrue(c.ignores('test/anothertest/ignoredbyfname.c'))
         self.assertTrue(c.ignores('test/someothertest/alsoignored.c'))
+
+    def test_default_ignores(self):
+        default_test_dir = util.writeTestFiles(Default_Test_Files)
+        c = component.Component(default_test_dir)
+        self.assertTrue(c.ignores('.something.c.swp'))
+        self.assertTrue(c.ignores('.something.c~'))
+        self.assertTrue(c.ignores('path/to/.something.c.swm'))
+        self.assertTrue(c.ignores('path/to/.something.c~'))
+        self.assertTrue(c.ignores('.DS_Store'))
+        self.assertTrue(c.ignores('.git'))
+        self.assertTrue(c.ignores('.hg'))
+        self.assertTrue(c.ignores('.svn'))
+        self.assertTrue(c.ignores('yotta_modules'))
+        self.assertTrue(c.ignores('yotta_targets'))
+        self.assertTrue(c.ignores('build'))
+        self.assertTrue(c.ignores('.yotta.json'))
+
+        util.rmRf(default_test_dir)
 
     def test_comments(self):
         c = component.Component(self.test_dir)

@@ -39,6 +39,15 @@ logger = logging.getLogger('access')
 def _userAuthedWithGithub():
     return settings.getProperty('github', 'authtoken')
 
+def _ensureDomainPrefixed(url):
+    if not re.match(r"^https?://[^/]+\.[^/]+", url):
+        if not url.startswith('/'):
+            return _github_url + '/' + url
+        else:
+            return _github_url + url
+    else:
+        return url
+
 def _handleAuth(fn):
     ''' Decorator to re-try API calls after asking the user for authentication. '''
     @functools.wraps(fn)
@@ -46,49 +55,58 @@ def _handleAuth(fn):
         # if yotta is being run noninteractively, then we never retry, but we
         # do call auth.authorizeUser, so that a login URL can be displayed:
         interactive = globalconf.get('interactive')
-        if not interactive:
-            try:
-                return fn(*args, **kwargs)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 401:
-                    auth.authorizeUser(provider='github', interactive=False)
-                raise
-            except github.BadCredentialsException:
-                logger.debug("github: bad credentials")
-                auth.authorizeUser(provider='github', interactive=False)
-                raise
-            except github.UnknownObjectException:
-                logger.debug("github: unknown object")
-                # some endpoints return 404 if the user doesn't have access:
-                if not _userAuthedWithGithub():
-                    logger.info('failed to fetch Github object, try re-authing...')
-                    auth.authorizeUser(provider='github', interactive=False)
-                raise
-        else:
-            try:
-                return fn(*args, **kwargs)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 401:
-                    auth.authorizeUser(provider='github')
-                    return fn(*args, **kwargs)
-                raise
-            except github.BadCredentialsException:
-                logger.debug("github: bad credentials")
-                auth.authorizeUser(provider='github')
+
+        def retryWithAuthOrRaise(original_exception):
+            # in all cases ask for auth, so that in non-interactive mode a
+            # login URL is displayed
+            auth.authorizeUser(provider='github', interactive=interactive)
+            if not interactive:
+                raise original_exception
+            else:
                 logger.debug('trying with authtoken: %s', settings.getProperty('github', 'authtoken'))
                 return fn(*args, **kwargs)
-            except github.UnknownObjectException:
-                logger.debug("github: unknown object")
-                # some endpoints return 404 if the user doesn't have access, maybe
-                # it would be better to prompt for another username and password,
-                # and store multiple tokens that we can try for each request....
-                # but for now we assume that if the user is logged in then a 404
-                # really is a 404
-                if not _userAuthedWithGithub():
-                    logger.info('failed to fetch Github object, re-trying with authentication...')
-                    auth.authorizeUser(provider='github')
-                    return fn(*args, **kwargs)
-                raise
+
+        # authorised requests have a higher rate limit, but display a warning
+        # message in this case, as the user might not expect the requirement to
+        # auth:
+        def handleRateLimitExceeded(original_exception):
+            if not _userAuthedWithGithub():
+                logger.warning('github rate limit for anonymous requests exceeded: you must log in')
+                return retryWithAuthOrRaise(original_exception)
+            else:
+                raise original_exception
+
+        try:
+            return fn(*args, **kwargs)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                # 403 = rate limit exceeded
+                return handleRateLimitExceeded(e)
+            if e.response.status_code == 401:
+                # 401 = unauthorised
+                return retryWithAuthOrRaise(e)
+            raise
+        except github.BadCredentialsException as e:
+            logger.debug("github: bad credentials")
+            return retryWithAuthOrRaise(e)
+        except github.UnknownObjectException as e:
+            logger.debug("github: unknown object")
+            # some endpoints return 404 if the user doesn't have access, maybe
+            # it would be better to prompt for another username and password,
+            # and store multiple tokens that we can try for each request....
+            # but for now we assume that if the user is logged in then a 404
+            # really is a 404
+            if not _userAuthedWithGithub():
+                logger.info('failed to fetch Github object, re-trying with authentication...')
+                return retryWithAuthOrRaise(e)
+            raise
+        except github.RateLimitExceededException as e:
+            return handleRateLimitExceeded(e)
+        except github.GithubException as e:
+            if e.status == 403:
+                # 403 = rate limit exceeded
+                return handleRateLimitExceeded(e)
+            raise
     return wrapped
 
 @_handleAuth
@@ -99,10 +117,10 @@ def _getTags(repo):
     repo = g.get_repo(repo)
     tags = repo.get_tags()
     logger.debug('tags for %s: %s', repo, [t.name for t in tags])
-    return {t.name: t.tarball_url for t in tags}
+    return {t.name: _ensureDomainPrefixed(t.tarball_url) for t in tags}
 
 def _tarballUrlForBranch(repo, branchname=None):
-    r = repo.url + u'/tarball'
+    r = _ensureDomainPrefixed(repo.url) + u'/tarball'
     if branchname:
         r += '/' + branchname
     return r
@@ -125,7 +143,7 @@ def _getTipArchiveURL(repo):
 
 
 @_handleAuth
-def _getTarball(url, into_directory, cache_key):
+def _getTarball(url, into_directory, cache_key, origin_info=None):
     '''unpack the specified tarball url into the specified directory'''
 
     try:
@@ -150,7 +168,8 @@ def _getTarball(url, into_directory, cache_key):
                     stream = response,
             into_directory = into_directory,
                       hash = {},
-                 cache_key = cache_key
+                 cache_key = cache_key,
+               origin_info = origin_info
         )
 
 
@@ -160,29 +179,30 @@ def _createCacheKey(*args):
     # a cache key:
     import hashlib
     h = hashlib.sha256()
-    h.update('this is the _createCacheKey seed')
+    h.update(u'this is the _createCacheKey seed'.encode())
     for arg in args:
-        h.update(str(arg))
+        h.update((u'%s' % (arg)).encode())
     return h.hexdigest()
 
 # API
-def deauthorize():
-    if settings.getProperty('github', 'authtoken'):
-        settings.setProperty('github', 'authtoken', '')
-
 class GithubComponentVersion(access_common.RemoteVersion):
     def __init__(self, semver, tag, url, name, cache_key=None):
         # if cache key is None, then we won't cache this version
         self.cache_key = cache_key
         self.tag = tag
         github_spec = re.search('/(repos|codeload.github.com)/([^/]*/[^/]*)/', url).group(2)
+        self.origin_info = {
+            'url':('github://'+github_spec+'#'+(semver or tag))
+        }
         super(GithubComponentVersion, self).__init__(
             semver, url, name=name, friendly_version=(semver or tag), friendly_source=('GitHub %s' % github_spec)
         )
 
     def unpackInto(self, directory):
         assert(self.url)
-        _getTarball(self.url, directory, self.cache_key)
+        _getTarball(
+            self.url, directory, self.cache_key, origin_info=self.origin_info
+        )
 
 class GithubComponent(access_common.RemoteComponent):
     def __init__(self, repo, tag_or_branch=None, semantic_spec=None, name=None):

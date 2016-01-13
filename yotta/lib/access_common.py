@@ -10,7 +10,6 @@ import os
 import hashlib
 import tempfile
 import shutil
-import sys
 import functools
 import random
 import errno
@@ -21,13 +20,13 @@ import version
 import fsutils
 # folders, , where yotta stores things, internal
 import folders
+# Ordered JSON, , read & write json, internal
+import ordered_json
+# settings, , load and save settings, internal
+import settings
 
 logger = logging.getLogger('access')
 cache_logger = logging.getLogger('cache')
-
-# arbitrary default setting for download caching. Later maybe this can be a
-# setting:
-Max_Cached_Modules = 100
 
 class AccessException(Exception):
     pass
@@ -82,19 +81,15 @@ class RemoteComponent(object):
     def remoteType(cls):
         raise NotImplementedError
 
-
-def _openExclusively(name):
-    # in python >=3.3, there's the handy 'x' flag, otherwise we have to use
-    # fdopen:
-    # (tarfile has problems with fdopened files on python 3.3, so this works
-    # around that bug too)
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
-        return open(name, 'bx+')
-    else:
-        fd = os.open(name, os.O_CREAT | os.O_EXCL |
-                           os.O_RDWR | getattr(os, "O_BINARY", 0))
-        return os.fdopen(fd, 'rb+')
-
+_max_cached_modules = None
+def getMaxCachedModules():
+    global _max_cached_modules
+    if _max_cached_modules is None:
+        _max_cached_modules = settings.get('maxCachedModules')
+        if _max_cached_modules is None:
+            # arbitrary default value
+            _max_cached_modules = 200
+    return _max_cached_modules
 
 def pruneCache():
     ''' Prune the cache '''
@@ -103,13 +98,17 @@ def pruneCache():
         return os.path.join(cache_dir, f)
     # ensure cache exists
     fsutils.mkDirP(cache_dir)
+    max_cached_modules = getMaxCachedModules()
     for f in sorted(
-            [f for f in os.listdir(cache_dir) if os.path.isfile(fullpath(f))],
-            key = lambda f: os.stat(fullpath(f)).st_mtime
-        )[Max_Cached_Modules:]:
+            [f for f in os.listdir(cache_dir) if
+                os.path.isfile(fullpath(f)) and not f.endswith('.json')
+            ],
+            key = lambda f: os.stat(fullpath(f)).st_mtime,
+            reverse = True
+        )[max_cached_modules:]:
         cache_logger.debug('cleaning up cache file %s', f)
-        fsutils.rmF(fullpath(f))
-    cache_logger.debug('cache pruned to %s items', Max_Cached_Modules)
+        removeFromCache(f)
+    cache_logger.debug('cache pruned to %s items', max_cached_modules)
 
 def sometimesPruneCache(p):
     ''' return decorator to prune cache after calling fn with a probability of p'''
@@ -133,28 +132,47 @@ def unpackFrom(tar_file_path, to_directory):
     into_parent_dir = os.path.dirname(to_directory)
     fsutils.mkDirP(into_parent_dir)
     temp_directory = tempfile.mkdtemp(dir=into_parent_dir)
+    try:
+        with tarfile.open(tar_file_path) as tf:
+            strip_dirname = ''
+            # get the extraction directory name from the first part of the
+            # extraction paths: it should be the same for all members of
+            # the archive
+            for m in tf.getmembers():
+                split_path = fsutils.fullySplitPath(m.name)
+                logger.debug('process member: %s %s', m.name, split_path)
+                if os.path.isabs(m.name) or '..' in split_path:
+                    raise ValueError('archive uses invalid paths')
+                if not strip_dirname:
+                    if len(split_path) != 1 or not len(split_path[0]):
+                        raise ValueError('archive does not appear to contain a single module')
+                    strip_dirname = split_path[0]
+                    continue
+                else:
+                    if split_path[0] != strip_dirname:
+                        raise ValueError('archive does not appear to contain a single module')
+                m.name = os.path.join(*split_path[1:])
+                tf.extract(m, path=temp_directory)
+        # make sure the destination directory doesn't exist:
+        fsutils.rmRf(to_directory)
+        shutil.move(temp_directory, to_directory)
+        temp_directory = None
+        logger.debug('extraction complete %s', to_directory)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            logger.error('failed to extract tarfile %s', e)
+            fsutils.rmF(tar_file_path)
+        raise
+    finally:
+        if temp_directory is not None:
+            # if anything has failed, cleanup
+            fsutils.rmRf(temp_directory)
 
-    with tarfile.open(tar_file_path) as tf:
-        strip_dirname = ''
-        # get the extraction directory name from the first part of the
-        # extraction paths: it should be the same for all members of
-        # the archive
-        for m in tf.getmembers():
-            split_path = fsutils.fullySplitPath(m.name)
-            if os.path.isabs(m.name) or '..' in split_path:
-                raise ValueError('archive uses invalid paths')
-            if not strip_dirname:
-                if len(split_path) != 1 or not len(split_path[0]):
-                    raise ValueError('archive does not appear to contain a single module')
-                strip_dirname = split_path[0]
-                continue
-            else:
-                if split_path[0] != strip_dirname:
-                    raise ValueError('archive does not appear to contain a single module')
-            m.name = os.path.join(*split_path[1:])
-            tf.extract(m, path=temp_directory)
-    shutil.move(temp_directory, to_directory)
-    logger.debug('extraction complete %s', to_directory)
+def removeFromCache(cache_key):
+    f = os.path.join(folders.cacheDirectory(), cache_key)
+    fsutils.rmF(f)
+    # remove any metadata too, if it exists
+    fsutils.rmF(f + '.json')
 
 def unpackFromCache(cache_key, to_directory):
     ''' If the specified cache key exists, unpack the tarball into the
@@ -165,8 +183,16 @@ def unpackFromCache(cache_key, to_directory):
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
     path = os.path.join(cache_dir, cache_key)
+    logger.debug('attempt to unpack from cache %s -> %s', path, to_directory)
     try:
         unpackFrom(path, to_directory)
+        try:
+            shutil.copy(path + '.json', os.path.join(to_directory, '.yotta_origin.json'))
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
         cache_logger.debug('unpacked %s from cache into %s', cache_key, to_directory)
         return
     except IOError as e:
@@ -174,12 +200,11 @@ def unpackFromCache(cache_key, to_directory):
             cache_logger.debug('%s not in cache', cache_key)
             raise KeyError('not in cache')
 
-def downloadToCache(stream, hashinfo={}, cache_key=None):
+def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
     ''' Download the specified stream to a temporary cache directory, and
-        return (path to the downloaded, cache key).
-        If cache_key is None, then a cache key will be generated and returned,
-        but you will probably want to remove the cache file yourself (this is
-        safe).
+        returns a cache key that can be used to access/remove the file.
+        If cache_key is None, then a cache key will be generated and returned.
+        You will probably want to use removeFromCache(cache_key) to remove it.
     '''
     hash_name  = None
     hash_value = None
@@ -203,11 +228,13 @@ def downloadToCache(stream, hashinfo={}, cache_key=None):
 
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
-    download_fname = os.path.join(cache_dir, cache_key)
+    cache_as = os.path.join(cache_dir, cache_key)
+    file_size = 0
 
-    with _openExclusively(download_fname) as f:
+    (download_file, download_fname) = tempfile.mkstemp(dir=cache_dir)
+    with os.fdopen(download_file, 'wb') as f:
         f.seek(0)
-        for chunk in stream.iter_content(1024):
+        for chunk in stream.iter_content(4096):
             f.write(chunk)
             if hash_name:
                 m.update(chunk)
@@ -221,24 +248,42 @@ def downloadToCache(stream, hashinfo={}, cache_key=None):
             )
             if hash_value and (hash_value != calculated_hash):
                 raise Exception('Hash verification failed.')
-        logger.debug('wrote tarfile of size: %s to %s', f.tell(), download_fname)
+        file_size = f.tell()
+        logger.debug('wrote tarfile of size: %s to %s', file_size, download_fname)
         f.truncate()
+    try:
+        os.rename(download_fname, cache_as)
+        extended_origin_info = {
+            'hash': hashinfo,
+            'size': file_size
+        }
+        extended_origin_info.update(origin_info)
+        ordered_json.dump(cache_as + '.json', extended_origin_info)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            # if we failed, it's because the file already exists (probably
+            # because another process got there first), so just rm our
+            # temporary file and continue
+            cache_logger.debug('another process downloaded %s first', cache_key)
+            fsutils.rmF(download_fname)
+        else:
+            raise
 
-    return (download_fname, cache_key)
+    return cache_key
 
 @sometimesPruneCache(0.05)
-def unpackTarballStream(stream, into_directory, hash={}, cache_key=None):
+def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_info=dict()):
     ''' Unpack a responses stream that contains a tarball into a directory. If
         a hash is provided, then it will be used as a cache key (for future
         requests you can try to retrieve the key value from the cache first,
         before making the request)
     '''
 
-    download_fname, cache_key = downloadToCache(stream, hash, cache_key)
-    unpackFromCache(cache_key, into_directory)
+    new_cache_key = downloadToCache(stream, hash, cache_key, origin_info)
+    unpackFromCache(new_cache_key, into_directory)
 
     # if we didn't provide a cache key, there's no point in storing the cache
     if cache_key is None:
-        fsutils.rmF(download_fname)
+        removeFromCache(new_cache_key)
 
 

@@ -287,7 +287,7 @@ class CMakeGen(object):
         import vcs
 
         now = datetime.datetime.utcnow()
-        vcs = vcs.getVCS(sourcedir)
+        vcs_instance = vcs.getVCS(sourcedir)
         if self.build_uuid is None:
             import uuid
             self.build_uuid = uuid.uuid4()
@@ -301,11 +301,27 @@ class CMakeGen(object):
             ('YOTTA_BUILD_SECOND', now.second,      'UTC second 0-61'),
             ('YOTTA_BUILD_UUID',   self.build_uuid, 'unique random UUID for each build'),
         ]
-        if vcs is not None:
-            definitions += [
-                ('YOTTA_BUILD_VCS_ID', vcs.getCommitId(), 'git or mercurial hash'),
-                ('YOTTA_BUILD_VCS_CLEAN', int(vcs.isClean()), 'evaluates true if the version control system was clean, otherwise false')
-            ]
+        if vcs_instance is not None:
+            commit_id = None
+            repotype = vcs_instance.__class__.__name__
+            try:
+                commit_id = vcs_instance.getCommitId()
+            except vcs.VCSNotInstalled as e:
+                logger.warning('%s is not installed, VCS status build info is not available', repotype)
+                commit_id = None
+            except vcs.VCSError as e:
+                logger.debug('%s', e)
+                logger.warning(
+                    'error detecting build info: "%s", build info is not available to the build. Please check that this is a valid %s repository!',
+                    str(e).split('\n')[0],
+                    repotype
+                )
+            if commit_id is not None:
+                clean_state = int(vcs_instance.isClean())
+                definitions += [
+                    ('YOTTA_BUILD_VCS_ID',    commit_id,   'git or mercurial hash'),
+                    ('YOTTA_BUILD_VCS_CLEAN', clean_state, 'evaluates true if the version control system was clean, otherwise false')
+                ]
 
         for d in definitions:
             preproc_defs += '#define %s %s // %s\n' % d
@@ -370,7 +386,10 @@ class CMakeGen(object):
         delegate_to_existing = None
         delegate_build_dir = None
 
+        module_is_empty = False
         if os.path.isfile(os.path.join(component.path, 'CMakeLists.txt')):
+            # adding custom CMake is a promise to generate a library: so the
+            # module is never empty in this case.
             delegate_to_existing = component.path
             add_own_subdirs = []
             logger.debug("delegate to build dir: %s", builddir)
@@ -394,10 +413,19 @@ class CMakeGen(object):
                     add_own_subdirs.append(
                         (os.path.join(component.path, f), f)
                     )
-
             # names of all directories at this level with stuff in: used to figure
             # out what to link automatically
             all_subdirs = manual_subdirs + [x[0] for x in autogen_subdirs]
+
+            # first check if this module is empty:
+            if component.isTestDependency():
+                if len(autogen_subdirs) + len(add_own_subdirs) == 0:
+                    module_is_empty = True
+            else:
+                if len(autogen_subdirs) + len(add_own_subdirs) <= len(test_subdirs):
+                    module_is_empty = True
+
+            # autogenerate CMakeLists for subdirectories as appropriate:
             for f, source_files in autogen_subdirs:
                 if f in binary_subdirs:
                     exe_name = binary_subdirs[f]
@@ -409,7 +437,7 @@ class CMakeGen(object):
                     if component.isTestDependency():
                         continue
                     self.generateTestDirList(
-                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel
+                        builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel, module_is_empty=module_is_empty
                     )
                 else:
                     for header_dir, header_files in header_subdirs:
@@ -428,24 +456,28 @@ class CMakeGen(object):
             if component.isTestDependency():
                 test_subdirs = []
 
-            # if we're not building anything other than tests, then we need to
-            # generate a dummy library so that this component can still be linked
-            # against
-            if len(add_own_subdirs) <= len(test_subdirs):
-                add_own_subdirs.append(self.createDummyLib(
-                    component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
-                ))
+            # if we're not building anything other than tests, and this is a
+            # library module (not a binary) then we need to generate a dummy
+            # library so that this component can still be linked against
+            if module_is_empty:
+                if len(binary_subdirs):
+                    logger.warning('nothing to build!')
+                else:
+                    add_own_subdirs.append(self.createDummyLib(
+                        component, builddir, [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
+                    ))
 
-        # generate the top-level toolchain file:
-        template = jinja_environment.get_template('toolchain.cmake')
-        file_contents = template.render({  #pylint: disable=no-member
-                               # toolchain files are provided in hierarchy
-                               # order, but the template needs them in reverse
-                               # order (base-first):
-            "toolchain_files": reversed(self.target.getToolchainFiles())
-        })
         toolchain_file_path = os.path.join(builddir, 'toolchain.cmake')
-        self._writeFile(toolchain_file_path, file_contents)
+        if toplevel:
+            # generate the top-level toolchain file:
+            template = jinja_environment.get_template('toolchain.cmake')
+            file_contents = template.render({  #pylint: disable=no-member
+                                   # toolchain files are provided in hierarchy
+                                   # order, but the template needs them in reverse
+                                   # order (base-first):
+                "toolchain_files": self.target.getToolchainFiles()
+            })
+            self._writeFile(toolchain_file_path, file_contents)
 
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
@@ -467,7 +499,9 @@ class CMakeGen(object):
                  "config_include_file": self.config_include_file,
                          "delegate_to": delegate_to_existing,
                   "delegate_build_dir": delegate_build_dir,
-                 "active_dependencies": active_dependencies
+                 "active_dependencies": active_dependencies,
+                     "module_is_empty": module_is_empty,
+                      "cmake_includes": self.target.getAdditionalIncludes()
         })
         self._writeFile(os.path.join(builddir, 'CMakeLists.txt'), file_contents)
 
@@ -477,13 +511,22 @@ class CMakeGen(object):
         dummy_cfile_name = 'dummy.c'
         logger.debug("create dummy lib: %s, %s, %s" % (safe_name, dummy_dirname, dummy_cfile_name))
 
+        cmake_files = []
+        source_dir = os.path.join(component.path, 'source')
+        if os.path.exists(source_dir):
+            for root, dires, files in os.walk(os.path.join(component.path, 'source')):
+                for f in files:
+                    name, ext = os.path.splitext(f)
+                    if ext.lower() == '.cmake':
+                        cmake_files.append(os.path.join(root, f))
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
 
         dummy_cmakelists = dummy_template.render({ #pylint: disable=no-member
                    "cfile_name": dummy_cfile_name,
                       "libname": component.getName(),
-            "link_dependencies": link_dependencies
+            "link_dependencies": link_dependencies,
+                  "cmake_files": cmake_files
         })
         self._writeFile(os.path.join(builddir, dummy_dirname, "CMakeLists.txt"), dummy_cmakelists)
         dummy_cfile = "void __yotta_dummy_lib_symbol_%s(){}\n" % safe_name
@@ -502,7 +545,7 @@ class CMakeGen(object):
             with open(fname, "w") as f:
                 f.write(contents)
 
-    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False):
+    def generateTestDirList(self, builddir, dirname, source_files, component, immediate_dependencies, toplevel=False, module_is_empty=False):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x for x in immediate_dependencies]
@@ -534,7 +577,8 @@ class CMakeGen(object):
             tests.append([[str(f) for f in sources], object_name, [f.lang for f in sources]])
 
         # link tests against the main executable
-        link_dependencies.append(component.getName())
+        if not module_is_empty:
+            link_dependencies.append(component.getName())
 
         # Find cmake files
         cmake_files = []

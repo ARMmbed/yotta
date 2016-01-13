@@ -24,6 +24,10 @@ def run(arguments, cwd='.'):
          stdin = subprocess.PIPE
     )
     out, err = child.communicate()
+    # no command should ever produce a traceback:
+    if 'traceback' in (out.decode('utf-8')+err.decode('utf-8')).lower():
+        print(out+err)
+        assert(False)
     return out.decode('utf-8'), err.decode('utf-8'), child.returncode
 
 

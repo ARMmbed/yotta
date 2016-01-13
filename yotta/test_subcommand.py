@@ -16,9 +16,12 @@ from .lib import target
 from .lib import fsutils
 # build, , build subcommand, internal
 from . import build
+# --config option, , , internal
+from . import options
 
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument(
         "--list", '-l', dest='list_only', default=False, action='store_true',
         help='List the tests that would be run, but don\'t run them. Implies --no-build'
@@ -115,7 +118,7 @@ def execCommand(args, following_args):
     if not c:
         return 1
 
-    target, errors = c.satisfyTarget(args.target)
+    target, errors = c.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)

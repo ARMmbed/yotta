@@ -379,7 +379,7 @@ class Component(pack.Pack):
          available_components,
                   search_dirs,
             working_directory,
-          update_if_installed,
+             update_installed,
                   dep_of_name
         ):
         r = access.satisfyFromAvailable(dspec.name, available_components)
@@ -388,6 +388,11 @@ class Component(pack.Pack):
                 logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                 r.setTestDependency(False)
             return r
+        update_if_installed = False
+        if update_installed is True:
+            update_if_installed = True
+        elif update_installed:
+            update_if_installed = dspec.name in update_installed
         r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
         if r:
             r.setTestDependency(dspec.is_test_dependency)
@@ -481,9 +486,10 @@ class Component(pack.Pack):
                     current directory is checked.
 
                 update_installed:
-                    False (default), or True: whether to check the available
-                    versions of installed components, and update if a newer
-                    version is available.
+                    False (default), True, or set(): whether to check the
+                    available versions of installed components, and update if a
+                    newer version is available. If this is a set(), only update
+                    things in the specified set.
 
                 traverse_links:
                     False (default) or True: whether to recurse into linked
@@ -506,7 +512,7 @@ class Component(pack.Pack):
             available_components,
             search_dirs,
             working_directory,
-            update_if_installed,
+            update_installed,
             dep_of_name=None
         ):
             r = access.satisfyFromAvailable(dspec.name, available_components)
@@ -515,6 +521,11 @@ class Component(pack.Pack):
                     logger.debug('test dependency subsequently occurred as real dependency: %s', r.getName())
                     r.setTestDependency(False)
                 return r
+            update_if_installed = False
+            if update_installed is True:
+                update_if_installed = True
+            elif update_installed:
+                update_if_installed = dspec.name in update_installed
             r = access.satisfyVersionFromSearchPaths(dspec.name, dspec.version_req, search_dirs, update_if_installed)
             if r:
                 r.setTestDependency(dspec.is_test_dependency)
@@ -554,7 +565,7 @@ class Component(pack.Pack):
                            test = test
         )
 
-    def satisfyTarget(self, target_name_and_version, update_installed=False):
+    def satisfyTarget(self, target_name_and_version, update_installed=False, additional_config=None):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
             current component
@@ -563,10 +574,11 @@ class Component(pack.Pack):
         if self.isApplication():
             application_dir = self.path
         return target.getDerivedTarget(
-            target_name_and_version,
-            self.targetsPath(),
-            application_dir = application_dir,
-            update_installed = update_installed
+                                target_name_and_version,
+                                self.targetsPath(),
+              application_dir = application_dir,
+             update_installed = update_installed,
+            additional_config = additional_config
         )
 
     def installedDependencies(self):

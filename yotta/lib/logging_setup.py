@@ -76,8 +76,17 @@ class PlainFormatter(logging.Formatter):
     def format(self, record):
         return record.levelname.lower() + ': ' + record.getMessage()
 
+_enabled_subsystems = []
+_level = 0
+_plain = False
+
 def init(level=0, enable_subsystems=[], plain=False):
-    level = int(round(level))
+    global _enabled_subsystems
+    global _level
+    global _plain
+    _enabled_subsystems = enable_subsystems
+    _level = int(round(level))
+    _plain = plain
     # once logging.something has been called you have to remove all logging
     # handlers before re-configing...
     root = logging.getLogger()
@@ -87,16 +96,34 @@ def init(level=0, enable_subsystems=[], plain=False):
 
     # set new handler with our formatter
     handler = logging.StreamHandler()
-    if plain:
+    if _plain:
         handler.setFormatter(PlainFormatter())
     else:
         handler.setFormatter(FancyFormatter())
     root.addHandler(handler)
 
+    setLevel(_level)
+
+def setPlain(plain):
+    global _plain
+    _plain = plain
+    init(level=_level, enable_subsystems=_enabled_subsystems, plain=plain)
+
+def setEnabledModules(subsystems):
+    global _enabled_subsystems
+    _enabled_subsystems = subsystems
+    setLevel(_level)
+
+def setLevel(level):
+    global _level
+    _level = level
     # set appropriate levels on subsystem loggers - maybe selective logging
     # should use filters instead?
-    if enable_subsystems and len(enable_subsystems):
-        for subsys in enable_subsystems:
+    if _enabled_subsystems and len(_enabled_subsystems):
+        logging.getLogger().setLevel(logging.INFO)
+        for subsys in _enabled_subsystems:
             logging.getLogger(subsys).setLevel(level)
     else:
         logging.getLogger().setLevel(level)
+
+

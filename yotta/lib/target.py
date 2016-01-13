@@ -63,14 +63,53 @@ def _tryTerminate(process):
         if e.errno != errno.ESRCH:
             raise
 
+def _mirrorStructure(dictionary, value):
+    ''' create a new nested dictionary object with the same structure as
+        'dictionary', but with all scalar values replaced with 'value'
+    '''
+    result = type(dictionary)()
+    for k in dictionary.keys():
+        if isinstance(dictionary[k], dict):
+            result[k] = _mirrorStructure(dictionary[k], value)
+        else:
+            result[k] = value
+    return result
+
 # API
+
+def loadAdditionalConfig(config_path):
+    ''' returns (error, config)
+    '''
+    error = None
+    config = {}
+    if not config_path:
+        return (error, config)
+    if os.path.isfile(config_path):
+        try:
+            config = ordered_json.load(config_path)
+        except Exception as e:
+            error = "Invalid syntax in file %s: %s" % (config_path, e)
+    else:
+        # try to interpret the argument as literal JSON
+        try:
+            config = ordered_json.loads(config_path)
+        except Exception as e:
+            # if this fails too, guess whether it was intended to be JSON or
+            # not, and display an appropriate error message
+            if '{' in config_path or '}' in config_path:
+                error = "Invalid syntax in literal JSON: %s" % e
+            else:
+                error = "File \"%s\" does not exist" % config_path
+    logger.debug('read additional config: %s', config)
+    return (error, config)
 
 def getDerivedTarget(
         target_name_and_version,
                    targets_path,
                 application_dir = None,
                 install_missing = True,
-               update_installed = False
+               update_installed = False,
+              additional_config = None
     ):
     ''' Get the specified target description, optionally ensuring that it (and
         all dependencies) are installed in targets_path.
@@ -140,7 +179,7 @@ def getDerivedTarget(
                 app_config = ordered_json.load(app_config_fname)
             except Exception as e:
                 errors.append(Exception("Invalid application config.json: %s" % (e)))
-    return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config), errors)
+    return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config, additional_config), errors)
 
 class Target(pack.Pack):
     def __init__(self, path, installed_linked=False, latest_suitable_version=None):
@@ -175,7 +214,7 @@ class Target(pack.Pack):
         return self.description.get('config', OrderedDict())
 
 class DerivedTarget(Target):
-    def __init__(self, leaf_target, base_targets, app_config):
+    def __init__(self, leaf_target, base_targets, app_config, additional_config):
         ''' Initialise a DerivedTarget (representing an inheritance hierarchy of
             Targets.), given the most-derived Target description, and a set of
             available Targets to compose the rest of the lineage from.
@@ -200,7 +239,9 @@ class DerivedTarget(Target):
 
         self.hierarchy = [leaf_target] + base_targets[:]
         self.config = None
+        self.config_blame = None
         self.app_config = app_config
+        self.additional_config = additional_config or {}
 
 
     # override truthiness to test validity of the entire hierarchy:
@@ -211,35 +252,55 @@ class DerivedTarget(Target):
     def __bool__(self):
         return self.__nonzero__()
 
+    def getScript(self, scriptname):
+        ''' return the specified script if one exists (possibly inherited from
+            a base target)
+        '''
+        for t in self.hierarchy:
+            if 'scripts' in t.description and scriptname in t.description['scripts']:
+                return t.description['scripts'][scriptname]
+        return None
+
     def _loadConfig(self):
         ''' load the configuration information from the target hierarchy '''
-        config_dicts = [self.app_config] + [t.getConfig() for t in self.hierarchy]
+        config_dicts = [self.additional_config, self.app_config] + [t.getConfig() for t in self.hierarchy]
+        # create an identical set of dictionaries, but with the names of the
+        # sources in place of the values. When these are merged they will show
+        # where each merged property came from:
+        config_blame = [
+            _mirrorStructure(self.additional_config, 'command-line config'),
+            _mirrorStructure(self.app_config, 'application\'s config.json'),
+        ] + [
+            _mirrorStructure(t.getConfig(), t.getName()) for t in self.hierarchy
+        ]
+
         self.config = _mergeDictionaries(*config_dicts)
+        self.config_blame = _mergeDictionaries(*config_blame)
         # note that backwards compatibility with the "similarTo" data that used
         # to be used for target-dependencies is ensured at the point of use. We
-        # don't merge similarTo into the config because it might break things.
+        # don't merge similarTo into the config because it might break things
+        # in the config (clobber objects with scalar values, for example)
 
     def _ensureConfig(self):
         if self.config is None:
             self._loadConfig()
 
-    def setApplicationConfig(self, config):
-        ''' set the application-config data to the contents of the
-            dictionary-like object `config`
-        '''
-        self.app_config = config
-        self._loadConfig()
-
     def getConfigValue(self, conf_key):
         self._ensureConfig()
-        key_path = conf_key.split('.');
-        c = self.config
-        for part in key_path:
-            if part in c:
-                c = c[part]
-            else:
-                return None
-        return c
+        # jsonpointer, pip install jsonpointer, BSD 3 Clause
+        import jsonpointer
+        try:
+            return jsonpointer.resolve_pointer(self.config, conf_key)
+        except jsonpointer.JsonPointerException as e:
+            # fall back to legacy dot-separated pointers
+            key_path = conf_key.split('.');
+            c = self.config
+            for part in key_path:
+                if part in c:
+                    c = c[part]
+                else:
+                    return None
+            return c
 
     def getSimilarTo_Deprecated(self):
         r = []
@@ -252,23 +313,51 @@ class DerivedTarget(Target):
         self._ensureConfig()
         return self.config
 
+    def getConfigBlame(self):
+        self._ensureConfig()
+        return self.config_blame
+
     def getToolchainFiles(self):
-        return [
+        ''' return a list of toolchain file paths in override order (starting
+            at the bottom/leaf of the hierarchy and ending at the base).
+            The list is returned in the order they should be included
+            (most-derived last).
+        '''
+        return reversed([
             os.path.join(x.path, x.description['toolchain']) for x in self.hierarchy if 'toolchain' in x.description
-        ]
+        ])
+
+    def getAdditionalIncludes(self):
+        ''' Return the list of cmake files which are to be included by yotta in
+            every module built. The list is returned in the order they should
+            be included (most-derived last).
+        '''
+        return reversed([
+            os.path.join(t.path, include_file)
+                for t in self.hierarchy
+                for include_file in t.description.get('cmakeIncludes', [])
+        ])
 
     @classmethod
     def addBuildOptions(cls, parser):
         parser.add_argument('-G', '--cmake-generator', dest='cmake_generator',
            default='Ninja',
-           choices=(
-               'Unix Makefiles',
-               'Ninja',
-               'Xcode',
-               'Sublime Text 2 - Ninja',
-               'Sublime Text 2 - Unix Makefiles'
-           )
+           help='CMake generator to use (defaults to Ninja). You can use this '+
+           'to generate IDE project files instead, see cmake --help for '+
+           'possible generator names. Note that only Ninja or Unix Makefile '+
+           'based generators will work correctly with yotta.',
+           metavar='CMAKE_GENERATOR',
+           type=str
         )
+
+    @classmethod
+    def _findNinja(cls):
+        # sometimes ninja is called ninja-build
+        for name in ('ninja', 'ninja-build'):
+            if fsutils.which(name) is not None:
+                return name
+        # default to ninja:
+        return 'ninja'
 
     @classmethod
     def overrideBuildCommand(cls, generator_name, targets=None):
@@ -280,7 +369,7 @@ class DerivedTarget(Target):
         try:
             r = {
                 'Unix Makefiles': ['make'],
-                'Ninja': ['ninja']
+                'Ninja': [cls._findNinja()]
             }[generator_name]
             # all of the above build programs take the build targets (e.g.
             # "all") as the last arguments
@@ -291,19 +380,25 @@ class DerivedTarget(Target):
             return None
 
     def hintForCMakeGenerator(self, generator_name, component):
+        if generator_name in ('Ninja', 'Unix Makefiles'):
+            return None
         try:
             name = self.getName()
             component_name = component.getName()
             return {
                 'Xcode':
-                    'to open the built project, run:\nopen ./build/%s/%s.xcodeproj' % (name, component_name),
+                    'a project file has been generated at ./build/%s/%s.xcodeproj' % (name, component_name),
                 'Sublime Text 2 - Ninja':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name),
+                    'a project file has been generated at ./build/%s/%s.sublime-project' % (name, component_name),
                 'Sublime Text 2 - Unix Makefiles':
-                    'to open the built project, run:\nopen ./build/%s/%s.??' % (name, component_name)
+                    'a project file has been generated at ./build/%s/%s.sublime-project' % (name, component_name),
+                'Eclipse CDT4 - Ninja':
+                    'a project file has been generated at ./build/%s/.project' % name,
+                'Eclipse CDT4 - Unix Makefiles':
+                    'a project file has been generated at ./build/%s/.project' % name
             }[generator_name]
         except KeyError:
-            return None
+            return 'project files for %s have been generated in ./build/%s' % (component_name, name)
 
     def exec_helper(self, cmd, builddir):
         ''' Execute the given command, returning an error message if an error occured
@@ -314,7 +409,7 @@ class DerivedTarget(Target):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 if cmd[0] == 'cmake':
-                    return 'CMake is not installed, please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                    return 'CMake is not installed, please follow the installation instructions at http://yottadocs.mbed.com/#installing'
                 else:
                     return '%s is not installed' % (cmd[0])
             else:
@@ -340,27 +435,12 @@ class DerivedTarget(Target):
         res = self.exec_helper(cmd, builddir)
         if res is not None:
             return res
-        # cmake error: the generated Ninja build file will not work on windows when arguments are read from
-        # a file (@file) instead of the command line, since '\' in @file is interpreted as an escape sequence.
-        # !!! FIXME: remove this once http://www.cmake.org/Bug/view.php?id=15278 is fixed!
-        if args.cmake_generator == "Ninja" and os.name == 'nt':
-            logger.debug("Converting back-slashes in build.ninja to forward-slashes")
-            build_file = os.path.join(builddir, "build.ninja")
-            # We want to convert back-slashes to forward-slashes, except in macro definitions, such as
-            # -DYOTTA_COMPONENT_VERSION = \"0.0.1\". So we use a little trick: first we change all \"
-            # strings to an unprintable ASCII char that can't appear in build.ninja (in this case \1),
-            # then we convert all the back-slashed to forward-slashes, then we convert '\1' back to \".
-            try:
-                f = open(build_file, "r+t")
-                data = f.read()
-                data = data.replace('\\"', '\1')
-                data = data.replace('\\', '/')
-                data = data.replace('\1', '\\"')
-                f.seek(0)
-                f.write(data)
-                f.close()
-            except:
-                return 'Unable to update "%s", aborting' % build_file
+
+        # work-around various yotta-specific issues with the generated
+        # Ninja/project files:
+        import cmake_fixups
+        cmake_fixups.applyFixupsForFenerator(args.cmake_generator, builddir, component)
+
         build_command = self.overrideBuildCommand(args.cmake_generator, targets=targets)
         if build_command:
             cmd = build_command + build_args
@@ -462,7 +542,7 @@ class DerivedTarget(Target):
         '''
         try:
             signal.signal(signal.SIGINT, _ignoreSignal);
-            if 'scripts' in self.description and 'debug' in self.description['scripts']:
+            if self.getScript('debug') is not None:
                 return self._debugWithScript(builddir, program)
             elif 'debug' in self.description:
                 logger.warning(
@@ -487,7 +567,7 @@ class DerivedTarget(Target):
 
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
-                for x in self.description['scripts']['debug']
+                for x in self.getScript('debug')
             ]
             logger.debug('starting debugger: %s', cmd)
             child = subprocess.Popen(
@@ -567,12 +647,13 @@ class DerivedTarget(Target):
         # (filter commands are relative to the module dir to make it possible
         # to use filter scripts shipped with the module)
         test_command = './' + test_command
-        if not ('scripts' in self.description and 'test' in self.description['scripts']):
+        test_script = self.getScript('test')
+        if test_script is None:
             cmd = shlex.split(test_command)
         else:
             cmd = [
-                os.path.expandvars(string.Template(x).safe_substitute(program=test_command))
-                for x in self.description['scripts']['test']
+                os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(test_dir, test_command))))
+                for x in test_script
             ] + forward_args
 
         test_child = None

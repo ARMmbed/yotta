@@ -44,7 +44,7 @@ import auth
 import yotta.lib.globalconf as globalconf
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
-Website_Base_URL  = 'http://yottabuild.org'
+Website_Base_URL  = 'https://yotta.mbed.com'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')
@@ -59,14 +59,14 @@ class AuthError(RuntimeError):
 
 def generate_jwt_token(private_key, registry=None):
     registry = registry or Registry_Base_URL
-    expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(hours=2)).timetuple())
+    expires = calendar.timegm((datetime.datetime.utcnow() + datetime.timedelta(minutes=2)).timetuple())
     prn = _fingerprint(private_key.public_key())
     logger.debug('fingerprint: %s' % prn)
     token_fields = {
         "iss": 'yotta',
         "aud": registry,
         "prn": prn,
-        "exp": str(expires)
+        "exp": expires
     }
     logger.debug('token fields: %s' % token_fields)
     private_key_pem = private_key.private_bytes(
@@ -292,7 +292,8 @@ def _getTarball(url, directory, sha256):
                     stream = response,
             into_directory = directory,
                       hash = {'sha256':sha256},
-                 cache_key = sha256
+                 cache_key = sha256,
+               origin_info = {'url':url}
         )
 
 def _getSources():
@@ -304,9 +305,12 @@ def _getSources():
 def _isPublicRegistry(registry):
     return (registry is None) or (registry == Registry_Base_URL)
 
-def _friendlyRegistryName(registry):
-    if registry == Registry_Base_URL:
-        return 'the public module registry'
+def friendlyRegistryName(registry, short=False):
+    if registry.startswith(Registry_Base_URL):
+        if short:
+            return 'public registry'
+        else:
+            return 'the public module registry'
     else:
         return registry
 
@@ -404,11 +408,14 @@ def _getYottaClientUUID():
 def _headersForRegistry(registry):
     registry = registry or Registry_Base_URL
     auth_token = generate_jwt_token(_getPrivateKeyObject(registry), registry)
+    mbed_user_id = os.environ.get('MBED_USER_ID', None)
     r = {
         'Authorization': 'Bearer %s' % auth_token,
         'X-Yotta-Client-Version': _getYottaVersion(),
         'X-Yotta-Client-ID': _getYottaClientUUID()
     }
+    if mbed_user_id is not None:
+        r['X-Yotta-MBED-User-ID'] = mbed_user_id
     if registry == Registry_Base_URL:
         return r
     for s in _getSources():
@@ -432,7 +439,7 @@ class RegistryThingVersion(access_common.RemoteVersion):
             self.sha256 = None
         url = _tarballURL(self.namespace, self.name, version, registry)
         super(RegistryThingVersion, self).__init__(
-            version, url, name=name, friendly_source=_friendlyRegistryName(registry)
+            version, url, name=name, friendly_source=friendlyRegistryName(registry)
         )
 
     def unpackInto(self, directory):
@@ -454,10 +461,19 @@ class RegistryThing(access_common.RemoteComponent):
         # we deliberately allow only lowercase, hyphen, and (unfortunately)
         # numbers in package names, to reduce the possibility of confusingly
         # similar names: if the name doesn't match this then escalate to make
-        # the user fix it
-        name_match = re.match('^([a-z0-9-]+)$', name)
-        if not name_match:
-            raise ValueError('Dependency name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name)
+        # the user fix it. Targets also allow +
+        if registry == 'targets':
+            name_match = re.match('^[a-z]+[a-z0-9+-]*$', name)
+            if not name_match:
+                raise access_common.AccessException(
+                    'Target name "%s" is not valid (must contain only lowercase letters, hyphen, plus, and numbers)' % name
+                )
+        else:
+            name_match = re.match('^[a-z]+[a-z0-9-]*$', name)
+            if not name_match:
+                raise access_common.AccessException(
+                    'Module name "%s" is not valid (must contain only lowercase letters, hyphen, and numbers)' % name
+                )
         assert(vs.semantic_spec)
         return RegistryThing(name, vs.semantic_spec, registry)
 

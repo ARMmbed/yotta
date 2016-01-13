@@ -5,8 +5,7 @@ section: reference/commands
 ---
 
 # Command Reference
-<a name="yotta"></a>
-## yotta
+## <a href="#yotta" name="yotta">#</a> yotta
 Synonyms: `yt`
 
 The `yotta` command is always run with a subcommand in order to do something, `yotta` with no subcommand will only display help and version information with the `--help` and `--version` options.
@@ -18,19 +17,28 @@ Options:
  * `yotta --help`: Display help for yotta, including a list of subcommands.
  * `yotta <subcommand> --help`: display help for a specific subcommand.
 
-<a name="yotta-init"></a>
-## yotta init
+Additional Options that can be used with all subcommands:
+
+ * `yotta --plain <subcommand>`: Don't use coloured output.
+ * `yotta --noninteractive <subcommand>`: Don't wait for user input.
+ * `yotta --target <targetname>`: Override the currently set target for this
+   command (useful when isolating several instances of yotta)
+ * `yotta --config <configfile or JSON>`: Override the target and
+   application-defined [configuration](/reference/config.html). This is useful
+   in CI infrastructure to easily change the configuration for a particular
+   build.
+
+## <a href="#yotta-init" name="yotta-init">#</a> yotta init
 #### Synopsis
 
 ```
 yotta init
-
 ```
+
 #### Description
 Create a new `module.json` module-description file based on a set of questions. If a `module.json` file already exists, the values in it will be used as defaults, and it will not delete anything from the file.
 
-<a name="yotta-build"></a>
-## yotta build
+## <a href="#yotta-build" name="yotta-build">#</a> yotta build
 #### Synopsis
 
 ```
@@ -60,23 +68,51 @@ Options:
 
  * `--generate-only`, `-g`: only generate the CMakeLists, don't build
  * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
- * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs, though some IDEs may not be able to use non-standard compilers defined by `yotta` targets without additional plugins. The available generators depend on whether `yotta` is running on OS X, Linux, or Windows.
+ * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs.
  * `name ...`: one or more modules may be specified, in which case only these
    modules and their dependencies will be built. Use `all_tests` to cause all
    tests to be built.
  * `-- ...`: any options specified after `--` are passed unmodified on to the tool being used for building (e.g. Ninja, or make)
 
+#### Generating IDE Project Files
+The `-G`/`--cmake-generator` option can be used to generate project files for
+various IDE and text editors. This option is passed through to CMake, but note
+that only IDE project files which use Ninja or Makefile build systems will
+correctly support cross-compilation for yotta targets.
+
+To see the [CMake generators](https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html)
+available on your platform see `cmake --help`.
+
+
 #### Examples
 
-```
+Build this module and its tests:
+
+```sh
 yotta build
-yotta build -d all_tests
-yotta build -d -G "Sublime Text 2 - Ninja"
-yotta build -G "Unix Makefiles" -- -j 4
 ```
 
-<a name="yotta-search"></a>
-## yotta search
+Build the tests for all dependencies:
+
+```sh
+yotta build -d all_tests
+```
+
+Generating IDE project files:
+
+```sh
+yotta build -d -G "Sublime Text 2 - Ninja"
+yotta build -d -G "Eclipse CDT4 - Ninja"
+```
+
+Passing options through to the build system:
+
+```sh
+yotta build -G "Unix Makefiles" -- -j 4
+yotta build -- -v
+```
+
+## <a href="#yotta-search" name="yotta-search">#</a> yotta search
 #### Synopsis
 ```
 yotta search <string> [--keyword=<keyword>] [--limit=<N>]
@@ -107,8 +143,7 @@ yotta search module logging
 yotta search target -k mbed-official -k mbed-target:k64f
 ```
 
-<a name="yotta-test"></a>
-## yotta test
+## <a href="#yotta-test" name="yotta-test">#</a> yotta test
 #### Synopsis
 
 ```
@@ -142,11 +177,11 @@ Options:
 yotta test
 yotta test --list all
 yotta test -n my-test
+yotta test --config="path/to/test-config.json"
 ```
    
 
-<a name="yotta-debug"></a>
-## yotta debug
+## <a href="#yotta-debug" name="yotta-debug">#</a> yotta debug
 #### Synopsis
 
 ```
@@ -164,19 +199,21 @@ yotta debug test/simplelog-test
 yotta debug source/helloyotta
 ```
 
-<a name="yotta-target"></a>
-## yotta target
+## <a href="#yotta-target" name="yotta-target">#</a> yotta target
 #### Synopsis
 
 ```
 yotta target
-yotta target <targetname>[,url-or-version-spec] [-g]
+yotta target <targetname>[,url-or-version-spec] [-g] [-n]
 ```
 
 #### Description
-Display or set the current target. `yotta` will look for and install a target description from the `yotta` registry when building or installing dependencies.
+Display or set the current target. `yotta` will look for and install a target
+description from the `yotta` registry when building or installing dependencies.
+If you run `yotta target` in an existing module then yotta will attempt to
+download the target description immediately, unless `-n` is specified.
 
-Targets define the options and commands that `yotta` uses to compile modules and executables. Currently only `x86-osx-native` and `x86-linux-native` targets are available.
+Targets define the options and commands that `yotta` uses to compile modules and executables. 
 
 A target must define a CMake Toolchain file describing all of the rules that `yotta` uses to build software, it may also define commands to launch a debugger (used by `yotta debug`).
 
@@ -187,17 +224,16 @@ the current module only, in a `.yotta.json` file.
 If the target is set both locally and globally, then the locally set target
 takes precedence.
 
-<a name="yotta-install"></a>
-## yotta install
-Synonyms: `yotta in`, `yotta i`
+## <a href="#yotta-install" name="yotta-install">#</a> yotta install
+Synonyms: `yotta in`
 #### Synopsis
 
 ```
-(in a module directory)
+# in a module directory:
 yotta install
 yotta install <module>[@<version>]
-(anywhere)
-yotta install <module>[@<version>] --global
+# anywhere:
+yotta install <module>[@<version>] [--global]
 ```
 
 #### Description
@@ -212,15 +248,16 @@ yotta install <module>
 Which installs `<module>` and its dependencies, and saves it in the current module's description file.
 
 A `<module>` is one of:
- * a name, in which case the module is installed from the public registry (<yottabuild.org>)
- * a github spec (username/reponame), in which case the module is installed directly from github. This can include private github URLs.
 
-##### yotta install (no arguments, in a module folder)
+  * a name, in which case the module is installed from the public registry (<https://yotta.mbed.com>)
+  * a github spec (username/reponame), in which case the module is installed directly from github. This can include private github URLs.
+
+#### `yotta install` (no arguments, in a module folder)
 In a module directory, `yotta install` will check for and install any missing dependencies of the current module. Options:
 
  * `--install-linked`: also traverse into any linked modules, and install their dependencies. By default linked modules are not modified. Note that without this option all the required dependencies to build may not be installed.
 
-##### `yotta install <module>` (in a module folder)
+#### `yotta install <module>` (in a module folder)
 In a module directory, `yotta install <module>` will install the specified module, and any missing dependencies for it.
 
 The installed version of the module will be saved as a dependency into the
@@ -229,20 +266,19 @@ to specify that only minor version updates are allowed to be installed,
 **unless** the module has a 0.x.x version number, in which case the `~`
 semantic-version specifier is used restrict updates to patch versions only.
 
-##### `yotta install <module>` (anywhere)
+#### `yotta install <module>` (anywhere)
 Download the specified dependency, and install it in a subdirectory of the current directory. Options:
 
  * `--global`: install the specified module into the global modules directory instead.
 
-##### Examples
+#### Examples
 
 ```
 yotta install simpleog
 yotta install ARM-RD/simplelog
 ```
 
-<a name="yotta-update"></a>
-## yotta update
+## <a href="#yotta-update" name="yotta-update">#</a> yotta update
 Synonyms: `yotta up`
 #### Synopsis
 
@@ -258,8 +294,7 @@ Options:
 
  * `--update-linked`: update the dependencies of linked modules too.
 
-<a name="yotta-version"></a>
-## yotta version
+## <a href="#yotta-version" name="yotta-version">#</a> yotta version
 Synonyms: `yotta v`
 #### Synopsis
 
@@ -272,7 +307,7 @@ Bump the current module's version, set a new version, or display the current ver
 
 If the current module is version-controlled by mercurial or git, then the new version is tagged. If the module is version controlled but the working directory is not clean, then an error message is printed.
 
-## yotta login
+## <a href="#yotta-login" name="yotta-login">#</a> yotta login
 #### Synopsis
 
 ```
@@ -287,8 +322,7 @@ You must log in before you can publish modules. Access control for publishing is
 No information other than your email address, and a public key generated by your `yotta` client, is stored by the `yotta` registry. Even someone with access to the `yotta` registry's database would not be able to publish modules in your name without stealing information that never leaves your computer!
 
 
-<a name="yotta-logout"></a>
-## yotta logout
+## <a href="#yotta-logout" name="yotta-logout">#</a> yotta logout
 #### Synopsis
 
 ```
@@ -298,8 +332,7 @@ yotta logout
 #### Description
 Remove all saved authentication information from the current computer. Does not revoke access tokens, as GitHub returns the same access token for each computer that you log into `yotta` on. If you wish to revoke access tokens you can do so on your GitHub account page.
 
-<a name="yotta-whoami"></a>
-## yotta whoami
+## <a href="#yotta-whoami" name="yotta-whoami">#</a> yotta whoami
 #### Synopsis
 
 ```
@@ -312,7 +345,7 @@ Display the primary email address(es) that you are currently authenticated to.
 If you are not logged in then this will return a non-zero status code,
 otherwise the status code is 0.
 
-# Examples
+#### Examples
 ```sh
 > yotta whoami
 friend@example.com
@@ -323,8 +356,7 @@ not logged in
 ```
 
 
-<a name="yotta-publish"></a>
-## yotta publish
+## <a href="#yotta-publish" name="yotta-publish">#</a> yotta publish
 #### Synopsis
 
 ```
@@ -332,14 +364,13 @@ yotta publish
 ```
 
 #### Description
-Publish the current module or target to the public [`yotta` registry](https://yottabuild.org), where other people will be able to search for and install it.
+Publish the current module or target to the public [`yotta` registry](https://yotta.mbed.com), where other people will be able to search for and install it.
 
 Any files matching lines in the `.yotta_ignore` file (if present) are ignored,
 and will not be included in the published tarball.
 
 
-<a name="yotta-link"></a>
-## yotta link
+## <a href="#yotta-link" name="yotta-link">#</a> yotta link
 Synonyms: `yotta ln`
 #### Synopsis
 
@@ -369,6 +400,13 @@ When you run `yotta build` it will then pick up the linked module.
 
 This works for direct and indirect dependencies: you can link to a module that your module does not use directly, but a dependency of your module does.
 
+**WARNING:** yotta uses directory junctions to provide links on windows. **Some
+command line tools are not aware of directory junctions and will recurse
+through them** (such as the version of `rm` that ships with msys). Be careful
+if you recursively delete your yotta_modules folder. yotta itself will never
+modify or remove files through a link, and windows explorer will also treat
+them correctly.
+
 #### Directories
 When you run `yotta link`, links are created in a system-wide directory under
 `YOTTA_PREFIX`, and the links in that directory are then picked up by
@@ -380,8 +418,7 @@ to make yotta link things into your home directory), set the `YOTTA_PREFIX`
 environment variable.
 
 
-<a name="yotta-link-target"></a>
-## yotta link-target
+## <a href="#yotta-link-target" name="yotta-link-target">#</a> yotta link-target
 #### Synopsis
 
 ```
@@ -408,8 +445,7 @@ yotta link-target <targetename>
 
 When you run `yotta build` (provided you've set `yotta target` to `<targetname>`), the linked target description will be used.
 
-<a name="yotta-list"></a>
-## yotta list
+## <a href="#yotta-list" name="yotta-list">#</a> yotta list
 Synonyms: `yotta ls`
 #### Synopsis
 
@@ -420,8 +456,7 @@ yotta list [--all]
 #### Description
 List the installed dependencies of the current module, including information on the installed versions. Unless `--all` is specified, dependencies are only listed under the modules that first use them, with `--all` dependencies that are used my multiple modules are listed multiple times (but all modules will use the same installed instance of the dependency).
 
-<a name="yotta-uninstall"></a>
-## yotta uninstall
+## <a href="#yotta-uninstall" name="yotta-uninstall">#</a> yotta uninstall
 Synonyms: `yotta unlink`, `yotta rm`
 #### Synopsis
 
@@ -432,8 +467,7 @@ yotta uninstall <module>
 #### Description
 Remove the specified dependency of the current module (or destroy the symlink if it was linked).
 
-<a name="yotta-owners"></a>
-## yotta owners
+## <a href="#yotta-owners" name="yotta-owners">#</a> yotta owners
 Synonyms: `yotta owner`
 #### Synopsis
 
@@ -449,9 +483,7 @@ List, add, or remove owners from the specified module or target. Owners are peop
 If the current directory is a module or target, then the module name is optional, and defaults to the current module.
 
 
-<a name="yotta-licenses"></a>
-## yotta licenses
-
+## <a href="#yotta-licenses" name="yotta-licenses">#</a> yotta licenses
 #### Synopsis
 
 ```
@@ -467,9 +499,7 @@ occurs in, instead of just once.
 `module.json` files, it can make no warranties about whether modules contain
 code under other licenses that have not been declared.
 
-<a name="yotta-config"></a>
-## yotta config
-
+## <a href="#yotta-config" name="yotta-config">#</a> yotta config
 #### Synopsis
 
 ```
@@ -491,8 +521,7 @@ modules when they are built.
 
 See the [config system reference](/reference/config.html) for more details.
 
-<a name="yotta-outdated"></a>
-## yotta outdated
+## <a href="#yotta-outdated" name="yotta-outdated">#</a> yotta outdated
 
 #### Synopsis
 

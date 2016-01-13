@@ -17,9 +17,13 @@ git_logger = logging.getLogger('git')
 hg_logger = logging.getLogger('hg')
 
 class VCSError(Exception):
-    def __init__(self, message, returncode=None):
+    def __init__(self, message, returncode=None, command=None):
         super(VCSError, self).__init__(message)
         self.returncode = returncode
+        self.command = command
+
+class VCSNotInstalled(VCSError):
+    pass
 
 class VCS(object):
     @classmethod
@@ -120,21 +124,21 @@ class Git(VCS):
         out, err = None, None
         for cmd in commands:
             try:
-                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                child = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ)
             except OSError as e:
                 if e.errno == errno.ENOENT:
                     if cmd[0] == 'git':
-                        raise VCSError(
-                            'git is not installed, or not in your path. Please follow the installation instructions at http://docs.yottabuild.org/#installing'
+                        raise VCSNotInstalled(
+                            'git is not installed, or not in your path. Please follow the installation instructions at http://yottadocs.mbed.com/#installing'
                         )
                     else:
-                        raise VCSError('%s is not installed' % (cmd[0]))
+                        raise VCSNotInstalled('%s is not installed' % (cmd[0]))
                 else:
-                    raise VCSError('command %s failed' % (cmd))
+                    raise VCSError('command failed', command=cmd)
             out, err = child.communicate()
             returncode = child.returncode
             if returncode:
-                raise VCSError("command failed: %s:%s" % (cmd, err or out), returncode=returncode)
+                raise VCSError("command failed: %s" % (err or out), returncode=returncode, command=cmd)
         return out, err
 
     def isClean(self):

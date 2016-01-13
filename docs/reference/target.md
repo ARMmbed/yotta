@@ -15,6 +15,7 @@ when building for different targets.
 {
   "name": "frdm-k64f-gcc",
   "version": "0.0.7",
+  "license": "Apache-2.0",
   "inherits": {
     "mbed-gcc": "~0.1.2"
   },
@@ -31,6 +32,10 @@ when building for different targets.
     }
   },
   "toolchain": "CMake/toolchain.cmake",
+  "cmakeIncludes": [
+    "CMake/enableXXX.cmake",
+    "CMake/debugYYY.cmake"
+  ]
   "scripts": {
     "debug": ["valinor", "--target", "K64F", "$program" ],
     "test": [ "mbed_test_wrapper", "--target", "K64F", "$program" ]
@@ -97,11 +102,13 @@ from `targetDependencies` that matches one of the identifiers in this list.
 The identifiers are arbitrary strings, and do not need to be the names of other
 targets.
 
-### <a href="#licenses" name="licenses">#</a> `licenses` *required*
-**type: Array of objects: `{"url":"<URL to full license>", "type":"<SPDX license identifier>" }`**
 
-The licenses property in module.json should include all of the licenses that
-affect code in your module. For example:
+### <a href="#licenses" name="licenses">#</a> `licenses` *deprecated*
+See also: [`license`](#license). The `licenses` property was formerly a method
+of specifying that multiple licenses applied to a target. It's now preferred to
+use a single `license` field containing a SPDX license expression.
+
+`licenses` example:
 
 ```json
   "licenses": [
@@ -109,14 +116,29 @@ affect code in your module. For example:
       "url": "https://spdx.org/licenses/Apache-2.0",
       "type": "Apache-2.0"
     }
-  ]
+  ],
 ```
 
-If you're starting a completely new module, and have freedom to choose the
-license yourself, `yotta`'s preferred license is
-[Apache-2.0](http://spdx.org/licenses/Apache-2.0), a permissive OSI-approved
-open source license which provides clarity over the scope of patent grants.
-`yotta` itself is also licensed under Apache-2.0.
+
+### <a href="#license" name="license">#</a> `license` *required*
+**type: String** `"<SPDX license identifier>"`**
+
+The license property in target.json should include all of the licenses that
+affect code in your target. For example:
+
+```json
+  "license": "Apache-2.0"
+```
+
+The license identifiers are from the [SPDX list](http://spdx.org/licenses/).
+[SPDX license expressions](/reference/licenses.html) can be used for compound licenses.
+
+According to [SPDX v2.0](https://spdx.org/sites/spdx/files/SPDX-2.0.pdf), custom licenses in a file should be entered as:
+
+```json
+  "license": "LicenseRef-LICENSE.pdf"
+```
+
 
 ### <a href="#description" name="description">#</a> `description`
 **type: String**
@@ -140,6 +162,18 @@ with the mbed target name of the development board.
 Path to the target's CMake toolchain file. If this target [inherits](#inherits)
 from another target that provides a functioning toolchain this property is
 optional.
+
+### <a href="#cmakeIncludes" name="cmakeIncludes">#</a> `cmakeIncludes`
+**type: Array of String (paths relative to target root directory)**
+
+List of CMake files which should be included in every module built. These can
+be used to modify the rules for building libraries/executables as necessary.
+For example, a target description might provide the ability to produce
+selected code-coverage information by appending code-coverage flags when
+compiling some selected subset of modules.
+
+The name of the library being built by the current module is available in the
+included cmake files as `YOTTA_MODULE_NAME`.
 
 ### <a href="#scripts" name="scripts">#</a> `scripts`
 **type: hash of script-name to command**

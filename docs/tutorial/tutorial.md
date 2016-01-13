@@ -9,9 +9,14 @@ There are two sorts of things that `yotta` builds: modules, and executables. Mod
 
 We’ll look at creating and publishing a module, then using that module in a simple command line executable.
 
+This tutorial assumes your are building and running natively on OS X or Linux,
+For a guide to writing cross-compiled programs for mbed OS using yotta, see the
+[mbed OS
+documentation](https://docs.mbed.com/docs/getting-started-mbed-os/en/latest/FirstProjectmbedOS/).
+
 <a name="Creating a Module"></a>
 ## Creating a Module
-Before creating a module you should always check the [yotta registry](http://yottabuild.org) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
+Before creating a module you should always check the [yotta registry](https://yotta.mbed.com) to see if another module already exists that does the same thing. If it does, think about submitting a pull-request to that module first.
 
 Let’s create a module that provides a really simple logging framework:
 
@@ -29,17 +34,22 @@ First create a directory with the name we want, and `cd` into it.
 
 ```sh
 > yotta init
-Enter the module name: <simplelog>
-Enter the initial version: <0.0.0>
+Enter the module name: <simplelog> 
+Enter the initial version: <0.0.0> 
+Is this an executable (instead of a re-usable library module)? <no> 
 Short description: Really simple logging.
-Keywords: <> logging
+Keywords:  <> logging, simple, example
 Author: James Crosby <james.crosby@arm.com>
-Repository url: ssh://git@github.com/ARM-RD/simplelog
-Homepage: http://github.com/ARM-RD/simplelog
-What is the license for this project (ISC, MIT, Apache-2 etc.)?  <ISC>
-Is this module an executable? <no>
+Repository url (where people can submit bugfixes): ssh://git@github.com/ARMmbed/simplelog
+Homepage: http://github.com/ARMmbed/simplelog
+What is the license for this project (Apache-2.0, ISC, MIT etc.)?  <Apache-2.0> 
 > 
 ```
+
+**Note:** you can use any valid [SPDX license
+expression](/reference/licenses.html) for the license of your module, although
+simple permissive open-source licenses like Apache-2.0 are encouraged, and will
+make it easier for people to use your module and contribute improvements.
 
 ### Module Structure
 `yotta init` also creates some directories for us to put things in:
@@ -69,6 +79,11 @@ For the same reason we prefix everything in the public header with the name of o
 #ifndef SIMPLELOG_LOG_H
 #define SIMPLELOG_LOG_H
 
+// make sure the header works when included from C++
+#ifdef __cplusplus
+extern "C" {
+#endif // def __cplusplus
+
 // Log levels: note that we prefix everything with the module name. It's OK to
 // use various Casing and underscore separated conventions to denote different
 // types of symbols, since module names are forced to be lower case, and cannot
@@ -90,6 +105,10 @@ void simpleLogError(const char* msg);
 void simpleLogWarning(const char* msg);
 void simpleLogInfo(const char* msg);
 void simpleLogDebug(const char* msg);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // def __cplusplus
 
 // end the header inclusion guard
 #endif // ndef SIMPLELOG_LOG_H
@@ -181,6 +200,10 @@ int main(){
     return 0;
 }
 ```
+
+Note that if you are compiling a program for [mbed
+OS](https://github.com/armmbed/mbed-os) with yotta, then the entry point is
+[`app_start`](https://github.com/armmbed/minar#impact), instead of `main`.
 
 Now, when we run `yotta build`, yotta will also build our test:
 
@@ -285,7 +308,7 @@ This has saved `simplelog` as a dependency in the `module.json` file, specifying
 `yotta install` also creates a `yotta_modules` directory in the module's directory, which it uses to store your dependencies. This, along with a corresponding `yotta_targets directory`, and the `build` directory, may be overwritten by `yotta` at any time, so generally shouldn't be modified, and you should not create files in them.
 
 ### Implement
-When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable. For this example, use a file called `./source/hello.c`:
+When `yotta` builds, it will automatically arrange that our executable is linked against the dependencies we've specified, and that their header files are available, so we can create a single file in the `./source` directory to get a working executable. For this example, use a file called `./source/hello.cpp`:
 
 ```C
 #include "simplelog/log.h"
@@ -307,7 +330,7 @@ info: generate for target: x86-osx-native 0.0.3 at /Dev/helloyotta/yotta_targets
 -- Build files have been written to: /Dev/helloyotta/build/x86-osx-native
 Scanning dependencies of target simplelog
 ...
-[100%] Building C object source/CMakeFiles/helloyotta.dir/Dev/helloyotta/source/hello.c.o
+[100%] Building C object source/CMakeFiles/helloyotta.dir/Dev/helloyotta/source/hello.cpp.o
 Linking C executable helloyotta
 [100%] Built target helloyotta
 ```

@@ -24,7 +24,7 @@ from .lib import fsutils
 # OK this is a pretty terrible validation regex... should find a proper module
 # to do this
 Target_RE = re.compile('^('+
-    '[a-z0-9-]+,?('+
+    '[a-z]+[a-z0-9+-]*,?('+
         '[a-zA-Z0-9-]+/[a-zA-Z0-9-]+' +'|'+ '([a-zA-Z0-9_-]*@)?[a-zA-Z0-9_+-]+://.*' + '|' + '[a-z0-9.-]*'+
     ')?'+
 ')$')
@@ -38,13 +38,10 @@ def addOptions(parser):
         default=False, action='store_true',
         help='set globally (in the per-user settings) instead of locally to this directory'
     )
-
-    # FIXME: need help that lists possible targets, and we need a walkthrough
-    # guide to forking a new target for an existing board
-    #
-    # (the description of a target should have a list of things that it's
-    #  similar to, e.g. objectador is similar to EFM32gg990f, #  EFM32gg,
-    #  Cortex-M3, ARMv8, ARM)
+    parser.add_argument('-n', '--no-install', dest='no_install',
+        default=False, action='store_true',
+        help='do not immediately download the target description'
+    )
 
 
 def displayCurrentTarget(args):
@@ -103,7 +100,7 @@ def execCommand(args, following_args):
         return displayCurrentTarget(args)
     else:
         if not Target_RE.match(args.set_target):
-            logging.error('''Invalid target: "%s"''' % args.set_target)#, targets must be one of:
+            logging.error('Invalid target: "%s"' % args.set_target)#, targets must be one of:
             #
             #    a valid name (lowercase letters, numbers, and hyphen)
             #    a github ref (owner/project)
@@ -126,4 +123,14 @@ def execCommand(args, following_args):
             else:
                 t = args.set_target
             settings.setProperty('build', 'target', t, not args.save_global)
+            if not args.no_install:
+                # if we have a module in the current directory, try to make sure
+                # this target is installed
+                c = component.Component(os.getcwd())
+                if c:
+                    target, errors = c.satisfyTarget(t)
+                    for err in errors:
+                        logging.error(err)
+                    if len(errors):
+                        logging.error('NOTE: use "yotta link-target" to test a locally modified target prior to publishing.')
             return 0

@@ -18,11 +18,14 @@ from .lib import access_common
 
 # folders, , get places to install things, internal
 from .lib import folders
+# --config option, , , internal
+from . import options
 
 GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
 
 
 def addOptions(parser):
+    options.config.addTo(parser)
     parser.add_argument('component', default=None, nargs='?',
         help='If specified, install this module instead of installing '+
              'the dependencies of the current module.'
@@ -83,7 +86,7 @@ def installDeps(args, current_component):
     if not args.target:
         logging.error('No target has been set, use "yotta target" to set one.')
         return 1
-    target, errors = current_component.satisfyTarget(args.target)
+    target, errors = current_component.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)
@@ -114,7 +117,7 @@ def installComponentAsDependency(args, current_component):
         logging.debug(str(current_component.getError()))
         logging.error('The current directory does not contain a valid module.')
         return -1
-    target, errors = current_component.satisfyTarget(args.target)
+    target, errors = current_component.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:
             logging.error(error)
@@ -175,23 +178,27 @@ def installComponent(args):
     # !!! FIXME: should support other URL specs, spec matching should be in
     # access module
     github_ref_match = GitHub_Ref_RE.match(args.component)
-    if github_ref_match:
-        component_name = github_ref_match.group(1)
-        access.satisfyVersion(
-                  component_name,
-                  args.component,
-                       available = dict(),
-                    search_paths = [path],
-               working_directory = path
-        )
-    else:
-        component_name = args.component
-        access.satisfyVersion(
-                  component_name,
-                             '*',
-                       available = dict(),
-                    search_paths = [path],
-               working_directory = path
-        )
+    try:
+        if github_ref_match:
+            component_name = github_ref_match.group(1)
+            access.satisfyVersion(
+                      component_name,
+                      args.component,
+                           available = dict(),
+                        search_paths = [path],
+                   working_directory = path
+            )
+        else:
+            component_name = args.component
+            access.satisfyVersion(
+                      component_name,
+                                 '*',
+                           available = dict(),
+                        search_paths = [path],
+                   working_directory = path
+            )
+    except access_common.Unavailable as e:
+        logging.error('%s', e)
+        return 1
     os.chdir(component_name)
     return installDeps(args, component.Component(os.getcwd()))

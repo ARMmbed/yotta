@@ -10,14 +10,19 @@ import logging
 
 # validate, , validate things, internal
 from .lib import validate
+# access_common, , things shared between different component access modules, internal
+from .lib import access_common
 # CMakeGen, , generate build files, internal
 from .lib import cmakegen
 # Target, , represents an installed target, internal
 from .lib import target
 # install, , install subcommand, internal
 from . import install
+# --config option, , , internal
+from . import options
 
 def addOptions(parser, add_build_targets=True):
+    options.config.addTo(parser)
     parser.add_argument('-g', '--generate-only', dest='generate_only',
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
@@ -61,7 +66,11 @@ def installAndBuild(args, following_args):
     if not c:
         return {'status':1}
 
-    target, errors = c.satisfyTarget(args.target)
+    try:
+        target, errors = c.satisfyTarget(args.target, additional_config=args.config)
+    except access_common.AccessException as e:
+        logging.error(e)
+        return {'status':1}
     if errors:
         for error in errors:
             logging.error(error)

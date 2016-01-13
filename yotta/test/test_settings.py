@@ -9,27 +9,30 @@
 import unittest
 import tempfile
 import os
+import random
 
 # validate, , validate various things, internal
 from yotta.lib import settings
 from yotta.lib.fsutils import rmRf
 
 class TestSettings(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+    @classmethod
+    def setUpClass(cls):
+        cls.test_dir = tempfile.mkdtemp()
         test_files = [
             ('1.json', '{"a":{"b":{"c":"1-value"}}}'),
             ('2.json', '{"a":{"b":{"c":"2-value"}, "b2":"2-value"}}'),
             ('3.json', '{"a":{"b":{"c":"3-value"}, "b2":"3-value"}, "a2":"3-value"}')
         ]
-        self.filenames = []
+        cls.filenames = []
         for fn, s in test_files:
-            self.filenames.append(os.path.join(self.test_dir, fn))
-            with open(self.filenames[-1], 'w') as f:
+            cls.filenames.append(os.path.join(cls.test_dir, fn))
+            with open(cls.filenames[-1], 'w') as f:
                 f.write(s)
 
-    def tearDown(self):
-        rmRf(self.test_dir)
+    @classmethod
+    def tearDownClass(cls):
+        rmRf(cls.test_dir)
 
     def test_merging(self):
         p = settings._JSONConfigParser()
@@ -112,6 +115,10 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(p5.get('someLongNameHere_etc_etc.with.a.path'), 7)
         self.assertEqual(p5.get('someLongNameHere_etc_etc.with.another.path'), 7)
 
+    def test_envvars(self):
+        testval = str(random.randint(1,100000))
+        os.environ['YOTTA_SETTINGS_TEST_VARIABLE'] = testval
+        self.assertEqual(settings.get('settings.TEST.Variable'), testval)
 
 
 if __name__ == '__main__':

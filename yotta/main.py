@@ -4,6 +4,7 @@
 # See LICENSE file for details.
 
 from .lib import lazyregex #pylint: disable=unused-import
+from .lib import errors #pylint: disable=unused-import
 
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
@@ -11,26 +12,17 @@ import argcomplete
 
 # standard library modules, , ,
 import argparse
-import logging
 import sys
-from functools import reduce
 import os
 
-# logging setup, , setup the logging system, internal
-from .lib import logging_setup
-# detect, , detect things about the system, internal
-from .lib import detect
 # globalconf, share global arguments between modules, internal
 import yotta.lib.globalconf as globalconf
 
 # hook to support coverage information when yotta runs itself during tests:
-if 'COVERAGE_PROCESS_START' is os.environ:
+if 'COVERAGE_PROCESS_START' in os.environ:
     import coverage
     coverage.process_startup()
 
-
-def logLevelFromVerbosity(v):
-    return max(1, logging.INFO - v * (logging.ERROR-logging.NOTSET) // 5)
 
 def splitList(l, at_value):
     r = [[]]
@@ -41,40 +33,6 @@ def splitList(l, at_value):
             r[-1].append(x)
     return r
 
-# (instead of subclassing argparse._SubParsersAction, we monkey-patch it,
-#  because argcomplete has special-cases for the _SubParsersAction class that
-#  it's impossible to extend to another class)
-#
-# add a add_parser_async function, which allows a subparser to be added whose
-# options are not evaluated until the subparser has been selected. This allows
-# us to defer loading the modules for all the subcommands until they are
-# actually:
-def _SubParsersAction_addParserAsync(self, name, *args, **kwargs):
-    if not 'callback' in kwargs:
-        raise ValueError('callback=fn(parser) argument must be specified')
-    callback = kwargs['callback']
-    del kwargs['callback']
-    parser = self.add_parser(name, *args, **kwargs)
-    parser._lazy_load_callback = callback
-    return None
-argparse._SubParsersAction.add_parser_async = _SubParsersAction_addParserAsync
-
-def _wrapSubParserActionCall(orig_call):
-    def wrapped_call(self, parser, namespace, values, option_string=None):
-        parser_name = values[0]
-        if parser_name in self._name_parser_map:
-            subparser = self._name_parser_map[parser_name]
-            if hasattr(subparser, '_lazy_load_callback'):
-                # the callback is responsible for adding the subparser's own
-                # arguments:
-                subparser._lazy_load_callback(subparser)
-        # now we can go ahead and call the subparser action: its arguments are
-        # now all set up
-        return orig_call(self, parser, namespace, values, option_string)
-    return wrapped_call
-argparse._SubParsersAction.__call__ = _wrapSubParserActionCall(argparse._SubParsersAction.__call__)
-
-
 # Override the argparse default version action so that we can avoid importing
 # pkg_resources (which is slowww) unless someone has actually asked for the
 # version
@@ -84,47 +42,39 @@ class FastVersionAction(argparse.Action):
         sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
         sys.exit(0)
 
-
 def main():
-    parser = argparse.ArgumentParser(
+    # standard library modules, , ,
+    import logging
+    from functools import reduce
+
+    # logging setup, , setup the logging system, internal
+    from .lib import logging_setup
+    # options, , common argument parser options, internal
+    import yotta.options as options
+
+    logging_setup.init(level=logging.INFO, enable_subsystems=None, plain=False)
+
+    # we override many argparse things to make options more re-usable across
+    # subcommands, and allow lazy loading of subcommand modules:
+    parser = options.parser.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description='Build software using re-usable components.\n'+
         'For more detailed help on each subcommand, run: yotta <subcommand> --help'
     )
-    subparser = parser.add_subparsers(metavar='<subcommand>')
+    subparser = parser.add_subparsers(dest='subcommand_name', metavar='<subcommand>')
 
     parser.add_argument('--version', nargs=0, action=FastVersionAction,
         help='display the version'
     )
-    parser.add_argument('-v', '--verbose', dest='verbosity', action='count',
-        default=0,
-        help='increase verbosity: can be used multiple times'
-    )
-    parser.add_argument('-d', '--debug', dest='debug', action='append',
-        metavar='SUBSYS',
-        help=argparse.SUPPRESS
-        #help='specify subsystems to debug: use in conjunction with -v to '+
-        #     'increase the verbosity only for specified subsystems'
-    )
 
-    parser.add_argument('-t', '--target', dest='target',
-        default=detect.defaultTarget(),
-        help='Set the build and dependency resolution target (targetname[,versionspec_or_url])'
-    )
-
-    parser.add_argument('--plain', dest='plain',
-        action='store_true', default=False,
-        help="Use a simple output format with no colours"
-    )
-
-    parser.add_argument('--noninteractive', '-n', dest='interactive',
-        action='store_false', default=True,
-        help="Do not wait for user interaction (for example to log in), fail instead."
-    )
-
-    parser.add_argument(
-        '--registry', default=None, dest='registry', help=argparse.SUPPRESS
-    )
+    # add re-usable top-level options which subcommands may also accept
+    options.verbosity.addTo(parser)
+    options.debug.addTo(parser)
+    options.plain.addTo(parser)
+    options.noninteractive.addTo(parser)
+    options.registry.addTo(parser)
+    options.target.addTo(parser)
+    options.config.addTo(parser)
 
     def addParser(name, module_name, description, help=None):
         if help is None:
@@ -144,7 +94,8 @@ def main():
         'Search for open-source modules and targets that have been published '+
         'to the yotta registry (with yotta publish). See help for `yotta '+
         'install` for installing modules, and for `yotta target` for '+
-        'switching targets.'
+        'switching targets.',
+        'Search for published modules and targets'
     )
     addParser('init', 'init', 'Create a new module.')
     addParser('install', 'install',
@@ -163,8 +114,20 @@ def main():
         'Build the current module.'
     )
     addParser('version', 'version', 'Bump the module version, or (with no arguments) display the current version.')
-    addParser('link', 'link', 'Symlink a module.')
-    addParser('link-target', 'link_target', 'Symlink a target.')
+    addParser('link', 'link',
+        'Symlink a module to be used in another module. Use "yotta link" '+
+        '(with no arguments) to link the current module globally. Or use '+
+        '"yotta link module-name" To use a module that was previously linked '+
+        'globally in the current module.',
+        'Symlink a module'
+    )
+    addParser('link-target', 'link_target',
+        'Symlink a target to be used in another module. Use "yotta link-target" '+
+        '(with no arguments) to link the current target globally. Or use '+
+        '"yotta link-target target-name" To use a target that was previously linked '+
+        'globally in the current module.',
+        'Symlink a target'
+    )
     addParser('update', 'update', 'Update dependencies for the current module, or a specific module.')
     addParser('target', 'target', 'Set or display the target device.')
     addParser('debug', 'debug', 'Attach a debugger to the current target.  Requires target support.')
@@ -185,7 +148,12 @@ def main():
     addParser('list', 'list', 'List the dependencies of the current module, or the inherited targets of the current target.')
     addParser('outdated', 'outdated', 'Display information about dependencies which have newer versions available.')
     addParser('uninstall', 'uninstall', 'Remove a specific dependency of the current module, both from module.json and from disk.')
-    addParser('remove', 'remove', 'Remove the downloaded version of a dependency, or un-link a linked module.')
+    addParser('remove', 'remove',
+        'Remove the downloaded version of a dependency module or target, or '+
+        'un-link a linked module or target (see yotta link --help for details '+
+        'of linking). This command does not modify your module.json file.',
+        'Remove or unlink a dependency without removing it from module.json.'
+    )
     addParser('owners', 'owners', 'Add/remove/display the owners of a module or target.')
     addParser('licenses', 'licenses', 'List the licenses of the current module and its dependencies.')
     addParser('clean', 'clean', 'Remove files created by yotta and the build.')
@@ -194,16 +162,17 @@ def main():
     # short synonyms, subparser.choices is a dictionary, so use update() to
     # merge in the keys from another dictionary
     short_commands = {
-            'up':subparser.choices['update'],
-            'in':subparser.choices['install'],
-            'ln':subparser.choices['link'],
-             'v':subparser.choices['version'],
-            'ls':subparser.choices['list'],
-            'rm':subparser.choices['remove'],
-        'unlink':subparser.choices['remove'],
-         'owner':subparser.choices['owners'],
-          'lics':subparser.choices['licenses'],
-           'who':subparser.choices['whoami']
+                'up':subparser.choices['update'],
+                'in':subparser.choices['install'],
+                'ln':subparser.choices['link'],
+                 'v':subparser.choices['version'],
+                'ls':subparser.choices['list'],
+                'rm':subparser.choices['remove'],
+            'unlink':subparser.choices['remove'],
+     'unlink-target':subparser.choices['remove'],
+             'owner':subparser.choices['owners'],
+              'lics':subparser.choices['licenses'],
+               'who':subparser.choices['whoami']
     }
     subparser.choices.update(short_commands)
 
@@ -227,9 +196,6 @@ def main():
     globalconf.set('interactive', args.interactive)
     globalconf.set('plain', args.plain)
 
-    loglevel = logLevelFromVerbosity(args.verbosity)
-    logging_setup.init(level=loglevel, enable_subsystems=args.debug, plain=args.plain)
-
     # finally, do stuff!
     if 'command' not in args:
         parser.print_usage()
@@ -242,4 +208,3 @@ def main():
         status = -1
 
     sys.exit(status or 0)
-
