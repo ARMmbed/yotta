@@ -13,7 +13,7 @@ import tempfile
 # internal modules:
 from yotta.lib.fsutils import rmRf
 from . import cli
-
+from . import util
 
 Test_Target = "x86-osx-native,*"
 
@@ -54,6 +54,26 @@ Public_Module_JSON = '''{
 }'''
 
 
+Test_Publish = {
+'module.json':'''{
+  "name": "test-publish",
+  "version": "0.0.0",
+  "description": "Test yotta publish",
+  "author": "James Crosby <james.crosby@arm.com>",
+  "license": "Apache-2.0",
+  "keywords": ["mbed-official"],
+  "dependencies":{
+  }
+}''',
+'readme.md':'''##This is a test module used in yotta's test suite.''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    printf("foo!\\n");
+    return 7;
+}'''
+}
+
+
 class TestCLIPublish(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -88,6 +108,15 @@ class TestCLIPublish(unittest.TestCase):
                 os.environ['YOTTA_USER_SETTINGS_DIR'] = saved_settings_dir
             else:
                 del os.environ['YOTTA_USER_SETTINGS_DIR']
+
+    def test_warnOfficialKeywords(self):
+        path = util.writeTestFiles(Test_Publish, True)
+
+        stdout, stderr, statuscode = cli.run(['-t', 'x86-linux-native', '--noninteractive', 'publish'], cwd=path)
+        self.assertNotEqual(statuscode, 0)
+        self.assertIn('Is this really an officially supported mbed module', stdout + stderr)
+
+        util.rmRf(path)
 
 if __name__ == '__main__':
     unittest.main()

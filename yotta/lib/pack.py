@@ -52,6 +52,8 @@ Default_Publish_Ignore = [
 Readme_Regex = re.compile('^readme(?:\.md)', re.IGNORECASE)
 
 Ignore_List_Fname = '.yotta_ignore'
+Shrinkwrap_Fname  = 'yotta-shrinkwrap.json'
+Shrinkwrap_Schema = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'shrinkwrap.json')
 Origin_Info_Fname = '.yotta_origin.json'
 
 logger = logging.getLogger('components')
@@ -92,10 +94,23 @@ class OptionalFileWrapper(object):
 
 
 class DependencySpec(object):
-    def __init__(self, name, version_req, is_test_dependency=False):
+    def __init__(self, name, version_req, is_test_dependency=False, shrinkwrap_version_req=None, specifying_module=None):
         self.name = name
         self.version_req = version_req
+        self.specifying_module = specifying_module # for diagnostic info only, may not be present
         self.is_test_dependency = is_test_dependency
+        self.shrinkwrap_version_req = shrinkwrap_version_req
+
+    def isShrinkwrapped(self):
+        return self.shrinkwrap_version_req is not None
+
+    def nonShrinkwrappedVersionReq(self):
+        ''' return the dependency specification ignoring any shrinkwrap '''
+        return self.version_req
+
+    def versionReq(self):
+        ''' return the dependency specification, which may be from a shrinkwrap file '''
+        return self.shrinkwrap_version_req or self.version_req
 
     def __unicode__(self):
         return u'%s at %s' % (self.name, self.version_req)
@@ -103,6 +118,28 @@ class DependencySpec(object):
         return self.__unicode__().encode('utf-8')
     def __repr__(self):
         return self.__unicode__()
+
+def tryReadJSON(filename, schemaname):
+    r = None
+    try:
+        with open(filename, 'r') as jsonfile:
+            r = ordered_json.load(filename)
+            have_errors = False
+            if schemaname is not None:
+                with open(schemaname, 'r') as schema_file:
+                    schema = json.load(schema_file)
+                    validator = jsonschema.Draft4Validator(schema)
+                    for error in validator.iter_errors(r):
+                        logger.error(
+                            '%s is not valid under the schema: %s value %s',
+                            filename,
+                            u'.'.join([str(x) for x in error.path]),
+                            error.message
+                        )
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
+    return r
 
 # Pack represents the common parts of Target and Component objects (versions,
 # VCS, etc.)
@@ -116,7 +153,8 @@ class Pack(object):
             description_filename,
             installed_linked,
             schema_filename = None,
-            latest_suitable_version = None
+            latest_suitable_version = None,
+            inherit_shrinkwrap = None
         ):
         # resolve links at creation time, to minimise path lengths:
         self.unresolved_path = path
@@ -173,7 +211,40 @@ class Pack(object):
             # though!
             #if have_errors:
             #    raise InvalidDescription('Invalid %s' % description_filename)
+        self.inherited_shrinkwrap = None
+        self.shrinkwrap = None
+        # we can only apply shrinkwraps to instances with valid descriptions:
+        # instances do not become valid after being invalid so this is safe
+        # (but it means you cannot trust the shrinkwrap of an invalid
+        # component)
+        # (note that it is unsafe to use the __bool__ operator on self here as
+        # we are not fully constructed)
+        if self.description:
+            if inherit_shrinkwrap is not None:
+                # when inheriting a shrinkwrap, check that this module is
+                # listed in the shrinkwrap, otherwise emit a warning:
+                if next((x for x in inherit_shrinkwrap.get('modules', []) if x['name'] == self.getName()), None) is None:
+                    logger.warning("%s missing from shrinkwrap", self.getName())
+                self.inherited_shrinkwrap = inherit_shrinkwrap
+            self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
+            if self.shrinkwrap:
+                logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
+                if self.inherited_shrinkwrap:
+                    logger.warning('shrinkwrap in %s overrides inherited shrinkwrap', self.getName())
+        #logger.info('%s created with inherited_shrinkwrap %s', self.getName(), self.inherited_shrinkwrap)
         self.vcs = vcs.getVCS(path)
+
+    def getShrinkwrap(self):
+        return self.shrinkwrap or self.inherited_shrinkwrap
+
+    def getShrinkwrapMapping(self):
+        shrinkwrap = self.getShrinkwrap()
+        if shrinkwrap and 'modules' in shrinkwrap:
+            return {
+                x['name']: x['version'] for x in shrinkwrap['modules']
+            }
+        else:
+            return {}
 
     def origin(self):
         ''' Read the .yotta_origin.json file (if present), and return the value
@@ -256,6 +327,12 @@ class Pack(object):
             return self.description['name']
         else:
             return None
+
+    def getKeywords(self):
+        if self.description:
+            return self.description.get('keywords', [])
+        else:
+            return []
 
     def _parseIgnoreFile(self, f):
         r = []

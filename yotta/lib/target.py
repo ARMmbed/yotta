@@ -135,7 +135,7 @@ def getDerivedTarget(
             if install_missing:
                 t = access.satisfyVersion(
                                  name = dspec.name,
-                     version_required = dspec.version_req,
+                     version_required = dspec.versionReq(),
                             available = target_hierarchy,
                          search_paths = search_dirs,
                     working_directory = targets_path,
@@ -145,7 +145,7 @@ def getDerivedTarget(
             else:
                 t = access.satisfyVersionFromSearchPaths(
                                  name = dspec.name,
-                     version_required = dspec.version_req,
+                     version_required = dspec.versionReq(),
                          search_paths = search_dirs,
                                  type = 'target'
                 )
@@ -182,7 +182,13 @@ def getDerivedTarget(
     return (DerivedTarget(leaf_target, target_hierarchy[1:], app_config, additional_config), errors)
 
 class Target(pack.Pack):
-    def __init__(self, path, installed_linked=False, latest_suitable_version=None):
+    def __init__(
+            self,
+            path,
+            installed_linked = False,
+            latest_suitable_version = None,
+            inherit_shrinkwrap = None
+        ):
         ''' Initialise a Target based on a directory. If the directory does not
             contain a valid target.json file the initialised object will test
             false, and will contain an error property containing the failure.
@@ -193,7 +199,8 @@ class Target(pack.Pack):
                description_filename = Target_Description_File,
                    installed_linked = installed_linked,
                     schema_filename = Schema_File,
-            latest_suitable_version = latest_suitable_version
+            latest_suitable_version = latest_suitable_version,
+                 inherit_shrinkwrap = inherit_shrinkwrap
         )
 
     def baseTargetSpec(self):

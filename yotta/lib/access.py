@@ -202,14 +202,15 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
 
     return None
 
-def searchPathsFor(name, spec, search_paths, type='module'):
+def searchPathsFor(name, spec, search_paths, type='module', inherit_shrinkwrap=None):
     for path in search_paths:
         check_path = os.path.join(path, name)
         logger.debug("check path %s for %s" % (check_path, name))
         instance = _clsForType(type)(
                      check_path,
                    installed_linked = fsutils.isLink(check_path),
-            latest_suitable_version = None
+            latest_suitable_version = None,
+                 inherit_shrinkwrap = inherit_shrinkwrap
         )
         if instance:
             logger.debug("got %s v=%s spec %s matches? %s", instance, instance.getVersion(), spec, spec.match(instance.getVersion()))
@@ -228,6 +229,11 @@ def _clsForType(type):
     return {'module':component.Component, 'target':target.Target}[type]
 
 def satisfyFromAvailable(name, available, type='module'):
+    # we don't need to pass the shrinkwrap to this function because if this
+    # function finds a module we have already processed its dependencies for
+    # another module - so the shrinkwrap could not be applied.
+    # !!! FIXME: what about issuing warnings for things that don't match the
+    # shrinkwrap though?
     if name in available and available[name]:
         logger.debug('satisfy %s from already installed %ss' % (name, type))
         r = available[name]
@@ -238,7 +244,7 @@ def satisfyFromAvailable(name, available, type='module'):
         return r
     return None
 
-def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=False, type='module'):
+def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=False, type='module', inherit_shrinkwrap=None):
     ''' returns a Component/Target for the specified version, if found in the
         list of search paths. If `update' is True, then also check for newer
         versions of the found component, and update it in-place (unless it was
@@ -251,7 +257,8 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
             name,
             sourceparse.parseSourceURL(version_required).semanticSpec(),
             search_paths,
-            type
+            type,
+            inherit_shrinkwrap = inherit_shrinkwrap
         )
     except pack.InvalidDescription as e:
         logger.error(e)
@@ -284,20 +291,22 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
         ))
         # must rm the old component before continuing
         fsutils.rmRf(local_version.path)
-        return _satisfyVersionByInstallingVersion(name, version_required, local_version.path, v, type=type)
+        return _satisfyVersionByInstallingVersion(
+            name, version_required, local_version.path, v, type=type, inherit_shrinkwrap=inherit_shrinkwrap
+        )
     return None
 
-def satisfyVersionByInstalling(name, version_required, working_directory, type='module'):
+def satisfyVersionByInstalling(name, version_required, working_directory, type='module', inherit_shrinkwrap=None):
     ''' installs and returns a Component/Target for the specified name+version
         requirement, into a subdirectory of `working_directory'
     '''
     v = latestSuitableVersion(name, version_required, _registryNamespaceForType(type))
     install_into = os.path.join(working_directory, name)
     return _satisfyVersionByInstallingVersion(
-        name, version_required, install_into, v, type=type
+        name, version_required, install_into, v, type=type, inherit_shrinkwrap = inherit_shrinkwrap
     )
 
-def _satisfyVersionByInstallingVersion(name, version_required, working_directory, version, type='module'):
+def _satisfyVersionByInstallingVersion(name, version_required, working_directory, version, type='module', inherit_shrinkwrap=None):
     ''' installs and returns a Component/Target for the specified version requirement into
         'working_directory' using the provided remote version object.
         This function is not normally called via `satisfyVersionByInstalling',
@@ -306,7 +315,7 @@ def _satisfyVersionByInstallingVersion(name, version_required, working_directory
     assert(version)
     logger.info('download %s', version)
     version.unpackInto(working_directory)
-    r = _clsForType(type)(working_directory)
+    r = _clsForType(type)(working_directory, inherit_shrinkwrap = inherit_shrinkwrap)
     if not r:
         raise Exception(
             'Dependency "%s":"%s" is not a valid %s.' % (name, version_required, type)
@@ -324,7 +333,8 @@ def satisfyVersion(
         search_paths,
         working_directory,
         update_installed=None,
-        type='module'  # or 'target'
+        type='module',  # or 'target'
+        inherit_shrinkwrap=None
     ):
     ''' returns a Component/Target for the specified version (either to an already
         installed copy (from the available list, or from disk), or to a newly
@@ -345,11 +355,20 @@ def satisfyVersion(
             )
         return r
 
-    r = satisfyVersionFromSearchPaths(name, version_required, search_paths, update_installed == 'Update', type=type)
+    r = satisfyVersionFromSearchPaths(
+        name,
+        version_required,
+        search_paths,
+        (update_installed == 'Update'),
+        type = type,
+        inherit_shrinkwrap = inherit_shrinkwrap
+    )
     if r is not None:
         return r
 
-    return satisfyVersionByInstalling(name, version_required, working_directory, type=type)
+    return satisfyVersionByInstalling(
+        name, version_required, working_directory, type=type, inherit_shrinkwrap = inherit_shrinkwrap
+    )
 
 
 def satisfyTarget(name, version_required, working_directory, update_installed=None):
@@ -360,5 +379,6 @@ def satisfyTarget(name, version_required, working_directory, update_installed=No
             search_paths = [working_directory],
        working_directory = working_directory,
         update_installed = update_installed,
-                    type = 'target'
+                    type = 'target',
+      inherit_shrinkwrap = inherit_shrinkwrap
     )

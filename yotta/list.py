@@ -7,7 +7,6 @@
 from __future__ import print_function
 import logging
 import os
-import json
 
 # colorama, BSD 3-Clause license, cross-platform terminal colours, pip install colorama
 import colorama
@@ -35,7 +34,7 @@ def addOptions(parser):
         help='Display where modules were originally downloaded from (implied by --all).'
     )
     parser.add_argument('--json', '-j', dest='json', default=False, action='store_true',
-        help='Output json representation of dependencies.'
+        help='Output json representation of dependencies (implies --all).'
     )
 
 def execCommand(args, following_args):
@@ -55,19 +54,19 @@ def execCommand(args, following_args):
 
     if args.show_all:
         args.display_origin = True
-
-    dependencies = c.getDependenciesRecursive(
+    installed_modules = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
                         test = True
     )
     if args.json:
-        putln(formatJsonDeps(target, dependencies, args.show_all))
+        dependency_graph = resolveDependencyGraph(target, c, installed_modules)
+        print(formatDependencyGraphAsJSON(dependency_graph))
     else:
         putln(
             ComponentDepsFormatter(
                                target = target,
-                 available_components = dependencies,
+                 available_components = installed_modules,
                                 plain = args.plain,
                              list_all = args.show_all,
                        display_origin = args.display_origin
@@ -76,26 +75,63 @@ def execCommand(args, following_args):
             )
         )
 
-def formatJsonDeps(target, available_components, list_all):
-    d = {}
-    for c in available_components:
-        co = available_components[c]
-        d[c] = {}
-        d[c]['name'] = co.getName()
-        d[c]['version'] = str(co.getVersion())
-        d[c]['dependencies'] = {}
-        for dep in co.getDependencySpecs(target=target):
-            depcomp = available_components[dep.name]
-            spec = access.remoteComponentFor(dep.name, dep.version_req, 'modules').versionSpec()
-            dd = {
-                'verspec':dep.version_req,
-                   'test':dep.is_test_dependency,
-                'missing':not available_components[dep.name],
-               'mismatch':not spec.match(depcomp.getVersion()),
-                   'link':co.installedLinked()
-            }
-            d[c]['dependencies'][dep.name]=dd
-    return json.dumps(d)
+def formatDependencyGraphAsJSON(dep_graph):
+    from .lib import ordered_json
+    return ordered_json.dumps(dep_graph)
+
+def resolveDependencyGraph(target, top_component, available_modules, processed=None):
+    from collections import OrderedDict
+    r = OrderedDict()
+
+    if processed is None:
+        processed = set()
+
+    if not 'modules' in r:
+        r['modules'] = []
+
+    module_description = OrderedDict([
+        ('name',    top_component.getName()),
+        ('version', str(top_component.getVersion())),
+        ('path',    top_component.path),
+    ])
+    if top_component.installedLinked():
+         module_description['linkedTo'] = fsutils.realpath(top_component.path)
+    if top_component.is_test_dependency:
+         module_description['testOnly'] = True
+
+    specs = dict([(x.name, x) for x in top_component.getDependencySpecs(target=target)])
+    deps = top_component.getDependencies(
+         available_components = available_modules,
+                       target = target,
+                         test = True,
+                     warnings = False
+    )
+    if not top_component:
+        module_description['errors'] = [top_component.getError()]
+
+    specifications = []
+    for name, dep in deps.items():
+        spec_info = {
+            'name': name,
+            'version': str(specs[name].nonShrinkwrappedVersionReq()),
+        }
+        if specs[name].isShrinkwrapped():
+            spec_info['shrinkwrapped'] = str(specs[name].versionReq())
+        if specs[name].is_test_dependency:
+            spec_info['testOnly'] = True
+        specifications.append(spec_info)
+
+    if len(specifications):
+        module_description['specifications'] = specifications
+
+    processed.add(top_component.getName())
+    r['modules'].append(module_description)
+
+    for name, dep in deps.items():
+        if not name in processed:
+            r['modules'] += resolveDependencyGraph(target, dep, available_modules, processed)['modules']
+
+    return r
 
 def putln(x):
     if u'unicode' in str(type(x)):
@@ -235,10 +271,11 @@ class ComponentDepsFormatter(object):
             if isTestOnly(name):
                 test_dep_status = u' (test dependency)'
 
+            version_req = specs[name].nonShrinkwrappedVersionReq()
             if not dep:
-                r += indent + tee + name + u' ' + specs[name].version_req + test_dep_status + BRIGHT + RED + ' missing' + RESET + '\n'
+                r += indent + tee + name + u' ' + version_req + test_dep_status + BRIGHT + RED + ' missing' + RESET + '\n'
             else:
-                spec = access.remoteComponentFor(name, specs[name].version_req, 'modules').versionSpec()
+                spec = access.remoteComponentFor(name, version_req, 'modules').versionSpec()
                 if not spec:
                     spec_descr = u''
                 elif spec.match(dep.getVersion()):
