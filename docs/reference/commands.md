@@ -592,8 +592,10 @@ Create a `yotta-shrinkwrap.json` file in the current module, which specifies
 the exact versions of dependencies currently used.
 
 When a module with a `yotta-shrinkwrap.json` file is installed, the versions
-specified in the shrinkwrap will be used for its dependencies, instead of the
-latest versions that satisfy the specifications from module.json files.
+specified in the shrinkwrap will be downloaded from the public yotta registry,
+instead of the latest versions that satisfy the specifications from module.json
+files. **When a shrinkwrap file is present, dependencies will always be
+downloaded from the registry, not from git/other URLs.**
 
 In practise this allows an application or module to specify a known-good set of
 dependencies that it should be used with.
