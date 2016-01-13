@@ -451,10 +451,57 @@ Synonyms: `yotta ls`
 
 ```
 yotta list [--all]
+yotta list [--json]
 ```
 
 #### Description
-List the installed dependencies of the current module, including information on the installed versions. Unless `--all` is specified, dependencies are only listed under the modules that first use them, with `--all` dependencies that are used my multiple modules are listed multiple times (but all modules will use the same installed instance of the dependency).
+List the installed dependencies of the current module, including information on
+the installed versions. Unless `--all` is specified, dependencies are only
+listed under the modules that first use them, with `--all` dependencies that
+are used my multiple modules are listed multiple times (but all modules will
+use the same installed instance of the dependency).
+
+The `--json` option will cause the list to be output in JSON format, for
+example:
+
+```JSON
+{
+  "modules": [
+    {
+      "name": "toplevel-module-name",
+      "version": "1.0.0",
+      "path": "/some/path/on/disk/toplevel-module-name",
+      "specifications": [
+        {
+          "version": "~0.11.0",
+          "name": "some-dependency-name"
+        }
+      ]
+    },
+    {
+      "name": "some-dependency-name",
+      "version": "0.11.7",
+      "path": "/some/path/on/disk/yotta_modules/some-dependency-name",
+      "linkedTo": "/some/path/on/disk/some-dependency-name",
+      "specifications": [
+        {
+          "version": "ARMmbed/some-test-dependency#^1.2.3",
+          "name": "some-test-dependency",
+          "testOnly": true
+        }
+      ]
+    },
+    {
+      "name": "some-test-dependency",
+      "version": "1.5.6",
+      "path": "/some/path/on/disk/yotta_modules/some-test-dependency",
+      "errors": [
+        "a description of some error with this module"
+      ]
+    }
+}
+```
+
 
 ## <a href="#yotta-uninstall" name="yotta-uninstall">#</a> yotta uninstall
 Synonyms: `yotta unlink`, `yotta rm`
@@ -532,3 +579,43 @@ yotta outdated
 #### Description
 List modules for which newer versions are available from the yotta registry.
 
+## <a href="#yotta-shrinkwrap" name="yotta-shrinkwrap">#</a> yotta shrinkwrap
+
+#### Synopsis
+
+```
+yotta shrinkwrap
+```
+
+#### Description
+Create a `yotta-shrinkwrap.json` file in the current module, which specifies
+the exact versions of dependencies currently used.
+
+When a module with a `yotta-shrinkwrap.json` file is installed, the versions
+specified in the shrinkwrap will be used for its dependencies, instead of the
+latest versions that satisfy the specifications from module.json files.
+
+In practise this allows an application or module to specify a known-good set of
+dependencies that it should be used with.
+
+Note that generally publishing modules with a `yotta-shrinkwrap.json` file to
+the yotta registry should be avoided. The exact versions specified in the
+shrink-wrap could easily cause version conflicts with other modules which
+depend on the same modules.
+
+The format of the `yotta-shrinkwrap.json` file is:
+
+```
+{
+  "modules": [
+    {
+      "version": "1.0.0",
+      "name": "first-module-name"
+    },
+    {
+      "version": "0.11.7",
+      "name": "a-dependency-name"
+    },
+    ...
+}
+```
