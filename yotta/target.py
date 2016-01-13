@@ -85,7 +85,7 @@ def displayCurrentTarget(args):
         if base_spec:
             # if the last target in the hierarchy has a base spec, then the
             # hierarchy is incomplete:
-            line += '\n' + BRIGHT + RED + base_spec.name + u' ' + base_spec.version_req + u' missing'
+            line += '\n' + BRIGHT + RED + base_spec.name + u' ' + base_spec.versionReq() + u' missing'
 
     if u'unicode' in str(type(line)):
         # python 2.7

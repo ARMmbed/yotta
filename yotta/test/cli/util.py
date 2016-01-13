@@ -34,6 +34,24 @@ int foo(){ return 7; }
 '''
 }
 
+Test_Complex_Lib = {
+'module.json':'''{
+  "name": "test-testdep-a",
+  "version": "0.0.2",
+  "description": "Module to test more complex scenarios",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "test-testdep-b": "0.0.8",
+    "test-testdep-c": "*",
+    "test-testdep-d": "*"
+  },
+  "testDependencies": {
+    "test-testdep-e": "*"
+  }
+}
+'''
+}
+
 Test_Trivial_Exe = {
 'module.json':'''{
   "name": "test-trivial-exe",

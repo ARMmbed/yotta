@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "https://registry.yottabuild.org/schema/shrinkwrap",
+  "title": "yotta-shrinkwrap.json schema",
+  "properties": {
+    "modules": {
+       "$ref": "#/definitions/modulesArray"
+      },
+    "additionalProperties": false
+  },
+  "definitions": {
+    "module": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/name"
+        },
+        "version": {
+          "$ref": "#/definitions/semverSpecification"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z]+[a-z0-9-]*$",
+      "minLength": 2,
+      "maxLength": 64,
+      "not": {
+        "enum": [
+          "test",
+          "source",
+          "yotta_modules",
+          "yotta_targets",
+          "include"
+        ]
+      }
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "pattern": "^[a-zA-Z0-9 ()._/-]*$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)(-[a-zA-Z0-9]+[a-zA-Z0-9-]*([.][a-zA-Z0-9]+[a-zA-Z0-9-]*)*)?([+][a-zA-Z0-9]+[a-zA-Z0-9-]*([.][a-zA-Z0-9]+[a-zA-Z0-9-]*)*)?$"
+    },
+    "semverSpecification": {
+      "comment": "!!! TODO: pattern",
+      "type": "string",
+      "pattern": ".*"
+    },
+    "modulesArray": {
+      "type": "array",
+      "items":{
+        "$ref": "#/definitions/module"
+      }
+    }
+  }
+}
