@@ -113,8 +113,10 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     for name, dep in deps.items():
         spec_info = {
             'name': name,
-            'version': str(specs[name].version_req),
+            'version': str(specs[name].nonShrinkwrappedVersionReq()),
         }
+        if specs[name].isShrinkwrapped():
+            spec_info['shrinkwrapped'] = str(specs[name].versionReq())
         if specs[name].is_test_dependency:
             spec_info['testOnly'] = True
         specifications.append(spec_info)
@@ -269,10 +271,11 @@ class ComponentDepsFormatter(object):
             if isTestOnly(name):
                 test_dep_status = u' (test dependency)'
 
+            version_req = specs[name].nonShrinkwrappedVersionReq()
             if not dep:
-                r += indent + tee + name + u' ' + specs[name].version_req + test_dep_status + BRIGHT + RED + ' missing' + RESET + '\n'
+                r += indent + tee + name + u' ' + version_req + test_dep_status + BRIGHT + RED + ' missing' + RESET + '\n'
             else:
-                spec = access.remoteComponentFor(name, specs[name].version_req, 'modules').versionSpec()
+                spec = access.remoteComponentFor(name, version_req, 'modules').versionSpec()
                 if not spec:
                     spec_descr = u''
                 elif spec.match(dep.getVersion()):

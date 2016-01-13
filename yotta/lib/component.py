@@ -134,15 +134,21 @@ class Component(pack.Pack):
 
         def specForDependency(name, version_spec, istest):
             shrinkwrap = self.getShrinkwrapMapping()
-            shrinkwrapped = False
+            shrinkwrap_version_req = None
             if name in shrinkwrap:
                 # exact version, and pull from registry:
-                version_spec = shrinkwrap[name]
+                shrinkwrap_version_req = shrinkwrap[name]
                 logger.debug(
                     'respecting %s shrinkwrap version %s for %s', self.getName(), version_spec, name
                 )
                 shrinkwrapped = True
-            return pack.DependencySpec(name, version_spec, istest, shrinkwrapped=shrinkwrapped)
+            return pack.DependencySpec(
+                                         name,
+                                         version_spec,
+                                         istest,
+                shrinkwrap_version_req = shrinkwrap_version_req,
+                     specifying_module = self.getName()
+            )
 
         deps += [specForDependency(x[0], x[1], False) for x in self.description.get('dependencies', {}).items()]
         target_deps = self.description.get('targetDependencies', {})
@@ -250,9 +256,15 @@ class Component(pack.Pack):
                   update_installed,
                   self
                 )
-                if r and not sourceparse.parseSourceURL(dspec.version_req).semanticSpecMatches(r.getVersion()):
-                    logger.debug('%s does not meet specification %s required by %s' % (r.getName(), dspec.version_req, self.getName()))
-                    r.setError('does not meet specification %s required by %s' % (dspec.version_req, self.getName()))
+                if r and not sourceparse.parseSourceURL(dspec.versionReq()).semanticSpecMatches(r.getVersion()):
+                    shrinkwrap_msg = ''
+                    if dspec.isShrinkwrapped():
+                        shrinkwrap_msg = 'shrinkwrap on '
+                    msg = 'does not meet specification %s required by %s%s' % (
+                        dspec.versionReq(), shrinkwrap_msg, self.getName()
+                    )
+                    logger.debug('%s %s', r.getName(), msg)
+                    r.setError(msg)
                 return r
             except access_common.Unavailable as e:
                 errors.append(e)
@@ -416,7 +428,7 @@ class Component(pack.Pack):
             update_if_installed = dspec.name in update_installed
         r = access.satisfyVersionFromSearchPaths(
             dspec.name,
-            dspec.version_req,
+            dspec.versionReq(),
             search_dirs,
             update_if_installed,
             inherit_shrinkwrap = dep_of.getShrinkwrap()
@@ -556,7 +568,7 @@ class Component(pack.Pack):
                 update_if_installed = dspec.name in update_installed
             r = access.satisfyVersionFromSearchPaths(
                 dspec.name,
-                dspec.version_req,
+                dspec.versionReq(),
                 search_dirs,
                 update_if_installed,
                 inherit_shrinkwrap = dep_of.getShrinkwrap()
@@ -585,7 +597,7 @@ class Component(pack.Pack):
 
             r = access.satisfyVersionByInstalling(
                 dspec.name,
-                dspec.version_req,
+                dspec.versionReq(),
                 self.modulesPath(),
                 inherit_shrinkwrap = dep_of.getShrinkwrap()
             )

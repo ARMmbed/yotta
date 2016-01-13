@@ -126,7 +126,7 @@ def getDerivedTarget(
             if install_missing:
                 t = access.satisfyVersion(
                                  name = dspec.name,
-                     version_required = dspec.version_req,
+                     version_required = dspec.versionReq(),
                             available = target_hierarchy,
                          search_paths = search_dirs,
                     working_directory = targets_path,
@@ -136,7 +136,7 @@ def getDerivedTarget(
             else:
                 t = access.satisfyVersionFromSearchPaths(
                                  name = dspec.name,
-                     version_required = dspec.version_req,
+                     version_required = dspec.versionReq(),
                          search_paths = search_dirs,
                                  type = 'target'
                 )

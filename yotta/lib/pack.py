@@ -94,11 +94,23 @@ class OptionalFileWrapper(object):
 
 
 class DependencySpec(object):
-    def __init__(self, name, version_req, is_test_dependency=False, shrinkwrapped=False):
+    def __init__(self, name, version_req, is_test_dependency=False, shrinkwrap_version_req=None, specifying_module=None):
         self.name = name
         self.version_req = version_req
+        self.specifying_module = specifying_module # for diagnostic info only, may not be present
         self.is_test_dependency = is_test_dependency
-        self.shrinkwrapped = shrinkwrapped
+        self.shrinkwrap_version_req = shrinkwrap_version_req
+
+    def isShrinkwrapped(self):
+        return self.shrinkwrap_version_req is not None
+
+    def nonShrinkwrappedVersionReq(self):
+        ''' return the dependency specification ignoring any shrinkwrap '''
+        return self.version_req
+
+    def versionReq(self):
+        ''' return the dependency specification, which may be from a shrinkwrap file '''
+        return self.shrinkwrap_version_req or self.version_req
 
     def __unicode__(self):
         return u'%s at %s' % (self.name, self.version_req)
