@@ -86,7 +86,7 @@ def displayOutdated(modules, dependency_specs, use_colours):
                 shrinkwrap_prevents_update = [
                     x for x in dependency_specs
                     if x.name == name and x.isShrinkwrapped() and not
-                       sourceparse.parseSourceURL(x.nonShrinkwrappedVersionReq()).semanticSpecMatches(latest_v)
+                       sourceparse.parseSourceURL(x.versionReq()).semanticSpecMatches(latest_v)
                 ]
                 update_prevented_by = ''
                 if len(specs_preventing_update):
