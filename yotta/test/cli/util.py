@@ -272,12 +272,13 @@ def getNativeTargetDescription():
     }
 
 
-def writeTestFiles(files, add_space_in_path=False):
+def writeTestFiles(files, add_space_in_path=False, test_dir=None):
     ''' write a dictionary of filename:contents into a new temporary directory
     '''
-    test_dir = tempfile.mkdtemp()
-    if add_space_in_path:
-        test_dir = test_dir + ' spaces in path'
+    if test_dir is None:
+        test_dir = tempfile.mkdtemp()
+        if add_space_in_path:
+            test_dir = test_dir + ' spaces in path'
 
     for path, contents in files.items():
         path_dir, file_name =  os.path.split(path)
@@ -285,6 +286,7 @@ def writeTestFiles(files, add_space_in_path=False):
         fsutils.mkDirP(path_dir)
         with open(os.path.join(path_dir, file_name), 'w') as f:
             f.write(contents)
+
     return test_dir
 
 def isWindows():

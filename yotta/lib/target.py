@@ -54,6 +54,15 @@ def _mergeDictionaries(*args):
             result[k] = _mergeDictionaries(result[k], v)
     return result
 
+def _tryTerminate(process):
+    try:
+        process.terminate()
+    except OSError as e:
+        # if the error is "no such process" then the process probably exited
+        # while we were waiting for it, so don't raise an exception
+        if e.errno != errno.ESRCH:
+            raise
+
 def _mirrorStructure(dictionary, value):
     ''' create a new nested dictionary object with the same structure as
         'dictionary', but with all scalar values replaced with 'value'
@@ -581,10 +590,7 @@ class DerivedTarget(Target):
             raise
         finally:
             if child is not None:
-                try:
-                    child.terminate()
-                except OSError as e:
-                    pass
+                _tryTerminate(child)
 
     @fsutils.dropRootPrivs
     def _debugDeprecated(self, builddir, program):
@@ -643,15 +649,17 @@ class DerivedTarget(Target):
                         pass
 
     @fsutils.dropRootPrivs
-    def test(self, cwd, test_command, filter_command, forward_args):
-        # we assume that test commands are relative to the current directory.
+    def test(self, test_dir, module_dir, test_command, filter_command, forward_args):
+        # we assume that test commands are relative to the current directory
+        # (filter commands are relative to the module dir to make it possible
+        # to use filter scripts shipped with the module)
         test_command = './' + test_command
         test_script = self.getScript('test')
         if test_script is None:
             cmd = shlex.split(test_command)
         else:
             cmd = [
-                os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(cwd, test_command))))
+                os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(test_dir, test_command))))
                 for x in test_script
             ] + forward_args
 
@@ -662,18 +670,24 @@ class DerivedTarget(Target):
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = cwd, stdout = subprocess.PIPE
+                    cmd, cwd = test_dir, stdout = subprocess.PIPE
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = cwd, stdin = test_child.stdout
+                        filter_command, cwd = module_dir, stdin = test_child.stdout
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
-                    test_child.terminate()
+                    _tryTerminate(test_child)
                     return 1
+                logger.debug('waiting for filter process')
                 test_filter.communicate()
-                test_child.terminate()
+                logger.debug('reading test child stdout')
+                trailing_output = test_child.stdout.read()
+                logger.debug('test child trailing output: "%s"', trailing_output)
+                if test_child.poll() is None:
+                    logger.warning('test child has not exited and will be terminated')
+                    _tryTerminate(test_child)
                 test_child.stdout.close()
                 returncode = test_filter.returncode
                 test_child = None
@@ -684,8 +698,9 @@ class DerivedTarget(Target):
             else:
                 try:
                     test_child = subprocess.Popen(
-                        cmd, cwd = cwd
+                        cmd, cwd = test_dir
                     )
+                    logger.debug('waiting for test child')
                 except OSError as e:
                     if e.errno == errno.ENOENT:
                         logger.error('Error: no such file or directory: "%s"', cmd[0])
@@ -699,8 +714,8 @@ class DerivedTarget(Target):
                     return 1
         finally:
             if test_child is not None:
-                test_child.terminate()
+                _tryTerminate(test_child)
             if test_filter is not None:
-                test_filter.terminate()
+                _tryTerminate(test_filter)
         logger.debug("test %s passed", test_command)
         return 0

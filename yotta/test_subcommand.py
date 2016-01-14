@@ -160,7 +160,8 @@ def execCommand(args, following_args):
             if args.list_only:
                 continue
             test_returncode = target.test(
-                            cwd = dirname,
+                       test_dir = dirname,
+                     module_dir = module.path,
                    test_command = test_command,
                  filter_command = filter_command,
                    forward_args = following_args
