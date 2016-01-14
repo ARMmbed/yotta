@@ -371,7 +371,7 @@ def generateTest(**kwargs):
     test_method.__name__ = test_name
     setattr(TestCLITestGenerated, test_name, test_method)
 
-if not util.canBuildNatively():
+if util.canBuildNatively():
     forAllReporterTests(generateTest)
 else:
     print('WARNING: skipping test reporter tests (cannot build natively on this platform)')
