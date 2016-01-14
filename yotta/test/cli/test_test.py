@@ -330,7 +330,7 @@ class TestCLITestGenerated(TestCLITest):
 # generate the filter-testing tests dynamically:
 def generateTestMethod(**kwargs):
     def generatedTestMethod(self):
-        test_dir = self.writeTestFiles(filesForReporterTest(**kwargs), test_dir=self.test_dir)
+        test_dir = util.writeTestFiles(filesForReporterTest(**kwargs), test_dir=self.test_dir)
 
         # build first, to make test timing more accurate:
         stdout, stderr, statuscode = cli.run(['--target', systemDefaultTarget(), 'build'], cwd=test_dir)
