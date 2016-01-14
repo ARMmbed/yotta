@@ -345,7 +345,7 @@ def generateTestMethod(**kwargs):
 
         # useful output for debugging failed tests:
         if bool(statuscode) == bool(kwargs['test_passes']) or \
-                duration >= 4.5 + kwargs['reporter_waits'] or \
+                duration >= 5.5 + kwargs['reporter_waits'] or \
                 (kwargs['test_speed'] == 'fast' and (duration >= 1.5 + kwargs['reporter_waits'])):
             print(stdout + stderr)
             print(statuscode)
@@ -357,8 +357,9 @@ def generateTestMethod(**kwargs):
             self.assertNotEqual(statuscode, 0)
 
         # **no** tests should cause a timeout (Which is set at 4.5 seconds in
-        # the test reporter), + the wait-for duration
-        self.assertTrue(duration < 4.5 + kwargs['reporter_waits'])
+        # the test reporter), + the wait-for duration (+ 1 second slack for
+        # process startup etc.)
+        self.assertTrue(duration < 5.5 + kwargs['reporter_waits'])
 
         # if a test isn't slow, then it should run in less than 1 seconds
         if kwargs['test_speed'] == 'fast':
