@@ -220,7 +220,7 @@ Pin-Priority: 1001
 e.g.
 
 ```sh
-sudo echo -e "Explanation: get gcc-arm-none-eabi from ppa\nPackage: gcc-arm-none-eabi\nPin: origin \"ppa.launchpad.net\"\nPin-Priority: 1001" | sudo tee /etc/apt/preferences.d/gcc-arm-none-eabi'
+sudo echo -e "Explanation: get gcc-arm-none-eabi from ppa\nPackage: gcc-arm-none-eabi\nPin: origin \"ppa.launchpad.net\"\nPin-Priority: 1001" | sudo tee /etc/apt/preferences.d/gcc-arm-none-eabi
 ```
 
 Then install the package as normal:
