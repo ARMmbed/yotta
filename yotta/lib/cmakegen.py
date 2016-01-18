@@ -155,7 +155,9 @@ class CMakeGen(object):
         for f in sorted(os.listdir(component.path)):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
-            if os.path.isfile(os.path.join(component.path, f, 'CMakeLists.txt')):
+            check_cmakefile_path = os.path.join(f, 'CMakeLists.txt')
+            if os.path.isfile(os.path.join(component.path, check_cmakefile_path)) and not \
+                    component.ignores(check_cmakefile_path):
                 self.checkStandardSourceDir(f, component)
                 # if the subdirectory has a CMakeLists.txt in it, then use that
                 manual_subdirs.append(f)
@@ -387,7 +389,7 @@ class CMakeGen(object):
         delegate_build_dir = None
 
         module_is_empty = False
-        if os.path.isfile(os.path.join(component.path, 'CMakeLists.txt')):
+        if os.path.isfile(os.path.join(component.path, 'CMakeLists.txt')) and not component.ignores('CMakeLists.txt'):
             # adding custom CMake is a promise to generate a library: so the
             # module is never empty in this case.
             delegate_to_existing = component.path
