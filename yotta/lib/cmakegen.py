@@ -519,7 +519,7 @@ class CMakeGen(object):
             for root, dires, files in os.walk(os.path.join(component.path, 'source')):
                 for f in files:
                     name, ext = os.path.splitext(f)
-                    if ext.lower() == '.cmake':
+                    if ext.lower() == '.cmake' and not component.ignores(os.path.relpath(os.path.join(root, f), component.path)):
                         cmake_files.append(os.path.join(root, f))
 
         dummy_template = jinja_environment.get_template('dummy_CMakeLists.txt')
@@ -587,7 +587,7 @@ class CMakeGen(object):
         for root, dires, files in os.walk(os.path.join(component.path, dirname)):
             for f in files:
                 name, ext = os.path.splitext(f)
-                if ext.lower() == '.cmake':
+                if ext.lower() == '.cmake' and not component.ignores(os.path.relpath(os.path.join(root, f), component.path)):
                     cmake_files.append(os.path.join(root, f))
 
         test_template = jinja_environment.get_template('test_CMakeLists.txt')
@@ -637,7 +637,7 @@ class CMakeGen(object):
             for root, dires, files in os.walk(os.path.join(component.path, dirname)):
                 for f in files:
                     name, ext = os.path.splitext(f)
-                    if ext.lower() == '.cmake':
+                    if ext.lower() == '.cmake' and not component.ignores(os.path.relpath(os.path.join(root, f), component.path)):
                         cmake_files.append(os.path.join(root, f))
 
             subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
