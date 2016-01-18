@@ -147,6 +147,49 @@ int foo(){
 'test/g/a/a/b/bar.c':'#include "stdio.h"\nint bar(){ printf("bar!\\n"); return 7; }'
 }
 
+Test_Ignore_Custom_Cmake = {
+'module.json':'''{
+  "name": "cmake-ignore-test",
+  "version": "0.0.0",
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}''',
+'.yotta_ignore':'''
+./source/CMakeLists.txt
+CMakeLists.txt
+./source/empty.c
+./source/ignoreme.cmake
+./test/CMakeLists.txt
+./test/ignoreme.cmake
+''',
+'source/CMakeLists.txt':'''
+message("source CMakeLists.txt should be ignored!")
+add_library(cmake-ignore-test "empty.c")
+''',
+'CMakeLists.txt': '''
+message("root cmakelist should be ignored!")
+add_subdirectory(source)
+add_subdirectory(test)
+''',
+'source/empty.c': '''
+int foo(){ }
+''',
+'source/ignoreme.cmake': '''
+message(".cmake file should be ignored!")
+''',
+'test/CMakeLists.txt': '''
+message("test CMakeLists.txt file should be ignored!")
+''',
+'test/ignoreme.cmake': '''
+message("test .cmake file should be ignored!")
+''',
+'test/empty.c': '''
+int main(){ return 0; }
+'''
+}
+
 
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
@@ -242,6 +285,13 @@ class TestCLIBuild(unittest.TestCase):
     def test_customCMakeBuildExe(self):
         test_dir = util.writeTestFiles(util.Test_Custom_CMake_Exe, True)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_ignoreCustomCMake(self):
+        test_dir = util.writeTestFiles(Test_Ignore_Custom_Cmake, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertNotIn('should be ignored', stdout)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):
