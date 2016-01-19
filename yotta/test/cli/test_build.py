@@ -190,6 +190,109 @@ int main(){ return 0; }
 '''
 }
 
+Test_Custom_Lib_Dir = {
+'module.json':'''{
+  "name": "test-custom-dir-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "lib": "mylibdir"
+}''',
+'test-custom-dir-lib/lib.h': '''
+int foo();
+''',
+'mylibdir/lib.c':'''
+#warning "this message should be printed"
+#include "test-custom-dir-lib/lib.h"
+int foo(){ return 7; }
+'''
+}
+
+Test_Custom_Bin_Dir = {
+'module.json':'''{
+  "name": "test-custom-dir-bin",
+  "version": "1.0.0",
+  "description": "Module to test trivial exe compilation",
+  "license": "Apache-2.0",
+  "bin": "mybindir"
+}''',
+'mybindir/main.c':'''
+#warning "this message should be printed"
+int main(){ return 0; }
+'''
+}
+
+# expect an error message
+Test_Lib_And_Bin = {
+'module.json':'''{
+  "name": "test-custom-dir-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "lib": "mylibdir",
+  "bin": "mylibdir"
+}''',
+'mylibdir/lib.c':'''
+int foo(){ return 7; }
+'''
+}
+
+# expect an error message
+Test_Lib_Nonexistent = {
+'module.json':'''{
+  "name": "test-custom-dir-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "lib": "doesntexist"
+}'''
+}
+
+# expect an error message
+Test_Bin_Nonexistent = {
+'module.json':'''{
+  "name": "test-custom-dir-lib",
+  "version": "1.0.0",
+  "description": "Module to test trivial lib compilation",
+  "license": "Apache-2.0",
+  "bin": "doesntexist"
+}'''
+}
+
+# expect a warning message for "Source" and "src" implicit source directory
+# names: only "source" is supported as an implicit source directory name:
+Test_Misspelt_Source_Dir_1 = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'Source/lib.c':"int foo(){return 0;}\n"
+}
+
+Test_Misspelt_Source_Dir_2 = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'src/lib.c':"int foo(){return 0;}\n"
+}
+
+# ...but if the misspelt directory is ignored, then no warning should be issued
+Test_Ignored_Misspelt_Source_Dir = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'src/lib.c':"int foo(){return 0;}\n",
+'.yotta_ignore':"./src"
+}
+
 
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
@@ -292,6 +395,67 @@ class TestCLIBuild(unittest.TestCase):
         test_dir = util.writeTestFiles(Test_Ignore_Custom_Cmake, True)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
         self.assertNotIn('should be ignored', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customLibDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Lib_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customBinDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Bin_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_libAndBinSpecified(self):
+        test_dir = util.writeTestFiles(Test_Lib_And_Bin)
+        stdout, stderr, statuscode = cli.run(['--target', util.nativeTarget(), 'build'], cwd=test_dir)
+        self.assertNotEqual(statuscode, 0)
+        self.assertIn('Both "lib" and "bin" are specified in module.json: only one is allowed', stdout+stderr)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_libNonExistent(self):
+        test_dir = util.writeTestFiles(Test_Lib_Nonexistent)
+        stdout, stderr, statuscode = cli.run(['--target', util.nativeTarget(), 'build'], cwd=test_dir)
+        self.assertIn('directory "doesntexist" doesn\'t exist', stdout+stderr)
+        # !!! FIXME: should this error be fatal?
+        # self.assertNotEqual(statuscode, 0)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_binNonExistent(self):
+        test_dir = util.writeTestFiles(Test_Bin_Nonexistent)
+        stdout, stderr, statuscode = cli.run(['--target', util.nativeTarget(), 'build'], cwd=test_dir)
+        self.assertIn('directory "doesntexist" doesn\'t exist', stdout+stderr)
+        # !!! FIXME: should this error be fatal?
+        # self.assertNotEqual(statuscode, 0)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDir1(self):
+        test_dir = util.writeTestFiles(Test_Misspelt_Source_Dir_1)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("has non-standard source directory name", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDir2(self):
+        test_dir = util.writeTestFiles(Test_Misspelt_Source_Dir_2)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("has non-standard source directory name", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDirIgnored(self):
+        test_dir = util.writeTestFiles(Test_Ignored_Misspelt_Source_Dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertNotIn("has non-standard source directory name", stdout)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):
