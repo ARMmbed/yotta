@@ -135,21 +135,51 @@ class CMakeGen(object):
     def checkStandardSourceDir(self, dirname, component):
         err = validate.sourceDirValidationError(dirname, component.getName())
         if err:
-            logger.warn(err)
+            # !!! FIXME: ensure this warning is covered in tests: it was broken
+            logger.warning(err)
+
+    def _validateListedSubdirsExist(self, component):
+        ''' Return true if all the subdirectories which this component lists in
+            its module.json file exist (although their validity is otherwise
+            not checked).
+
+            If they don't, warning messages are printed.
+        '''
+        lib_subdirs = component.getLibs(explicit_only=True)
+        bin_subdirs = component.getBinaries()
+
+        ok = True
+        for d in lib_subdirs:
+            if not os.path.exists(os.path.join(component.path, d)):
+                logger.warning(
+                    "lib directory \"%s\" doesn't exist but is listed in the module.json file of %s", d, component
+                )
+                ok = False
+
+        for d in bin_subdirs:
+            if not os.path.exists(os.path.join(component.path, d)):
+                logger.warning(
+                    "bin directory \"%s\" doesn't exist but is listed in the module.jons file of %s", d, component
+                )
+                ok = False
+
+        return ok
 
     def _listSubDirectories(self, component):
         ''' return: {
                 manual: [list of subdirectories with manual CMakeLists],
                   auto: [list of pairs: (subdirectories name to autogenerate, a list of source files in that dir)],
                    bin: {dictionary of subdirectory name to binary name},
-                  test: [list of directories that build tests]
+                   lib: {dictionary of subdirectory name to binary name},
+                  test: [list of directories that build tests],
               resource: [list of directories that contain resources]
             }
         '''
         manual_subdirs = []
         auto_subdirs = []
         header_subdirs = []
-        bin_subdirs = {os.path.normpath(x) : y for x,y in component.getBinaries().items()};
+        lib_subdirs = component.getLibs()
+        bin_subdirs = component.getBinaries()
         test_subdirs = []
         resource_subdirs = []
         for f in sorted(os.listdir(component.path)):
@@ -159,38 +189,51 @@ class CMakeGen(object):
             if os.path.isfile(os.path.join(component.path, check_cmakefile_path)) and not \
                     component.ignores(check_cmakefile_path):
                 self.checkStandardSourceDir(f, component)
-                # if the subdirectory has a CMakeLists.txt in it, then use that
+                # if the subdirectory has a CMakeLists.txt in it (and it isn't
+                # ignored), then delegate to that:
                 manual_subdirs.append(f)
                 # tests only supported in the `test` directory for now
                 if f in ('test',):
                     test_subdirs.append(f)
-            elif f in ('source', 'test') or os.path.normpath(f) in bin_subdirs:
-                # otherwise, if the directory has source files, generate a
-                # CMakeLists in the corresponding temporary directory, and add
-                # that.
-                # For now we only do this for the source and test directories -
-                # in theory we could do others
+            else:
+                # otherwise, if the directory has source files, and is listed
+                # as a source/test directory, generate a CMakeLists in the
+                # corresponding temporary directory, and add that.
                 sources = self.containsSourceFiles(os.path.join(component.path, f), component)
                 if sources:
-                    auto_subdirs.append((f, sources))
-                    # tests only supported in the `test` directory for now
                     if f in ('test',):
+                        auto_subdirs.append((f, sources))
                         test_subdirs.append(f)
+                    elif os.path.normpath(f) in lib_subdirs or os.path.normpath(f) in bin_subdirs:
+                        auto_subdirs.append((f, sources))
+                    elif f == component.getName():
+                        header_subdirs.append((f, sources))
+                elif (f in ('test',)) or \
+                     (os.path.normpath(f) in lib_subdirs) or \
+                     (os.path.normpath(f) in bin_subdirs):
+                    # (if there aren't any source files then do nothing)
+                    # !!! FIXME: ensure this warning is covered in tests, also
+                    # this warning should probably only be emitted if the
+                    # component in question is at the top-level
+                    logger.warning("subdirectory \"%s\" of %s was ignored because it doesn't appear to contain any source files", f, component)
 
-            elif f == component.getName():
-                headers = self.containsSourceFiles(os.path.join(component.path, f), component)
-                if headers:
-                    header_subdirs.append((f, headers))
-
-            elif f in ('resource'):
+            # 'resource' directory also has special meaning, but there's no
+            # pattern for the files which might be in here:
+            if f in ('resource',):
                 resource_subdirs.append(os.path.join(component.path, f))
-            elif f.lower() in ('source', 'src', 'test', 'resource'):
+
+            # issue a warning if a differently cased or common misspelling of a
+            # standard directory name was encountered:
+            check_directory_name_cases = list(lib_subdirs.keys()) + list(bin_subdirs.keys()) + ['test', 'resource']
+            if f.lower() in check_directory_name_cases + ['src'] and not f in check_directory_name_cases:
                 self.checkStandardSourceDir(f, component)
+
         return {
             "manual": manual_subdirs,
               "auto": auto_subdirs,
            "headers": header_subdirs,
                "bin": bin_subdirs,
+               "lib": lib_subdirs,
               "test": test_subdirs,
           "resource": resource_subdirs
         }
@@ -397,13 +440,19 @@ class CMakeGen(object):
             logger.debug("delegate to build dir: %s", builddir)
             delegate_build_dir = os.path.join(builddir, 'existing')
         else:
+            # !!! TODO: if they don't exist, that should possibly be a fatal
+            # error, not just a warning
+            self._validateListedSubdirsExist(component)
+
             subdirs = self._listSubDirectories(component)
             manual_subdirs      = subdirs['manual']
             autogen_subdirs     = subdirs['auto']
             binary_subdirs      = subdirs['bin']
+            lib_subdirs         = subdirs['lib']
             test_subdirs        = subdirs['test']
             resource_subdirs    = subdirs['resource']
             header_subdirs      = subdirs['headers']
+            logger.debug("%s lib subdirs: %s, bin subdirs: %s", component, lib_subdirs, binary_subdirs)
 
             add_own_subdirs = []
             for f in manual_subdirs:
@@ -429,10 +478,6 @@ class CMakeGen(object):
 
             # autogenerate CMakeLists for subdirectories as appropriate:
             for f, source_files in autogen_subdirs:
-                if f in binary_subdirs:
-                    exe_name = binary_subdirs[f]
-                else:
-                    exe_name = None
                 if f in test_subdirs:
                     # if this module is a test dependency, then don't recurse
                     # to building its own tests.
@@ -442,12 +487,28 @@ class CMakeGen(object):
                         builddir, f, source_files, component, immediate_dependencies, toplevel=toplevel, module_is_empty=module_is_empty
                     )
                 else:
+                    if f in binary_subdirs:
+                        is_executable = True
+                        object_name = binary_subdirs[f]
+                    else:
+                        # not a test subdir or binary subdir: it must be a lib
+                        # subdir
+                        assert(f in lib_subdirs)
+                        object_name = lib_subdirs[f]
+
                     for header_dir, header_files in header_subdirs:
                         source_files.extend(header_files)
 
                     self.generateSubDirList(
-                        builddir, f, source_files, component, all_subdirs,
-                        immediate_dependencies, exe_name, resource_subdirs
+                                      builddir = builddir,
+                                       dirname = f,
+                                  source_files = source_files,
+                                     component = component,
+                                   all_subdirs = all_subdirs,
+                        immediate_dependencies = immediate_dependencies,
+                                   object_name = object_name,
+                              resource_subdirs = resource_subdirs,
+                                 is_executable = (f in binary_subdirs)
                     )
                 add_own_subdirs.append(
                     (os.path.join(builddir, f), f)
@@ -603,59 +664,54 @@ class CMakeGen(object):
 
         self._writeFile(fname, file_contents)
 
-    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, executable_name, resource_subdirs):
+    def generateSubDirList(self, builddir, dirname, source_files, component, all_subdirs, immediate_dependencies, object_name, resource_subdirs, is_executable):
         logger.debug('generate CMakeLists.txt for directory: %s' % os.path.join(component.path, dirname))
 
         link_dependencies = [x[0] for x in immediate_dependencies.items() if not x[1].isTestDependency()]
         fname = os.path.join(builddir, dirname, 'CMakeLists.txt')
 
-        if dirname == 'source' or executable_name:
-            if executable_name:
-                object_name = executable_name
-                executable  = True
-            else:
-                object_name = component.getName()
-                executable  = False
-            # if we're building the main library, or an executable for this
-            # component, then we should link against all the other directories
-            # containing cmakelists:
-            link_dependencies += [x for x in all_subdirs if x not in ('source', 'test', dirname)]
+        assert(object_name)
+        object_name = object_name
 
-            # Find resource files
-            resource_files = []
-            for f in resource_subdirs:
-                for root, dires, files in os.walk(f):
-                    if root.endswith(".xcassets") or root.endswith(".bundle"):
-                        resource_files.append(root)
-                        del dires[:]
-                    else:
-                        for f in files:
-                            resource_files.append(os.path.join(root, f))
+        # if we're building the main library, or an executable for this
+        # component, then we should link against all the other directories
+        # containing cmakelists:
+        link_dependencies += [x for x in all_subdirs if x not in ('source', 'test', dirname)]
 
-            # Find cmake files
-            cmake_files = []
-            for root, dires, files in os.walk(os.path.join(component.path, dirname)):
-                for f in files:
-                    name, ext = os.path.splitext(f)
-                    if ext.lower() == '.cmake' and not component.ignores(os.path.relpath(os.path.join(root, f), component.path)):
-                        cmake_files.append(os.path.join(root, f))
+        # Find resource files
+        resource_files = []
+        for f in resource_subdirs:
+            for root, dires, files in os.walk(f):
+                if root.endswith(".xcassets") or root.endswith(".bundle"):
+                    resource_files.append(root)
+                    del dires[:]
+                else:
+                    for f in files:
+                        resource_files.append(os.path.join(root, f))
 
-            subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
+        # Find cmake files
+        cmake_files = []
+        for root, dires, files in os.walk(os.path.join(component.path, dirname)):
+            for f in files:
+                name, ext = os.path.splitext(f)
+                if ext.lower() == '.cmake' and not component.ignores(os.path.relpath(os.path.join(root, f), component.path)):
+                    cmake_files.append(os.path.join(root, f))
 
-            file_contents = subdir_template.render({ #pylint: disable=no-member
-                    'source_directory': os.path.join(component.path, dirname),
-                 "config_include_file": self.config_include_file,
-                          'executable': executable,
-                          'file_names': [str(f) for f in source_files],
-                         'object_name': object_name,
-                   'link_dependencies': link_dependencies,
-                           'languages': set(f.lang for f in source_files),
-                        'source_files': set((f.fullpath, f.lang) for f in source_files),
-                      'resource_files': resource_files,
-                         'cmake_files': cmake_files
-            })
-        else:
-            raise Exception('auto CMakeLists for non-source/test directories is not supported')
+        subdir_template = jinja_environment.get_template('subdir_CMakeLists.txt')
+
+        file_contents = subdir_template.render({ #pylint: disable=no-member
+                'source_directory': os.path.join(component.path, dirname),
+             "config_include_file": self.config_include_file,
+                      'executable': is_executable,
+                      'file_names': [str(f) for f in source_files],
+                     'object_name': object_name,
+               'link_dependencies': link_dependencies,
+                       'languages': set(f.lang for f in source_files),
+                    'source_files': set((f.fullpath, f.lang) for f in source_files),
+                  'resource_files': resource_files,
+                     'cmake_files': cmake_files
+        })
+
         self._writeFile(fname, file_contents)
 
 

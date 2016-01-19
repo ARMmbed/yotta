@@ -101,6 +101,9 @@
         "bin": {
             "$ref": "#/definitions/path"
         },
+        "lib": {
+            "$ref": "#/definitions/path"
+        },
         "dependencies": {
             "$ref": "#/definitions/dependencyMap"
         },
@@ -290,8 +293,19 @@
         }
     },
     "required": ["name", "version"],
-    "oneOf" : [
-        {"required": ["license"]},
-        {"required": ["licenses"]}
+    "allOf": [
+        {
+            "description": "Every module must declare a license.",
+            "oneOf" : [
+                {"required": ["license"]},
+                {"required": ["licenses"]}
+            ]
+        },
+        {
+            "description": "both 'bin' and 'lib' must not be defined: a module is either an executable or a re-usable library module",
+            "not" : {
+                "required": ["bin", "lib"]
+            }
+        }
     ]
 }
