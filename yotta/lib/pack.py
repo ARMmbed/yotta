@@ -124,7 +124,6 @@ def tryReadJSON(filename, schemaname):
     try:
         with open(filename, 'r') as jsonfile:
             r = ordered_json.load(filename)
-            have_errors = False
             if schemaname is not None:
                 with open(schemaname, 'r') as schema_file:
                     schema = json.load(schema_file)
