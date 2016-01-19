@@ -363,6 +363,20 @@ of the contents of the source directory, set:
   "bin": "./source"
 ```
 
+### `lib`
+**type: String (path relative to module root)**
+
+If present, the `lib` property specifies a subdirectory that should be built
+into a library. If it isn't specified, then the default behaviour is for the
+"source" directory to be built into a library.
+
+For example, to build a library out of the contents of `./some/subdirectory`
+instead of the default `source` directory, use:
+
+```json
+  "lib": "./some/subdirectory"
+```
+
 ### `extraIncludes`
 **type: Array of String (paths relative to module root)**
 
