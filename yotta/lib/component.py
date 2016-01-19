@@ -125,7 +125,7 @@ class Component(pack.Pack):
                 'it should not specify a "lib" subdirectory, and if this is '+\
                 'a re-usable library module, it should not specify a "bin" '+\
                 'subdirectory'
-            self.description = None
+            self.description = {}
         # specified in the description
         self.installed_dependencies = False
         self.dependencies_failed = False

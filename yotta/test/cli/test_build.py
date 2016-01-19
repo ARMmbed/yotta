@@ -259,6 +259,40 @@ Test_Bin_Nonexistent = {
 }'''
 }
 
+# expect a warning message for "Source" and "src" implicit source directory
+# names: only "source" is supported as an implicit source directory name:
+Test_Misspelt_Source_Dir_1 = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'Source/lib.c':"int foo(){return 0;}\n"
+}
+
+Test_Misspelt_Source_Dir_2 = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'src/lib.c':"int foo(){return 0;}\n"
+}
+
+# ...but if the misspelt directory is ignored, then no warning should be issued
+Test_Ignored_Misspelt_Source_Dir = {
+'module.json':'''{
+  "name": "test-mod",
+  "version": "1.0.0",
+  "description": "Module to test misspelt source dir names",
+  "license": "Apache-2.0"
+}''',
+'src/lib.c':"int foo(){return 0;}\n",
+'.yotta_ignore':"./src"
+}
+
 
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
@@ -401,7 +435,27 @@ class TestCLIBuild(unittest.TestCase):
         self.assertIn('directory "doesntexist" doesn\'t exist', stdout+stderr)
         # !!! FIXME: should this error be fatal?
         # self.assertNotEqual(statuscode, 0)
-        print(stdout+stderr)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDir1(self):
+        test_dir = util.writeTestFiles(Test_Misspelt_Source_Dir_1)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("has non-standard source directory name", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDir2(self):
+        test_dir = util.writeTestFiles(Test_Misspelt_Source_Dir_2)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("has non-standard source directory name", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_misspeltSourceDirIgnored(self):
+        test_dir = util.writeTestFiles(Test_Ignored_Misspelt_Source_Dir)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertNotIn("has non-standard source directory name", stdout)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):

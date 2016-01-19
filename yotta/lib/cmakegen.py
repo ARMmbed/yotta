@@ -135,7 +135,6 @@ class CMakeGen(object):
     def checkStandardSourceDir(self, dirname, component):
         err = validate.sourceDirValidationError(dirname, component.getName())
         if err:
-            # !!! FIXME: ensure this warning is covered in tests: it was broken
             logger.warning(err)
 
     def _validateListedSubdirsExist(self, component):
@@ -210,7 +209,8 @@ class CMakeGen(object):
                         header_subdirs.append((f, sources))
                 elif (f in ('test',)) or \
                      (os.path.normpath(f) in lib_subdirs) or \
-                     (os.path.normpath(f) in bin_subdirs):
+                     (os.path.normpath(f) in bin_subdirs) and not \
+                     component.ignores(f):
                     # (if there aren't any source files then do nothing)
                     # !!! FIXME: ensure this warning is covered in tests, also
                     # this warning should probably only be emitted if the
@@ -225,7 +225,9 @@ class CMakeGen(object):
             # issue a warning if a differently cased or common misspelling of a
             # standard directory name was encountered:
             check_directory_name_cases = list(lib_subdirs.keys()) + list(bin_subdirs.keys()) + ['test', 'resource']
-            if f.lower() in check_directory_name_cases + ['src'] and not f in check_directory_name_cases:
+            if f.lower() in check_directory_name_cases + ['src'] and not \
+               f in check_directory_name_cases and not \
+               component.ignores(f):
                 self.checkStandardSourceDir(f, component)
 
         return {
