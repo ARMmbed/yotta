@@ -95,6 +95,7 @@ class Component(pack.Pack):
             dependencies have been installed) for each of the dependencies.
 
         '''
+        self.description = OrderedDict()
         logger.log(VVVERBOSE_DEBUG, "Component: " +  path +  ' installed_linked=' + str(installed_linked))
         warn_deprecated_filename = False
         if (not os.path.exists(os.path.join(path, Component_Description_File))) and \
@@ -125,7 +126,7 @@ class Component(pack.Pack):
                 'it should not specify a "lib" subdirectory, and if this is '+\
                 'a re-usable library module, it should not specify a "bin" '+\
                 'subdirectory'
-            self.description = {}
+            self.description = OrderedDict()
         # specified in the description
         self.installed_dependencies = False
         self.dependencies_failed = False
