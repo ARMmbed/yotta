@@ -9,7 +9,7 @@ from collections import defaultdict
 import logging
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 
 def addOptions(parser):
     parser.add_argument('--all', '-a', dest='list_all', default=False, action='store_true',

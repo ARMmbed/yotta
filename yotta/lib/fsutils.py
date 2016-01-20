@@ -89,7 +89,11 @@ def fullySplitPath(path):
     return components
 
 # Some functions are platform-dependent
-_platform_fsutils = __import__("fsutils_win" if os.name == 'nt' else "fsutils_posix", globals(), locals(), ['*'])
+if os.name == 'nt':
+    import yotta.lib.fsutils_win as _platform_fsutils
+else:
+    import yotta.lib.fsutils_posix as _platform_fsutils
+
 isLink        = _platform_fsutils.isLink
 tryReadLink   = _platform_fsutils.tryReadLink
 _symlink      = _platform_fsutils._symlink

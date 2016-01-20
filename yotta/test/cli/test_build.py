@@ -12,8 +12,8 @@ import re
 import datetime
 
 # internal modules:
-from . import cli
-from . import util
+from yotta.test.cli import cli
+from yotta.test.cli import util
 
 Test_Complex = {
 'module.json': '''{

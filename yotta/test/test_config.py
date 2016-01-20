@@ -11,7 +11,7 @@ import logging
 
 # internal modules:
 from yotta.lib import validate
-from .cli import util
+from yotta.test.cli import util
 
 logging.basicConfig(
     level=logging.ERROR

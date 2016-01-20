@@ -8,8 +8,8 @@
 import unittest
 
 # internal modules:
-from . import util
-from . import cli
+from yotta.test.cli import util
+from yotta.test.cli import cli
 
 Test_Outdated = {
 'module.json':'''{

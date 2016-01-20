@@ -16,7 +16,7 @@ import requests
 
 # internal modules:
 from yotta.lib.fsutils import rmRf
-from . import cli
+from yotta.test.cli import cli
 
 Test_Module_JSON = '''{
   "name": "testmod",

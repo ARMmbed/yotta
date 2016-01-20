@@ -8,9 +8,9 @@ from __future__ import print_function
 import itertools
 
 # Registry Access, , access packages in the registry, internal
-from .lib import registry_access
-from .lib import settings
-from .lib import version
+from yotta.lib import registry_access
+from yotta.lib import settings
+from yotta.lib import version
 
 def addOptions(parser):
     parser.add_argument(

@@ -10,13 +10,13 @@ import logging
 import os
 
 # Component, , represents an installed component, internal
-from .lib import component
+from yotta.lib import component
 # Target, , represents an installed target, internal
-from .lib import target
+from yotta.lib import target
 # Registry Access, , access packages in the registry, internal
-from .lib import registry_access
+from yotta.lib import registry_access
 # Validate, , validate various things, internal
-from .lib import validate
+from yotta.lib import validate
 
 def checkEmail(email):
     if validate.looksLikeAnEmail(email):

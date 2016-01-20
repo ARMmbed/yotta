@@ -7,7 +7,7 @@
 import logging
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # options, , shared options, internal
 import yotta.options as options
 

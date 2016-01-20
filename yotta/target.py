@@ -13,13 +13,13 @@ import os
 import colorama
 
 # settings, , load and save settings, internal
-from .lib import settings
+from yotta.lib import settings
 # Target, , represents an installed target, internal
-from .lib import target
+from yotta.lib import target
 # Component, , represents an installed component, internal
-from .lib import component
+from yotta.lib import component
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 
 # OK this is a pretty terrible validation regex... should find a proper module
 # to do this

@@ -8,12 +8,6 @@ import re
 import os
 import logging
 
-# Component, , represents an installed component, internal
-import component
-# Target, , represents an installed target, internal
-import target
-# Pack, , base class for targets and components, internal
-import pack
 
 
 Source_Dir_Regex = re.compile('^[a-z0-9_-]*$')
@@ -62,6 +56,10 @@ def looksLikeAnEmail(email):
         return False
 
 def currentDirectoryModule():
+    # Component, , represents an installed component, internal
+    from yotta.lib import component
+    # Pack, , base class for targets and components, internal
+    from yotta.lib import pack
     try:
         c = component.Component(os.getcwd())
     except pack.InvalidDescription as e:
@@ -75,6 +73,10 @@ def currentDirectoryModule():
     return c
 
 def currentDirectoryTarget():
+    # Target, , represents an installed target, internal
+    from yotta.lib import target
+    # Pack, , base class for targets and components, internal
+    from yotta.lib import pack
     try:
         t = target.Target(os.getcwd())
     except pack.InvalidDescription as e:
@@ -87,6 +89,12 @@ def currentDirectoryTarget():
     return t
 
 def currentDirectoryModuleOrTarget():
+    # Component, , represents an installed component, internal
+    from yotta.lib import component
+    # Target, , represents an installed target, internal
+    from yotta.lib import target
+    # Pack, , base class for targets and components, internal
+    from yotta.lib import pack
     wd = os.getcwd()
     errors = []
     p = None

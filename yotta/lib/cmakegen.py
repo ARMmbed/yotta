@@ -15,11 +15,7 @@ from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 
 # fsutils, , misc filesystem utils, internal
-import fsutils
-# validate, , validate various things, internal
-import validate
-# ordered_json, , read/write ordered json, internal
-import ordered_json
+from yotta.lib import fsutils
 
 Template_Dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
 
@@ -133,6 +129,8 @@ class CMakeGen(object):
                 yield error
 
     def checkStandardSourceDir(self, dirname, component):
+        # validate, , validate various things, internal
+        from yotta.lib import validate
         err = validate.sourceDirValidationError(dirname, component.getName())
         if err:
             logger.warning(err)
@@ -264,6 +262,8 @@ class CMakeGen(object):
 
     def getConfigData(self, all_dependencies, component, builddir, build_info_header_path):
         ''' returns (path_to_config_header, cmake_set_definitions) '''
+        # ordered_json, , read/write ordered json, internal
+        from yotta.lib import ordered_json
         add_defs_header = ''
         set_definitions = ''
         # !!! backwards-compatible "TARGET_LIKE" definitions for the top-level
@@ -331,7 +331,7 @@ class CMakeGen(object):
         # standard library modules
         import datetime
         # vcs, , represent version controlled directories, internal
-        import vcs
+        from yotta.lib import vcs
 
         now = datetime.datetime.utcnow()
         vcs_instance = vcs.getVCS(sourcedir)

@@ -7,9 +7,9 @@
 import logging
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # --config option, , , internal
-from . import options
+from yotta import options
 
 def addOptions(parser):
     options.config.addTo(parser)

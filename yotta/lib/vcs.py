@@ -10,9 +10,6 @@ import tempfile
 import logging
 import errno
 
-# fsutils, , misc filesystem utils, internal
-import fsutils
-
 git_logger = logging.getLogger('git')
 hg_logger = logging.getLogger('hg')
 
@@ -107,6 +104,8 @@ class Git(VCS):
                 raise
 
     def remove(self):
+        # fsutils, , misc filesystem utils, internal
+        from yotta.lib import fsutils
         fsutils.rmRf(self.worktree)
 
     def getCommitId(self):
@@ -234,6 +233,8 @@ class HG(VCS):
         return r
 
     def remove(self):
+        # fsutils, , misc filesystem utils, internal
+        from yotta.lib import fsutils
         fsutils.rmRf(self.worktree)
 
     def getCommitId(self):

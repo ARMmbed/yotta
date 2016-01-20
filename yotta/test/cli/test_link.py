@@ -13,8 +13,8 @@ import tempfile
 # internal modules:
 from yotta.lib.folders import globalInstallDirectory
 
-from . import cli
-from . import util
+from yotta.test.cli import cli
+from yotta.test.cli import util
 
 Test_Target = 'x86-linux-native'
 

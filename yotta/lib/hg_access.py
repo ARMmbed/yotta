@@ -7,13 +7,13 @@
 import logging
 
 # version, , represent versions and specifications, internal
-import version
+from yotta.lib import version
 # access_common, , things shared between different component access modules, internal
-import access_common
+from yotta.lib import access_common
 # vcs, , represent version controlled directories, internal
-import vcs
+from yotta.lib import vcs
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 
 logger = logging.getLogger('access')
 
