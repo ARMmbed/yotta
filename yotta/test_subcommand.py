@@ -9,11 +9,11 @@ import logging
 import re
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # Target, , represents an installed target, internal
-from .lib import target
+from yotta.lib import target
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 # build, , build subcommand, internal
 from . import build
 # --config option, , , internal

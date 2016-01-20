@@ -12,15 +12,15 @@ import os
 import colorama
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # utils, , miscellaneous utilities, internal
-from .lib.utils import islast
+from yotta.lib.utils import islast
 # access, , get components (and check versions), internal
-from .lib import access
+from yotta.lib import access
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 # Registry Access, , access packages in the registry, internal
-from .lib.registry_access import friendlyRegistryName
+from yotta.lib.registry_access import friendlyRegistryName
 # --config option, , , internal
 from . import options
 
@@ -76,7 +76,7 @@ def execCommand(args, following_args):
         )
 
 def formatDependencyGraphAsJSON(dep_graph):
-    from .lib import ordered_json
+    from yotta.lib import ordered_json
     return ordered_json.dumps(dep_graph)
 
 def resolveDependencyGraph(target, top_component, available_modules, processed=None):

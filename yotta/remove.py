@@ -8,9 +8,9 @@ import logging
 import os
 
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 
 
 def addOptions(parser):
@@ -40,7 +40,7 @@ def rmLinkOrDirectory(path, nonexistent_warning):
 
 def removeGlobally(module_or_target):
     # folders, , get places to install things, internal
-    from .lib import folders
+    from yotta.lib import folders
     if module_or_target == 'module':
         global_dir = folders.globalInstallDirectory()
         p = validate.currentDirectoryModule()

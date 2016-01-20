@@ -8,7 +8,7 @@ import platform
 import sys
 
 # settings, , load and save settings, internal
-import settings
+from yotta.lib import settings
 
 def defaultTarget(ignore_set_target=False):
     set_target = settings.getProperty('build', 'target')

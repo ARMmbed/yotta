@@ -7,10 +7,10 @@
 import os
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 
 def addOptions(parser):
     pass

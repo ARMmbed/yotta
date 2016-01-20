@@ -8,9 +8,9 @@ import argparse
 import logging
 
 # auth, , authenticate users, internal
-from .lib import auth
+from yotta.lib import auth
 # Registry Access, , access modules in the registry, internal
-from .lib import registry_access
+from yotta.lib import registry_access
 # --registry option, , , internal
 from . import options
 

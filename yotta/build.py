@@ -9,13 +9,13 @@ import logging
 
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # access_common, , things shared between different component access modules, internal
-from .lib import access_common
+from yotta.lib import access_common
 # CMakeGen, , generate build files, internal
-from .lib import cmakegen
+from yotta.lib import cmakegen
 # Target, , represents an installed target, internal
-from .lib import target
+from yotta.lib import target
 # install, , install subcommand, internal
 from . import install
 # --config option, , , internal

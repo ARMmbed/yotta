@@ -10,11 +10,11 @@ import logging
 import re
 
 # Component, , represents an installed component, internal
-from .lib import component
+from yotta.lib import component
 # version, , represent versions and specifications, internal
-from .lib import version
+from yotta.lib import version
 # validate, , validate various things, internal
-from .lib import validate
+from yotta.lib import validate
 
 Known_Licenses = {
              'isc': 'ISC',

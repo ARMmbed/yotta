@@ -7,13 +7,9 @@
 import logging
 
 # version, , represent versions and specifications, internal
-import version
+from yotta.lib import version
 # access_common, , things shared between different component access modules, internal
-import access_common
-# vcs, , represent version controlled directories, internal
-import vcs
-# fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import access_common
 
 logger = logging.getLogger('access')
 
@@ -28,6 +24,10 @@ class GitCloneVersion(version.Version):
         super(GitCloneVersion, self).__init__(semver)
 
     def unpackInto(self, directory):
+        # vcs, , represent version controlled directories, internal
+        from yotta.lib import vcs
+        # fsutils, , misc filesystem utils, internal
+        from yotta.lib import fsutils
         logger.debug('unpack version %s from git repo %s to %s' % (self.version, self.working_copy.directory, directory))
         tag = self.tag
         fsutils.rmRf(directory)
@@ -109,6 +109,8 @@ class GitComponent(access_common.RemoteComponent):
     # version is requested it can be retrieved from the temporary clone,
     # instead of from the remote origin.
     def clone(self):
+        # vcs, , represent version controlled directories, internal
+        from yotta.lib import vcs
         clone = vcs.Git.cloneToTemporaryDir(self.url)
         clone.fetchAllBranches()
         return GitWorkingCopy(clone)

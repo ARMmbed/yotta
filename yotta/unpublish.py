@@ -7,7 +7,7 @@
 import logging
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 
 def addOptions(parser):
     pass

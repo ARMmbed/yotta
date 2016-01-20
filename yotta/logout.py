@@ -7,7 +7,7 @@
 import argparse
 
 # Github Access, , access repositories on github, internal
-from .lib import auth, registry_access
+from yotta.lib import auth, registry_access
 
 def addOptions(parser):
     # set the registry URL to save an API key for (this argument is also a

@@ -10,7 +10,7 @@ import os
 import copy
 
 # internal modules:
-import yotta.lib.fsutils as fsutils
+from yotta.lib import fsutils
 from yotta.lib.detect import systemDefaultTarget
 
 # some simple example module definitions that can be re-used by multiple tests:

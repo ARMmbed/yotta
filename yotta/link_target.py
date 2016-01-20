@@ -11,11 +11,11 @@ import os
 import colorama
 
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # folders, , get places to install things, internal
-from .lib import folders
+from yotta.lib import folders
 
 def addOptions(parser):
     parser.add_argument('link_target', default=None, nargs='?',

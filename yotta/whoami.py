@@ -7,7 +7,7 @@
 import argparse
 
 # Registry Access, , access modules in the registry, internal
-from .lib import registry_access
+from yotta.lib import registry_access
 
 def addOptions(parser):
     # the registry URL to provide login info for

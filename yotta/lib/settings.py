@@ -9,12 +9,10 @@ import os
 import threading
 from collections import OrderedDict
 
-# fsutils, , misc filesystem utils, internal
-import fsutils
 # Ordered JSON, , read & write json, internal
-import ordered_json
+from yotta.lib import ordered_json
 # folders, , get places to install things, internal
-import folders
+from yotta.lib import folders
 
 #
 # yotta's settings always written to ~/.yotta/config.json, but are read, in
@@ -105,6 +103,9 @@ class _JSONConfigParser(object):
             Note that currently array indexes are not supported. You must
             set the whole array.
         '''
+        # fsutils, , misc filesystem utils, internal
+        from yotta.lib import fsutils
+
         if filename is None:
             config = self._firstConfig()[1]
         else:

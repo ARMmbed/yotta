@@ -9,9 +9,9 @@ import logging
 import sys
 
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 # utils, , miscellaneous utilities, internal
-from .lib.utils import islast
+from yotta.lib.utils import islast
 # --config option, , , internal
 from . import options
 

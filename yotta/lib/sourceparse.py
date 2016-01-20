@@ -14,7 +14,7 @@ except ImportError:
 import re
 
 # version, , represent versions and specifications, internal
-import version
+from yotta.lib import version
 
 class VersionSource(object):
     def __init__(self, source_type, location, spec):

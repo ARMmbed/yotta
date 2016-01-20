@@ -16,14 +16,11 @@ import shlex
 from collections import OrderedDict
 
 # Ordered JSON, , read & write json, internal
-import ordered_json
-# access, , get components, internal
-import access
-import access_common
+from yotta.lib import ordered_json
 # Pack, , common parts of Components/Targets, internal
-import pack
+from yotta.lib import pack
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 
 Target_Description_File = 'target.json'
 App_Config_File = 'config.json'
@@ -111,6 +108,9 @@ def getDerivedTarget(
                update_installed = False,
               additional_config = None
     ):
+    # access, , get components, internal
+    from yotta.lib import access
+    from yotta.lib import access_common
     ''' Get the specified target description, optionally ensuring that it (and
         all dependencies) are installed in targets_path.
 
@@ -445,7 +445,7 @@ class DerivedTarget(Target):
 
         # work-around various yotta-specific issues with the generated
         # Ninja/project files:
-        import cmake_fixups
+        from yotta.lib import cmake_fixups
         cmake_fixups.applyFixupsForFenerator(args.cmake_generator, builddir, component)
 
         build_command = self.overrideBuildCommand(args.cmake_generator, targets=targets)

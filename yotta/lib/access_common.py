@@ -15,15 +15,15 @@ import random
 import errno
 
 # version, , represent versions and specifications, internal
-import version
+from yotta.lib import version
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 # folders, , where yotta stores things, internal
-import folders
+from yotta.lib import folders
 # Ordered JSON, , read & write json, internal
-import ordered_json
+from yotta.lib import ordered_json
 # settings, , load and save settings, internal
-import settings
+from yotta.lib import settings
 
 logger = logging.getLogger('access')
 cache_logger = logging.getLogger('cache')

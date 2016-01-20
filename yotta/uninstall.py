@@ -8,9 +8,9 @@ import logging
 import os
 
 # fsutils, , misc filesystem utils, internal
-from .lib import fsutils
+from yotta.lib import fsutils
 # validate, , validate things, internal
-from .lib import validate
+from yotta.lib import validate
 
 
 def addOptions(parser):

@@ -15,11 +15,11 @@ import webbrowser
 import colorama
 
 # Registry Access, , access packages in the registry, internal
-import registry_access
+from yotta.lib import registry_access
 # settings, , load and save settings, internal
-import settings
+from yotta.lib import settings
 # globalconf, share global arguments between modules, internal
-import yotta.lib.globalconf as globalconf
+from yotta.lib import globalconf
 
 logger = logging.getLogger('access')
 

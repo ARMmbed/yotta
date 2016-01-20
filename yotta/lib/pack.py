@@ -21,16 +21,12 @@ from pathlib import PurePath
 # JSON Schema, pip install jsonschema, Verify JSON Schemas, MIT
 import jsonschema
 
-# version, , represent versions and specifications, internal
-import version
 # Ordered JSON, , read & write json, internal
-import ordered_json
-# vcs, , represent version controlled directories, internal
-import vcs
+from yotta.lib import ordered_json
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 # Registry Access, , access packages in the registry, internal
-import registry_access
+from yotta.lib import registry_access
 
 # These patterns are used in addition to any glob expressions defined by the
 # .yotta_ignore file
@@ -155,6 +151,11 @@ class Pack(object):
             latest_suitable_version = None,
             inherit_shrinkwrap = None
         ):
+        # version, , represent versions and specifications, internal
+        from yotta.lib import version
+        # vcs, , represent version controlled directories, internal
+        from yotta.lib import vcs
+
         # resolve links at creation time, to minimise path lengths:
         self.unresolved_path = path
         self.path = fsutils.realpath(path)

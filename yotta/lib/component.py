@@ -9,20 +9,16 @@ import logging
 from collections import OrderedDict
 
 # access, , get components, internal
-import access
-import access_common
+from yotta.lib import access
+from yotta.lib import access_common
 # pool, , shared thread pool, internal
 #from pool import pool
 # vcs, , represent version controlled directories, internal
-import vcs
+from yotta.lib import vcs
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 # Pack, , common parts of Components/Targets, internal
-import pack
-# Target, , represent an installed target, internal
-import target
-# sourceparse, , parse version source urls, internal
-import sourceparse
+from yotta.lib import pack
 
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
@@ -253,6 +249,8 @@ class Component(pack.Pack):
 
             returns (components, errors)
         '''
+        # sourceparse, , parse version source urls, internal
+        from yotta.lib import sourceparse
         errors = []
         modules_path = self.modulesPath()
         def satisfyDep(dspec):
@@ -631,6 +629,8 @@ class Component(pack.Pack):
             github ref or URL) is installed in the targets directory of the
             current component
         '''
+        # Target, , represent an installed target, internal
+        from yotta.lib import target
         application_dir = None
         if self.isApplication():
             application_dir = self.path

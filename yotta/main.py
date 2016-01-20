@@ -3,8 +3,8 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-from .lib import lazyregex #pylint: disable=unused-import
-from .lib import errors #pylint: disable=unused-import
+from yotta.lib import lazyregex #pylint: disable=unused-import
+from yotta.lib import errors #pylint: disable=unused-import
 
 # NOTE: argcomplete must be first!
 # argcomplete, pip install argcomplete, tab-completion for argparse, Apache-2
@@ -48,7 +48,7 @@ def main():
     from functools import reduce
 
     # logging setup, , setup the logging system, internal
-    from .lib import logging_setup
+    from yotta.lib import logging_setup
     # options, , common argument parser options, internal
     import yotta.options as options
 

@@ -7,26 +7,20 @@
 import os
 import logging
 
-# Component, , represents an installed component, internal
-import component
-# Target, , represents an installed target, internal
-import target
-# Pack, , base class for targets and components, internal
-import pack
 # Access common, , components shared between access modules, internal
-import access_common
+from yotta.lib import access_common
 # Registry Access, , access packages in the registry, internal
-import registry_access
+from yotta.lib import registry_access
 # Github Access, , access repositories on github, internal
-import github_access
+from yotta.lib import github_access
 # Git Access, , access repositories via generic git URLs, internal
-import git_access
+from yotta.lib import git_access
 # hg Access, , access repositories via generic mercurial URLs, internal
-import hg_access
+from yotta.lib import hg_access
 # fsutils, , misc filesystem utils, internal
-import fsutils
+from yotta.lib import fsutils
 # sourceparse, , parse version source urls, internal
-import sourceparse
+from yotta.lib import sourceparse
 
 # Version requirement strings we want to support:
 #
@@ -225,6 +219,10 @@ def _registryNamespaceForType(type):
     return type + 's'
 
 def _clsForType(type):
+    # Component, , represents an installed component, internal
+    from yotta.lib import component
+    # Target, , represents an installed target, internal
+    from yotta.lib import target
     assert(type in ('module', 'target'))
     return {'module':component.Component, 'target':target.Target}[type]
 
@@ -250,6 +248,9 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
         versions of the found component, and update it in-place (unless it was
         installed via a symlink).
     '''
+    # Pack, , base class for targets and components, internal
+    from yotta.lib import pack
+
     v    = None
 
     try:

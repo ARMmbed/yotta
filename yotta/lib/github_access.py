@@ -15,13 +15,13 @@ import github
 from github import Github
 
 # settings, , load and save settings, internal
-import settings
+from yotta.lib import settings
 # access_common, , things shared between different component access modules, internal
-import access_common
+from yotta.lib import access_common
 # auth, , authenticate users, internal
-import auth
+from yotta.lib import auth
 # globalconf, share global arguments between modules, internal
-import yotta.lib.globalconf as globalconf
+from yotta.lib import globalconf
 
 # Constants
 _github_url = 'https://api.github.com'

@@ -10,14 +10,14 @@ import os
 import re
 
 # Component, , represents an installed component, internal
-from .lib import component
+from yotta.lib import component
 # access, , get components, internal
-from .lib import access
+from yotta.lib import access
 # access, , get components, internal
-from .lib import access_common
+from yotta.lib import access_common
 
 # folders, , get places to install things, internal
-from .lib import folders
+from yotta.lib import folders
 # --config option, , , internal
 from . import options
 
