@@ -134,4 +134,5 @@ def execCommand(args, following_args):
                         logging.error(err)
                     if len(errors):
                         logging.error('NOTE: use "yotta link-target" to test a locally modified target prior to publishing.')
+                        return 1
             return 0
