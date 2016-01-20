@@ -115,7 +115,13 @@ class DependencySpec(object):
     def __unicode__(self):
         return u'%s at %s' % (self.name, self.version_req)
     def __str__(self):
-        return self.__unicode__().encode('utf-8')
+        import sys
+        # in python 3 __str__ must return a string (i.e. unicode), in
+        # python 2, it must not return unicode, so:
+        if sys.version_info[0] >= 3:
+            return self.__unicode__()
+        else:
+            return self.__unicode__().encode('utf8')
     def __repr__(self):
         return self.__unicode__()
 
