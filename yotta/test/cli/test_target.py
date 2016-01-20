@@ -73,6 +73,12 @@ class TestCLITarget(unittest.TestCase):
                 os.stat(os.path.join(self.test_dir, '.yotta.json')).st_mode & Check_Not_Stat
             )
 
+    def test_setNonexistentTarget(self):
+        stdout, stderr, statuscode = cli.run(['target', 'thisdoesnotexist'], cwd=self.test_dir)
+        self.assertNotEqual(statuscode, 0)
+        self.assertNotIn('Exception', stdout+stderr)
+        self.assertIn('does not exist in the targets registry', stdout+stderr)
+
     def runCheckCommand(self, args):
         stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)
         self.assertEqual(statuscode, 0)

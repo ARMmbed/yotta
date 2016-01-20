@@ -58,7 +58,13 @@ class RemoteVersion(version.Version):
     def __repr__(self):
         return u'%s@%s from %s' % (self.name, self.friendly_version, self.friendly_source)
     def __str__(self):
-        return self.__unicode__()
+        import sys
+        # in python 3 __str__ must return a string (i.e. unicode), in
+        # python 2, it must not return unicode, so:
+        if sys.version_info[0] >= 3:
+            return self.__unicode__()
+        else:
+            return self.__unicode__().encode('utf8')
     def __unicode__(self):
         return self.__repr__()
 
