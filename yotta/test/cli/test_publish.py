@@ -12,8 +12,8 @@ import tempfile
 
 # internal modules:
 from yotta.lib.fsutils import rmRf
-from . import cli
-from . import util
+from yotta.test.cli import cli
+from yotta.test.cli import util
 
 Test_Target = "x86-osx-native,*"
 

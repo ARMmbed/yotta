@@ -103,9 +103,6 @@ class _JSONConfigParser(object):
             Note that currently array indexes are not supported. You must
             set the whole array.
         '''
-        # fsutils, , misc filesystem utils, internal
-        from yotta.lib import fsutils
-
         if filename is None:
             config = self._firstConfig()[1]
         else:
@@ -121,6 +118,8 @@ class _JSONConfigParser(object):
         config[path[-1]] = value
 
     def write(self, filename=None):
+        # fsutils, , misc filesystem utils, internal
+        from yotta.lib import fsutils
         if filename is None:
             filename, data = self._firstConfig()
         elif filename in self.configs:

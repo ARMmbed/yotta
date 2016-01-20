@@ -13,7 +13,7 @@ from yotta.lib import validate
 # utils, , miscellaneous utilities, internal
 from yotta.lib.utils import islast
 # --config option, , , internal
-from . import options
+from yotta import options
 
 def addOptions(parser):
     options.config.addTo(parser)

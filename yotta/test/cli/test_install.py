@@ -13,7 +13,7 @@ import re
 
 # internal modules:
 from yotta.lib.fsutils import rmRf
-from . import cli
+from yotta.test.cli import cli
 from yotta.lib import settings
 
 

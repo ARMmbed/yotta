@@ -19,7 +19,7 @@ from yotta.lib import access_common
 # folders, , get places to install things, internal
 from yotta.lib import folders
 # --config option, , , internal
-from . import options
+from yotta import options
 
 GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
 

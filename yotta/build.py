@@ -17,9 +17,9 @@ from yotta.lib import cmakegen
 # Target, , represents an installed target, internal
 from yotta.lib import target
 # install, , install subcommand, internal
-from . import install
+from yotta import install
 # --config option, , , internal
-from . import options
+from yotta import options
 
 def addOptions(parser, add_build_targets=True):
     options.config.addTo(parser)

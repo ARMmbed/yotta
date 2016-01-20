@@ -15,9 +15,9 @@ from yotta.lib import target
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 # build, , build subcommand, internal
-from . import build
+from yotta import build
 # --config option, , , internal
-from . import options
+from yotta import options
 
 
 def addOptions(parser):

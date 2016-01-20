@@ -12,8 +12,8 @@ import os
 # internal modules:
 from yotta.lib.detect import systemDefaultTarget
 from yotta.lib import component
-from .cli import cli
-from .cli import util
+from yotta.test.cli import cli
+from yotta.test.cli import util
 
 Test_Files = {
     '.yotta_ignore': '''

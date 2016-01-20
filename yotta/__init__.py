@@ -3,5 +3,5 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-from .main import main
+from yotta.main import main
 

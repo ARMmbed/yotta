@@ -22,7 +22,7 @@ from yotta.lib import fsutils
 # Registry Access, , access packages in the registry, internal
 from yotta.lib.registry_access import friendlyRegistryName
 # --config option, , , internal
-from . import options
+from yotta import options
 
 def addOptions(parser):
     options.config.addTo(parser)

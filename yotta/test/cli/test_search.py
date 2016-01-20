@@ -9,7 +9,7 @@
 import unittest
 
 # internal modules:
-from . import cli
+from yotta.test.cli import cli
 
 class TestCLISearch(unittest.TestCase):
     def test_bothModule(self):
