@@ -78,14 +78,25 @@ def checkPrintStatus(errors, components):
 
 
 def installDeps(args, current_component):
+    # settings, , load and save settings, internal
+    from yotta.lib import settings
+
     logging.debug('install deps for %s' % current_component)
     if not current_component:
         logging.debug(str(current_component.getError()))
         logging.error('The current directory does not contain a valid module.')
         return 1
-    if not args.target:
-        logging.error('No target has been set, use "yotta target" to set one.')
-        return 1
+    # warn if the target hasn't been explicitly specified when running a build:
+    # this is likely user-error
+    if not settings.getProperty('build', 'targetSetExplicitly') and not \
+        getattr(args, '_target_set_explicitly', False):
+        logging.warning(
+            'The build target has not been set, so the default (%s) is being ' +
+            'used. You can use `yotta target <targetname>` to set the build ' +
+            'target. See http://yottadocs.mbed.com/tutorial/targets.html for '
+            'more information on using targets.',
+            args.target
+        )
     target, errors = current_component.satisfyTarget(args.target, additional_config=args.config)
     if errors:
         for error in errors:

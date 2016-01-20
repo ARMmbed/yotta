@@ -123,6 +123,7 @@ def execCommand(args, following_args):
             else:
                 t = args.set_target
             settings.setProperty('build', 'target', t, not args.save_global)
+            settings.setProperty('build', 'targetSetExplicitly', True, not args.save_global)
             if not args.no_install:
                 # if we have a module in the current directory, try to make sure
                 # this target is installed
