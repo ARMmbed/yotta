@@ -134,7 +134,7 @@ yotta --config=./path/to/config/file install
 yotta --config='{"mbed-os":{"stdio":{"baud":115200}}}' build
 ```
 
-**NOTE:** it is recommended to not use this as part of your normal build
+**NOTE:** it is not recommended to use this as part of your normal build
 process (as it will make it hard for someone else to reproduce your build), but
 passing config on the command line can be useful when testing your modules in
 order to easily switch between building different possible configurations.
