@@ -187,22 +187,23 @@ chmod 755 /usr/local/lib/yotta_modules
 To cross-compile yotta modules for embedded targets, you first need install the
 [`arm-none-eabi-gcc` compiler](https://launchpad.net/gcc-arm-embedded).
 
-On most Linux distributions, this can be done by running:
+On most Linux distributions (although not Ubuntu), this can be done by running:
 
 ```sh
 sudo apt-get install gcc-arm-none-eabi
 ```
 
-Unfortunately there is a package name conflict for [Ubuntu 14.04 and
-later](https://launchpad.net/~terry.guo/+archive/ubuntu/gcc-arm-embedded), so
-you need to remove previous versions and update your repositories:
+On Ubuntu it's necessary to use the ARM-maintained [gcc-arm-embedded
+package](https://launchpad.net/gcc-arm-embedded), instead:
 
 ```sh
+# remove the built-in package, if installed:
 sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
+# set up the PPA for the ARM-maintained package:
 sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
 sudo apt-get update
+# install:
 sudo apt-get install gcc-arm-embedded
-
 ```
 
 To use this compiler, you'll need to select a supported cross-compilation
