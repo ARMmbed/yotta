@@ -188,7 +188,7 @@ class Component(pack.Pack):
 
         return r
 
-    def hasDependency(self, name, target=None):
+    def hasDependency(self, name, target=None, test_dependencies=False):
         ''' Check if this module has any dependencies with the specified name
             in its dependencies list, or in target dependencies for the
             specified target
@@ -202,6 +202,33 @@ class Component(pack.Pack):
                 if _truthyConfValue(target.getConfigValue(conf_key)) or conf_key in target.getSimilarTo_Deprecated():
                     if name in target_conf_deps:
                         return True
+
+        if test_dependencies:
+            if name in self.description.get('testDependencies', {}).keys():
+                return True
+
+            if target is not None:
+                test_target_deps = self.description.get('testTargetDependencies', {})
+                for conf_key, target_conf_deps in test_target_deps.items():
+                    if _truthyConfValue(target.getConfigValue(conf_key)) or conf_key in target.getSimilarTo_Deprecated():
+                        if name in target_conf_deps:
+                            return True
+        return False
+
+    def hasDependencyRecursively(self, name, target=None, test_dependencies=False):
+        ''' Check if this module, or any of its dependencies, have a
+            dependencies with the specified name in their dependencies, or in
+            their targetDependencies corresponding to the specified target.
+
+            Note that if recursive dependencies are not installed, this test
+            may return a false-negative.
+        '''
+        if self.hasDependency(name, test_dependencies=test_dependencies):
+            return True
+        for d in self.getDependencies(target=target, test=test_dependencies, warnings=False).values():
+            # test_dependencies of non-top-level modules are never checked:
+            if d and d.hasDependencyRecursively(name, target=target, test_dependencies=False):
+                return True
         return False
 
 
@@ -624,10 +651,12 @@ class Component(pack.Pack):
                            test = test
         )
 
-    def satisfyTarget(self, target_name_and_version, update_installed=False, additional_config=None):
+    def satisfyTarget(self, target_name_and_version, update_installed=False, additional_config=None, install_missing=True):
         ''' Ensure that the specified target name (and optionally version,
             github ref or URL) is installed in the targets directory of the
             current component
+
+            returns (derived_target, errors)
         '''
         # Target, , represent an installed target, internal
         from yotta.lib import target
@@ -637,10 +666,30 @@ class Component(pack.Pack):
         return target.getDerivedTarget(
                                 target_name_and_version,
                                 self.targetsPath(),
+              install_missing = install_missing,
               application_dir = application_dir,
              update_installed = update_installed,
             additional_config = additional_config
         )
+
+    def getTarget(self, target_name_and_version, additional_config=None):
+        ''' Return a derived target object representing the selected target: if
+            the target is not installed, or is invalid then the returned object
+            will test false in a boolean context.
+
+            Returns derived_target
+
+            Errors are not displayed.
+        '''
+        derived_target, errors = self.satisfyTarget(
+                               target_name_and_version,
+           additional_config = additional_config,
+             install_missing = False
+        )
+        if len(errors):
+            return None
+        else:
+            return derived_target
 
     def installedDependencies(self):
         ''' Return true if satisfyDependencies has been called.
