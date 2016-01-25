@@ -3,20 +3,6 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
-# standard library modules, , ,
-import logging
-import os
-
-# colorama, BSD 3-Clause license, color terminal output, pip install colorama
-import colorama
-
-# fsutils, , misc filesystem utils, internal
-from yotta.lib import fsutils
-# validate, , validate things, internal
-from yotta.lib import validate
-# folders, , get places to install things, internal
-from yotta.lib import folders
-
 def addOptions(parser):
     parser.add_argument('component', default=None, nargs='?',
         help='Link a globally installed (or globally linked) module into '+
@@ -25,6 +11,20 @@ def addOptions(parser):
     )
 
 def execCommand(args, following_args):
+    # standard library modules, , ,
+    import logging
+    import os
+
+    # colorama, BSD 3-Clause license, color terminal output, pip install colorama
+    import colorama
+
+    # validate, , validate things, internal
+    from yotta.lib import validate
+    # folders, , get places to install things, internal
+    from yotta.lib import folders
+    # fsutils, , misc filesystem utils, internal
+    from yotta.lib import fsutils
+
     c = validate.currentDirectoryModule()
     if not c:
         return 1
@@ -54,6 +54,28 @@ def execCommand(args, following_args):
             )
         else:
             logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+        # check if the thing we linked is actually a dependency, if it isn't
+        # warn about that. To do this we may have to get the current target
+        # description. This might fail, in which case we warn that we couldn't
+        # complete the check:
+        target = c.getTarget(args.target, args.config)
+        if target:
+            if not c.hasDependencyRecursively(args.component, target=target, test_dependencies=True):
+                logging.warning(
+                    '"%s" is not installed as a dependency, so will not '+
+                    ' be built. Perhaps you meant to "yotta install %s" '+
+                    'first?',
+                    args.component,
+                    args.component
+                )
+        else:
+            logging.warning(
+                'Could not check if linked module "%s" is installed as a '+
+                'dependency, because target "%s" is not available. Run '
+                '"yotta ls" to check.',
+                args.component,
+                args.target
+            )
     else:
         logging.info('%s -> %s' % (dst, src))
 
