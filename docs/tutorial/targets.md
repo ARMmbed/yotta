@@ -13,12 +13,15 @@ The description contains information on:
 
  * a [Toolchain File](#toolchainfile), which describes how to run the compiler
  * Any supporting files required to compile (such as link scripts)
+ * Configuration information associated with this target, for example
+   describing what hardware functionality is available.
  * What other targets this target should be considered "similar to". This
    information is used to resolve dependencies.
 
 And optionally provides information on:
 
  * how to run the debugger (`yotta debug` support)
+ * how to run tests, where they cannot be run natively (`yotta test` support)
 
 Each yotta target contains a [target.json](../reference/target.html) file, which
 describes where to find this other information.
@@ -110,6 +113,12 @@ Though the path is actually specified in the `toolchain` property in target.json
   "toolchain": "CMake/toolchain.cmake"
 ```
 
+### <a href="#config" name="config">#</a> yotta Config Information
+In addition to the `similarTo` data, your target can also define arbitrary JSON
+configuration data that can be used as the basis for including dependencies and
+providing configuration to the modules being built. See the [config system
+reference](/reference/config.html) for details.
+
 ### <a href="#similarto" name="similarto">#</a> The similarTo List and Target Specific Dependencies
 The similarTo list in a target description is the list of targets that the
 target should be considered "similar to". This is defined by target.json:
@@ -118,20 +127,16 @@ target should be considered "similar to". This is defined by target.json:
   "similarTo": <list of strings>,
 ```
 
-This list is used to choose which dependencies to pick when a module has
-target-specific dependencies (defined by the `targetDependencies` property in
-[module.json](../reference/module.html)). Target-specific dependencies can be
-used to depend on different implementations of the functionality that a module
-needs on different target platforms, which is especially useful when compiling
-for embedded hardware.
+This list is used (in addition to the config information) to choose which
+dependencies to pick when a module has target-specific dependencies (defined by
+the `targetDependencies` property in [module.json](../reference/module.html)).
+Target-specific dependencies can be used to depend on different implementations
+of the functionality that a module needs on different target platforms, which
+is especially useful when compiling for embedded hardware.
 
-When you create a new target that's based on an existing target, you should
-copy its similarTo list. 
-
-You might do this, for example, if you've created a new product based on an
-existing microcontroller development board. Most of the peripherals and
-functionality is the same, so you'll want to depend on the same implementations
-that work best for the board your device is based on.
+Note that now that [config info](/reference/config.html) can be defined by
+target descriptions, and target descriptions inherit from other ones, the use
+of `similarTo` should generally be avoided.
 
 When compiling, CMake variables and preprocessor definitions are defined by
 `yotta` for each thing in the similarTo list (and the name of the target
@@ -144,11 +149,6 @@ TARGET_LIKE_FOO
 Where `FOO` is the name in the similarTo list, converted to uppercase, and with
 any non-alphanumeric characters converted to underscores.
 
-### <a href="#config" name="config">#</a> yotta Config Information
-In addition to the `similarTo` data, your target can also define arbitrary JSON
-configuration data that can be used as the basis for including dependencies and
-providing configuration to the modules being built. See the [config system
-reference](/reference/config.html) for details.
 
 ### <a href="#yotta-debug" name="yotta-debug">#</a> `yotta debug` Support
 Targets can optionally provide a command that yotta will use to start a
