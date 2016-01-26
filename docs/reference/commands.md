@@ -66,13 +66,27 @@ reference](/reference/buildsystem.html).
 
 Options:
 
- * `--generate-only`, `-g`: only generate the CMakeLists, don't build
- * `--release-build`, `-r`: build a release (optimised) build. The exact effects depend on the toolchain.
- * `--cmake-generator`, `-G`: specify the CMake Generator. CMake can generate project files for various editors and IDEs.
- * `name ...`: one or more modules may be specified, in which case only these
+  * **`--generate-only`, `-g`**: only generate the CMakeLists, don't build
+
+  * **`--debug-build`, `-d`**: build a debug (less-optimised) build.
+
+    The effects depend on the target (this selects CMake build type `Debug`),
+    but generally this means no optimisation, and `NDEBUG` is not defined.
+
+  * **`--release-build`, `-r`**: build a release (optimised) build.   **deprecated**
+
+    The effects depend on the target (this selects CMake build type
+    `RelWithDebInfo`).
+    This option is deprecated because it is now the default, unless
+    `--debug-build` is specified.
+
+  * **`--cmake-generator`, `-G`**: specify the CMake Generator. CMake can generate project files for various editors and IDEs.
+
+  * **`name ...`**: one or more modules may be specified, in which case only these
    modules and their dependencies will be built. Use `all_tests` to cause all
    tests to be built.
- * `-- ...`: any options specified after `--` are passed unmodified on to the tool being used for building (e.g. Ninja, or make)
+
+  * **`-- ...`**: any options specified after `--` are passed unmodified on to the tool being used for building (e.g. Ninja, or make)
 
 #### Generating IDE Project Files
 The `-G`/`--cmake-generator` option can be used to generate project files for
