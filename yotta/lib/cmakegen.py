@@ -162,7 +162,7 @@ class CMakeGen(object):
 
         return ok
 
-    def _listSubDirectories(self, component):
+    def _listSubDirectories(self, component, toplevel):
         ''' return: {
                 manual: [list of subdirectories with manual CMakeLists],
                   auto: [list of pairs: (subdirectories name to autogenerate, a list of source files in that dir)],
@@ -205,14 +205,13 @@ class CMakeGen(object):
                         auto_subdirs.append((f, sources))
                     elif f == component.getName():
                         header_subdirs.append((f, sources))
-                elif (f in ('test',)) or \
-                     (os.path.normpath(f) in lib_subdirs) or \
-                     (os.path.normpath(f) in bin_subdirs) and not \
-                     component.ignores(f):
+                elif toplevel and \
+                     ((f in ('test',)) or \
+                      (os.path.normpath(f) in lib_subdirs) or \
+                      (os.path.normpath(f) in bin_subdirs) and not \
+                      component.ignores(f)):
                     # (if there aren't any source files then do nothing)
-                    # !!! FIXME: ensure this warning is covered in tests, also
-                    # this warning should probably only be emitted if the
-                    # component in question is at the top-level
+                    # !!! FIXME: ensure this warning is covered in tests
                     logger.warning("subdirectory \"%s\" of %s was ignored because it doesn't appear to contain any source files", f, component)
 
             # 'resource' directory also has special meaning, but there's no
@@ -446,7 +445,7 @@ class CMakeGen(object):
             # error, not just a warning
             self._validateListedSubdirsExist(component)
 
-            subdirs = self._listSubDirectories(component)
+            subdirs = self._listSubDirectories(component, toplevel)
             manual_subdirs      = subdirs['manual']
             autogen_subdirs     = subdirs['auto']
             binary_subdirs      = subdirs['bin']
