@@ -683,8 +683,6 @@ class DerivedTarget(Target):
                 logger.debug('waiting for filter process')
                 test_filter.communicate()
                 logger.debug('reading test child stdout')
-                trailing_output = test_child.stdout.read()
-                logger.debug('test child trailing output: "%s"', trailing_output)
                 if test_child.poll() is None:
                     logger.warning('test child has not exited and will be terminated')
                     _tryTerminate(test_child)
