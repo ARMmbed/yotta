@@ -314,14 +314,16 @@ Keywords describe what your module does, and help other people to find it.
 The URL of your module's homepage (if any).
 
 ### `repository`
-**type: String (url)**
+**type: Object `{"url":"<url>", "type": "<git, hg, or svn>"}`**
 
-The URL of your module's source code repository (if any). Including this helps
-other people to contribute to your module by making it easy for them to clone
-their own copy and suggest improvements.
+The `repository` section helps other people to contribute to your module by
+making it easy for them to clone their own copy and suggest improvements.
 
-**Note:** this repository field is for information only, to help people find
-and contribute back to your module. It is never use by yotta to download code.
+The URL of your module's source code repository and the type of the repository
+should be included.
+
+**Note:** this repository field is intended as a place where people can find
+and contribute back to your module. It is never used by yotta to download code.
 See the [dependencies](#dependencies) section for information on how to depend
 on modules from source control repositories, instead of from the public modules
 registry.
