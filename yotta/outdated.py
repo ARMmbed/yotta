@@ -77,6 +77,7 @@ def displayOutdated(modules, dependency_specs, use_colours):
             status = 2
             continue
         elif not m or m.version < latest_v:
+            update_prevented_by = ''
             if m:
                 specs_preventing_update = [
                     x for x in dependency_specs
@@ -88,7 +89,6 @@ def displayOutdated(modules, dependency_specs, use_colours):
                     if x.name == name and x.isShrinkwrapped() and not
                        sourceparse.parseSourceURL(x.versionReq()).semanticSpecMatches(latest_v)
                 ]
-                update_prevented_by = ''
                 if len(specs_preventing_update):
                     update_prevented_by = ' (update prevented by specifications: %s)' % (
                         ', '.join(['%s from %s' % (x.version_req, x.specifying_module) for x in specs_preventing_update])
