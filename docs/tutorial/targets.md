@@ -9,22 +9,17 @@ section: tutorial/targets
 Target descriptions allow `yotta` to compile the same code for different target
 platforms (different desktop operating systems, or different embedded devices).
 
-The description contains information on:
+Each target description contains information both about how to run the compiler
+to compile (or cross-compile), and [configuration information](/reference/config.html) describing the
+hardware or environment that the target represents.
 
- * a [Toolchain File](#toolchainfile), which describes how to run the compiler
- * Any supporting files required to compile (such as link scripts)
- * Configuration information associated with this target, for example
-   describing what hardware functionality is available.
- * What other targets this target should be considered "similar to". This
-   information is used to resolve dependencies.
+### <a href="#finding-targets" name="finding-targets">#</a> Finding Targets
 
-And optionally provides information on:
+You can search for targets that people have published using [`yotta
+search target "<search query>"`](/reference/commands.html#yotta-search). For
+mbed boards, you can find information about the targets that can be used on the
+[mbed board pages](https://www.mbed.com/en/development/hardware/boards/).
 
- * how to run the debugger (`yotta debug` support)
- * how to run tests, where they cannot be run natively (`yotta test` support)
-
-Each yotta target contains a [target.json](../reference/target.html) file, which
-describes where to find this other information.
 
 ### <a href="#selecting-targets" name="selecting-targets">#</a> Selecting the Target
 
@@ -46,6 +41,23 @@ separate directory for each target: `./build/<targetname>/`.
 
 
 ## <a href="#writing-targets" name="writing-targets">#</a> Writing Targets
+
+The description contains information on:
+
+ * a [Toolchain File](#toolchainfile), which describes how to run the compiler
+ * Any supporting files required to compile (such as link scripts)
+ * Configuration information associated with this target, for example
+   describing what hardware functionality is available.
+ * What other targets this target should be considered "similar to". This
+   information is used to resolve dependencies.
+
+And optionally provides information on:
+
+ * how to run the debugger (`yotta debug` support)
+ * how to run tests, where they cannot be run natively (`yotta test` support)
+
+Each yotta target contains a [target.json](../reference/target.html) file, which
+describes where to find this other information.
 
 ### <a href="#inheriting" name="inheriting">#</a> Inheriting from an Existing Target
 
