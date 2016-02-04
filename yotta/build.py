@@ -129,6 +129,12 @@ def installAndBuild(args, following_args):
         if error:
             logging.error(error)
             build_status = 1
+        if install_status:
+            logging.warning(
+                "There were also errors installing and resolving dependencies, "+
+                "which may have caused the build failure: see above, or run "+
+                "`yotta install` for details."
+            )
 
     return {
                 'status': build_status or generate_status or install_status,
