@@ -65,12 +65,12 @@ def execCommand(args, following_args):
     else:
         return installComponent(args)
 
-def checkPrintStatus(errors, components):
+def checkPrintStatus(errors, components, top_component):
     status = 0
     for error in errors:
         logging.error(error)
         status = 1
-    for c in components.values():
+    for c in components.values() + [top_component]:
         if c and c.getError():
             logging.error('%s %s', c.getName(), c.getError())
             status = 1
@@ -118,7 +118,7 @@ def installDeps(args, current_component):
             available_components = [(current_component.getName(), current_component)],
                             test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
-        return checkPrintStatus(errors, components)
+        return checkPrintStatus(errors, components, current_component)
 
 
 
@@ -179,7 +179,7 @@ def installComponentAsDependency(args, current_component):
                         test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
 
     )
-    return checkPrintStatus(errors, components)
+    return checkPrintStatus(errors, components, current_component)
 
 
 def installComponent(args):

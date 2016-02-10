@@ -4,4 +4,5 @@
 # See LICENSE file for details.
 
 from yotta.main import main
+from yotta.main import __version__
 
