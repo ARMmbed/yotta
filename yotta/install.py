@@ -70,7 +70,7 @@ def checkPrintStatus(errors, components, top_component):
     for error in errors:
         logging.error(error)
         status = 1
-    for c in components.values() + [top_component]:
+    for c in list(components.values()) + [top_component]:
         if c and c.getError():
             logging.error('%s %s', c.getName(), c.getError())
             status = 1
