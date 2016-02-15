@@ -46,9 +46,11 @@ def execCommand(args, following_args):
         src = os.getcwd()
         dst = os.path.join(folders.globalTargetInstallDirectory(), t.getName())
 
+    broken_link = False
     if args.link_target:
         realsrc = fsutils.realpath(src)
         if src == realsrc:
+            broken_link = True
             logging.warning(
               ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET #pylint: disable=no-member
             )
@@ -56,6 +58,12 @@ def execCommand(args, following_args):
             logging.info('%s -> %s -> %s' % (dst, src, realsrc))
     else:
         logging.info('%s -> %s' % (dst, src))
-    fsutils.symlink(src, dst)
+    try:
+        fsutils.symlink(src, dst)
+    except Exception as e:
+        if broken_link:
+            logging.error('failed to create link (create the first half of the link first)')
+        else:
+            logging.error('failed to create link: %s', e)
 
 
