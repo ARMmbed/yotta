@@ -65,15 +65,26 @@ def execCommand(args, following_args):
     else:
         return installComponent(args)
 
-def checkPrintStatus(errors, components):
+def checkPrintStatus(errors, components, top_component, target):
     status = 0
     for error in errors:
         logging.error(error)
         status = 1
-    for c in components.values():
+    for c in list(components.values()) + [top_component]:
         if c and c.getError():
             logging.error('%s %s', c.getName(), c.getError())
             status = 1
+    leaf_target = None
+    if target and target.hierarchy:
+        for t in target.hierarchy:
+            if not leaf_target:
+                leaf_target = t
+            if t and t.getError():
+                if t is leaf_target:
+                    logging.error('target %s %s', t.getName(), t.getError())
+                else:
+                    logging.error('base target %s of %s %s', t.getName(), leaf_target.getName(), t.getError())
+                status = 1
     return status
 
 
@@ -118,7 +129,7 @@ def installDeps(args, current_component):
             available_components = [(current_component.getName(), current_component)],
                             test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
         )
-        return checkPrintStatus(errors, components)
+        return checkPrintStatus(errors, components, current_component, target)
 
 
 
@@ -179,7 +190,7 @@ def installComponentAsDependency(args, current_component):
                         test = {'own':'toplevel', 'all':True, 'none':False}[args.install_test_deps]
 
     )
-    return checkPrintStatus(errors, components)
+    return checkPrintStatus(errors, components, current_component, target)
 
 
 def installComponent(args):

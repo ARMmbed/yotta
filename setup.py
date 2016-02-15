@@ -30,7 +30,7 @@ else:
 
 setup(
     name = "yotta",
-    version = "0.13.1",
+    version = read("yotta/version.txt").strip(),
     author = "James Crosby",
     author_email = "James.Crosby@arm.com",
     description = ("Re-usable components for embedded software."),
@@ -39,7 +39,7 @@ setup(
     url = "about:blank",
     packages=find_packages(),
     package_data={
-        'yotta': ['lib/schema/*.json', 'lib/templates/*.txt', 'lib/templates/*.cmake']
+        'yotta': ['version.txt', 'lib/schema/*.json', 'lib/templates/*.txt', 'lib/templates/*.cmake']
     },
     long_description=read('pypi_readme.rst'),
     classifiers=[

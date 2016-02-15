@@ -115,6 +115,10 @@
         },
         "config": {
             "$ref": "#definitions/configData"
+        },
+        "yotta": {
+            "comment": "specification on the yotta versions that this target will work with (recommend >=x.y.z)",
+            "$ref": "#/definitions/semverSpecification"
         }
     },
     "definitions": {

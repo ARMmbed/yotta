@@ -423,3 +423,23 @@ For example, the scripts for a module that uses the
       "testReporter": ["greentea", "--digest", "stdin", "-v", "-V"]
    }
 ```
+
+<a name="yotta"></a>
+### `yotta`
+**type: version specification**
+
+A version specification for the version of yotta that this module requires. For
+example:
+
+```json
+   "yotta": ">=0.13.0"
+```
+
+```json
+   "yotta": ">=0.10.0, !0.12.0"
+```
+
+If your module requires functionality that was introduced in a specific yotta
+version, then you can use this property so that older versions of yotta report
+a clear error message to the user that they need to upgrade before using your
+module.

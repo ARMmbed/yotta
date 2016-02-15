@@ -23,6 +23,9 @@ if 'COVERAGE_PROCESS_START' in os.environ:
     import coverage
     coverage.process_startup()
 
+# set __version__ using the same file that's read by setup.py when installing:
+with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as _version_f:
+    __version__ = _version_f.read().strip()
 
 def splitList(l, at_value):
     r = [[]]
@@ -32,15 +35,6 @@ def splitList(l, at_value):
         else:
             r[-1].append(x)
     return r
-
-# Override the argparse default version action so that we can avoid importing
-# pkg_resources (which is slowww) unless someone has actually asked for the
-# version
-class FastVersionAction(argparse.Action):
-    def __call__(self, parser, args, values, option_string=None):
-        import pkg_resources
-        sys.stdout.write(pkg_resources.require("yotta")[0].version + '\n') #pylint: disable=not-callable
-        sys.exit(0)
 
 def main():
     # standard library modules, , ,
@@ -63,7 +57,7 @@ def main():
     )
     subparser = parser.add_subparsers(dest='subcommand_name', metavar='<subcommand>')
 
-    parser.add_argument('--version', nargs=0, action=FastVersionAction,
+    parser.add_argument('--version', action='version', version=__version__,
         help='display the version'
     )
 

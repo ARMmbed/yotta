@@ -225,3 +225,22 @@ Use `$program` for the name of the program that's being debugged, for example:
   ]
 ```
 
+<a name="yotta"></a>
+### `yotta`
+**type: version specification**
+
+A version specification for the version of yotta that this target requires. For
+example:
+
+```json
+   "yotta": ">=0.13.0"
+```
+
+```json
+   "yotta": ">=0.10.0, !0.12.0"
+```
+
+If your target requires functionality that was introduced in a specific yotta
+version, then you can use this property so that older versions of yotta report
+a clear error message to the user that they need to upgrade before using your
+target.
