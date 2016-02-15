@@ -24,7 +24,15 @@ def addOptions(parser):
              'link the current target.'
     )
 
+def nameFromTargetSpec(target_name_and_version):
+    if ',' in target_name_and_version:
+        return target_name_and_version.split(',')[0]
+    else:
+        return target_name_and_version
+
 def execCommand(args, following_args):
+    c = None
+    t = None
     if args.link_target:
         c = validate.currentDirectoryModule()
         if not c:
@@ -56,6 +64,29 @@ def execCommand(args, following_args):
             )
         else:
             logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+        # check that the linked target is actually set as the target (or is
+        # inherited from by something set as the target), if it isn't, warn the
+        # user:
+        if c and args.link_target != nameFromTargetSpec(args.target):
+            target = c.getTarget(args.target, args.config)
+            if target:
+                if not target.inheritsFrom(args.link_target):
+                    logging.warning(
+                        'target "%s" is not used by the current target (%s), so '
+                        'this link will have no effect. Perhaps you meant to '
+                        'use "yotta target <targetname>" to set the build '
+                        'target first.',
+                        args.link_target,
+                        nameFromTargetSpec(args.target)
+                    )
+            else:
+                logging.warning(
+                    'Could not check if linked target "%s" is used by the '+
+                    'current target "%s": run "yotta target" to check.',
+                    args.link_target,
+                    nameFromTargetSpec(args.target)
+                )
+
     else:
         logging.info('%s -> %s' % (dst, src))
     try:
