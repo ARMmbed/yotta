@@ -43,6 +43,9 @@ class TargetUnavailable(Unavailable):
 class SpecificationNotMet(AccessException):
     pass
 
+class NotInCache(KeyError):
+    pass
+
 
 class RemoteVersion(version.Version):
     def __init__(self, version_string, url=None, name='unknown', friendly_source='unknown', friendly_version=None):
@@ -102,6 +105,14 @@ def pruneCache():
     cache_dir = folders.cacheDirectory()
     def fullpath(f):
         return os.path.join(cache_dir, f)
+    def getMTimeSafe(f):
+        # it's possible that another process removed the file before we stat
+        # it, handle this gracefully
+        try:
+            return os.stat(f).st_mtime
+        except FileNotFoundError:
+            import time
+            return time.clock()
     # ensure cache exists
     fsutils.mkDirP(cache_dir)
     max_cached_modules = getMaxCachedModules()
@@ -109,7 +120,7 @@ def pruneCache():
             [f for f in os.listdir(cache_dir) if
                 os.path.isfile(fullpath(f)) and not f.endswith('.json')
             ],
-            key = lambda f: os.stat(fullpath(f)).st_mtime,
+            key = lambda f: getMTimeSafe(fullpath(f)),
             reverse = True
         )[max_cached_modules:]:
         cache_logger.debug('cleaning up cache file %s', f)
@@ -182,10 +193,10 @@ def removeFromCache(cache_key):
 
 def unpackFromCache(cache_key, to_directory):
     ''' If the specified cache key exists, unpack the tarball into the
-        specified directory, otherwise raise KeyError.
+        specified directory, otherwise raise NotInCache (a KeyError subclass).
     '''
     if cache_key is None:
-        raise KeyError('"None" is never in cache')
+        raise NotInCache('"None" is never in cache')
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
     path = os.path.join(cache_dir, cache_key)
@@ -204,7 +215,7 @@ def unpackFromCache(cache_key, to_directory):
     except IOError as e:
         if e.errno == errno.ENOENT:
             cache_logger.debug('%s not in cache', cache_key)
-            raise KeyError('not in cache')
+            raise NotInCache('not in cache')
 
 def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
     ''' Download the specified stream to a temporary cache directory, and
@@ -265,8 +276,12 @@ def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
         }
         extended_origin_info.update(origin_info)
         ordered_json.dump(cache_as + '.json', extended_origin_info)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
+    except Exception as e:
+        # windows error 183 == file already exists
+        # (be careful not to use WindowsError on non-windows platforms as it
+        # isn't defined)
+        if (isinstance(e, OSError) and e.errno == errno.ENOENT) or \
+           (isinstance(e, getattr(__builtins__, "WindowsError", type(None))) and e.errno == 183):
             # if we failed, it's because the file already exists (probably
             # because another process got there first), so just rm our
             # temporary file and continue
@@ -285,8 +300,15 @@ def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_
         before making the request)
     '''
 
-    new_cache_key = downloadToCache(stream, hash, cache_key, origin_info)
-    unpackFromCache(new_cache_key, into_directory)
+    # it's possible (though extremely unlikely) another process pruned this
+    # module from the cache after we downloaded it
+    for retry in range(10):
+        try:
+            new_cache_key = downloadToCache(stream, hash, cache_key, origin_info)
+            unpackFromCache(new_cache_key, into_directory)
+            break
+        except NotInCache as e:
+            continue
 
     # if we didn't provide a cache key, there's no point in storing the cache
     if cache_key is None:
