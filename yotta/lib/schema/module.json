@@ -129,6 +129,10 @@
                 }
             },
             "additionalProperties": false
+        },
+        "yotta": {
+            "comment": "specification on the yotta versions that this module will work with (recommend >=x.y.z)",
+            "$ref": "#/definitions/semverSpecification"
         }
     },
     "definitions": {

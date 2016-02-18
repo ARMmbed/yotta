@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2016 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -199,6 +199,28 @@ class Pack(object):
         except IOError as e:
             if e.errno != errno.ENOENT:
                 raise
+        # warn about invalid yotta versions before schema errors (as new yotta
+        # might introduce new schema)
+        yotta_version_spec = None
+        if self.description and self.description.get('yotta', None):
+            try:
+                yotta_version_spec = version.Spec(self.description['yotta'])
+            except ValueError as e:
+                logger.warning(
+                    "could not parse yotta version spec '%s' from %s: it "+
+                    "might require a newer version of yotta",
+                    self.description['yotta'],
+                    self.description['name']
+                )
+        if yotta_version_spec is not None:
+            import yotta
+            yotta_version = version.Version(yotta.__version__)
+            if not yotta_version_spec.match(yotta_version):
+                self.error = "requires yotta version %s (current version is %s). see http://yottadocs.mbed.com for update instructions" % (
+                    str(yotta_version_spec),
+                    str(yotta_version)
+                )
+
         if self.description and schema_filename and not self.path in self.schema_errors_displayed:
             self.schema_errors_displayed.add(self.path)
             have_errors = False
