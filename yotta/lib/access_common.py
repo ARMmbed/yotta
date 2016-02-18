@@ -300,6 +300,12 @@ def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_
         before making the request)
     '''
 
+    # if the cache is disabled, then use a random cache key even if one was
+    # provided, so that the module is not persisted in the cache and its
+    # temporary download location is a random key:
+    if getMaxCachedModules() == 0:
+        cache_key = None
+
     # it's possible (though extremely unlikely) another process pruned this
     # module from the cache after we downloaded it
     for retry in range(10):
