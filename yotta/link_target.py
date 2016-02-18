@@ -24,7 +24,15 @@ def addOptions(parser):
              'link the current target.'
     )
 
+def nameFromTargetSpec(target_name_and_version):
+    if ',' in target_name_and_version:
+        return target_name_and_version.split(',')[0]
+    else:
+        return target_name_and_version
+
 def execCommand(args, following_args):
+    c = None
+    t = None
     if args.link_target:
         c = validate.currentDirectoryModule()
         if not c:
@@ -46,16 +54,47 @@ def execCommand(args, following_args):
         src = os.getcwd()
         dst = os.path.join(folders.globalTargetInstallDirectory(), t.getName())
 
+    broken_link = False
     if args.link_target:
         realsrc = fsutils.realpath(src)
         if src == realsrc:
+            broken_link = True
             logging.warning(
               ('%s -> %s -> ' % (dst, src)) + colorama.Fore.RED + 'BROKEN' + colorama.Fore.RESET #pylint: disable=no-member
             )
         else:
             logging.info('%s -> %s -> %s' % (dst, src, realsrc))
+        # check that the linked target is actually set as the target (or is
+        # inherited from by something set as the target), if it isn't, warn the
+        # user:
+        if c and args.link_target != nameFromTargetSpec(args.target):
+            target = c.getTarget(args.target, args.config)
+            if target:
+                if not target.inheritsFrom(args.link_target):
+                    logging.warning(
+                        'target "%s" is not used by the current target (%s), so '
+                        'this link will have no effect. Perhaps you meant to '
+                        'use "yotta target <targetname>" to set the build '
+                        'target first.',
+                        args.link_target,
+                        nameFromTargetSpec(args.target)
+                    )
+            else:
+                logging.warning(
+                    'Could not check if linked target "%s" is used by the '+
+                    'current target "%s": run "yotta target" to check.',
+                    args.link_target,
+                    nameFromTargetSpec(args.target)
+                )
+
     else:
         logging.info('%s -> %s' % (dst, src))
-    fsutils.symlink(src, dst)
+    try:
+        fsutils.symlink(src, dst)
+    except Exception as e:
+        if broken_link:
+            logging.error('failed to create link (create the first half of the link first)')
+        else:
+            logging.error('failed to create link: %s', e)
 
 
