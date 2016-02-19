@@ -43,6 +43,8 @@ class VCS(object):
         raise NotImplementedError()
     def getCommitId(self):
         raise NotImplementedError()
+    def getDescription(self):
+        raise NotImplementedError()
     def __nonzero__(self):
         raise NotImplementedError()
     # python 3 truthiness
@@ -110,6 +112,10 @@ class Git(VCS):
 
     def getCommitId(self):
         out, err = self._execCommands([self._gitCmd('rev-parse', 'HEAD')])
+        return out.strip()
+
+    def getDescription(self):
+        out, err = self._execCommands([self._gitCmd('describe', '--always', '--tags')])
         return out.strip()
 
     def workingDirectory(self):
@@ -239,6 +245,9 @@ class HG(VCS):
 
     def getCommitId(self):
         return self.repo.hg_node()
+
+    def getDescription(self):
+        return self.repo.hg_command('log', '-r', '.', '-T', "{latesttag}{sub('^-0-.*', '', '-{latesttagdistance}-m{node|short}')}")
 
     def workingDirectory(self):
         return self.worktree
