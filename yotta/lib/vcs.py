@@ -247,7 +247,7 @@ class HG(VCS):
         return self.repo.hg_node()
 
     def getDescription(self):
-        return self.repo.hg_command('log', '-r', '.', '-T', "{latesttag}{sub('^-0-.*', '', '-{latesttagdistance}-m{node|short}')}")
+        return self.repo.hg_command('log', '--rev', '.', '--template', "{latesttag}{sub('^-0-.*', '', '-{latesttagdistance}-m{node|short}')}")
 
     def workingDirectory(self):
         return self.worktree
