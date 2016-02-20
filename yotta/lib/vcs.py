@@ -247,7 +247,10 @@ class HG(VCS):
         return self.repo.hg_node()
 
     def getDescription(self):
-        return self.repo.hg_command('log', '--rev', '.', '--template', "{latesttag}{sub('^-0-.*', '', '-{latesttagdistance}-m{node|short}')}")
+        try:
+            return self.repo.hg_command('log', '--rev', '.', '--template', "{latesttag}{sub('^-0-.*', '', '-{latesttagdistance}-m{node|short}')}")
+        except self.hgapi.HgException: # old mercurial doesn't support above command, output short hash, m-prefixed
+            return "m" + self.getCommitId()[:12]
 
     def workingDirectory(self):
         return self.worktree
