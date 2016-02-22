@@ -65,6 +65,7 @@ built, then the following will also be defined in this header:
 ```C
 #define YOTTA_BUILD_VCS_ID 0123456789abcdef // git or mercurial hash, variable length up to 40 characters
 #define YOTTA_BUILD_VCS_CLEAN 1             // 1 if there were no uncommitted changes, else 0
+#define YOTTA_BUILD_VCS_DESCRIPTION v0.5-57-gad36348 // git describe or mercurial equivalent
 ```
 
 Corresponding definitions for all of the build information are always available

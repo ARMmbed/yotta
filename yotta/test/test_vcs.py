@@ -39,6 +39,10 @@ class TestGit(unittest.TestCase):
         commit_id = self.working_copy.getCommitId()
         self.assertTrue(len(commit_id) >= 6)
 
+    def test_getDescription(self):
+        description = self.working_copy.getDescription()
+        self.assertTrue(len(description) >= 1)
+
     def test_isClean(self):
         self.assertTrue(self.working_copy.isClean())
         fsutils.rmF(os.path.join(self.working_copy.workingDirectory(), 'module.json'))
@@ -72,6 +76,10 @@ class TestHg(unittest.TestCase):
     def test_getCommitId(self):
         commit_id = self.working_copy.getCommitId()
         self.assertTrue(len(commit_id) >= 6)
+
+    def test_getDescription(self):
+        description = self.working_copy.getDescription()
+        self.assertTrue(len(description) >= 1)
 
     def test_isClean(self):
         self.assertTrue(self.working_copy.isClean())

@@ -364,9 +364,11 @@ class CMakeGen(object):
                 )
             if commit_id is not None:
                 clean_state = int(vcs_instance.isClean())
+                description = vcs_instance.getDescription()
                 definitions += [
                     ('YOTTA_BUILD_VCS_ID',    commit_id,   'git or mercurial hash'),
-                    ('YOTTA_BUILD_VCS_CLEAN', clean_state, 'evaluates true if the version control system was clean, otherwise false')
+                    ('YOTTA_BUILD_VCS_CLEAN', clean_state, 'evaluates true if the version control system was clean, otherwise false'),
+                    ('YOTTA_BUILD_VCS_DESCRIPTION', description, 'git describe or mercurial equivalent')
                 ]
 
         for d in definitions:
