@@ -108,6 +108,11 @@ class Component(pack.Pack):
             latest_suitable_version = latest_suitable_version,
                  inherit_shrinkwrap = inherit_shrinkwrap
         )
+        if self.description and inherit_shrinkwrap is not None:
+            # when inheriting a shrinkwrap, check that this module is
+            # listed in the shrinkwrap, otherwise emit a warning:
+            if next((x for x in inherit_shrinkwrap.get('modules', []) if x['name'] == self.getName()), None) is None:
+                logger.warning("%s missing from shrinkwrap", self.getName())
         if warn_deprecated_filename:
             logger.warning(
                 "Component %s uses deprecated %s file, use %s instead." % (
@@ -144,9 +149,8 @@ class Component(pack.Pack):
                 # exact version, and pull from registry:
                 shrinkwrap_version_req = shrinkwrap[name]
                 logger.debug(
-                    'respecting %s shrinkwrap version %s for %s', self.getName(), version_spec, name
+                    'respecting %s shrinkwrap version %s for %s', self.getName(), shrinkwrap_version_req, name
                 )
-                shrinkwrapped = True
             return pack.DependencySpec(
                                          name,
                                          version_spec,
@@ -669,7 +673,8 @@ class Component(pack.Pack):
               install_missing = install_missing,
               application_dir = application_dir,
              update_installed = update_installed,
-            additional_config = additional_config
+            additional_config = additional_config,
+                   shrinkwrap = self.getShrinkwrap()
         )
 
     def getTarget(self, target_name_and_version, additional_config=None):

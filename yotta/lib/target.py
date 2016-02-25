@@ -106,7 +106,8 @@ def getDerivedTarget(
                 application_dir = None,
                 install_missing = True,
                update_installed = False,
-              additional_config = None
+              additional_config = None,
+                     shrinkwrap = None
     ):
     # access, , get components, internal
     from yotta.lib import access
@@ -119,10 +120,29 @@ def getDerivedTarget(
     '''
     logger.debug('satisfy target: %s' % target_name_and_version);
     if ',' in target_name_and_version:
-        name, ver = target_name_and_version.split(',')
-        dspec = pack.DependencySpec(name, ver)
+        name, version_req = target_name_and_version.split(',')
     else:
-        dspec = pack.DependencySpec(target_name_and_version, "*")
+        name = target_name_and_version
+        version_req = '*'
+
+    # shrinkwrap is the raw json form, not mapping form here, so rearrange it
+    # before indexing:
+    if shrinkwrap is not None:
+        shrinkwrap_version_req = {
+            x['name']: x['version'] for x in shrinkwrap.get('targets', [])
+        }.get(name, None)
+    else:
+        shrinkwrap_version_req = None
+    if shrinkwrap_version_req is not None:
+        logger.debug(
+            'respecting shrinkwrap version %s for %s', shrinkwrap_version_req, name
+        )
+
+    dspec = pack.DependencySpec(
+                                 name,
+                                 version_req,
+        shrinkwrap_version_req = shrinkwrap_version_req
+    )
 
     leaf_target      = None
     previous_name    = dspec.name
@@ -140,14 +160,16 @@ def getDerivedTarget(
                          search_paths = search_dirs,
                     working_directory = targets_path,
                      update_installed = ('Update' if update_installed else None),
-                                 type = 'target'
+                                 type = 'target',
+                   inherit_shrinkwrap = shrinkwrap
                 )
             else:
                 t = access.satisfyVersionFromSearchPaths(
                                  name = dspec.name,
                      version_required = dspec.versionReq(),
                          search_paths = search_dirs,
-                                 type = 'target'
+                                 type = 'target',
+                   inherit_shrinkwrap = shrinkwrap
                 )
         except access_common.Unavailable as e:
             errors.append(e)
@@ -202,6 +224,11 @@ class Target(pack.Pack):
             latest_suitable_version = latest_suitable_version,
                  inherit_shrinkwrap = inherit_shrinkwrap
         )
+        if self.description and inherit_shrinkwrap is not None:
+            # when inheriting a shrinkwrap, check that this module is
+            # listed in the shrinkwrap, otherwise emit a warning:
+            if next((x for x in inherit_shrinkwrap.get('targets', []) if x['name'] == self.getName()), None) is None:
+                logger.warning("%s missing from shrinkwrap", self.getName())
 
     def baseTargetSpec(self):
         ''' returns pack.DependencySpec for the base target of this target (or
@@ -209,7 +236,17 @@ class Target(pack.Pack):
         '''
         inherits = self.description.get('inherits', {})
         if len(inherits) == 1:
-            return pack.DependencySpec(list(inherits.items())[0][0], list(inherits.items())[0][1])
+            name, version_req = list(inherits.items())[0]
+            shrinkwrap_version_req = self.getShrinkwrapMapping('targets').get(name, None)
+            if shrinkwrap_version_req is not None:
+                logger.debug(
+                    'respecting shrinkwrap version %s for %s', shrinkwrap_version_req, name
+                )
+            return pack.DependencySpec(
+                name,
+                version_req,
+                shrinkwrap_version_req = shrinkwrap_version_req
+            )
         elif len(inherits) > 1:
             logger.error('target %s specifies multiple base targets, but only one is allowed', self.getName())
         return None

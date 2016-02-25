@@ -6,6 +6,9 @@
     "modules": {
        "$ref": "#/definitions/modulesArray"
       },
+    "targets": {
+       "$ref": "#/definitions/targetsArray"
+      },
     "additionalProperties": false
   },
   "definitions": {
@@ -23,6 +26,10 @@
         "name",
         "version"
       ]
+    },
+    "target": {
+      "comment":"targets are specified in the same way as modules (name and version spec)",
+      "$ref": "#/definitions/module"
     },
     "name": {
       "type": "string",
@@ -58,6 +65,12 @@
       "type": "array",
       "items":{
         "$ref": "#/definitions/module"
+      }
+    },
+    "targetsArray": {
+      "type": "array",
+      "items":{
+        "$ref": "#/definitions/target"
       }
     }
   }

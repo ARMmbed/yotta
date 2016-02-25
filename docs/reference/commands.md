@@ -603,7 +603,8 @@ yotta shrinkwrap
 
 #### Description
 Create a `yotta-shrinkwrap.json` file in the current module, which specifies
-the exact versions of dependencies currently used.
+the exact versions of dependencies and target descriptions currently being
+used.
 
 When a module with a `yotta-shrinkwrap.json` file is installed, the versions
 specified in the shrinkwrap will be downloaded from the public yotta registry,
@@ -633,5 +634,13 @@ The format of the `yotta-shrinkwrap.json` file is:
       "name": "a-dependency-name"
     },
     ...
+  ],
+  "targets": [
+   {
+     "version": "1.2.3",
+     "name": "some-target-name"
+   },
+   ...
+  ]
 }
 ```
