@@ -53,7 +53,7 @@ def execCommand(args, following_args):
         return 1
 
     with open('yotta-shrinkwrap.json', 'w') as f:
-        f.write(ordered_json.dumps(filterForShrinkwrap(dependency_list)))
+        f.write(ordered_json.dumps(prepareShrinkwarp(dependency_list, target.hierarchy)))
 
 
 def checkDependenciesForShrinkwrap(dependency_list):
@@ -90,6 +90,19 @@ def checkDependenciesForShrinkwrap(dependency_list):
 
     return errors
 
+
+def prepareShrinkwarp(dependency_list, target_list):
+    modules_shrinkwrap = filterForShrinkwrap(dependency_list)
+    targets_shrinkwrap = targetsShrinkwrap(target_list)
+    modules_shrinkwrap.update(targets_shrinkwrap)
+    return modules_shrinkwrap
+
+def targetsShrinkwrap(target_list):
+    return {
+        'targets': [
+            {'name':t.getName(), 'version':str(t.getVersion())} for t in target_list if t
+        ]
+    }
 
 def filterForShrinkwrap(dependency_list):
     def filterModule(mod):

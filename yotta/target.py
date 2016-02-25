@@ -63,7 +63,7 @@ def displayCurrentTarget(args):
         app_path = None
 
     derived_target, errors = target.getDerivedTarget(
-        args.target, c.targetsPath(), application_dir=app_path, install_missing=False
+        args.target, c.targetsPath(), application_dir=app_path, install_missing=False, shrinkwrap=c.getShrinkwrap()
     )
     for error in errors:
         logging.error(error)

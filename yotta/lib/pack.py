@@ -248,12 +248,7 @@ class Pack(object):
         # (note that it is unsafe to use the __bool__ operator on self here as
         # we are not fully constructed)
         if self.description:
-            if inherit_shrinkwrap is not None:
-                # when inheriting a shrinkwrap, check that this module is
-                # listed in the shrinkwrap, otherwise emit a warning:
-                if next((x for x in inherit_shrinkwrap.get('modules', []) if x['name'] == self.getName()), None) is None:
-                    logger.warning("%s missing from shrinkwrap", self.getName())
-                self.inherited_shrinkwrap = inherit_shrinkwrap
+            self.inherited_shrinkwrap = inherit_shrinkwrap
             self.shrinkwrap = tryReadJSON(os.path.join(path, Shrinkwrap_Fname), Shrinkwrap_Schema)
             if self.shrinkwrap:
                 logger.warning('dependencies of %s are pegged by yotta-shrinkwrap.json', self.getName())
@@ -265,11 +260,12 @@ class Pack(object):
     def getShrinkwrap(self):
         return self.shrinkwrap or self.inherited_shrinkwrap
 
-    def getShrinkwrapMapping(self):
+    def getShrinkwrapMapping(self, variant='modules'):
         shrinkwrap = self.getShrinkwrap()
-        if shrinkwrap and 'modules' in shrinkwrap:
+        assert(variant in ['modules', 'targets'])
+        if shrinkwrap and variant in shrinkwrap:
             return {
-                x['name']: x['version'] for x in shrinkwrap['modules']
+                x['name']: x['version'] for x in shrinkwrap[variant]
             }
         else:
             return {}
