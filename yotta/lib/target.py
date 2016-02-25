@@ -125,13 +125,14 @@ def getDerivedTarget(
         name = target_name_and_version
         version_req = '*'
 
-    if shrinkwrap is None:
-        shrinkwrap = {}
-
     # shrinkwrap is the raw json form, not mapping form here, so rearrange it
     # before indexing:
-    shrinkwrap_map = { x['name']: x['version'] for x in shrinkwrap.get('targets', []) }
-    shrinkwrap_version_req = shrinkwrap_map.get(name, None)
+    if shrinkwrap is not None:
+        shrinkwrap_version_req = {
+            x['name']: x['version'] for x in shrinkwrap.get('targets', [])
+        }.get(name, None)
+    else:
+        shrinkwrap_version_req = None
     if shrinkwrap_version_req is not None:
         logger.debug(
             'respecting shrinkwrap version %s for %s', shrinkwrap_version_req, name
