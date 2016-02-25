@@ -153,7 +153,7 @@ class TestCLIShrinkwrap(unittest.TestCase):
         stdout, stderr, statuscode = cli.run(['-t', 'inherits-from-test-target', '--plain', 'install'], cwd=test_dir)
         self.assertEqual(statuscode, 0)
 
-        stdout, stderr, statuscode = cli.run(['-t', 'inherits-from-test-target', '--plain', 'list'], cwd=test_dir)
+        stdout, stderr, statuscode = cli.run(['-t', 'inherits-from-test-target', '--plain', 'target'], cwd=test_dir)
         self.assertEqual(statuscode, 0)
         self.assertIn('%s %s' % (Test_Target_Name, Test_Target_Old_Version), stdout+stderr)
 
