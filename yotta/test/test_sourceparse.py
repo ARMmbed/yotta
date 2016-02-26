@@ -31,7 +31,6 @@ Github_URLs = [
     'username/reponame@^1.2.3',
     'username/reponame@-1.2.3',
     'username/reponame@branch-or-tag-name',
-
 ]
 
 Git_URLs = [
@@ -64,13 +63,7 @@ test_invalid_urls = [
 ]
 
 
-class TestGitAccess(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
+class TestParseSourceURL(unittest.TestCase):
     def test_registryURLs(self):
         for url in Registry_URLs:
             sv = sourceparse.parseSourceURL(url)
@@ -90,6 +83,54 @@ class TestGitAccess(unittest.TestCase):
         for url in HG_URLs:
             sv = sourceparse.parseSourceURL(url)
             self.assertEqual(sv.source_type, 'hg')
+
+    def test_invalid(self):
+        for url in test_invalid_urls:
+            self.assertRaises(ValueError, sourceparse.parseSourceURL, url)
+
+Valid_Names = [
+    'validname',
+    'another-validname',
+    'another-valid2name123'
+]
+
+class TestParseModuleNameAndSpec(unittest.TestCase):
+    def test_validNames(self):
+        for name in Valid_Names:
+            n, s = sourceparse.parseModuleNameAndSpec(name)
+            self.assertEqual(n, name)
+            self.assertEqual(s, '*')
+
+    def test_GithubRefs(self):
+        for url in Github_URLs:
+            n, s = sourceparse.parseModuleNameAndSpec(url)
+            self.assertEqual(n, 'reponame')
+
+    def test_atVersion(self):
+        for name in Valid_Names:
+            for v in Registry_URLs:
+                if len(v):
+                    nv = name + '@' + v
+                    n, s = sourceparse.parseModuleNameAndSpec(nv)
+                    self.assertEqual(n, name)
+                    self.assertEqual(s, v)
+
+    def test_atGitURL(self):
+        for name in Valid_Names:
+            for v in Git_URLs:
+                nv = name + '@' + v
+                n, s = sourceparse.parseModuleNameAndSpec(nv)
+                self.assertEqual(n, name)
+                self.assertEqual(s, v)
+
+    def test_atHGURL(self):
+        for name in Valid_Names:
+            for v in HG_URLs:
+                nv = name + '@' + v
+                n, s = sourceparse.parseModuleNameAndSpec(nv)
+                self.assertEqual(n, name)
+                self.assertEqual(s, v)
+
 
 if __name__ == '__main__':
     unittest.main()

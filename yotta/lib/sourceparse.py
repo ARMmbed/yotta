@@ -47,7 +47,7 @@ class VersionSource(object):
             return self.semantic_spec.match(v)
 
 
-def _withoutFragment(url):
+def _splitFragment(url):
     parsed = urlsplit(url)
     if '#' in url:
         return url[:url.index('#')], parsed.fragment
@@ -57,15 +57,15 @@ def _withoutFragment(url):
 def _getGithubRef(source_url):
     import re
     # something/something#spec = github
-    defragmented, fragment = _withoutFragment(source_url)
+    defragmented, fragment = _splitFragment(source_url)
     github_match = re.match('^[a-z0-9_-]+/([a-z0-9_-]+)$', defragmented, re.I)
     if github_match:
         return github_match.group(1), VersionSource('github', defragmented, fragment)
 
     # something/something@spec = github
-    alternate_github_match = re.match('([a-z0-9_-]+/([a-z0-9_-]+)) *@?([~^><=.0-9a-z\*-]*)', source_url, re.I)
+    alternate_github_match = re.match('([a-z0-9_-]+/([a-z0-9_-]+)) *@?([~^><=.0-9a-z\*-]*)$', source_url, re.I)
     if alternate_github_match:
-        return alternate_github_match.group(1), VersionSource('github', alternate_github_match.group(0), alternate_github_match.group(2))
+        return alternate_github_match.group(2), VersionSource('github', alternate_github_match.group(1), alternate_github_match.group(3))
 
     return None, None
 
@@ -100,14 +100,12 @@ def parseSourceURL(source_url):
     elif parsed.scheme.startswith('hg+') or parsed.path.endswith('.hg'):
         # hg+anything://anything or anything.hg is a hg repo:
         return VersionSource('hg', without_fragment, parsed.fragment)
-    elif re.match('^[a-z0-9_-]+/[a-z0-9_-]+$', without_fragment, re.I):
-        # something/something#spec = github
-        return VersionSource('github', without_fragment, parsed.fragment)
 
     # something/something@spec = github
-    module_name, alternate_github_match = _getGithubRef(source_url)
-    if alternate_github_match:
-        return alternate_github_match
+    # something/something#spec = github
+    module_name, github_match = _getGithubRef(source_url)
+    if github_match:
+        return github_match
 
     raise ValueError("Invalid version specification: \"%s\"" % (source_url))
 
@@ -140,10 +138,7 @@ def parseModuleNameAndSpec(module_name_and_spec):
     if not spec:
         spec = '*'
 
-    print 'determined name:%s, spec:%s' % (name, spec)
     import sys
     sys.stdout.flush()
 
     return name, spec
-
-
