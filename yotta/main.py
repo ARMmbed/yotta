@@ -94,7 +94,8 @@ def main():
     addParser('init', 'init', 'Create a new module.')
     addParser('install', 'install',
         'Add a specific module as a dependency, and download it, or install all '+
-        'dependencies for the current module.'
+        'dependencies for the current module. Use yotta install '+
+        'modulename@version to install a specific version.'
     )
     addParser('build', 'build',
         'Build the current module. Options can be passed to the underlying '+

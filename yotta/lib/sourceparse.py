@@ -11,7 +11,6 @@ try:
     from urlparse import urlsplit
 except ImportError:
     from urllib.parse import urlsplit #pylint: disable=no-name-in-module,import-error
-import re
 
 # version, , represent versions and specifications, internal
 from yotta.lib import version
@@ -48,10 +47,33 @@ class VersionSource(object):
             return self.semantic_spec.match(v)
 
 
+def _splitFragment(url):
+    parsed = urlsplit(url)
+    if '#' in url:
+        return url[:url.index('#')], parsed.fragment
+    else:
+        return url, None
+
+def _getGithubRef(source_url):
+    import re
+    # something/something#spec = github
+    defragmented, fragment = _splitFragment(source_url)
+    github_match = re.match('^[a-z0-9_-]+/([a-z0-9_-]+)$', defragmented, re.I)
+    if github_match:
+        return github_match.group(1), VersionSource('github', defragmented, fragment)
+
+    # something/something@spec = github
+    alternate_github_match = re.match('([a-z0-9_-]+/([a-z0-9_-]+)) *@?([~^><=.0-9a-z\*-]*)$', source_url, re.I)
+    if alternate_github_match:
+        return alternate_github_match.group(2), VersionSource('github', alternate_github_match.group(1), alternate_github_match.group(3))
+
+    return None, None
+
 def parseSourceURL(source_url):
     ''' Parse the specified version source URL (or version spec), and return an
         instance of VersionSource
     '''
+    import re
     parsed = urlsplit(source_url)
 
     if '#' in source_url:
@@ -78,14 +100,45 @@ def parseSourceURL(source_url):
     elif parsed.scheme.startswith('hg+') or parsed.path.endswith('.hg'):
         # hg+anything://anything or anything.hg is a hg repo:
         return VersionSource('hg', without_fragment, parsed.fragment)
-    elif re.match('^[a-z0-9_-]+/[a-z0-9_-]+$', without_fragment, re.I):
-        # something/something#spec = github
-        return VersionSource('github', without_fragment, parsed.fragment)
 
     # something/something@spec = github
-    alternate_github_match = re.match('([a-z0-9_-]+/[a-z0-9_-]+) *@?([~^><=.0-9a-z\*-]*)', source_url, re.I)
-    if alternate_github_match:
-        return VersionSource('github', alternate_github_match.group(0), alternate_github_match.group(1))
+    # something/something#spec = github
+    module_name, github_match = _getGithubRef(source_url)
+    if github_match:
+        return github_match
 
-    raise ValueError("Invalid version source url: \"%s\"" % (source_url))
+    raise ValueError("Invalid version specification: \"%s\"" % (source_url))
 
+def parseModuleNameAndSpec(module_name_and_spec):
+    ''' Parse modulename[@versionspec] and return a tuple
+        (module_name_string, version_spec_string).
+
+        Also accepts raw github version specs (Owner/reponame#whatever), as the
+        name can be deduced from these.
+
+        Note that the specification split from the name is not validated. If
+        there is no specification (just a module name) passed in, then '*' will
+        be returned as the specification.
+    '''
+    import re
+    # fist check if this is a raw github specification that we can get the
+    # module name from:
+    name, spec = _getGithubRef(module_name_and_spec)
+    if name and spec:
+        return name, module_name_and_spec
+
+    # next split at the first @, if any
+    name = module_name_and_spec.split('@')[0]
+    spec = module_name_and_spec[len(name)+1:]
+
+    name = name.strip()
+
+    # if there's no specification, return the explicit any-version
+    # specification:
+    if not spec:
+        spec = '*'
+
+    import sys
+    sys.stdout.flush()
+
+    return name, spec

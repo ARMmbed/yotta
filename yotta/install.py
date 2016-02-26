@@ -7,7 +7,6 @@
 import argparse
 import logging
 import os
-import re
 
 # Component, , represents an installed component, internal
 from yotta.lib import component
@@ -20,9 +19,6 @@ from yotta.lib import access_common
 from yotta.lib import folders
 # --config option, , , internal
 from yotta import options
-
-GitHub_Ref_RE = re.compile('[a-zA-Z0-9-]*/([a-zA-Z0-9-]*)')
-
 
 def addOptions(parser):
     options.config.addTo(parser)
@@ -145,20 +141,16 @@ def installComponentAsDependency(args, current_component):
             logging.error(error)
         return 1
     modules_dir = current_component.modulesPath()
-    #!!! FIXME: non-registry component spec support (see also installComponent
-    # below), for these the original source should be included in the version
-    # spec, too
-    github_ref_match = GitHub_Ref_RE.match(args.component)
+
+    from yotta.lib import sourceparse
+    # check if we have both a name and specification
+    component_name, component_spec = sourceparse.parseModuleNameAndSpec(args.component)
+    logging.info('%s, %s', component_name, component_spec)
+
+    if component_name == current_component.getName():
+        logging.error('will not install module %s as a dependency of itself', component_name)
+        return -1
     try:
-        if github_ref_match:
-            component_name = github_ref_match.group(1)
-            component_spec = args.component
-        else:
-            component_name = args.component
-            component_spec = '*'
-        if component_name == current_component.getName():
-            logging.error('will not install module %s as a dependency of itself', component_name)
-            return -1
         installed = access.satisfyVersion(
                 component_name,
                 component_spec,
@@ -166,7 +158,7 @@ def installComponentAsDependency(args, current_component):
                   search_paths = [modules_dir],
              working_directory = modules_dir
         )
-    except access_common.Unavailable as e:
+    except access_common.AccessException as e:
         logging.error(e)
         return 1
 
@@ -197,29 +189,19 @@ def installComponent(args):
     path = folders.globalInstallDirectory() if args.act_globally else os.getcwd()
     logging.debug('install component %s to %s' % (args.component, path))
 
-    # !!! FIXME: should support other URL specs, spec matching should be in
-    # access module
-    github_ref_match = GitHub_Ref_RE.match(args.component)
+    from yotta.lib import sourceparse
+    # check if we have both a name and specification
+    component_name, component_spec = sourceparse.parseModuleNameAndSpec(args.component)
+
     try:
-        if github_ref_match:
-            component_name = github_ref_match.group(1)
-            access.satisfyVersion(
-                      component_name,
-                      args.component,
-                           available = dict(),
-                        search_paths = [path],
-                   working_directory = path
-            )
-        else:
-            component_name = args.component
-            access.satisfyVersion(
-                      component_name,
-                                 '*',
-                           available = dict(),
-                        search_paths = [path],
-                   working_directory = path
-            )
-    except access_common.Unavailable as e:
+        access.satisfyVersion(
+                  component_name,
+                  component_spec,
+                       available = dict(),
+                    search_paths = [path],
+               working_directory = path
+        )
+    except access_common.AccessException as e:
         logging.error('%s', e)
         return 1
     os.chdir(component_name)

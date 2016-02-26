@@ -51,7 +51,12 @@ def remoteComponentFor(name, version_required, registry='modules'):
         Raises an exception if any arguments are invalid.
     '''
 
-    vs = sourceparse.parseSourceURL(version_required)
+    try:
+        vs = sourceparse.parseSourceURL(version_required)
+    except ValueError as e:
+        raise access_common.Unavailable(
+            '%s' % (e)
+        )
 
     if vs.source_type == 'registry':
         if registry not in ('modules', 'targets'):
@@ -251,12 +256,17 @@ def satisfyVersionFromSearchPaths(name, version_required, search_paths, update=F
     # Pack, , base class for targets and components, internal
     from yotta.lib import pack
 
-    v    = None
+    v = None
+    try:
+        sv = sourceparse.parseSourceURL(version_required)
+    except ValueError as e:
+        logging.error(e)
+        return None
 
     try:
         local_version = searchPathsFor(
             name,
-            sourceparse.parseSourceURL(version_required).semanticSpec(),
+            sv.semanticSpec(),
             search_paths,
             type,
             inherit_shrinkwrap = inherit_shrinkwrap
