@@ -156,7 +156,7 @@ class CMakeGen(object):
         for d in bin_subdirs:
             if not os.path.exists(os.path.join(component.path, d)):
                 logger.warning(
-                    "bin directory \"%s\" doesn't exist but is listed in the module.jons file of %s", d, component
+                    "bin directory \"%s\" doesn't exist but is listed in the module.json file of %s", d, component
                 )
                 ok = False
 
