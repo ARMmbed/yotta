@@ -79,7 +79,7 @@ def formatDependencyGraphAsJSON(dep_graph):
     from yotta.lib import ordered_json
     return ordered_json.dumps(dep_graph)
 
-def resolveDependencyGraph(target, top_component, available_modules, processed=None):
+def resolveDependencyGraph(target, top_component, available_modules, processed=None, test=True):
     from collections import OrderedDict
     r = OrderedDict()
 
@@ -103,7 +103,7 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     deps = top_component.getDependencies(
          available_components = available_modules,
                        target = target,
-                         test = True,
+                         test = test,
                      warnings = False
     )
     if not top_component:
@@ -127,9 +127,12 @@ def resolveDependencyGraph(target, top_component, available_modules, processed=N
     processed.add(top_component.getName())
     r['modules'].append(module_description)
 
+    if test == 'toplevel':
+        test = False
+
     for name, dep in deps.items():
         if not name in processed:
-            r['modules'] += resolveDependencyGraph(target, dep, available_modules, processed)['modules']
+            r['modules'] += resolveDependencyGraph(target, dep, available_modules, processed, test=test)['modules']
 
     return r
 

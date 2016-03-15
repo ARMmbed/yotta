@@ -39,10 +39,10 @@ def execCommand(args, following_args):
     installed_modules = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
-                        test = False
+                        test = 'toplevel'
     )
 
-    dependency_list = yotta_list.resolveDependencyGraph(target, c, installed_modules)
+    dependency_list = yotta_list.resolveDependencyGraph(target, c, installed_modules, test='toplevel')
 
     errors = checkDependenciesForShrinkwrap(dependency_list)
     if len(errors):
