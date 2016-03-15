@@ -118,7 +118,7 @@ def pruneCache():
     max_cached_modules = getMaxCachedModules()
     for f in sorted(
             [f for f in os.listdir(cache_dir) if
-                os.path.isfile(fullpath(f)) and not f.endswith('.json')
+                os.path.isfile(fullpath(f)) and not f.endswith('.json') and not f.endswith('.locked')
             ],
             key = lambda f: getMTimeSafe(fullpath(f)),
             reverse = True
@@ -187,9 +187,14 @@ def unpackFrom(tar_file_path, to_directory):
 
 def removeFromCache(cache_key):
     f = os.path.join(folders.cacheDirectory(), cache_key)
-    fsutils.rmF(f)
-    # remove any metadata too, if it exists
-    fsutils.rmF(f + '.json')
+    try:
+        fsutils.rmF(f)
+        # remove any metadata too, if it exists
+        fsutils.rmF(f + '.json')
+    except OSError as e:
+        # if we failed to remove either file, then it might be because another
+        # instance of yotta is using it, so just skip it this time.
+        pass
 
 def unpackFromCache(cache_key, to_directory):
     ''' If the specified cache key exists, unpack the tarball into the
@@ -216,12 +221,17 @@ def unpackFromCache(cache_key, to_directory):
         if e.errno == errno.ENOENT:
             cache_logger.debug('%s not in cache', cache_key)
             raise NotInCache('not in cache')
+    except OSError as e:
+        if e.errno == errno.ENOTEMPTY:
+            logger.error('directory %s was not empty: probably simultaneous invocation of yotta! It is likely that downloaded sources are corrupted.')
+        else:
+            raise
 
-def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
+def _downloadToCache(stream, hashinfo={}, origin_info=dict()):
     ''' Download the specified stream to a temporary cache directory, and
         returns a cache key that can be used to access/remove the file.
-        If cache_key is None, then a cache key will be generated and returned.
-        You will probably want to use removeFromCache(cache_key) to remove it.
+        You should use either removeFromCache(cache_key) or _moveCachedFile to
+        move the downloaded file to a known key after downloading.
     '''
     hash_name  = None
     hash_value = None
@@ -240,15 +250,12 @@ def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
         if not hash_name:
             logger.warning('could not find supported hash type in %s', hashinfo)
 
-    if cache_key is None:
-        cache_key = '%032x' % random.getrandbits(256)
-
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
-    cache_as = os.path.join(cache_dir, cache_key)
     file_size = 0
 
-    (download_file, download_fname) = tempfile.mkstemp(dir=cache_dir)
+    (download_file, download_fname) = tempfile.mkstemp(dir=cache_dir, suffix='.locked')
+
     with os.fdopen(download_file, 'wb') as f:
         f.seek(0)
         for chunk in stream.iter_content(4096):
@@ -268,29 +275,38 @@ def downloadToCache(stream, hashinfo={}, cache_key=None, origin_info=dict()):
         file_size = f.tell()
         logger.debug('wrote tarfile of size: %s to %s', file_size, download_fname)
         f.truncate()
+
+    extended_origin_info = {
+        'hash': hashinfo,
+        'size': file_size
+    }
+    extended_origin_info.update(origin_info)
+    ordered_json.dump(download_fname + '.json', extended_origin_info)
+    return os.path.basename(download_fname)
+
+def _moveCachedFile(from_key, to_key):
+    ''' Move a file atomically within the cache: used to make cached files
+        available at known keys, so they can be used by other processes.
+    '''
+    cache_dir = folders.cacheDirectory()
+    from_path = os.path.join(cache_dir, from_key)
+    to_path   = os.path.join(cache_dir, to_key)
     try:
-        os.rename(download_fname, cache_as)
-        extended_origin_info = {
-            'hash': hashinfo,
-            'size': file_size
-        }
-        extended_origin_info.update(origin_info)
-        ordered_json.dump(cache_as + '.json', extended_origin_info)
+        os.rename(from_path, to_path)
+        # if moving the actual file was successful, then try to move the
+        # metadata:
+        os.rename(from_path+'.json', to_path+'.json')
     except Exception as e:
+        # if the source doesn't exist, or the destination doesn't exist, remove
+        # the file instead.
         # windows error 183 == file already exists
         # (be careful not to use WindowsError on non-windows platforms as it
         # isn't defined)
         if (isinstance(e, OSError) and e.errno == errno.ENOENT) or \
            (isinstance(e, getattr(__builtins__, "WindowsError", type(None))) and e.errno == 183):
-            # if we failed, it's because the file already exists (probably
-            # because another process got there first), so just rm our
-            # temporary file and continue
-            cache_logger.debug('another process downloaded %s first', cache_key)
-            fsutils.rmF(download_fname)
+            fsutils.rmF(from_path)
         else:
             raise
-
-    return cache_key
 
 @sometimesPruneCache(0.05)
 def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_info=dict()):
@@ -306,18 +322,14 @@ def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_
     if getMaxCachedModules() == 0:
         cache_key = None
 
-    # it's possible (though extremely unlikely) another process pruned this
-    # module from the cache after we downloaded it
-    for retry in range(10):
-        try:
-            new_cache_key = downloadToCache(stream, hash, cache_key, origin_info)
-            unpackFromCache(new_cache_key, into_directory)
-            break
-        except NotInCache as e:
-            continue
+    new_cache_key = _downloadToCache(stream, hash, origin_info)
+    unpackFromCache(new_cache_key, into_directory)
 
-    # if we didn't provide a cache key, there's no point in storing the cache
     if cache_key is None:
+        # if we didn't provide a cache key, there's no point in storing the cache
         removeFromCache(new_cache_key)
+    else:
+        # otherwise make this file available at the known cache key
+        _moveCachedFile(new_cache_key, cache_key)
 
 
