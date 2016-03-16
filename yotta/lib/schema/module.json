@@ -110,6 +110,10 @@
                     "comment": "Runs immediately before each build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
                     "$ref": "#/definitions/command"
                 },
+                "postBuild": {
+                    "comment": "Runs after everything has been built. This script will be run whether or not this module was actually re-built (so don't do slow things here!): consider using a .cmake file to define post-build rules instead. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
                 "preTest": {
                     "comment": "Runs before tests from this module are loaded by the target's scripts.test script",
                     "$ref": "#/definitions/command"

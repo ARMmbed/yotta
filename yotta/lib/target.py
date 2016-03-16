@@ -594,7 +594,7 @@ class DerivedTarget(Target):
 
             env = os.environ.copy()
             env['YOTTA_PROGRAM'] = prog_path
-            
+
             if self.getScript('start'):
                 cmd = [
                     os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))

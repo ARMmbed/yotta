@@ -52,7 +52,9 @@ class CMakeGen(object):
         self.buildroot = directory
         logger.info("generate for target: %s" % target)
         self.target = target
+        self.configured = False
         self.config_include_file = None
+        self.config_json_file = None
         self.build_info_include_file = None
         self.build_uuid = None
 
@@ -60,6 +62,38 @@ class CMakeGen(object):
         dirname = os.path.dirname(path)
         fsutils.mkDirP(dirname)
         self.writeIfDifferent(path, contents)
+
+    def configure(self, component, all_dependencies):
+        ''' Ensure all config-time files have been generated. Return a
+            dictionary of generated items.
+        '''
+        r = {}
+
+        builddir = self.buildroot
+
+        # only dependencies which are actually valid can contribute to the
+        # config data (which includes the versions of all dependencies in its
+        # build info) if the dependencies aren't available we can't tell what
+        # version they are. Anything missing here should always be a test
+        # dependency that isn't going to be used, otherwise the yotta build
+        # command will fail before we get here
+        available_dependencies = OrderedDict((k, v) for k, v in all_dependencies.items() if v)
+
+        self.set_toplevel_definitions = ''
+        if self.build_info_include_file is None:
+            self.build_info_include_file, build_info_definitions = self.getBuildInfo(component.path, builddir)
+            self.set_toplevel_definitions += build_info_definitions
+
+        if self.config_include_file is None:
+            self.config_include_file, config_definitions, self.config_json_file = self._getConfigData(available_dependencies, component, builddir, self.build_info_include_file)
+            self.set_toplevel_definitions += config_definitions
+
+        self.configured = True
+        return {
+            'merged_config_include': self.config_include_file,
+               'merged_config_json': self.config_json_file,
+               'build_info_include': self.build_info_include_file
+        }
 
     def generateRecursive(self, component, all_components, builddir=None, modbuilddir=None, processed_components=None, application=None):
         ''' generate top-level CMakeLists for this component and its
@@ -73,10 +107,13 @@ class CMakeGen(object):
             for error in gen.generateRecursive(...):
                 print(error)
         '''
+        assert(self.configured)
+
         if builddir is None:
             builddir = self.buildroot
         if modbuilddir is None:
             modbuilddir = os.path.join(builddir, 'ym')
+
         if processed_components is None:
             processed_components = dict()
         if not self.target:
@@ -259,7 +296,7 @@ class CMakeGen(object):
                 r.append(('%s_%s' % (key_prefix, sanitizePreprocessorSymbol(k)), v))
         return r
 
-    def getConfigData(self, all_dependencies, component, builddir, build_info_header_path):
+    def _getConfigData(self, all_dependencies, component, builddir, build_info_header_path):
         ''' returns (path_to_config_header, cmake_set_definitions) '''
         # ordered_json, , read/write ordered json, internal
         from yotta.lib import ordered_json
@@ -321,7 +358,7 @@ class CMakeGen(object):
             config_json_file,
             ordered_json.dumps(merged_config)
         )
-        return (config_include_file, set_definitions)
+        return (config_include_file, set_definitions, config_json_file)
 
     def getBuildInfo(self, sourcedir, builddir):
         ''' Write the build info header file, and return (path_to_written_header, set_cmake_definitions) '''
@@ -392,16 +429,6 @@ class CMakeGen(object):
             built for this component, but will not already have been built for
             another component.
         '''
-
-        set_definitions = ''
-        if self.build_info_include_file is None:
-            assert(toplevel)
-            self.build_info_include_file, build_info_definitions = self.getBuildInfo(component.path, builddir)
-            set_definitions += build_info_definitions
-
-        if self.config_include_file is None:
-            self.config_include_file, config_definitions = self.getConfigData(all_dependencies, component, builddir, self.build_info_include_file)
-            set_definitions += config_definitions
 
         include_root_dirs = ''
         if application is not None and component is not application:
@@ -553,7 +580,7 @@ class CMakeGen(object):
         file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
-                     "set_definitions": set_definitions,
+                     "set_definitions": self.set_toplevel_definitions,
                       "toolchain_file": toolchain_file_path,
                            "component": component,
                              "relpath": relpath,
