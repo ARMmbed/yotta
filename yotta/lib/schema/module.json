@@ -91,11 +91,11 @@
                     "$ref": "#/definitions/command"
                 },
                 "prePublish": {
-                    "comment": "Runs before a module is published. Return non-zero to prevent publishing.",
+                    "comment": "Runs before a this module is published. Return non-zero to prevent publishing.",
                     "$ref": "#/definitions/command"
                 },
                 "postPublish": {
-                    "comment": "Runs after a module has been published. Put your twitter posting script here.",
+                    "comment": "Runs after this module has been published. Put your twitter posting script here.",
                     "$ref": "#/definitions/command"
                 },
                 "postInstall": {

@@ -19,6 +19,7 @@ from collections import OrderedDict
 from yotta.lib import ordered_json
 # Pack, , common parts of Components/Targets, internal
 from yotta.lib import pack
+from yotta.lib.pack import tryTerminate as _tryTerminate
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 
@@ -50,15 +51,6 @@ def _mergeDictionaries(*args):
         elif isinstance(result[k], dict) and isinstance(v, dict):
             result[k] = _mergeDictionaries(result[k], v)
     return result
-
-def _tryTerminate(process):
-    try:
-        process.terminate()
-    except OSError as e:
-        # if the error is "no such process" then the process probably exited
-        # while we were waiting for it, so don't raise an exception
-        if e.errno != errno.ESRCH:
-            raise
 
 def _mirrorStructure(dictionary, value):
     ''' create a new nested dictionary object with the same structure as
@@ -588,7 +580,7 @@ class DerivedTarget(Target):
         logging.error('could not find program "%s" to debug' %  program)
         return None
 
-    #@fsutils.dropRootPrivs
+    @fsutils.dropRootPrivs
     def start(self, builddir, program, forward_args):
         ''' Launch the specified program. Uses the `start` script if specified
             by the target, attempts to run it natively if that script is not
