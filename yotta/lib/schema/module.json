@@ -102,10 +102,6 @@
                     "comment": "Runs once after a module is downloaded into yotta_modules, or downloaded as a top-level module.",
                     "$ref": "#/definitions/command"
                 },
-                "preConfig": {
-                    "comment": "Runs at the start of the build step, before yotta writes anything on disk (but after the module.json file has been read).",
-                    "$ref": "#/definitions/command"
-                },
                 "preGenerate": {
                     "comment": "Runs before generating CMake for the build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
                     "$ref": "#/definitions/command"
