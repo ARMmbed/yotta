@@ -15,7 +15,7 @@ from yotta import options
 
 def addOptions(parser):
     options.config.addTo(parser)
-    parser.add_argument('program', default=None,
+    parser.add_argument('program', default=None, nargs='?',
         help='name of the program to be debugged'
     )
 
@@ -35,8 +35,15 @@ def execCommand(args, following_args):
 
     builddir = os.path.join(cwd, 'build', target.getName())
 
-    # !!! FIXME: the program should be specified by the description of the
-    # current project (or a default value for the program should)
+    if args.program is None:
+        if c.isApplication():
+            # if no program was specified, default to the name of the executable
+            # module (if this is an executable module)
+            args.program = c.getName()
+        else:
+            logging.error('This module describes a library not an executable, so you must name an executable to debug.')
+            return 1
+
     errcode = None
     error = target.debug(builddir, args.program)
     if error:
