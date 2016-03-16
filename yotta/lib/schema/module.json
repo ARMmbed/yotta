@@ -99,7 +99,7 @@
                     "$ref": "#/definitions/command"
                 },
                 "postInstall": {
-                    "comment": "Runs once after a module is downloaded into yotta_modules.",
+                    "comment": "Runs once after a module is downloaded into yotta_modules, or downloaded as a top-level module.",
                     "$ref": "#/definitions/command"
                 },
                 "preConfig": {
