@@ -599,6 +599,9 @@ class DerivedTarget(Target):
             prog_path = self.findProgram(builddir, program)
             if prog_path is None:
                 return
+
+            env = os.environ.copy()
+            env['YOTTA_PROGRAM'] = prog_path
             
             if self.getScript('start'):
                 cmd = [
@@ -610,7 +613,7 @@ class DerivedTarget(Target):
 
             logger.debug('starting program: %s', cmd)
             child = subprocess.Popen(
-                cmd, cwd = builddir
+                cmd, cwd = builddir, env = env
             )
             child.wait()
             if child.returncode:
@@ -657,13 +660,16 @@ class DerivedTarget(Target):
             if prog_path is None:
                 return
 
+            env = os.environ.copy()
+            env['YOTTA_PROGRAM'] = prog_path
+
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
                 for x in self.getScript('debug')
             ]
             logger.debug('starting debugger: %s', cmd)
             child = subprocess.Popen(
-                cmd, cwd = builddir
+                cmd, cwd = builddir, env = env
             )
             child.wait()
             if child.returncode:
@@ -748,6 +754,9 @@ class DerivedTarget(Target):
                 for x in test_script
             ] + forward_args
 
+        env = os.environ.copy()
+        env['YOTTA_PROGRAM'] = test_command
+
         test_child = None
         test_filter = None
         try:
@@ -755,11 +764,11 @@ class DerivedTarget(Target):
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = test_dir, stdout = subprocess.PIPE
+                    cmd, cwd = test_dir, stdout = subprocess.PIPE, env = env
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = module_dir, stdin = test_child.stdout
+                        filter_command, cwd = module_dir, stdin = test_child.stdout, env = env
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
@@ -780,7 +789,7 @@ class DerivedTarget(Target):
             else:
                 try:
                     test_child = subprocess.Popen(
-                        cmd, cwd = test_dir
+                        cmd, cwd = test_dir, env = env
                     )
                     logger.debug('waiting for test child')
                 except OSError as e:
