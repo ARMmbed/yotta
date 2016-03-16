@@ -588,6 +588,44 @@ class DerivedTarget(Target):
         logging.error('could not find program "%s" to debug' %  program)
         return None
 
+    #@fsutils.dropRootPrivs
+    def start(self, builddir, program, forward_args):
+        ''' Launch the specified program. Uses the `start` script if specified
+            by the target, attempts to run it natively if that script is not
+            defined.
+        '''
+        child = None
+        try:
+            prog_path = self.findProgram(builddir, program)
+            if prog_path is None:
+                return
+            
+            if self.getScript('start'):
+                cmd = [
+                    os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
+                    for x in self.getScript('start')
+                ] + forward_args
+            else:
+                cmd = shlex.split('./' + prog_path) + forward_args
+
+            logger.debug('starting program: %s', cmd)
+            child = subprocess.Popen(
+                cmd, cwd = builddir
+            )
+            child.wait()
+            if child.returncode:
+                return "process exited with status %s" % child.returncode
+            child = None
+        except OSError as e:
+            import errno
+            if e.errno == errno.ENOEXEC:
+                return ("the program %s cannot be run (perhaps your target "+
+                        "needs to define a 'start' script to start it on its "
+                        "intended execution target?)") % prog_path
+        finally:
+            if child is not None:
+                _tryTerminate(child)
+
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
@@ -615,7 +653,7 @@ class DerivedTarget(Target):
     def _debugWithScript(self, builddir, program):
         child = None
         try:
-            prog_path = prog_path = self.findProgram(builddir, program)
+            prog_path = self.findProgram(builddir, program)
             if prog_path is None:
                 return
 
@@ -703,7 +741,7 @@ class DerivedTarget(Target):
         test_command = './' + test_command
         test_script = self.getScript('test')
         if test_script is None:
-            cmd = shlex.split(test_command)
+            cmd = shlex.split(test_command) + forward_args
         else:
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(test_dir, test_command))))
