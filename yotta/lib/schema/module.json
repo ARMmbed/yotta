@@ -87,6 +87,43 @@
             "type": "object",
             "patternProperties": {
                 "^(testReporter)$": {
+                    "comment": "A script to be used to process test results.",
+                    "$ref": "#/definitions/command"
+                },
+                "prePublish": {
+                    "comment": "Runs before a module is published. Return non-zero to prevent publishing.",
+                    "$ref": "#/definitions/command"
+                },
+                "postPublish": {
+                    "comment": "Runs after a module has been published. Put your twitter posting script here.",
+                    "$ref": "#/definitions/command"
+                },
+                "postInstall": {
+                    "comment": "Runs once after a module is downloaded into yotta_modules.",
+                    "$ref": "#/definitions/command"
+                },
+                "preConfig": {
+                    "comment": "Runs at the start of the build step, before yotta writes anything on disk (but after the module.json file has been read).",
+                    "$ref": "#/definitions/command"
+                },
+                "preGenerate": {
+                    "comment": "Runs before generating CMake for the build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
+                "preBuild": {
+                    "comment": "Runs immediately before each build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
+                "preTest": {
+                    "comment": "Runs before tests from this module are loaded by the target's scripts.test script",
+                    "$ref": "#/definitions/command"
+                },
+                "preDebug": {
+                    "comment": "Runs before any application including this module is loaded by the target's scripts.debug script",
+                    "$ref": "#/definitions/command"
+                },
+                "preStart": {
+                    "comment": "Runs before any application including this module is loaded by the target's scripts.start script",
                     "$ref": "#/definitions/command"
                 }
             },

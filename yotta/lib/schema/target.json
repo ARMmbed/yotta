@@ -99,7 +99,16 @@
         "scripts": {
             "type": "object",
             "patternProperties": {
-                "^(debug|test)$": {
+                "^debug$": {
+                    "comment": "script used to load programs for debugging. The program to be loaded is expanded from $program or available as environment varianble YOTTA_PROGRAM",
+                    "$ref": "#/definitions/command"
+                },
+                "^test$": {
+                    "comment": "script used to run programs for testing. The program to be loaded is expanded from $program or available as environment varianble YOTTA_PROGRAM",
+                    "$ref": "#/definitions/command"
+                },
+                "^start$": {
+                    "comment": "script used to start an application. The program to be loaded is expanded from $program or available as environment varianble YOTTA_PROGRAM",
                     "$ref": "#/definitions/command"
                 }
             },
