@@ -204,7 +204,7 @@ class CMakeGen(object):
                     elif os.path.normpath(f) in [fsutils.fullySplitPath(x)[0] for x in lib_subdirs] or \
                          os.path.normpath(f) in [fsutils.fullySplitPath(x)[0] for x in bin_subdirs]:
                         for full_subpath in list(lib_subdirs.keys()) + list(bin_subdirs.keys()):
-                            if fsutils.fullySplitPath(x)[0] == os.path.normpath(f):
+                            if fsutils.fullySplitPath(full_subpath)[0] == os.path.normpath(f):
                                 # this might be a sub-sub directory, in which
                                 # case we need to re-calculate the sources just
                                 # for the part we care about:
