@@ -201,8 +201,15 @@ class CMakeGen(object):
                     if f in ('test',):
                         auto_subdirs.append((f, sources))
                         test_subdirs.append(f)
-                    elif os.path.normpath(f) in lib_subdirs or os.path.normpath(f) in bin_subdirs:
-                        auto_subdirs.append((f, sources))
+                    elif os.path.normpath(f) in [fsutils.fullySplitPath(x)[0] for x in lib_subdirs] or \
+                         os.path.normpath(f) in [fsutils.fullySplitPath(x)[0] for x in bin_subdirs]:
+                        for full_subpath in list(lib_subdirs.keys()) + list(bin_subdirs.keys()):
+                            if fsutils.fullySplitPath(x)[0] == os.path.normpath(f):
+                                # this might be a sub-sub directory, in which
+                                # case we need to re-calculate the sources just
+                                # for the part we care about:
+                                sources = self.containsSourceFiles(os.path.join(component.path, full_subpath), component)
+                                auto_subdirs.append((full_subpath, sources))
                     elif f == component.getName():
                         header_subdirs.append((f, sources))
                 elif toplevel and \

@@ -190,37 +190,37 @@ int main(){ return 0; }
 '''
 }
 
-Test_Custom_Lib_Dir = {
-'module.json':'''{
-  "name": "test-custom-dir-lib",
-  "version": "1.0.0",
-  "description": "Module to test trivial lib compilation",
-  "license": "Apache-2.0",
-  "lib": "mylibdir"
-}''',
-'test-custom-dir-lib/lib.h': '''
-int foo();
-''',
-'mylibdir/lib.c':'''
-#warning "this message should be printed"
-#include "test-custom-dir-lib/lib.h"
-int foo(){ return 7; }
-'''
-}
+def _generateTestCustomLibBinDir(subdir='mysubdir', bin=False):
+    if bin:
+        libbin = 'bin'
+        fnname = 'main'
+    else:
+        libbin = 'lib'
+        fnname = 'foo'
+    return {
+        'module.json':'''{
+          "name": "test-custom-dir-%s",
+          "version": "1.0.0",
+          "description": "Module to test trivial %s compilation",
+          "license": "Apache-2.0",
+          "%s": "%s"
+        }''' % (libbin, libbin, libbin, subdir),
+        'test-custom-dir-%s/%s.h' % (libbin, libbin): '''
+        int %s();
+        ''' % (fnname),
+        '%s/%s.c' % (subdir, libbin):'''
+        #warning "this message should be printed"
+        #include "test-custom-dir-%s/%s.h"
+        int %s(){ return 7; }
+        ''' % (libbin, libbin, fnname)
+    }
 
-Test_Custom_Bin_Dir = {
-'module.json':'''{
-  "name": "test-custom-dir-bin",
-  "version": "1.0.0",
-  "description": "Module to test trivial exe compilation",
-  "license": "Apache-2.0",
-  "bin": "mybindir"
-}''',
-'mybindir/main.c':'''
-#warning "this message should be printed"
-int main(){ return 0; }
-'''
-}
+Test_Custom_Lib_Dir = _generateTestCustomLibBinDir('mylibdir', 'lib')
+Test_Custom_Lib_Sub_Dir = _generateTestCustomLibBinDir('mylibdir/subdir', 'lib')
+Test_Custom_Lib_Sub_Source_Dir = _generateTestCustomLibBinDir('source/mysourcesubdir', 'lib')
+Test_Custom_Bin_Dir = _generateTestCustomLibBinDir('mybindir', 'bin')
+Test_Custom_Bin_Sub_Dir = _generateTestCustomLibBinDir('mybindir/subdir', 'bin')
+Test_Custom_Bin_Sub_Source_Dir = _generateTestCustomLibBinDir('source/somewhere/mybindir', 'bin')
 
 # expect an error message
 Test_Lib_And_Bin = {
@@ -405,8 +405,36 @@ class TestCLIBuild(unittest.TestCase):
         util.rmRf(test_dir)
 
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customLibSubDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Lib_Sub_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customLibSubSourceDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Lib_Sub_Source_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_customBinDir(self):
         test_dir = util.writeTestFiles(Test_Custom_Bin_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customBinSubDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Bin_Sub_Dir, True)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('this message should be printed', stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_customBinSubSourceDir(self):
+        test_dir = util.writeTestFiles(Test_Custom_Bin_Sub_Source_Dir, True)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
         self.assertIn('this message should be printed', stdout)
         util.rmRf(test_dir)
