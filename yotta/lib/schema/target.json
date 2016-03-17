@@ -310,13 +310,23 @@
                "type": "string",
             "pattern": ".*"
         },
-        "command":{
-            "type": "array",
-            "items": {
-                "type": "string",
-                "minLength": 0,
-                "maxLength": 3000
-            }
+        "command": {
+            "comment": "a command is either an array of parts, or a single string (which will be split into parts according to normal shell splitting rules)",
+            "oneOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 3000
+                    }
+                },
+                {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 3000
+                }
+            ]
         },
         "configValues":{
             "oneOf": [ 
