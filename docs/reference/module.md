@@ -36,7 +36,7 @@ use `yotta init` to populate the file by answering a sequence of questions.
 
 ## Properties
 
-### `name` *required*
+### <a href="name" name="name">#</a> `name` *required*
 **type: String**
 
 The unique name of your module. It's got to be globally unique, so be
@@ -47,7 +47,7 @@ a letter. (This reduces problems with case insensitive filesystems, and
 confusingly similar names.)
 
 
-### `version` *required*
+### <a href="version" name="version">#</a> `version` *required*
 **type: String (conforming to the [semver](http://semver.org) specification)**
 
 yotta uses Semantic Versions for modules: your module's version lets people who
@@ -84,7 +84,7 @@ For `1+.x.x` versions, semantic versioning defines the following rules:
 For a complete guide to semantic versioning, see [semver.org](http://semver.org).
 
 
-### `licenses` *deprecated*
+### <a href="licenses" name="licenses">#</a> `licenses` *deprecated*
 See also: [`license`](#license). The `licenses` property was formerly a method
 of specifying that multiple licenses applied to a module. It's now preferred to
 use a single `license` field containing a SPDX license expression.
@@ -100,8 +100,7 @@ use a single `license` field containing a SPDX license expression.
   ],
 ```
 
-<a name="license"></a>
-### `license` *required*
+### <a href="license" name="license">#</a> `license` *required*
 **type: String** `"<SPDX license identifier>"`**
 
 The license property in module.json should include all of the licenses that
@@ -133,8 +132,7 @@ licenses, and automatically fill in the license field for those options.
 **Remember: some people will find it much harder to use your module if you
 don't use a standard permissive license.**
 
-<a name="dependencies"></a>
-### `dependencies`
+### <a href="#dependencies" name="dependencies">#</a>`dependencies`
 **type: Object `{"<modulename>": "<version specification or source>"}`**
 
 While not required (since your module may not depend on anything), the
@@ -227,8 +225,7 @@ Where <version specification> is a tag with a semantic version identifier.
 **Note that modules depending on github, ssh, or hg repositories cannot be
 published: they will be rejected by the yotta registry.**
 
-<a name="targetDependencies"></a>
-### `targetDependencies`
+### <a href="targetDependencies" name="targetDependencies">#</a> `targetDependencies`
 **type: Object `{"<target-identifier>": <dependencies object>}`**
 
 The modules in the `dependencies` property are always installed and used, no
@@ -284,8 +281,7 @@ Example:
 	}
 ```
 
-<a name="testDependencies"></a>
-### `testDependencies`
+### <a href="#testDependencies" name="testDependencies">#</a> `testDependencies`
 **type: Object `{"<modulename>": "<version specification or source>"}`**
 
 The `testDependencies` section can be used to list modules that are only
@@ -296,24 +292,24 @@ See [`dependencies`](#dependencies) for a description of how to specify
 different sorts of dependencies.
 
 
-### `description`
+### <a href="#description" name="description">#</a> `description`
 **type: String**
 
 Brief of what your module does. This helps other people to find your module.
 Include a `readme.md` file with a longer description, API documentation and
 example code.
 
-### `keywords`
+### <a href="#keywords" name="keywords">#</a>`keywords`
 **type: Array of String**
 
 Keywords describe what your module does, and help other people to find it.
 
-### `homepage`
+### <a href="#homepage" name="homepage">#</a>`homepage`
 **type: String (url)**
 
 The URL of your module's homepage (if any).
 
-### `repository`
+### <a href="#repository" name="repository">#</a>`repository`
 **type: Object `{"url":"<url>", "type": "<git, hg, or svn>"}`**
 
 The `repository` section helps other people to contribute to your module by
@@ -329,14 +325,14 @@ on modules from source control repositories, instead of from the public modules
 registry.
 
 
-### `private`
+### <a href="#private" name="private">#</a> `private`
 **type: Boolean**
 
 If present, and set to `true`, then `yotta publish` will not allow you to
 publish this module to the public registry. This is useful to prevent
 accidental publication of private modules and applications.
 
-### `bugs`
+### <a href="#bugs" name="bugs">#</a> `bugs`
 **type: Object `{"url":"<url>", "email": "<optional email>"}`**
 
 Including a bugs section helps people who use your module to report problems,
@@ -352,7 +348,7 @@ Example:
 ```
 
 
-### `bin`
+### <a href="#bin" name="bin">#</a> `bin`
 **type: String (path relative to module root)**
 
 If present, the `bin` property specifies a subdirectory that should be built
@@ -365,7 +361,7 @@ of the contents of the source directory, set:
   "bin": "./source"
 ```
 
-### `lib`
+### <a href="#lib" name="lib">#</a> `lib`
 **type: String (path relative to module root)**
 
 If present, the `lib` property specifies a subdirectory that should be built
@@ -379,7 +375,7 @@ instead of the default `source` directory, use:
   "lib": "./some/subdirectory"
 ```
 
-### `extraIncludes`
+### <a href="#extraIncludes" name="extraIncludes">#</a> `extraIncludes`
 **type: Array of String (paths relative to module root)**
 
 **WARNING** do not use this property in released modules. It exists only to
@@ -401,22 +397,60 @@ included as:
 eliminates any possibility of header name collision, as published module names
 are forced to be unique by the yotta module registry.
 
-<a name="scripts"></a>
-### `scripts`
+### <a href="#scripts" name="scripts">#</a> `scripts`
 **type: hash of script-name to command**
 
-Each command is an array of the separate command arguments.
+Each command is either an array of the separate command arguments, or a single
+string which yotta will split into parts based on normal shell command
+splitting rules.
+
+Any script which is a `.py` file will be invoked using the python interpreter
+which is running yotta.
 
 The supported scripts are:
 
- * **testReporter**: this command is run for the tests of each module, and is
+ * **`preVersion`**: Runs before the [`yotta
+   version`](/reference/commands.html#yotta-version)
+   command increments the version number. The old and new version numbers are
+   available as environment variables `YOTTA_OLD_VERSION` and
+   `YOTTA_NEW_VERSION`.  Can return non-zero to prevent continuing.
+ * **`postVersion`**: Runs after the version has been bumped by `yotta
+   version`, but before any changes have been committed or tagged in VCS
+   (returning non-zero will prevent
+   anything from being committed).
+ * **`prePublish`**: Runs before the module is
+   [published](/reference/commands.html#yotta-publish). Can return non-zero to
+   prevent publishing.
+ * **`postPublish`**: Runs after the module has been published. Tweet here.
+ * **`postInstall`**: Runs once after a module is downloaded into
+   `yotta_modules`, or downloaded as a top-level module.
+ * **`preGenerate`**: Runs before generating CMake for any build including this
+   module.
+ * **`preBuild`**: Runs immediately before each build including this module.
+ * **`postBuild`**: Runs after everything has been built. This script will be
+   run whether or not this module was actually re-built (so don't do slow
+   things here!): consider using a .cmake file to define post-build rules
+   instead.
+ * **`preTest`**: Runs before tests from this module are loaded by the target's
+   scripts.test script.
+ * **`preDebug`**: Runs before this module (if it is an application), or one of
+   its tests is loaded by the target's scripts.debug script.
+ * **`preStart`**: Runs before this module (if it is an application) is loaded
+   by the target's scripts.start script.
+ * **`testReporter`**: this command is run for the tests of each module, and is
    piped the output of the tests. It may display information about the
    success/failure of a test, and should exit with a status 0 if the test
    passed, or a status 1 if the test failed.
+ 
+The `preGenerate`, `preBuild` and `postBuild` scripts have the merged [config
+information](/reference/config.html) available to them in a file indicated by the
+`YOTTA_MERGED_CONFIG_FILE` environment variable.
 
-For example, the scripts for a module that uses the
-[greentea](https://github.com/ARMmbed/greentea) test framework, would use the
-`greentea` helper program to parse and verify the test output:
+#### Examples
+
+A module that uses the [greentea](https://github.com/ARMmbed/greentea) test
+framework, would use the `greentea` helper program to parse and verify the test
+output might use this testReporter script:
 
 ```json
    "scripts": {
@@ -424,8 +458,8 @@ For example, the scripts for a module that uses the
    }
 ```
 
-<a name="yotta"></a>
-### `yotta`
+
+### <a href="#yotta" name="yotta">#</a>  `yotta`
 **type: version specification**
 
 A version specification for the version of yotta that this module requires. For

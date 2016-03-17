@@ -99,6 +99,26 @@
         "scripts": {
             "type": "object",
             "patternProperties": {
+                "^prePublish$": {
+                    "comment": "Runs before this module is published. Return non-zero to prevent publishing.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postPublish$": {
+                    "comment": "Runs after this module has been published. Put your twitter posting script here.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postInstall$": {
+                    "comment": "Runs once after a module is downloaded into yotta_modules, or downloaded as a top-level module.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preVersion$": {
+                    "comment": "Runs before the yotta version command increments the version number. Return non-zero to prevent continuing.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postVersion$": {
+                    "comment": "Runs after the yotta version command has incremented the version number (but BEFORE anything is tagged or committed to git/hg). Return non-zero to prevent continuing.",
+                    "$ref": "#/definitions/command"
+                },
                 "^debug$": {
                     "comment": "script used to load programs for debugging. The program to be loaded is expanded from $program or available as environment varianble YOTTA_PROGRAM",
                     "$ref": "#/definitions/command"

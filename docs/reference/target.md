@@ -178,24 +178,51 @@ included cmake files as `YOTTA_MODULE_NAME`.
 ### <a href="#scripts" name="scripts">#</a> `scripts`
 **type: hash of script-name to command**
 
-Each command is an array of the separate command arguments.
+Each command is either an array of the separate command arguments, or a single
+string which yotta will split into parts based on normal shell command
+splitting rules.
+
+In all cases any instances of `$program` in the command text will be replaced
+with the path to yotta-compiled program about to be launched/debugged. The path
+to the program is also available to commands as the `YOTTA_PROGRAM` environment
+variable.
+
+Any script which is a `.py` file will be invoked using the python interpreter
+which is running yotta.
 
 The supported scripts are:
 
- * **debug**: this is the command that's run by `yotta debug`, it should
-   probably open a debugger. `$program` will be expanded to the full path of
-   the binary to be debugged.
- * **test**: this command is used by `yotta test` to run each test. `$program`
-   will be expanded to the full path of the binary to be debugged. For
+ * **`debug`**: this is the command that's run by `yotta debug`, it should
+   probably open a debugger.
+ * **`test`**: this command is used by `yotta test` to run each test. For
    cross-compiling targets, this command should load the binary on to the
    target device, and then print the program's output on standard out.
+ * **`start`**: this command is used by `yotta start` to start an executable. For
+   cross-compiling targets, this command should load the binary onto the target
+   device, and launch it.
+ * **`preVersion`**: Runs before the [`yotta
+   version`](/reference/commands.html#yotta-version)
+   command increments the version number. The old and new version numbers are
+   available as environment variables `YOTTA_OLD_VERSION` and
+   `YOTTA_NEW_VERSION`.  Can return non-zero to prevent continuing.
+ * **`postVersion`**: Runs after the version has been bumped by `yotta
+   version`, but before any changes have been committed or tagged in VCS
+   (returning non-zero will prevent
+   anything from being committed).
+ * **`prePublish`**: Runs before the target is
+   [published](/reference/commands.html#yotta-publish). Can return non-zero to
+   prevent publishing.
+ * **`postPublish`**: Runs after the target has been published. Tweet here.
+ * **`postInstall`**: Runs once after a target is downloaded into
+   `yotta_targets`.
 
-For example, the scripts for a native compilation target might look like:
+### Examples
+
+To use lldb as the debugger, a target for native compilation would define:
 
 ```json
    "scripts": {
       "debug": ["lldb", "$program"],
-      "test": ["$program"]
    }
 ```
 
