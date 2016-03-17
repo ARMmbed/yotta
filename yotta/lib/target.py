@@ -293,8 +293,9 @@ class DerivedTarget(Target):
             a base target)
         '''
         for t in self.hierarchy:
-            if 'scripts' in t.description and scriptname in t.description['scripts']:
-                return t.description['scripts'][scriptname]
+            s = t.getScript(scriptname)
+            if s:
+                return s
         return None
 
     def _loadConfig(self):
@@ -745,6 +746,17 @@ class DerivedTarget(Target):
                 os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(test_dir, test_command))))
                 for x in test_script
             ] + forward_args
+
+        # if the command is a python script, run it with the python interpreter
+        # being used to run yotta:
+        if test_command[0].lower().endswith('.py'):
+            import sys
+            python_interpreter = sys.executable
+            cmd = [python_interpreter] + cmd
+        if filter_command and filter_command[0].lower().endswith('.py'):
+            import sys
+            python_interpreter = sys.executable
+            filter_command = [python_interpreter] + filter_command
 
         env = os.environ.copy()
         env['YOTTA_PROGRAM'] = test_command

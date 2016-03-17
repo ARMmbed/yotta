@@ -44,7 +44,10 @@ def execCommand(args, following_args):
             logging.error('This module describes a library not an executable, so you must name an executable to debug.')
             return 1
 
-    errcode = None
+    errcode = c.runScript('preDebug', {"YOTTA_PROGRAM":args.program})
+    if errcode:
+        return errcode
+
     error = target.debug(builddir, args.program)
     if error:
         logging.error(error)

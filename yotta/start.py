@@ -44,7 +44,10 @@ def execCommand(args, following_args):
         # module (if this is an executable module)
         args.program = c.getName()
 
-    errcode = None
+    errcode = c.runScript('preStart', {"YOTTA_PROGRAM":args.program})
+    if errcode:
+        return errcode
+
     error = target.start(builddir, args.program, following_args)
     if error:
         logging.error(error)

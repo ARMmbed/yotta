@@ -496,44 +496,49 @@ class Pack(object):
             registry=registry
         )
 
+    def getScript(self, scriptname):
+        ''' Return the specified script command. If the first part of the
+            command is a .py file, then the current python interpreter is
+            prepended.
+
+            If the script is a single string, rather than an array, it is
+            shlex-split.
+        '''
+        script = self.description.get('scripts', {}).get(scriptname, None)
+        if script is not None:
+            if isinstance(script, str) or isinstance(script, type(u'unicode string')):
+                import shlex
+                script = shlex.split(script)
+            # if the command is a python script, run it with the python
+            # interpreter being used to run yotta:
+            if len(script) and script[0].lower().endswith('.py'):
+                import sys
+                script = [sys.executable] + script
+
+        return script
+
+
     @fsutils.dropRootPrivs
     def runScript(self, scriptname, additional_environment=None):
         ''' Run the specified script from the scripts section of the
             module.json file in the directory of this module.
         '''
-        import sys
         import subprocess
         import shlex
 
-        script = self.description.get('scripts', {}).get(scriptname, None)
-        if script is None:
+        command = self.getScript(scriptname)
+        if command is None:
             logger.debug('%s has no script %s', self, scriptname)
             return 0
-
-        # define additional environment variables for scripts:
-        env = os.environ.copy()
-        if additional_environment is not None:
-            env.update(additional_environment)
-        if isinstance(script, list):
-            command = script
-        else:
-            command = shlex.split(script)
 
         if not len(command):
             logger.error("script %s of %s is empty", scriptname, self.getName())
             return 1
 
-        # for now limit to running python scripts: anything else is very
-        # unlikely to work cross-platform. This will probably be OK for
-        # pre/post publish scripts, but would be problematic for post-install
-        # scripts.
-        # !!! FIXME: relax this
-        if not command[0].lower().endswith('.py'):
-            logger.error("script %s of %s is not a python script and cannot be run.", scriptname, self.getName())
-            return 1
-
-        python_interpreter = sys.executable
-        command = [python_interpreter] + command
+        # define additional environment variables for scripts:
+        env = os.environ.copy()
+        if additional_environment is not None:
+            env.update(additional_environment)
 
         errcode = 0
         try:

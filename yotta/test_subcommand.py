@@ -140,6 +140,10 @@ def execCommand(args, following_args):
     # tests, in case the specific test does not belong to this module
     tests = findCTests(builddir, recurse_yotta_modules=(all_tests or len(args.tests)))
 
+    errcode = c.runScript('preTest')
+    if errcode:
+        return errcode
+
     passed = 0
     failed = 0
     for dirname, test_definitions in tests:
@@ -148,7 +152,7 @@ def execCommand(args, following_args):
         if (not len(args.tests)) and (module is not c) and not all_tests:
             continue
         info_filter = True
-        filter_command = module.getTestFilterCommand()
+        filter_command = module.getScript('testReporter')
         for test_name, test_command in test_definitions:
             if len(args.tests) and not test_name in args.tests:
                 logging.debug('skipping not-listed test %s: %s', test_name, test_command)
