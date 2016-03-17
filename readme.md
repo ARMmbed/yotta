@@ -10,7 +10,7 @@ please [report them](https://github.com/ARMmbed/yotta/issues).
 ### Installation
 yotta is written in
 [python](https://www.python.org/downloads/release/python-279/), and is
-installed using [pip](http://pip.readthedocs.org/en/latest/installing.html).
+installed using [pip](https://pip.pypa.io/en/stable/installing/).
 Install yotta itself by running:
 
 ```bash
