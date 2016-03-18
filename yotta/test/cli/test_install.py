@@ -14,6 +14,7 @@ import re
 # internal modules:
 from yotta.lib.fsutils import rmRf
 from yotta.test.cli import cli
+from yotta.test.cli import util
 from yotta.lib import settings
 
 
@@ -312,11 +313,43 @@ class TestCLIInstall(unittest.TestCase):
 
         rmRf(test_dir)
 
+    @unittest.skipIf(not util.canBuildNatively(), "cannot build natively")
+    def test_postInstall_topLevel(self):
+        test_dir = util.writeTestFiles({})
+        self.runCheckCommand(['--target', util.nativeTarget(), 'install', 'test-post-install'], test_dir)
+        output = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], os.path.join(test_dir, 'test-post-install'))
+        self.assertIn('post-install generated file compiled', output)
+        self.assertIn('post-install generated header file included', output)
+        self.assertIn('generated .cmake file included', output)
+
+    @unittest.skipIf(not util.canBuildNatively(), "cannot build natively")
+    def test_postInstall_dependency(self):
+        test_dir = util.writeTestFiles({
+'module.json':'''{
+  "name": "test-postinstall",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "test-post-install": "*"
+  },
+  "bin":"./source"
+}''',
+
+'source/lib.c':'''
+#include <stdio.h>
+#include "test-post-install/generated.h"
+int main(){ printf("generated return val=%d\\n", postInstallGenerated()); return 0; }
+'''})
+        output = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn('post-install generated file compiled', output)
+        self.assertIn('post-install generated header file included', output)
+        self.assertIn('generated .cmake file included', output)
+
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
         #print stdout
         self.assertEqual(statuscode, 0)
-        return stdout or stderr
+        return stdout + stderr
 
 
 if __name__ == '__main__':
