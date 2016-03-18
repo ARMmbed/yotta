@@ -133,7 +133,10 @@ def main():
         '"test" script that will be used to run each test. Modules may also '+
         'define a "testReporter" script, which will be piped the output from '+
         'each test, and may produce a summary.',
-        'Run the tests for the current module on the current target. Requires target support.'
+        'Run the tests for the current module on the current target. Requires target support for cross-compiling targets.'
+    )
+    addParser('start', 'start',
+        'Launch the compiled program (available for executable modules only). Requires target support for cross-compiling targets.'
     )
     addParser('publish', 'publish', 'Publish a module or target to the public registry.')
     addParser('unpublish', 'unpublish', 'Un-publish a recently published module or target.')
@@ -168,7 +171,8 @@ def main():
      'unlink-target':subparser.choices['remove'],
              'owner':subparser.choices['owners'],
               'lics':subparser.choices['licenses'],
-               'who':subparser.choices['whoami']
+               'who':subparser.choices['whoami'],
+               'run':subparser.choices['start']
     }
     subparser.choices.update(short_commands)
 

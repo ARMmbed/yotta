@@ -335,6 +335,10 @@ def _satisfyVersionByInstallingVersion(name, version_required, working_directory
         raise Exception('%s %s (specification %s) has incorrect name %s' % (
             type, name, version_required, r.getName()
         ))
+    # error code deliberately ignored here for now, it isn't clear what the
+    # behaviour should be (abort? remove the unpacked state then abort?
+    # continue?)
+    r.runScript('postInstall')
     return r
 
 def satisfyVersion(

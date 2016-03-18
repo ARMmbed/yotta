@@ -1,4 +1,4 @@
-# Copyright 2014 ARM Limited
+# Copyright 2014-2016 ARM Limited
 #
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
@@ -16,7 +16,7 @@ from yotta import options
 def addOptions(parser):
     options.config.addTo(parser)
     parser.add_argument('program', default=None, nargs='?',
-        help='name of the program to be debugged'
+        help='name of the program to be started'
     )
 
 
@@ -25,6 +25,10 @@ def execCommand(args, following_args):
 
     c = validate.currentDirectoryModule()
     if not c:
+        return 1
+
+    if not c.isApplication():
+        logging.error('This module describes a library not an executable. Only executables can be started.')
         return 1
 
     target, errors = c.satisfyTarget(args.target, additional_config=args.config)
@@ -36,19 +40,15 @@ def execCommand(args, following_args):
     builddir = os.path.join(cwd, 'build', target.getName())
 
     if args.program is None:
-        if c.isApplication():
-            # if no program was specified, default to the name of the executable
-            # module (if this is an executable module)
-            args.program = c.getName()
-        else:
-            logging.error('This module describes a library not an executable, so you must name an executable to debug.')
-            return 1
+        # if no program was specified, default to the name of the executable
+        # module (if this is an executable module)
+        args.program = c.getName()
 
-    errcode = c.runScript('preDebug', {"YOTTA_PROGRAM":args.program})
+    errcode = c.runScript('preStart', {"YOTTA_PROGRAM":args.program})
     if errcode:
         return errcode
 
-    error = target.debug(builddir, args.program)
+    error = target.start(builddir, args.program, following_args)
     if error:
         logging.error(error)
         errcode = 1

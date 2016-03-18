@@ -34,9 +34,22 @@ Test_Module_JSON = '''{
     }
   ],
   "dependencies": {},
-  "targetDependencies": {}
+  "targetDependencies": {},
+  "scripts": {
+    "preVersion": ["echo", "pre-version!"],
+    "postVersion": ["echo", "post-version!"]
+  }
 }
 '''
+
+Test_PreventVersion_JSON = '''{
+  "name": "testmod",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "preVersion": ["false"]
+  }
+}'''
 
 class TestCLIVersion(unittest.TestCase):
     def setUp(self):
@@ -67,6 +80,20 @@ class TestCLIVersion(unittest.TestCase):
         stdout = self.runCheckCommand(['version', '1.2.3-alpha1'])
         stdout = self.runCheckCommand(['version'])
         self.assertTrue(stdout.find('1.2.3-alpha1') != -1)
+
+    def test_prePostVersion(self):
+        stdout = self.runCheckCommand(['version', 'patch'])
+        self.assertIn('pre-version!', stdout)
+        self.assertIn('post-version!', stdout)
+
+    def test_preVersionPreventsBump(self):
+        with open(os.path.join(self.test_dir, 'module.json'), 'w') as f:
+            f.write(Test_PreventVersion_JSON)
+        stdout, stderr, statuscode = cli.run(['version', '1.2.3'], cwd=self.test_dir)
+        self.assertNotEqual(statuscode, 0)
+        stdout = self.runCheckCommand(['version'])
+        self.assertNotIn('1.2.3', stdout)
+
 
     def runCheckCommand(self, args):
         stdout, stderr, statuscode = cli.run(args, cwd=self.test_dir)

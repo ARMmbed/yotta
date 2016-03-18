@@ -87,6 +87,50 @@
             "type": "object",
             "patternProperties": {
                 "^(testReporter)$": {
+                    "comment": "A script to be used to process test results.",
+                    "$ref": "#/definitions/command"
+                },
+                "^prePublish$": {
+                    "comment": "Runs before this module is published. Return non-zero to prevent publishing.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postPublish$": {
+                    "comment": "Runs after this module has been published. Put your twitter posting script here.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postInstall$": {
+                    "comment": "Runs once after a module is downloaded into yotta_modules, or downloaded as a top-level module.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preVersion$": {
+                    "comment": "Runs before the yotta version command increments the version number, the new and old version numbers are available as environment variables: YOTTA_NEW_VERSION and YOTTA_OLD_VERSION. Return non-zero to prevent continuing.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postVersion$": {
+                    "comment": "Runs after the yotta version command has incremented the version number (but BEFORE anything is tagged or committed to git/hg). Return non-zero to prevent continuing.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preGenerate$": {
+                    "comment": "Runs before generating CMake for the build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preBuild$": {
+                    "comment": "Runs immediately before each build. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
+                "^postBuild$": {
+                    "comment": "Runs after everything has been built. This script will be run whether or not this module was actually re-built (so don't do slow things here!): consider using a .cmake file to define post-build rules instead. The merged config info is available in a file indicated by the YOTTA_MERGED_CONFIG_FILE environment variable.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preTest$": {
+                    "comment": "Runs before tests from this module are loaded by the target's scripts.test script", "$ref": "#/definitions/command"
+                },
+                "^preDebug$": {
+                    "comment": "Runs before this module (if it is an application), or one of its tests is loaded by the target's scripts.debug script.",
+                    "$ref": "#/definitions/command"
+                },
+                "^preStart$": {
+                    "comment": "Runs before this module (if it is an application) is loaded by the target's scripts.start script.",
                     "$ref": "#/definitions/command"
                 }
             },
@@ -288,12 +332,22 @@
             "pattern": ".*"
         },
         "command":{
-            "type": "array",
-            "items": {
-                "type": "string",
-                "minLength": 0,
-                "maxLength": 3000
-            }
+            "comment": "a command is either an array of parts, or a single string (which will be split into parts according to normal shell splitting rules)",
+            "oneOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 3000
+                    }
+                },
+                {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 3000
+                }
+            ]
         }
     },
     "required": ["name", "version"],

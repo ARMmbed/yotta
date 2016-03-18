@@ -54,6 +54,15 @@ Origin_Info_Fname = '.yotta_origin.json'
 
 logger = logging.getLogger('components')
 
+def tryTerminate(process):
+    try:
+        process.terminate()
+    except OSError as e:
+        # if the error is "no such process" then the process probably exited
+        # while we were waiting for it, so don't raise an exception
+        if e.errno != errno.ESRCH:
+            raise
+
 class InvalidDescription(Exception):
     pass
 
@@ -486,6 +495,78 @@ class Pack(object):
             self.getVersion(),
             registry=registry
         )
+
+    def getScript(self, scriptname):
+        ''' Return the specified script command. If the first part of the
+            command is a .py file, then the current python interpreter is
+            prepended.
+
+            If the script is a single string, rather than an array, it is
+            shlex-split.
+        '''
+        script = self.description.get('scripts', {}).get(scriptname, None)
+        if script is not None:
+            if isinstance(script, str) or isinstance(script, type(u'unicode string')):
+                import shlex
+                script = shlex.split(script)
+            # if the command is a python script, run it with the python
+            # interpreter being used to run yotta, also fetch the absolute path
+            # to the script relative to this module (so that the script can be
+            # distributed with the module, no matter what current working
+            # directory it will be executed in):
+            if len(script) and script[0].lower().endswith('.py'):
+                if not os.path.isabs(script[0]):
+                    absscript = os.path.abspath(os.path.join(self.path, script[0]))
+                    logger.debug('rewriting script %s to be absolute path %s', script[0], absscript)
+                    script[0] = absscript
+                import sys
+                script = [sys.executable] + script
+
+        return script
+
+
+    @fsutils.dropRootPrivs
+    def runScript(self, scriptname, additional_environment=None):
+        ''' Run the specified script from the scripts section of the
+            module.json file in the directory of this module.
+        '''
+        import subprocess
+        import shlex
+
+        command = self.getScript(scriptname)
+        if command is None:
+            logger.debug('%s has no script %s', self, scriptname)
+            return 0
+
+        if not len(command):
+            logger.error("script %s of %s is empty", scriptname, self.getName())
+            return 1
+
+        # define additional environment variables for scripts:
+        env = os.environ.copy()
+        if additional_environment is not None:
+            env.update(additional_environment)
+
+        errcode = 0
+        try:
+            logger.debug('running script: %s', command)
+            child = subprocess.Popen(
+                command, cwd = self.path, env = env
+            )
+            child.wait()
+            if child.returncode:
+                logger.error(
+                    "script %s (from %s) exited with non-zero status %s",
+                    scriptname,
+                    self.getName(),
+                    child.returncode
+                )
+                errcode = child.returncode
+            child = None
+        finally:
+            if child is not None:
+                tryTerminate(child)
+        return errcode
 
 
     @classmethod

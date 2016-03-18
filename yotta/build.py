@@ -116,19 +116,38 @@ def installAndBuild(args, following_args):
         return {'status': 1, 'install_status':install_status, 'missing_status':missing}
 
     generator = cmakegen.CMakeGen(builddir, target)
+    # only pass available dependencies to
+    config = generator.configure(c, all_components)
+    logging.debug("config done, merged config: %s", config['merged_config_json'])
+
+    script_environment = {
+        'YOTTA_MERGED_CONFIG_FILE': config['merged_config_json']
+    }
+    # run pre-generate scripts for all components:
+    [mod.runScript('preGenerate', script_environment) for mod in all_components.values() if mod]
+
     app = c if len(c.getBinaries()) else None
     for error in generator.generateRecursive(c, all_components, builddir, application=app):
         logging.error(error)
         generate_status = 1
+
+    logging.debug("generate done.")
+    # run pre-build scripts for all components:
+    [mod.runScript('preBuild', script_environment) for mod in all_components.values() if mod]
 
     if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
                 build_args=following_args, targets=args.build_targets
         )
+
         if error:
             logging.error(error)
             build_status = 1
+        else:
+            # post-build scripts only get run if we were successful:
+            [mod.runScript('postBuild', script_environment) for mod in all_components.values() if mod]
+
         if install_status:
             logging.warning(
                 "There were also errors installing and resolving dependencies, "+

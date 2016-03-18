@@ -65,13 +65,22 @@ def execCommand(args, following_args):
     if errcode and not args.force:
         return errcode
 
+    errcode = p.runScript('prePublish')
+    if errcode:
+        logging.error("prePublish script error code %s prevents publishing", errcode)
+        return errcode
+
     error = p.publish(args.registry)
     if error:
         logging.error(error)
         return 1
 
+    errcode = p.runScript('postPublish')
+    if errcode:
+        logging.warning("postPublish script exited with code %s", errcode)
+
     # tag the version published as 'latest'
     # !!! can't do this, as can't move tags in git?
     #p.commitVCS(tag='latest')
     logging.info('published latest version: %s', p.getVersion())
-    return 0
+    return errcode

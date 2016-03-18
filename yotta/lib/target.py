@@ -19,6 +19,7 @@ from collections import OrderedDict
 from yotta.lib import ordered_json
 # Pack, , common parts of Components/Targets, internal
 from yotta.lib import pack
+from yotta.lib.pack import tryTerminate as _tryTerminate
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 
@@ -50,15 +51,6 @@ def _mergeDictionaries(*args):
         elif isinstance(result[k], dict) and isinstance(v, dict):
             result[k] = _mergeDictionaries(result[k], v)
     return result
-
-def _tryTerminate(process):
-    try:
-        process.terminate()
-    except OSError as e:
-        # if the error is "no such process" then the process probably exited
-        # while we were waiting for it, so don't raise an exception
-        if e.errno != errno.ESRCH:
-            raise
 
 def _mirrorStructure(dictionary, value):
     ''' create a new nested dictionary object with the same structure as
@@ -301,8 +293,9 @@ class DerivedTarget(Target):
             a base target)
         '''
         for t in self.hierarchy:
-            if 'scripts' in t.description and scriptname in t.description['scripts']:
-                return t.description['scripts'][scriptname]
+            s = t.getScript(scriptname)
+            if s:
+                return s
         return None
 
     def _loadConfig(self):
@@ -588,6 +581,47 @@ class DerivedTarget(Target):
         logging.error('could not find program "%s" to debug' %  program)
         return None
 
+    @fsutils.dropRootPrivs
+    def start(self, builddir, program, forward_args):
+        ''' Launch the specified program. Uses the `start` script if specified
+            by the target, attempts to run it natively if that script is not
+            defined.
+        '''
+        child = None
+        try:
+            prog_path = self.findProgram(builddir, program)
+            if prog_path is None:
+                return
+
+            env = os.environ.copy()
+            env['YOTTA_PROGRAM'] = prog_path
+
+            if self.getScript('start'):
+                cmd = [
+                    os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
+                    for x in self.getScript('start')
+                ] + forward_args
+            else:
+                cmd = shlex.split('./' + prog_path) + forward_args
+
+            logger.debug('starting program: %s', cmd)
+            child = subprocess.Popen(
+                cmd, cwd = builddir, env = env
+            )
+            child.wait()
+            if child.returncode:
+                return "process exited with status %s" % child.returncode
+            child = None
+        except OSError as e:
+            import errno
+            if e.errno == errno.ENOEXEC:
+                return ("the program %s cannot be run (perhaps your target "+
+                        "needs to define a 'start' script to start it on its "
+                        "intended execution target?)") % prog_path
+        finally:
+            if child is not None:
+                _tryTerminate(child)
+
     def debug(self, builddir, program):
         ''' Launch a debugger for the specified program. Uses the `debug`
             script if specified by the target, falls back to the `debug` and
@@ -615,9 +649,12 @@ class DerivedTarget(Target):
     def _debugWithScript(self, builddir, program):
         child = None
         try:
-            prog_path = prog_path = self.findProgram(builddir, program)
+            prog_path = self.findProgram(builddir, program)
             if prog_path is None:
                 return
+
+            env = os.environ.copy()
+            env['YOTTA_PROGRAM'] = prog_path
 
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
@@ -625,7 +662,7 @@ class DerivedTarget(Target):
             ]
             logger.debug('starting debugger: %s', cmd)
             child = subprocess.Popen(
-                cmd, cwd = builddir
+                cmd, cwd = builddir, env = env
             )
             child.wait()
             if child.returncode:
@@ -703,12 +740,26 @@ class DerivedTarget(Target):
         test_command = './' + test_command
         test_script = self.getScript('test')
         if test_script is None:
-            cmd = shlex.split(test_command)
+            cmd = shlex.split(test_command) + forward_args
         else:
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=os.path.abspath(os.path.join(test_dir, test_command))))
                 for x in test_script
             ] + forward_args
+
+        # if the command is a python script, run it with the python interpreter
+        # being used to run yotta:
+        if test_command[0].lower().endswith('.py'):
+            import sys
+            python_interpreter = sys.executable
+            cmd = [python_interpreter] + cmd
+        if filter_command and filter_command[0].lower().endswith('.py'):
+            import sys
+            python_interpreter = sys.executable
+            filter_command = [python_interpreter] + filter_command
+
+        env = os.environ.copy()
+        env['YOTTA_PROGRAM'] = test_command
 
         test_child = None
         test_filter = None
@@ -717,11 +768,11 @@ class DerivedTarget(Target):
             if filter_command:
                 logger.debug('using output filter command: %s', filter_command)
                 test_child = subprocess.Popen(
-                    cmd, cwd = test_dir, stdout = subprocess.PIPE
+                    cmd, cwd = test_dir, stdout = subprocess.PIPE, env = env
                 )
                 try:
                     test_filter = subprocess.Popen(
-                        filter_command, cwd = module_dir, stdin = test_child.stdout
+                        filter_command, cwd = module_dir, stdin = test_child.stdout, env = env
                     )
                 except OSError as e:
                     logger.error('error starting test output filter "%s": %s', filter_command, e)
@@ -742,7 +793,7 @@ class DerivedTarget(Target):
             else:
                 try:
                     test_child = subprocess.Popen(
-                        cmd, cwd = test_dir
+                        cmd, cwd = test_dir, env = env
                     )
                     logger.debug('waiting for test child')
                 except OSError as e:

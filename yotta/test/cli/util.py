@@ -12,6 +12,7 @@ import copy
 # internal modules:
 from yotta.lib import fsutils
 from yotta.lib.detect import systemDefaultTarget
+from yotta.test.cli import cli
 
 # some simple example module definitions that can be re-used by multiple tests:
 Test_Trivial_Lib = {
@@ -64,7 +65,8 @@ Test_Trivial_Exe = {
 }''',
 
 'source/lib.c':'''
-int main(){ return 0; }
+#include <stdio.h>
+int main(){ printf("[trivial-exe-running]\\n"); return 0; }
 '''
 }
 
@@ -299,6 +301,15 @@ def canBuildNatively():
 def nativeTarget():
     assert(canBuildNatively())
     return systemDefaultTarget()
+
+def runCheckCommand(args, test_dir):
+    stdout, stderr, statuscode = cli.run(args, cwd=test_dir)
+    if statuscode != 0:
+        print('command failed with status %s' % statuscode)
+        print(stdout)
+        print(stderr)
+    assert(statuscode == 0)
+    return '%s %s' % (stdout, stderr)
 
 def setupGitUser():
     # override the git user for subprocesses:
