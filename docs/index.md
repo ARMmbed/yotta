@@ -59,7 +59,7 @@ the [required domains](/reference/registry.html#network-access).
 ## <a href="#installing-on-osx" name="installing-on-osx">#</a> Installing On OS X
 To install yotta on OS X you can either use the packaged [yotta.app](https://github.com/ARMmbed/yotta_osx_installer/releases/latest) or install yotta and its dependencies yourself.
 ### <a href="#osx-yotta-app" name="osx-yotta-app">#</a> Using yotta.app
-Download the latest [**OS X yotta.app**](https://github.com/ARMmbed/yotta_osx_installer/releases/latest), and drag yotta.app from the disk image into your applications folder.
+Download the latest [**OS X yotta.app**](https://mbed-media.mbed.com/filer_public/91/56/91567e17-7a78-41ec-a998-4ee38e6274a2/yotta_osx_installer_v004.dmg), and drag yotta.app from the disk image into your applications folder.
 
 When you run yotta.app, a terminal will open where you can use yotta commands.
 
@@ -237,14 +237,14 @@ You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/
 ## <a href="#installing-on-windows" name="installing-on-windows">#</a> Installing on Windows
 To install yotta on windows you can either use the one shot windows installer or install all the dependencies and yotta manually.
 ### <a href="#windows-installer" name="windows-installer">#</a> yotta Windows Installer
- 1. Download the latest [**yotta windows installer**](https://github.com/ARMmbed/yotta_windows_installer/releases/latest).
+ 1. Download the latest [**yotta windows installer**](https://mbed-media.mbed.com/filer_public/2f/0b/2f0b924c-1fac-4907-989b-f2afe3f5785e/yotta_install_v023.exe).
  2. Run the installer. 
  3. Click on `Run Yotta` shortcut on desktop or in start menu to run session with yotta path temporarily pre-pended to system path. 
 
 ### <a href="#manual-windows-installation" name="manual-windows-installation">#</a> Manual Installation
 1. **Install [python](https://www.python.org/downloads/release/python-279/)**. You
     **must** install [python
-    2.7.9](https://www.python.org/downloads/release/python-279/) for yotta to
+    2.7.9 or later](https://www.python.org/downloads/release/python-279/) for yotta to
     work on windows. Select either the [x86-64
     installer](https://www.python.org/ftp/python/2.7.9/python-2.7.9.amd64.msi)
     if you use 64-bit
