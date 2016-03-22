@@ -36,6 +36,22 @@ def splitList(l, at_value):
             r[-1].append(x)
     return r
 
+def _exitSilentlyOnUnhandledPipeError(fn):
+    import functools
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except IOError as e:
+            import errno
+            if e.errno == errno.EPIPE:
+                # unhandled pipe error -> exit silently, but with an error code
+                sys.exit(1)
+            else:
+                raise
+    return wrapped
+
+@_exitSilentlyOnUnhandledPipeError
 def main():
     # standard library modules, , ,
     import logging
