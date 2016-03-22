@@ -20,8 +20,17 @@ class PlainAction(Action):
         setattr(namespace, self.dest, True)
         logging_setup.setPlain(True)
 
+class ColourfulAction(PlainAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, False)
+        logging_setup.setPlain(False)
+
+
 def addTo(parser):
     parser.add_argument('--plain', dest='plain', action=PlainAction,
-        default=None, help="Use a simple output format with no colours"
+        default=logging_setup.plainOutputByDefault(), nargs=0, help="Use a simple output format with no colours."
+    )
+    parser.add_argument('--colourful', dest='plain', action=ColourfulAction,
+        default=(not logging_setup.plainOutputByDefault()), nargs=0, help="Force colourful output, even if the output is not to a tty."
     )
 
