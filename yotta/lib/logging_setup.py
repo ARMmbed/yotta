@@ -80,7 +80,15 @@ _enabled_subsystems = []
 _level = 0
 _plain = False
 
-def init(level=0, enable_subsystems=[], plain=False):
+def plainOutputByDefault():
+    import sys
+    # if stdout or stderr is not a tty, then default to plain output
+    if sys.stdout.isatty() and sys.stderr.isatty():
+        return False
+    else:
+        return True
+
+def init(level=0, enable_subsystems=[], plain=plainOutputByDefault()):
     global _enabled_subsystems
     global _level
     global _plain
