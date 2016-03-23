@@ -100,6 +100,15 @@ def getMaxCachedModules():
             _max_cached_modules = 400
     return _max_cached_modules
 
+def _encodeCacheKey(cache_key):
+    import sys
+    # if we're under python 2, and cache_key is unicode (it will be, but check
+    # to be defensive), encode it as ascii. This prevents coersion errors if
+    # the username has unicode charaters in it.
+    if sys.version_info[0] < 3 and isinstance(cache_key, unicode):
+        return cache_key.encode('ascii')
+    return cache_key
+
 def pruneCache():
     ''' Prune the cache '''
     cache_dir = folders.cacheDirectory()
@@ -202,6 +211,9 @@ def unpackFromCache(cache_key, to_directory):
     '''
     if cache_key is None:
         raise NotInCache('"None" is never in cache')
+
+    cache_key = _encodeCacheKey(cache_key)
+
     cache_dir = folders.cacheDirectory()
     fsutils.mkDirP(cache_dir)
     path = os.path.join(cache_dir, cache_key)
@@ -315,6 +327,7 @@ def unpackTarballStream(stream, into_directory, hash={}, cache_key=None, origin_
         requests you can try to retrieve the key value from the cache first,
         before making the request)
     '''
+    cache_key = _encodeCacheKey(cache_key)
 
     # if the cache is disabled, then use a random cache key even if one was
     # provided, so that the module is not persisted in the cache and its
