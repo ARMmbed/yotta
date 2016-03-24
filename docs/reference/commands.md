@@ -218,7 +218,7 @@ yotta debug source/helloyotta
 
 ```
 yotta target
-yotta target <targetname>[,url-or-version-spec] [-g] [-n]
+yotta target <targetname>[@url-or-version-spec] [-g] [-n]
 ```
 
 #### Description
@@ -237,6 +237,13 @@ the current module only, in a `.yotta.json` file.
 
 If the target is set both locally and globally, then the locally set target
 takes precedence.
+
+#### Examples
+
+```
+yotta target x86-osx-native
+yotta target frdm-k64f-gcc@^2.0.0
+```
 
 ## <a href="#yotta-install" name="yotta-install">#</a> yotta install
 Synonyms: `yotta in`
