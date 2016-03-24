@@ -227,13 +227,13 @@ class Component(pack.Pack):
             Note that if recursive dependencies are not installed, this test
             may return a false-negative.
         '''
-        if self.hasDependency(name, test_dependencies=test_dependencies):
-            return True
-        for d in self.getDependencies(target=target, test=test_dependencies, warnings=False).values():
-            # test_dependencies of non-top-level modules are never checked:
-            if d and d.hasDependencyRecursively(name, target=target, test_dependencies=False):
-                return True
-        return False
+        # checking dependencies recursively isn't entirely straightforward, so
+        # use the existing method to resolve them all before checking:
+        dependencies = self.getDependenciesRecursive(
+                               target = target,
+                                 test = test_dependencies
+        )
+        return (name in dependencies)
 
 
     def getDependencies(self,
