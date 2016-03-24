@@ -163,7 +163,7 @@ def getDerivedTarget(
                                  type = 'target',
                    inherit_shrinkwrap = shrinkwrap
                 )
-        except access_common.Unavailable as e:
+        except access_common.AccessException as e:
             errors.append(e)
         if not t:
             if install_missing:
