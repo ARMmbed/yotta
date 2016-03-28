@@ -1,4 +1,5 @@
 build
+tmp_yotta_settings
 yotta.egg-info
 *.pyc
 *.pyo
