@@ -293,6 +293,68 @@ Test_Ignored_Misspelt_Source_Dir = {
 '.yotta_ignore':"./src"
 }
 
+Test_Scripts_PreBuild = {
+'module.json':'''{
+  "name": "test-tests",
+  "version": "0.0.0",
+  "description": "Test yotta's compilation of tests.",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "scripts": {
+    "preBuild": "./scripts/nop.py"
+  }
+}''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    printf("foo!\\n");
+    return 7;
+}''',
+'./scripts/nop.py':'''
+print('running prebuild')
+'''
+}
+
+Test_Scripts_PostBuild = {
+'module.json':'''{
+  "name": "test-tests",
+  "version": "0.0.0",
+  "description": "Test yotta's compilation of tests.",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "scripts": {
+    "postBuild": "./scripts/nop.py"
+  }
+}''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    printf("foo!\\n");
+    return 7;
+}''',
+'./scripts/nop.py':'''
+print('running postbuild')
+'''
+}
+
+Test_Scripts_PreGenerate = {
+'module.json':'''{
+  "name": "test-tests",
+  "version": "0.0.0",
+  "description": "Test yotta's compilation of tests.",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "scripts": {
+    "preGenerate": "./scripts/nop.py"
+  }
+}''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    printf("foo!\\n");
+    return 7;
+}''',
+'./scripts/nop.py':'''
+print('running pregenerate')
+'''
+}
 
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
@@ -484,6 +546,27 @@ class TestCLIBuild(unittest.TestCase):
         test_dir = util.writeTestFiles(Test_Ignored_Misspelt_Source_Dir)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
         self.assertNotIn("has non-standard source directory name", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_scriptsPreBuild(self):
+        test_dir = util.writeTestFiles(Test_Scripts_PreBuild)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("running prebuild", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_scriptsPostBuild(self):
+        test_dir = util.writeTestFiles(Test_Scripts_PostBuild)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("running postbuild", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_scriptsPreGenerate(self):
+        test_dir = util.writeTestFiles(Test_Scripts_PreGenerate)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("running pregenerate", stdout)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):

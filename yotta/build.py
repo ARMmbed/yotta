@@ -46,6 +46,10 @@ def execCommand(args, following_args):
     status = installAndBuild(args, following_args)
     return status['status']
 
+def runScriptWithModules(module, sub_modules, script, script_environment):
+    module.runScript(script)
+    [mod.runScript(script, script_environment) for mod in sub_modules if mod]
+
 def installAndBuild(args, following_args):
     ''' Perform the build command, but provide detailed error information.
         Returns {status:0, build_status:0, generate_status:0, install_status:0} on success.
@@ -124,7 +128,7 @@ def installAndBuild(args, following_args):
         'YOTTA_MERGED_CONFIG_FILE': config['merged_config_json']
     }
     # run pre-generate scripts for all components:
-    [mod.runScript('preGenerate', script_environment) for mod in all_components.values() if mod]
+    runScriptWithModules(c, all_components.values(), 'preGenerate', script_environment)
 
     app = c if len(c.getBinaries()) else None
     for error in generator.generateRecursive(c, all_components, builddir, application=app):
@@ -133,7 +137,7 @@ def installAndBuild(args, following_args):
 
     logging.debug("generate done.")
     # run pre-build scripts for all components:
-    [mod.runScript('preBuild', script_environment) for mod in all_components.values() if mod]
+    runScriptWithModules(c, all_components.values(), 'preBuild', script_environment)
 
     if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
@@ -146,7 +150,7 @@ def installAndBuild(args, following_args):
             build_status = 1
         else:
             # post-build scripts only get run if we were successful:
-            [mod.runScript('postBuild', script_environment) for mod in all_components.values() if mod]
+            runScriptWithModules(c, all_components.values(), 'postBuild', script_environment)
 
         if install_status:
             logging.warning(
