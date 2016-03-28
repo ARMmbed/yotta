@@ -103,7 +103,7 @@ def installAndBuild(args, following_args):
 
     builddir = os.path.join(cwd, 'build', target.getName())
 
-    all_components = c.getDependenciesRecursive(
+    all_deps = c.getDependenciesRecursive(
                       target = target,
         available_components = [(c.getName(), c)],
                         test = True
@@ -111,7 +111,7 @@ def installAndBuild(args, following_args):
 
     # if a dependency is missing the build will almost certainly fail, so don't try
     missing = 0
-    for d in all_components.values():
+    for d in all_deps.values():
         if not d and not (d.isTestDependency() and args.install_test_deps != 'all'):
             logging.error('%s not available' % os.path.split(d.path)[1])
             missing += 1
@@ -121,23 +121,23 @@ def installAndBuild(args, following_args):
 
     generator = cmakegen.CMakeGen(builddir, target)
     # only pass available dependencies to
-    config = generator.configure(c, all_components)
+    config = generator.configure(c, all_deps)
     logging.debug("config done, merged config: %s", config['merged_config_json'])
 
     script_environment = {
         'YOTTA_MERGED_CONFIG_FILE': config['merged_config_json']
     }
     # run pre-generate scripts for all components:
-    runScriptWithModules(c, all_components.values(), 'preGenerate', script_environment)
+    runScriptWithModules(c, all_deps.values(), 'preGenerate', script_environment)
 
     app = c if len(c.getBinaries()) else None
-    for error in generator.generateRecursive(c, all_components, builddir, application=app):
+    for error in generator.generateRecursive(c, all_deps, builddir, application=app):
         logging.error(error)
         generate_status = 1
 
     logging.debug("generate done.")
     # run pre-build scripts for all components:
-    runScriptWithModules(c, all_components.values(), 'preBuild', script_environment)
+    runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
     if (not hasattr(args, 'generate_only')) or (not args.generate_only):
         error = target.build(
@@ -150,7 +150,7 @@ def installAndBuild(args, following_args):
             build_status = 1
         else:
             # post-build scripts only get run if we were successful:
-            runScriptWithModules(c, all_components.values(), 'postBuild', script_environment)
+            runScriptWithModules(c, all_deps.values(), 'postBuild', script_environment)
 
         if install_status:
             logging.warning(
