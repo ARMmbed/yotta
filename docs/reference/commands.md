@@ -398,12 +398,13 @@ Synonyms: `yotta ln`
 ```
 yotta link (in a module directory)
 yotta link <modulename>
+yotta link /path/to/a/module
 ```
 
 #### Description
 Module linking allows you to use local versions of modules when building other modules – it's useful when fixing a bug in a dependency that is most easily reproduced when that dependency is used by another module.
 
-To link a module you need to perform two steps. First, in the directory of the dependency:
+To link a module there are two steps. First, in the directory of the dependency:
 
 ```
 yotta link
@@ -420,6 +421,8 @@ yotta link <depended-on-module-name>
 When you run `yotta build` it will then pick up the linked module.
 
 This works for direct and indirect dependencies: you can link to a module that your module does not use directly, but a dependency of your module does.
+
+The variant of the command which takes a path to an existing module (e.g. `yotta link ../path/to/a/module`) performs both steps in sequence, for convenience.
 
 **WARNING:** yotta uses directory junctions to provide links on windows. **Some
 command line tools are not aware of directory junctions and will recurse
@@ -445,6 +448,7 @@ environment variable.
 ```
 yotta link-target (in a target directory)
 yotta link-target <targetename>
+yotta link-target /path/to/a/target
 ```
 
 #### Description
@@ -465,6 +469,11 @@ yotta link-target <targetename>
 ```
 
 When you run `yotta build` (provided you've set `yotta target` to `<targetname>`), the linked target description will be used.
+
+The variant of the command which takes a path to an existing module (e.g. `yotta link ../path/to/a/module`) performs both steps in sequence, for convenience.
+
+See also [yotta link](#yotta-link).
+
 
 ## <a href="#yotta-list" name="yotta-list">#</a> yotta list
 Synonyms: `yotta ls`
