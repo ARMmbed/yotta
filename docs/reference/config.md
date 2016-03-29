@@ -130,8 +130,8 @@ which extends or overrides the target and application-provided config.
 Either a path to a JSON file, or literal JSON on the command line. For example
 
 ```sh
-yotta --config=./path/to/config/file install
 yotta --config='{"mbed-os":{"stdio":{"baud":115200}}}' build
+yotta --config=./path/to/config/file list --all
 ```
 
 **NOTE:** it is not recommended to use this as part of your normal build
