@@ -56,7 +56,7 @@ def execCommand(args, following_args):
                     logging.error("%s is not a valid module: %s", args.module_or_path, dep.getError())
                     return 1
                 link_module_name = dep.getName()
-                dst = os.path.join(folders.globalInstallDirectory(), dep.getName())
+                dst = os.path.join(folders.globalInstallDirectory(), link_module_name)
                 errcode = tryLink(src, dst)
                 if errcode:
                     return errcode

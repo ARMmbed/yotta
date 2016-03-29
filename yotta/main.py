@@ -135,10 +135,12 @@ def main():
         'Symlink a module'
     )
     addParser('link-target', 'link_target',
-        'Symlink a target to be used in another module. Use "yotta link-target" '+
-        '(with no arguments) to link the current target globally. Or use '+
-        '"yotta link-target target-name" To use a target that was previously linked '+
-        'globally in the current module.',
+        'Symlink a target to be used into another module.\n\n'+
+        'Use: "yotta link" in a target to link it globally, then use "yotta '+
+        'link-target <targetname>" to link it into the module where you want to use '+
+        'it.\n\n'+
+        '"yotta link ../path/to/target" is also supported, which will create '+
+        'the global link and a link into the current module in a single step.',
         'Symlink a target'
     )
     addParser('update', 'update', 'Update dependencies for the current module, or a specific module.')
