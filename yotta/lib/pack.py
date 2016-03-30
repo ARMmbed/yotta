@@ -548,6 +548,7 @@ class Pack(object):
             env.update(additional_environment)
 
         errcode = 0
+        child = None
         try:
             logger.debug('running script: %s', command)
             child = subprocess.Popen(
