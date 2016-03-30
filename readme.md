@@ -48,10 +48,12 @@ Every yotta module or application includes a
 lists the other modules that it needs (amongst other information like the
 module's license, and where to submit bug reports).
 
-When you build, yotta downloads your dependencies, and makes them available to
-your project. It's similar in concept to npm, pip or gem: although because C
-and C++ are compiled languages, yotta also controls the build of your software
-in order to ensure downloaded modules are available to use in your code.
+When you run [`yotta build`](http://docs.yottabuild.org/tutorial/building.html)
+to build your project, yotta downloads your dependencies, and makes them
+available to your project. It's similar in concept to npm, pip or gem: although
+because C and C++ are compiled languages, yotta also controls the build of your
+software in order to ensure downloaded modules are available to use in your
+code.
 
 To add a new module to your program run `yotta install <modulename>`.  yotta
 will install both the module you've specified and any of its dependencies that
