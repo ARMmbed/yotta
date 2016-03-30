@@ -55,17 +55,32 @@ def looksLikeAnEmail(email):
     else:
         return False
 
-def currentDirectoryModule():
+def directoryModule(path):
     # Component, , represents an installed component, internal
     from yotta.lib import component
     # Pack, , base class for targets and components, internal
     from yotta.lib import pack
     try:
-        c = component.Component(os.getcwd())
+        c = component.Component(path)
     except pack.InvalidDescription as e:
         logging.error(e)
         return None
+    return c
 
+def directoryTarget(path):
+    # Target, , represents an installed target, internal
+    from yotta.lib import target
+    # Pack, , base class for targets and components, internal
+    from yotta.lib import pack
+    try:
+        t = target.Target(path)
+    except pack.InvalidDescription as e:
+        logging.error(e)
+        return None
+    return t
+
+def currentDirectoryModule():
+    c = directoryModule(os.getcwd())
     if not c:
         logging.error(str(c.error))
         logging.error('The current directory does not contain a valid module.')
@@ -73,15 +88,7 @@ def currentDirectoryModule():
     return c
 
 def currentDirectoryTarget():
-    # Target, , represents an installed target, internal
-    from yotta.lib import target
-    # Pack, , base class for targets and components, internal
-    from yotta.lib import pack
-    try:
-        t = target.Target(os.getcwd())
-    except pack.InvalidDescription as e:
-        logging.error(e)
-        return None
+    t = directoryTarget(os.getcwd())
     if not t:
         logging.error(str(t.error))
         logging.error('The current directory does not contain a valid target.')
