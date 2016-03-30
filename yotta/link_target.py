@@ -57,7 +57,6 @@ def execCommand(args, following_args):
             if os.path.isdir(args.target_or_path):
                 # make sure the first half of the link exists,
                 src = os.path.abspath(args.target_or_path)
-                print src
                 # if it isn't a valid target, that's an error:
                 tgt = validate.directoryTarget(src)
                 if not tgt:
