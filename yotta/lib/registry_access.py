@@ -389,13 +389,9 @@ def _getPrivateKeyObject(registry=None):
             privatekey_der, None, default_backend()
         )
 
-_yotta_version = None
 def _getYottaVersion():
-    global _yotta_version
-    if _yotta_version is None:
-        import pkg_resources
-        _yotta_version = pkg_resources.require("yotta")[0].version
-    return _yotta_version
+    import yotta
+    return yotta.__version__
 
 def _getYottaClientUUID():
     import uuid
