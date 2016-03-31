@@ -21,8 +21,8 @@ def _addExceptHook(fn):
 
 def _yottaExceptHook(exc_type, exc_val, exc_tb):
     try:
-        import pkg_resources
-        sys.stderr.write('Fatal Exception, yotta=' + pkg_resources.require("yotta")[0].version + '\n')
+        import yotta
+        sys.stderr.write('Fatal Exception, yotta=' + yotta.__version__ + '\n')
     except Exception as e:
         sys.stderr.write('Fatal Exception, yotta=unknown\n')
 _addExceptHook(_yottaExceptHook)
