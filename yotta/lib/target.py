@@ -64,6 +64,16 @@ def _mirrorStructure(dictionary, value):
             result[k] = value
     return result
 
+def _encodePathForEnv(s):
+    # under python 2.7, be sure that paths being exported as environment
+    # variables are encoded (as utf-8 byte strings), not unicode objects:
+    import sys
+    if sys.version_info[0] == 2:
+        assert(isinstance(s, type(u'')) or isinstance(s, type(b'')))
+        if not isinstance(s, type(b'')):
+            s = s.encode('utf-8')
+    return s
+
 # API
 
 def loadAdditionalConfig(config_path):
@@ -594,7 +604,7 @@ class DerivedTarget(Target):
                 return
 
             env = os.environ.copy()
-            env['YOTTA_PROGRAM'] = prog_path
+            env['YOTTA_PROGRAM'] = _encodePathForEnv(prog_path)
 
             if self.getScript('start'):
                 cmd = [
@@ -654,7 +664,7 @@ class DerivedTarget(Target):
                 return
 
             env = os.environ.copy()
-            env['YOTTA_PROGRAM'] = prog_path
+            env['YOTTA_PROGRAM'] = _encodePathForEnv(prog_path)
 
             cmd = [
                 os.path.expandvars(string.Template(x).safe_substitute(program=prog_path))
@@ -759,7 +769,7 @@ class DerivedTarget(Target):
             filter_command = [python_interpreter] + filter_command
 
         env = os.environ.copy()
-        env['YOTTA_PROGRAM'] = test_command
+        env['YOTTA_PROGRAM'] = _encodePathForEnv(test_command)
 
         test_child = None
         test_filter = None
