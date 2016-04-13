@@ -169,6 +169,9 @@ def _friendlyAuthError(fn):
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == requests.codes.unauthorized: #pylint: disable=no-member
                 logger.error('insufficient permission')
+            elif e.response.status_code == requests.codes.bad and 'jwt has expired' in e.response.text.lower(): #pylint: disable=no-member
+                logger.error('server returned status %s: %s', e.response.status_code, e.response.text)
+                logger.error('Check that your system clock is set accurately!')
             else:
                 logger.error('server returned status %s: %s', e.response.status_code, e.response.text)
             raise
@@ -642,6 +645,7 @@ def removeOwner(namespace, name, owner, registry=None):
 
     return True
 
+@_friendlyAuthError
 @_retryConnectionErrors
 def whoami(registry=None):
     registry = registry or Registry_Base_URL
@@ -656,9 +660,8 @@ def whoami(registry=None):
     if response.status_code == 401:
         # not logged in
         return None
-    elif response.status_code != 200:
-        logger.error('error getting user information: %s', response.error)
-        return None
+    else:
+        response.raise_for_status()
     return ', '.join(ordered_json.loads(response.text).get('primary_emails', {}).values())
 
 @_retryConnectionErrors
