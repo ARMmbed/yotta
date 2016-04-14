@@ -36,6 +36,23 @@ def splitList(l, at_value):
             r[-1].append(x)
     return r
 
+def _handleUnhandledReqestExceptions(fn):
+    import functools
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        # requests, apache2
+        import requests
+        try:
+            return fn(*args, **kwargs)
+        except requests.exceptions.RequestException as e:
+            import logging
+            if e.request is not None:
+                logging.critical('%s %s failed with status %s', e.request.method, e.request.url, e.response.status_code)
+                sys.exit(1)
+            else:
+                raise
+    return wrapped
+
 def _exitSilentlyOnUnhandledPipeError(fn):
     import functools
     @functools.wraps(fn)
@@ -52,6 +69,7 @@ def _exitSilentlyOnUnhandledPipeError(fn):
     return wrapped
 
 @_exitSilentlyOnUnhandledPipeError
+@_handleUnhandledReqestExceptions
 def main():
     # standard library modules, , ,
     import logging
