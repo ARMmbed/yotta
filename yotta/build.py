@@ -47,7 +47,7 @@ def execCommand(args, following_args):
     return status['status']
 
 def runScriptWithModules(module, sub_modules, script, script_environment):
-    module.runScript(script)
+    module.runScript(script, script_environment)
     [mod.runScript(script, script_environment) for mod in sub_modules if mod]
 
 def installAndBuild(args, following_args):
