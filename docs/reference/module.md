@@ -291,6 +291,10 @@ installed as a dependency of another.
 See [`dependencies`](#dependencies) for a description of how to specify
 different sorts of dependencies.
 
+### <a href="#testTargetDependencies" name="testTargetDependencies">#</a> `testTargetDependencies`
+**type: Object `{"<target-identifier>": <dependencies object>}`**
+
+The `testTargetDependencies` section has the same format as the [`targetDependencies`](#targetDependencies) section, but only specifies dependencies needed to run unit tests.
 
 ### <a href="#description" name="description">#</a> `description`
 **type: String**
