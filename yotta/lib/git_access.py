@@ -73,7 +73,7 @@ class GitWorkingCopy(object):
 
 
     def tipVersion(self):
-        raise NotImplementedError
+        return GitCloneVersion('', '', self)
 
 
 class GitComponent(access_common.RemoteComponent):
