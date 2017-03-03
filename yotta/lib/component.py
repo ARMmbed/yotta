@@ -31,6 +31,7 @@ Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
+Component_Definitions_File = 'defines.json'
 Registry_Namespace = 'modules'
 Schema_File = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schema', 'module.json')
 
@@ -132,6 +133,16 @@ class Component(pack.Pack):
         self.installed_dependencies = False
         self.dependencies_failed = False
         self.is_test_dependency = test_dependency
+        # read definitions for applications
+        self.defines = {}
+        defines_path = os.path.join(path, Component_Definitions_File)
+        if os.path.isfile(defines_path):
+            if not self.isApplication():
+                # only applications can have definitions
+                logger.warning("%s ignored in library module '%s'" % (Component_Definitions_File, self.getName()))
+            else:
+                # TODO: define a schema for this file
+                self.defines = pack.tryReadJSON(defines_path, None)
 
     def getDependencySpecs(self, target=None):
         ''' Returns [DependencySpec]
@@ -832,3 +843,6 @@ class Component(pack.Pack):
             return False
         del self.description['dependencies'][component]
         return True
+
+    def getDefines(self):
+        return self.defines

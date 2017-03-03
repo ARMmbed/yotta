@@ -282,4 +282,30 @@ the same as the C preprocessor definitions, except that empty definitions, and
 `null` definitions are converted to `set(YOTTA_CFG_<property> "")`, and no
 conversion is performed for boolean values.
 
+### <a href="#macro-definitions" name="macro-definitions">#</a>Defining Macros in Applications
 
+It is possible to define arbitrary C/C++ macros in an application. These
+macros need to be defined in a file named `defines.json`, located in the
+same directory as `module.json`. For example, the `defines.json` below defines
+two macros named `MACRO1` (a string) and `MACRO2` (an integer):
+
+```json
+{
+  "MACRO1": "\"this is a text\"",
+  "MACRO2": 10
+}
+```
+
+The definitions of these macros will be appended to the `yotta_config.h` file:
+
+```C
+#define MACRO1 "this is a text"
+#define MACRO2 10
+```
+
+**NOTE:**: `defines.json` can only be used in applications. If a `defines.json`
+file is found in a library, yotta will ignore it and issue a warning message.
+
+**NOTE:** this feature was added to make integration with 3rd party code easier.
+However, it should be used as rarely as possible, as it pollutes the global
+module namespace. Whenever possible, use `config.json` instead.

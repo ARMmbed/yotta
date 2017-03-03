@@ -347,6 +347,14 @@ class CMakeGen(object):
             add_defs_header += "#define YOTTA_%s_VERSION_MINOR %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().minor())
             add_defs_header += "#define YOTTA_%s_VERSION_PATCH %d\n" % (sanitizePreprocessorSymbol(dep.getName()), dep.getVersion().patch())
 
+        # add the component's definitions
+        defines = component.getDefines()
+        if defines:
+            add_defs_header += "\n// direct definitions (defines.json)\n"
+            for name, value in defines.items():
+                add_defs_header += "#define %s %s\n" % (name, value)
+            add_defs_header += '\n'
+
         # use -include <definitions header> instead of lots of separate
         # defines... this is compiler specific, but currently testing it
         # out for gcc-compatible compilers only:
