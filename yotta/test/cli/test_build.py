@@ -356,6 +356,44 @@ print('running pregenerate')
 '''
 }
 
+Test_Defines_Application = {
+'module.json':'''{
+  "name": "test-defines-app",
+  "version": "0.0.0",
+  "description": "Test defines.json in application",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "bin": "source"
+}''',
+'defines.json':'''{
+  "INT_MACRO": 1234,
+  "TEXT_MACRO": "\\"yotta\\""
+}''',
+'source/foo.c':'''#include "stdio.h"
+int main(){
+    printf("%d %s\\n", INT_MACRO, TEXT_MACRO);
+    return 0;
+}'''
+}
+
+Test_Defines_Library = {
+'module.json':'''{
+  "name": "test-defines-lib",
+  "version": "0.0.0",
+  "description": "Test defines.json in library",
+  "keywords": [],
+  "license": "Apache-2.0"
+}''',
+'defines.json':'''{
+  "INT_MACRO": 1234,
+  "TEXT_MACRO": "\\"yotta\\""
+}''',
+'source/foo.c':'''#include "stdio.h"
+int foo(){
+    return 0;
+}'''
+}
+
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildTrivialLib(self):
@@ -567,6 +605,22 @@ class TestCLIBuild(unittest.TestCase):
         test_dir = util.writeTestFiles(Test_Scripts_PreGenerate)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
         self.assertIn("running pregenerate", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_Defines_Application(self):
+        test_dir = util.writeTestFiles(Test_Defines_Application)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        output = subprocess.check_output(['./build/' + util.nativeTarget().split(',')[0] + '/source/test-defines-app'], cwd=test_dir).decode()
+        self.assertIn("1234 yotta", output)
+        util.rmRf(test_dir)
+
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_Defines_Library(self):
+        test_dir = util.writeTestFiles(Test_Defines_Library)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        self.assertIn("defines.json ignored in library module 'test-defines-lib'", stdout)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):
