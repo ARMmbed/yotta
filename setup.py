@@ -36,7 +36,7 @@ setup(
     description = ("Re-usable components for embedded software."),
     license = "Apache-2.0",
     keywords = "embedded package module dependency management",
-    url = "about:blank",
+    url = "https://github.com/ARMmbed/yotta",
     packages=find_packages(),
     package_data={
         'yotta': ['version.txt', 'lib/schema/*.json', 'lib/templates/*.txt', 'lib/templates/*.cmake']
