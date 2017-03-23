@@ -147,8 +147,14 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
             )
             if v:
                 return v
+
+            # we have passed a specific commit ID:
+            v = remote_component.commitVersion()
+            if v:
+                return v
+
             raise access_common.Unavailable(
-                'Github repository "%s" does not have any tags or branches matching "%s"' % (
+                'Github repository "%s" does not have any tags, branches or commits matching "%s"' % (
                     version_required, remote_component.tagOrBranchSpec()
                 )
             )
