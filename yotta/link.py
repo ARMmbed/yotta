@@ -11,6 +11,9 @@ def addOptions(parser):
     )
 
 def tryLink(src, dst):
+    # standard library modules, , ,
+    import logging
+
     # fsutils, , misc filesystem utils, internal
     from yotta.lib import fsutils
     try:
