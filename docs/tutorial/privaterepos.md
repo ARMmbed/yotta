@@ -31,11 +31,25 @@ username/reponame
 username/reponame#<branchname>
 username/reponame#<tagname>
 username/reponame#<commit>
+https://github.com/username/reponame
+https://github.com/username/reponame#<branchname>
+https://github.com/username/reponame#<tagname>
+https://github.com/username/reponame#<commit>
 ```
 
+If the GitHub repository is public, the dependency will simply be downloaded. If the GitHub repository is private and this is the first time you are downloading from a private GitHub repository, you will be prompted to log in to GitHub using a URL.
+
+If you have a private GitHub repository and you would prefer to download it using SSH keys, you can use the following dependency form:
+
+```
+git@github.com:username/reponame.git
+git@github.com:username/reponame.git#<branchname>
+git@github.com:username/reponame.git#<tagname>
+git@github.com:username/reponame.git#<commit>
+```
 
 ###Other ways to depend on private repositories 
-Using shorthand GitHub URLs is the easiest and reccomneded method of working with private repositories, however as not all projects are hosted on GitHub, `yotta` supports using git and hg URLs directly as well.
+Using shorthand GitHub URLs is the easiest and recommended method of working with private repositories, however as not all projects are hosted on GitHub, `yotta` supports using git and hg URLs directly as well.
 
 For example, to include a privately hosted git repository from example.com:
 
