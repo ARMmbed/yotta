@@ -267,7 +267,7 @@ definitions will be produced:
 Note that string values are not quoted. If you want a quoted string,
 either embed escaped quotes (`\"`) in the string value, or use the preprocessor
 [stringification
-trick](https://gcc.gnu.org/onlinedocs/cpp/Stringification.html).
+trick](https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html).
 
 JSON boolean values are converted to 1 or 0, and `null` values are converted to `NULL`.
 
