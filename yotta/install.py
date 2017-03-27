@@ -167,7 +167,12 @@ def installComponentAsDependency(args, current_component):
     # (if it is not already present), and write that back to disk. Without
     # writing to disk the dependency wouldn't be usable.
     if installed and not current_component.hasDependency(component_name):
-        saved_spec = current_component.saveDependency(installed)
+        vs = sourceparse.parseSourceURL(component_spec)
+        if vs.source_type == 'registry':
+            saved_spec = current_component.saveDependency(installed)
+        else:
+            saved_spec = current_component.saveDependency(installed, component_spec)
+
         current_component.writeDescription()
         logging.info('dependency %s: %s written to module.json', component_name, saved_spec)
     else:

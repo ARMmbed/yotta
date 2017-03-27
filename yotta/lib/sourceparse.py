@@ -51,39 +51,55 @@ class VersionSource(object):
             return self.semantic_spec.match(v)
 
 
-def _splitFragment(url):
-    parsed = urlsplit(url)
-    if '#' in url:
-        return url[:url.index('#')], parsed.fragment
-    else:
-        return url, None
-
-def _getGithubRef(source_url):
+def _getNonRegistryRef(source_url):
     import re
+
     # something/something#spec = github
-    defragmented, fragment = _splitFragment(source_url)
-    github_match = re.match('^[a-z0-9_-]+/([a-z0-9_-]+)$', defragmented, re.I)
-    if github_match:
-        return github_match.group(1), VersionSource('github', defragmented, fragment)
-
     # something/something@spec = github
-    alternate_github_match = re.match('([a-z0-9_-]+/([a-z0-9_-]+)) *@?([~^><=.0-9a-z\*-]*)$', source_url, re.I)
-    if alternate_github_match:
-        return alternate_github_match.group(2), VersionSource('github', alternate_github_match.group(1), alternate_github_match.group(3))
+    # something/something spec = github
+    github_match = re.match('^([.a-z0-9_-]+/([.a-z0-9_-]+))( *[ @#]([.a-z0-9_-]+))?$', source_url, re.I)
+    if github_match:
+        return github_match.group(2), VersionSource('github', github_match.group(1), github_match.group(4))
 
-    return None, None
-
-def parseSourceURL(source_url):
-    ''' Parse the specified version source URL (or version spec), and return an
-        instance of VersionSource
-    '''
-    import re
     parsed = urlsplit(source_url)
+
+    # github
+    if parsed.netloc.endswith('github.com'):
+        # any URL onto github should be fetched over the github API, even if it
+        # would parse as a valid git URL
+        name_match = re.match('^/([.a-z0-9_-]+/([.a-z0-9_-]+?))(.git)?$', parsed.path, re.I)
+        if name_match:
+            return name_match.group(2), VersionSource('github', name_match.group(1), parsed.fragment)
 
     if '#' in source_url:
         without_fragment = source_url[:source_url.index('#')]
     else:
         without_fragment = source_url
+
+    # git
+    if parsed.scheme.startswith('git+') or parsed.path.endswith('.git'):
+        # git+anything://anything or anything.git is a git repo:
+        name_match = re.match('^.*?([.a-z0-9_-]+?)(.git)?$', parsed.path, re.I)
+        if name_match:
+            return name_match.group(1), VersionSource('git', without_fragment, parsed.fragment)
+
+    # mercurial
+    if parsed.scheme.startswith('hg+') or parsed.path.endswith('.hg'):
+        # hg+anything://anything or anything.hg is a hg repo:
+        name_match = re.match('^.*?([.a-z0-9_-]+?)(.hg)?$', parsed.path, re.I)
+        if name_match:
+            return name_match.group(1), VersionSource('hg', without_fragment, parsed.fragment)
+
+    return None, None
+
+
+def parseSourceURL(source_url):
+    ''' Parse the specified version source URL (or version spec), and return an
+        instance of VersionSource
+    '''
+    name, spec = _getNonRegistryRef(source_url)
+    if spec:
+        return spec
 
     try:
         url_is_spec = version.Spec(source_url)
@@ -94,22 +110,6 @@ def parseSourceURL(source_url):
         # if the url is an unadorned version specification (including an empty
         # string) then the source is the module registry:
         return VersionSource('registry', '', source_url)
-    elif parsed.netloc.endswith('github.com'):
-        # any URL onto github should be fetched over the github API, even if it
-        # would parse as a valid git URL
-        return VersionSource('github', parsed.path, parsed.fragment)
-    elif parsed.scheme.startswith('git+') or parsed.path.endswith('.git'):
-        # git+anything://anything or anything.git is a git repo:
-        return VersionSource('git', without_fragment, parsed.fragment)
-    elif parsed.scheme.startswith('hg+') or parsed.path.endswith('.hg'):
-        # hg+anything://anything or anything.hg is a hg repo:
-        return VersionSource('hg', without_fragment, parsed.fragment)
-
-    # something/something@spec = github
-    # something/something#spec = github
-    module_name, github_match = _getGithubRef(source_url)
-    if github_match:
-        return github_match
 
     raise InvalidVersionSpec("Invalid version specification: \"%s\"" % (source_url))
 
@@ -143,8 +143,8 @@ def parseTargetNameAndSpec(target_name_and_spec):
     import re
     # fist check if this is a raw github specification that we can get the
     # target name from:
-    name, spec = _getGithubRef(target_name_and_spec)
-    if name and spec:
+    name, spec = _getNonRegistryRef(target_name_and_spec)
+    if name:
         return name, target_name_and_spec
 
     # next split at the first @ or , if any
@@ -178,8 +178,8 @@ def parseModuleNameAndSpec(module_name_and_spec):
     import re
     # fist check if this is a raw github specification that we can get the
     # module name from:
-    name, spec = _getGithubRef(module_name_and_spec)
-    if name and spec:
+    name, spec = _getNonRegistryRef(module_name_and_spec)
+    if name:
         return name, module_name_and_spec
 
     # next split at the first @, if any
