@@ -195,8 +195,14 @@ def latestSuitableVersion(name, version_required, registry='modules', quiet=Fals
             )
             if v:
                 return v
+
+            # we have passed a specific commit ID:
+            v = local_clone.commitVersion(remote_component.tagOrBranchSpec())
+            if v:
+                return v
+
             raise access_common.Unavailable(
-                '%s repository "%s" does not have any tags or branches matching "%s"' % (
+                '%s repository "%s" does not have any tags, branches or commits matching "%s"' % (
                     clone_type, version_required, spec
                 )
             )
