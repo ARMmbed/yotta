@@ -30,7 +30,7 @@ The name of the library being built by the current module is available as
 No header needs to be included for this definition to be available.
 
 Use the [preprocessor stringification
-trick](https://gcc.gnu.org/onlinedocs/cpp/Stringification.html) to get the
+trick](https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html) to get the
 module name as a string, if desired. Note that this definition is **not**
 currently available when compiling tests, and there are other circumstances
 where using custom CMake can make it unavailable.
