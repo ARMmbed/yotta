@@ -201,6 +201,7 @@ def main():
     short_commands = {
                 'up':subparser.choices['update'],
                 'in':subparser.choices['install'],
+                'un':subparser.choices['uninstall'],
                 'ln':subparser.choices['link'],
                  'v':subparser.choices['version'],
                 'ls':subparser.choices['list'],
