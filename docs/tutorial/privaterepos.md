@@ -24,13 +24,13 @@ Sometimes it may not be appropriate publish a module to the public package regis
 
 The shorthand GitHub URL is formed of two parts: `<username>/<reponame>` where `<username>` is the GitHub user or organisation name of the repository owner and `<reponame>` is the name of the repositiry. e.g. the `yotta` repositry can be found at `ARMmbed/yotta`.
 
-You can specify a particular branch or tag to use by providing it in the URL. The supported GitHub URL formats are:
+You can specify a particular branch, tag or commit to use by providing it in the URL. The supported GitHub URL formats are:
 
 ```
 username/reponame
-username/reponame#<versionspec>
 username/reponame#<branchname>
 username/reponame#<tagname>
+username/reponame#<commit>
 ```
 
 
@@ -47,13 +47,13 @@ For example, to include a privately hosted git repository from example.com:
 ...
 ```
 
-Git URLs support branch, version and tags specifications:
+Git URLs support branch, version, tag and commit specifications:
 
 ```
 git+ssh://example.com/path/to/repo
-git+ssh://example.com/path/to/repo#<versionspec, branch or tag>
+git+ssh://example.com/path/to/repo#<versionspec, branch, tag or commit>
 anything://example.com/path/to/repo.git
-anything://example.com/path/to/repo.git#<versionspec, branch or tag>
+anything://example.com/path/to/repo.git#<versionspec, branch, tag or commit>
 ```
 
 Currently, mercurial URLs only support a version specification:

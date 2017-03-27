@@ -198,6 +198,10 @@ To specify a dependency on a github module, use one of the following forms:
 
     Uses the latest committed version on the specified branch.
 
+ * `"usefulmodule": "username/repositoryname#commit-id"`
+
+    Uses the specified commit ID.
+
 #### Depending on git Modules
 To specify a module available from a non-Github git server as a dependency, use
 a git URL:
@@ -206,8 +210,9 @@ a git URL:
  * `"usefulmodule": "git+ssh://somwhere.com/anything/anywhere#<version specification>"`
  * `"usefulmodule": "git+ssh://somwhere.com/anything/anywhere#<branch name>"`
  * `"usefulmodule": "git+ssh://somwhere.com/anything/anywhere#<tag name>"`
+ * `"usefulmodule": "git+ssh://somwhere.com/anything/anywhere#<commit id>"`
  * `"usefulmodule": "<anything>://somwhere.git"`
- * `"usefulmodule": "<anything>://somwhere.git#<version spec, tag, or branch name>"`
+ * `"usefulmodule": "<anything>://somwhere.git#<version spec, tag, branch name or commit id>"`
 
 #### Depending on hg Modules
 To specify a module available from a mercurial server as a dependency, use
