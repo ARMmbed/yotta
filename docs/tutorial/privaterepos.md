@@ -28,6 +28,7 @@ You can specify a particular branch, tag or commit to use by providing it in the
 
 ```
 username/reponame
+username/reponame#<versionspec>
 username/reponame#<branchname>
 username/reponame#<tagname>
 username/reponame#<commit>
