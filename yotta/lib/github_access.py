@@ -141,6 +141,12 @@ def _getTipArchiveURL(repo):
     repo = g.get_repo(repo)
     return repo.get_archive_link('tarball')
 
+@_handleAuth
+def _getCommitArchiveURL(repo, commit):
+    ''' return a string containing a tarball url '''
+    g = Github(settings.getProperty('github', 'authtoken'))
+    repo = g.get_repo(repo)
+    return repo.get_archive_link('tarball', commit)
 
 @_handleAuth
 def _getTarball(url, into_directory, cache_key, origin_info=None):
@@ -282,6 +288,19 @@ class GithubComponent(access_common.RemoteComponent):
         return GithubComponentVersion(
             '', '', _getTipArchiveURL(self.repo), self.name, cache_key=None
         )
+
+    def commitVersion(self):
+        ''' return a GithubComponentVersion object for a specific commit if valid
+        '''
+        import re
+
+        commit_match = re.match('^[a-f0-9]{7,40}$', self.tagOrBranchSpec(), re.I)
+        if commit_match:
+            return GithubComponentVersion(
+                '', '', _getCommitArchiveURL(self.repo, self.tagOrBranchSpec()), self.name, cache_key=None
+            )
+
+        return None
 
     @classmethod
     def remoteType(cls):

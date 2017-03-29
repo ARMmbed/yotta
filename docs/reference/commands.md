@@ -534,7 +534,7 @@ example:
 
 
 ## <a href="#yotta-uninstall" name="yotta-uninstall">#</a> yotta uninstall
-Synonyms: `yotta unlink`, `yotta rm`
+Synonyms: `yotta unlink`, `yotta rm`, `yotta un`
 #### Synopsis
 
 ```

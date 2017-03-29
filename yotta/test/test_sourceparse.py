@@ -11,50 +11,60 @@ import unittest
 # sourceparse, , parse version source urls, internal
 from yotta.lib import sourceparse
 
+# Shorthand URLs for GitHub
+ShortHand_URLs = [
+    'username/reponame',
+]
 
-Registry_URLs = [
+# Longhand URLs for GitHub
+Github_URLs = [
+    'https://github.com/username/reponame.git',
+    'git://github.com/username/reponame.git',
+    'git+http://username@github.com/username/reponame.git',
+    'git+https://username@github.com/username/reponame.git',
+]
+
+Git_URLs = [
+    'http://somewhere.something/reponame.git',
+    'https://somewhere.something/reponame.git',
+    'ssh://somewhere.com/something/etc/reponame.git',
+    'git+ssh://somewhere.com/something/etc/reponame',
+    'git@github.com:username/reponame.git',
+]
+
+HG_URLs = [
+    'http://somewhere.something/reponame.hg',
+    'https://somewhere.something/reponame.hg',
+    'ssh://somewhere.com/something/etc/reponame.hg',
+    'hg+ssh://somewhere.com/something/etc/reponame',
+]
+
+# We support version spec, branch name, tag name and commit id for GitHub and Git
+Git_Specs = [
+    '',
+    '1.2.3',
+    '^1.2.3',
+    '~1.2.3',
+    '-1.2.3',
+    'branch-or-tag-name',
+    'd5f5049',
+]
+
+# We support only version spec for HG
+HG_Specs = [
+    '',
+    '1.2.3',
+    '^1.2.3',
+    '~1.2.3',
+]
+
+Registry_Specs = [
     '',
     '*',
     '1.2.3',
     '>=1.2.3',
     '^0.1.2',
     '~0.1.2',
-]
-
-Github_URLs = [
-    'username/reponame',
-    'username/reponame#1.2.3',
-    'username/reponame#^1.2.3',
-    'username/reponame#-1.2.3',
-    'username/reponame#branch-or-tag-name',
-    'username/reponame@1.2.3',
-    'username/reponame@^1.2.3',
-    'username/reponame@-1.2.3',
-    'username/reponame@branch-or-tag-name',
-]
-
-Git_URLs = [
-    'git+ssh://somewhere.com/something/etc/etc',
-    'git+ssh://somewhere.com/something/etc/etc#1.2.3',
-    'git+ssh://somewhere.com/something/etc/etc#^1.2.3',
-    'git+ssh://somewhere.com/something/etc/etc#~1.2.3',
-    'git+ssh://somewhere.com/something/etc/etc#branch-name',
-    'ssh://somewhere.com/something/etc/etc.git',
-    'ssh://somewhere.com/something/etc/etc.git#^1.2.3',
-    'ssh://somewhere.com/something/etc/etc.git#~1.2.3',
-    'ssh://somewhere.com/something/etc/etc.git#branch-name',
-    'http://somewhere.something/something.git',
-]
-
-HG_URLs = [
-    'hg+ssh://somewhere.com/something/etc/etc',
-    'hg+ssh://somewhere.com/something/etc/etc#1.2.3',
-    'hg+ssh://somewhere.com/something/etc/etc#^1.2.3',
-    'hg+ssh://somewhere.com/something/etc/etc#~1.2.3',
-    'ssh://somewhere.com/something/etc/etc.hg',
-    'ssh://somewhere.com/something/etc/etc.hg#^1.2.3',
-    'ssh://somewhere.com/something/etc/etc.hg#~1.2.3',
-    'http://somewhere.something/something.hg',
 ]
 
 test_invalid_urls = [
@@ -65,24 +75,56 @@ test_invalid_urls = [
 
 class TestParseSourceURL(unittest.TestCase):
     def test_registryURLs(self):
-        for url in Registry_URLs:
+        for url in Registry_Specs:
             sv = sourceparse.parseSourceURL(url)
             self.assertEqual(sv.source_type, 'registry')
 
+    def test_shorthandURLs(self):
+        for url in ShortHand_URLs:
+            for s in Git_Specs:
+                if len(s):
+                    # Shorthand URLs support '@' and ' ' as well as '#'
+                    for m in ['#', '@', ' ']:
+                        sv = sourceparse.parseSourceURL(url + m + s)
+                        self.assertEqual(sv.source_type, 'github')
+                        self.assertEqual(sv.spec, s)
+                else:
+                    sv = sourceparse.parseSourceURL(url)
+                    self.assertEqual(sv.source_type, 'github')
+                    self.assertEqual(sv.spec, s)
+
     def test_githubURLs(self):
         for url in Github_URLs:
-            sv = sourceparse.parseSourceURL(url)
-            self.assertEqual(sv.source_type, 'github')
+            for s in Git_Specs:
+                if len(s):
+                    source = url + '#' + s
+                else:
+                    source = url
+                sv = sourceparse.parseSourceURL(source)
+                self.assertEqual(sv.source_type, 'github')
+                self.assertEqual(sv.spec, s)
 
     def test_gitURLs(self):
         for url in Git_URLs:
-            sv = sourceparse.parseSourceURL(url)
-            self.assertEqual(sv.source_type, 'git')
+            for s in Git_Specs:
+                if len(s):
+                    source = url + '#' + s
+                else:
+                    source = url
+                sv = sourceparse.parseSourceURL(source)
+                self.assertEqual(sv.source_type, 'git')
+                self.assertEqual(sv.spec, s)
 
     def test_hgURLs(self):
         for url in HG_URLs:
-            sv = sourceparse.parseSourceURL(url)
-            self.assertEqual(sv.source_type, 'hg')
+            for s in HG_Specs:
+                if len(s):
+                    source = url + '#' + s
+                else:
+                    source = url
+                sv = sourceparse.parseSourceURL(source)
+                self.assertEqual(sv.source_type, 'hg')
+                self.assertEqual(sv.spec, s)
 
     def test_invalid(self):
         for url in test_invalid_urls:
@@ -101,38 +143,63 @@ class TestParseModuleNameAndSpec(unittest.TestCase):
             self.assertEqual(n, name)
             self.assertEqual(s, '*')
 
+    def test_ShorthandRefs(self):
+        for url in ShortHand_URLs:
+            for spec in Git_Specs:
+                if len(spec):
+                    # Shorthand URLs support '@' and ' ' as well as '#'
+                    for m in ['#', '@', ' ']:
+                        ns = url + m + spec
+                        n, s = sourceparse.parseModuleNameAndSpec(ns)
+                        self.assertEqual(n, 'reponame')
+                        self.assertEqual(s, ns)
+                else:
+                    n, s = sourceparse.parseModuleNameAndSpec(url)
+                    self.assertEqual(n, 'reponame')
+                    self.assertEqual(s, url)
+
     def test_GithubRefs(self):
         for url in Github_URLs:
-            n, s = sourceparse.parseModuleNameAndSpec(url)
-            self.assertEqual(n, 'reponame')
+            for spec in Git_Specs:
+                if len(spec):
+                    ns = url + '#' + spec
+                else:
+                    ns = url
+                n, s = sourceparse.parseModuleNameAndSpec(ns)
+                self.assertEqual(n, 'reponame')
+                self.assertEqual(s, ns)
+
+    def test_GitRefs(self):
+        for url in Git_URLs:
+            for spec in Git_Specs:
+                if len(spec):
+                    ns = url + '#' + spec
+                else:
+                    ns = url
+                n, s = sourceparse.parseModuleNameAndSpec(ns)
+                self.assertEqual(n, 'reponame')
+                self.assertEqual(s, ns)
+
+    def test_HGRefs(self):
+        for url in HG_URLs:
+            for spec in HG_Specs:
+                if len(spec):
+                    ns = url + '#' + spec
+                else:
+                    ns = url
+                n, s = sourceparse.parseModuleNameAndSpec(ns)
+                self.assertEqual(n, 'reponame')
+                self.assertEqual(s, ns)
 
     def test_atVersion(self):
         for name in Valid_Names:
-            for v in Registry_URLs:
+            for v in Registry_Specs:
                 if len(v):
                     nv = name + '@' + v
                     n, s = sourceparse.parseModuleNameAndSpec(nv)
                     self.assertEqual(n, name)
                     self.assertEqual(s, v)
 
-    def test_atGitURL(self):
-        for name in Valid_Names:
-            for v in Git_URLs:
-                nv = name + '@' + v
-                n, s = sourceparse.parseModuleNameAndSpec(nv)
-                self.assertEqual(n, name)
-                self.assertEqual(s, v)
-
-    def test_atHGURL(self):
-        for name in Valid_Names:
-            for v in HG_URLs:
-                nv = name + '@' + v
-                n, s = sourceparse.parseModuleNameAndSpec(nv)
-                self.assertEqual(n, name)
-                self.assertEqual(s, v)
-
 
 if __name__ == '__main__':
     unittest.main()
-
-
