@@ -58,7 +58,6 @@ def _getNonRegistryRef(source_url):
     # something/something@spec = github
     # something/something spec = github
     github_match = re.match(r'^([.a-z0-9_-]+/([.a-z0-9_-]+)) *[@#]?([^/:\?\[\\]*)$', source_url, re.I)
-    #github_match = re.match('^([.a-z0-9_-]+/([.a-z0-9_-]+)) *[@#]?([.a-z0-9_\-\*\^\~\>\<\=]*)$', source_url, re.I)
     if github_match:
         return github_match.group(2), VersionSource('github', github_match.group(1), github_match.group(3))
 
