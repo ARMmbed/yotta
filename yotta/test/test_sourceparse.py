@@ -47,6 +47,7 @@ Git_Specs = [
     '~1.2.3',
     '-1.2.3',
     'branch-or-tag-name',
+    'branch+or+tag+name',
     'd5f5049',
 ]
 
