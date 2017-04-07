@@ -219,7 +219,7 @@ class CMakeGen(object):
         # if the application or library is set to get the sources from top level ("."),
         # they'll be acumulated into a single array (top_sources below).
         top_sources = []
-        start_on_top = "." in [os.path.normpath(x) for x in lib_subdirs.keys() + bin_subdirs.keys()]
+        start_on_top = "." in [os.path.normpath(x) for x in list(lib_subdirs.keys()) + list(bin_subdirs.keys())]
         for f in sorted(os.listdir(component.path)):
             if f in Ignore_Subdirs or f.startswith('.') or f.startswith('_'):
                 continue
