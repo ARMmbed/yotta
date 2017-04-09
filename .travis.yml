@@ -25,3 +25,9 @@ before_script:
   - /bin/bash .travis_init.sh
 # command to run tests
 script: python setup.py test 
+deploy:
+  provider: pypi
+  server: https://testpypi.python.org/pypi
+  user: "thegecko"
+  password:
+    secure: Ks8vwWD4oSa+HirFCs3bozgn73IwATomI7sm97Hb+sWu8qkExtnpnvlp/X97prmRFjfRF2t+R/oVOWMJTKRcg+a/9kCRmbDQfRD411Z1lDudd2/NThDQXr1fE1D0ql8+QErBYB2+1Oz8vdYeVlFxqxwksSk9PrG+OK5i/ptG5cs=
