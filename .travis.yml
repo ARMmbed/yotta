@@ -31,5 +31,3 @@ deploy:
   user: "thegecko"
   password:
     secure: Ks8vwWD4oSa+HirFCs3bozgn73IwATomI7sm97Hb+sWu8qkExtnpnvlp/X97prmRFjfRF2t+R/oVOWMJTKRcg+a/9kCRmbDQfRD411Z1lDudd2/NThDQXr1fE1D0ql8+QErBYB2+1Oz8vdYeVlFxqxwksSk9PrG+OK5i/ptG5cs=
-  on:
-    tags: true
