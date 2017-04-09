@@ -18,6 +18,11 @@ Looks_Like_An_Email = re.compile('^[^@]+@[^@]+\.[^@]+$')
 Component_Name_Regex = r'^[a-z]+[a-z0-9-]*$'
 Target_Name_Regex = r'^[a-z]+[a-z0-9+-]*$'
 
+# return True if the given directory name is a potential directory name
+# for tests, False otherwise
+def isPotentialTestDir(dirname):
+    return dirname.lower() in ('test', 'tests')
+
 # return an error string describing the validation failure, or None if there is
 # no error
 def sourceDirValidationError(dirname, component_name):
@@ -26,7 +31,7 @@ def sourceDirValidationError(dirname, component_name):
         return 'Module %s public include directory %s should not contain source files' % (component_name, dirname)
     elif dirname.lower() in ('source', 'src') and dirname != 'source':
         return 'Module %s has non-standard source directory name: "%s" should be "source"' % (component_name, dirname)
-    elif dirname.lower() in ('test', 'tests') and dirname != 'test':
+    elif isPotentialTestDir(dirname) and dirname != 'test':
         return 'Module %s has non-standard test directory name: "%s" should be "test"' % (component_name, dirname)
     elif not Source_Dir_Regex.match(dirname):
         corrected = Source_Dir_Invalid_Regex.sub('', dirname.lower())

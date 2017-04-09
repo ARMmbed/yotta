@@ -394,6 +394,54 @@ int foo(){
 }'''
 }
 
+Test_Toplevel_Application = {
+'module.json':'''{
+  "name": "test-toplevel-app",
+  "version": "0.0.0",
+  "description": "Test application with top level sources",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "bin": ".",
+  "extraIncludes": ["."]
+}''',
+'f1.c':'''int f1() {return 3;}''',
+'f1.h':'''int f1();''',
+'sub/f2.c':'''int f2() {return 10;}''',
+'sub/f2.h':'''int f2();''',
+'source/main.c':'''#include "f1.h"
+#include "sub/f2.h"
+#include <stdio.h>
+
+int main() {
+  printf("%d\\n", f1() + f2()); // 13
+  return 0;
+}'''
+}
+
+Test_Toplevel_Library = {
+'module.json':'''{
+  "name": "test-toplevel-lib",
+  "version": "0.0.0",
+  "description": "Test library with top level sources",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "lib": ".",
+  "extraIncludes": ["."]
+}''',
+'f1.c':'''int f1() {return 20;}''',
+'f1.h':'''int f1();''',
+'sub/f2.c':'''int f2() {return 22;}''',
+'sub/f2.h':'''int f2();''',
+'test/test.c':'''#include "f1.h"
+#include "sub/f2.h"
+#include <stdio.h>
+
+int main() {
+  printf("%d\\n", f1() + f2()); // 42
+  return 0;
+}'''
+}
+
 class TestCLIBuild(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_buildTrivialLib(self):
@@ -621,6 +669,22 @@ class TestCLIBuild(unittest.TestCase):
         test_dir = util.writeTestFiles(Test_Defines_Library)
         stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
         self.assertIn("defines.json ignored in library module 'test-defines-lib'", stdout)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_Toplevel_Application(self):
+        test_dir = util.writeTestFiles(Test_Toplevel_Application)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        output = subprocess.check_output(['./build/' + util.nativeTarget().split(',')[0] + '/test-toplevel-app/test-toplevel-app'], cwd=test_dir).decode()
+        self.assertIn("13", output)
+        util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_Toplevel_Library(self):
+        test_dir = util.writeTestFiles(Test_Toplevel_Library)
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build'], test_dir)
+        output = subprocess.check_output(['./build/' + util.nativeTarget().split(',')[0] + '/test/test-toplevel-lib-test-test'], cwd=test_dir).decode()
+        self.assertIn("42", output)
         util.rmRf(test_dir)
 
     def runCheckCommand(self, args, test_dir):
