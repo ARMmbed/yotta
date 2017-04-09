@@ -1,5 +1,5 @@
 .. image:: https://travis-ci.org/ARMmbed/yotta.svg
-.. image:: https://circleci.com/gh/ARMmbed/yotta.svg?style=svg
+.. image:: https://circleci.com/gh/ARMmbed/yotta.svg?style=shield
 
 yotta is a tool that we're building at `mbed <https://mbed.org>`_ to make it
 easier to build better software written in C, C++ or other C-family languages.
