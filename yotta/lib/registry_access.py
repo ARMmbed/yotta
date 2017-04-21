@@ -42,7 +42,7 @@ from yotta.lib import exportkey
 from yotta.lib import globalconf
 
 Registry_Base_URL = 'https://registry.yottabuild.org'
-Website_Base_URL  = 'https://yotta.mbed.com'
+Website_Base_URL  = 'https://yottabuild.org'
 _OpenSSH_Keyfile_Strip = re.compile(b"^(ssh-[a-z0-9]*\s+)|(\s+.+\@.+)|\n", re.MULTILINE)
 
 logger = logging.getLogger('access')

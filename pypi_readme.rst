@@ -7,11 +7,11 @@ It's still early in development, so if you have questions/feedback or issues, pl
 
 Installation
 ============
-While yotta is written in python, to use it to build software you'll need several non-python dependencies. Detailed installation instructions and links to installers can be found on the `yotta docs site <http://yottadocs.mbed.com>`_.
+While yotta is written in python, to use it to build software you'll need several non-python dependencies. Detailed installation instructions and links to installers can be found on the `yotta docs site <http://docs.yottabuild.org>`_.
 
 Get Started
 ===========
-The best way to get started is to `follow the tutorial <http://yottadocs.mbed.com/tutorial/tutorial.html>`_.
+The best way to get started is to `follow the tutorial <http://docs.yottabuild.org/tutorial/tutorial.html>`_.
 
 License
 =======

@@ -9,7 +9,7 @@ When you use [`yotta publish`](tutorial/release.html) to publish your re-usable
 modules, they are uploaded to the yotta public registry.
 
 They are immediately available to find via search
-[online](http://yotta.mbed.com), and via the [`yotta
+[online](http://yottabuild.org), and via the [`yotta
 search`](reference/commands.html#yotta-search) subcommand, and for anyone to
 install as a dependency of their own project.
 
@@ -40,8 +40,7 @@ to allow access to these domains though your firewall:
  * `https://registry.yottabuild.org`: the registry API itself
  * `https://yotta.blob.core.windows.net`: the blob store where versions of
     modules and targets are downloaded from.
- * `http://yotta.mbed.com` and `https://yottabuild.org`: (these are the same
-    website), and are necessary for the login mechanism.
+ * `https://yottabuild.org`: necessary for the login mechanism.
 
 **Note** that all of these domains may use multiple IP addresses, and each may
 share their IP addresses with other domains.

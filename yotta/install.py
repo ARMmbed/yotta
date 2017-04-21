@@ -100,7 +100,7 @@ def installDeps(args, current_component):
         logging.warning(
             'The build target has not been set, so the default (%s) is being ' +
             'used. You can use `yotta target <targetname>` to set the build ' +
-            'target. See http://yottadocs.mbed.com/tutorial/targets.html for '
+            'target. See http://docs.yottabuild.org/tutorial/targets.html for '
             'more information on using targets.',
             args.target
         )

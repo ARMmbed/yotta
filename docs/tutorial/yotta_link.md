@@ -94,7 +94,7 @@ next step is to download the latest source version.
 
 The yotta registry page for a module will display the `repository` and
 `homepage` fields from its description file, which can help us find this. For
-example [for simplelog](http://yotta.mbed.com/#/module/simplelog/1.0.0). The
+example [for simplelog](http://yottabuild.org/#/module/simplelog/1.0.0). The
 repository is listed as the github repository
 [ARMmbed/simplelog](https://github.com/ARMmbed/simplelog).
 

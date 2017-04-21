@@ -225,7 +225,7 @@ class Pack(object):
             import yotta
             yotta_version = version.Version(yotta.__version__)
             if not yotta_version_spec.match(yotta_version):
-                self.error = "requires yotta version %s (current version is %s). see http://yottadocs.mbed.com for update instructions" % (
+                self.error = "requires yotta version %s (current version is %s). see http://docs.yottabuild.org for update instructions" % (
                     str(yotta_version_spec),
                     str(yotta_version)
                 )

@@ -134,7 +134,7 @@ class Git(VCS):
                 if e.errno == errno.ENOENT:
                     if cmd[0] == 'git':
                         raise VCSNotInstalled(
-                            'git is not installed, or not in your path. Please follow the installation instructions at http://yottadocs.mbed.com/#installing'
+                            'git is not installed, or not in your path. Please follow the installation instructions at http://docs.yottabuild.org/#installing'
                         )
                     else:
                         raise VCSNotInstalled('%s is not installed' % (cmd[0]))
