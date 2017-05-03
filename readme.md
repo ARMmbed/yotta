@@ -10,9 +10,9 @@ or re-use them privately in your own projects.
 Whenever you build a project with yotta, you first select a [yotta
 target](http://docs.yottabuild.org/tutorial/targets.html). Targets describe the
 platform that you're building for (such as an [embedded IoT development
-board](http://yotta.mbed.com/#/target/frdm-k64f-gcc), or natively for
-[Mac](http://yotta.mbed.com/#/target/x86-osx-native) or
-[Linux](http://yotta.mbed.com/#/target/x86-linux-native)), and provide all the
+board](http://yottabuild.org/#/target/frdm-k64f-gcc), or natively for
+[Mac](http://yottabuild.org/#/target/x86-osx-native) or
+[Linux](http://yottabuild.org/#/target/x86-linux-native)), and provide all the
 information that yotta and modules you're using need to configure themselves
 correctly for that platform.
 
@@ -28,17 +28,17 @@ pip install yotta
 
 **Note that yotta needs several non-python dependencies to be installed
 correctly (such as a C++ compiler).** The **[detailed installation
-instructions](http://yottadocs.mbed.com/#installing)** include a full guide.
+instructions](http://docs.yottabuild.org/#installing)** include a full guide.
 
 Exactly which other dependencies (such as compilers and other build tools) are
 required will also depend on the [yotta target
-description](http://yottadocs.mbed.com/tutorial/targets.html) that you intend
+description](http://docs.yottabuild.org/tutorial/targets.html) that you intend
 to use, so please be sure to also check the target description's own
 documentation.
 
 ## Get Started!
 The best way to get started is to [follow the
-tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html), or if you have
+tutorial](http://docs.yottabuild.org/tutorial/tutorial.html), or if you have
 questions/feedback please [create an
 issue](https://github.com/ARMmbed/yotta/issues)!
 
@@ -61,10 +61,10 @@ you don't already have. It will also update your module.json file to reflect
 the new dependency.
 
 The best way to really understand how yotta works is to [follow the
-tutorial](http://yottadocs.mbed.com/tutorial/tutorial.html).
+tutorial](http://docs.yottabuild.org/tutorial/tutorial.html).
 
 ## Further Documentation
-For further documentation see the [yotta docs](http://yottadocs.mbed.com)
+For further documentation see the [yotta docs](http://docs.yottabuild.org)
 website.
 
 ## Tips

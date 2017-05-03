@@ -9,9 +9,9 @@ section: yotta/cheatsheet
 
 ### Instructions
  - [Video Guides](https://goo.gl/cJT1tO).
- - [Linux Instructions](yottadocs.mbed.com/#installing-on-linux).
- - [OS X Instructions](http://yottadocs.mbed.com/#installing-on-osx).
- - [Windows Instructions](http://yottadocs.mbed.com/#installing-on-windows).
+ - [Linux Instructions](http://docs.yottabuild.org/#installing-on-linux).
+ - [OS X Instructions](http://docs.yottabuild.org/#installing-on-osx).
+ - [Windows Instructions](http://docs.yottabuild.org/#installing-on-windows).
 
 ### Manual Installation
 `pip install -U yotta`
@@ -28,7 +28,7 @@ There are two types of modules: executable and library.
 ### Library Modules
 Library modules are reusable code, which provide functionality useful to lots
 of different apps such as network stacks, drivers and encoders/decoders. Anyone
-can publish a library module to the [yotta registry](http://yotta.mbed.com)
+can publish a library module to the [yotta registry](http://yottabuild.org)
 where other people can find useful modules and reuse them.
 
 #### Creating Library Modules
