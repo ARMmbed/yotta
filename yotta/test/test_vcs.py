@@ -17,8 +17,8 @@ from yotta.lib import fsutils
 
 from yotta.test.cli import util
 
-Test_Repo_git = "git@github.com:autopulated/testing-dummy.git"
-Test_Repo_hg  = "ssh://hg@bitbucket.org/autopulated/hg-testing-dummy"
+Test_Repo_git = "git@github.com:monty-bot/testing-dummy.git"
+Test_Repo_hg  = "ssh://hg@bitbucket.org/monty-bot/hg-testing-dummy"
 
 class TestGit(unittest.TestCase):
     @classmethod

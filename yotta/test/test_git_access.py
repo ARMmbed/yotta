@@ -23,8 +23,8 @@ from yotta import install
 
 
 Test_Name = 'testing-dummy'
-Test_Repo = "git@github.com:autopulated/testing-dummy.git"
-Test_Repo_With_Spec = "git@github.com:autopulated/testing-dummy.git#0.0.1"
+Test_Repo = "git@github.com:monty-bot/testing-dummy.git"
+Test_Repo_With_Spec = "git@github.com:monty-bot/testing-dummy.git#0.0.4"
 Test_Deps_Name = 'git-access-testing'
 Test_Deps_Target = 'x86-osx-native,*'
 

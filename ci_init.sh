@@ -1,0 +1,26 @@
+#!/bin/bash
+
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# don't check host keys - the tests need to access repos over ssh, which would
+# otherwise stall asking about the server's fingerprint
+echo -e 'Host bitbucket.org\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
+
+# We also need an account to access things on bitbucket (our test packages), so
+# we have a dummy account with this public private key:
+echo -e "-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----\n\n" > ~/.ssh/id_rsa
+echo -e "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDAwXJKE5bpK9/NBNMTi245+2Hvhe7kax4Vk2aqTpoLP6a/s35JyzATnRQEknuo5GrDXys+wyNQhdmS1+jk7PDLhAttOkkg+P6cvI68de9Kh/4pPbNX4Ip5gRe3ZFnjVCyU/KjlpeXcjzAsgBJxmBlSj48fpT7SYzlwkP8UZbGWHugJotgKnoz5KNUQjIgfQJHQnuJPR2zoXtM9ucCo66/HNVPfX40xGo7FYjfpqCgM/jA6ZaXejIc+a7TCUoi6mieDhqCnWINXpjA9kkJqwxfwUTQg5hy8UqTw2jUPZM/vj6ACfeTuYjIlRbI9DLjpGgXaGsNmQST5NAD9yBE5XBEsVXkgUpszaZWIxSGWMmWrWCUY8yqWVOHOJW7NfnZP1FTPZIJ/ZuxSn0r+pq9f1V2QMCeLSVCo+MTkk53gaBWL1cKh+M2Ds0KsIp7qvcH2IieKi37OeMNtadDxkAzxZXQzAdqKTYVAqtz4+cvQ5DLHq7y95hcjKpgyefpf/ccuXqdzReTFG9QHU+Au5cBA571jDPVwANMOpHBDmG7bIb/3AyzDQD6ueRwl4np7NVpbYhvRs23EJhWwYwAzC53XhiTdIAXZaawbKB29o92WYVeL+enPsCTuX7iznCpGg7Lh44IqC5KJbU86WWuYiuPooA7kMBHmHv+6hg+6q7Jp2i3xJQ== test@yottabuild.org" > ~/.ssh/id_rsa.pub
+
+# make sure the keys have the right permissions
+chmod 600 ~/.ssh/*
+
+# need to be authed to pull from the registry, so stick a set of keys authed to
+# the "yottatest" mbed user in ~/.yotta/config.json:
+mkdir -p ~/.yotta
+chmod 700 ~/.yotta
+cp ./.yotta_test_config.json ~/.yotta/config.json
+
+# set git settings
+git config --global user.email "test@yottabuild.org"
+git config --global user.name "Yotta CI Bot"

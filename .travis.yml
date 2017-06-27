@@ -11,7 +11,7 @@ addons:
    - gcc-4.8
    - g++-4.8
 env:
-  - CC=gcc-4.8 CXX=g++-4.8
+  - CC=gcc-4.8 CXX=g++-4.8 PYTHONIOENCODING=UTF-8 YOTTA_GITHUB_AUTHTOKEN=8d1dfa2011f74b1f26504918982e1e2ba154b910
 install:
   # install a newer version of CMake:
   - sudo apt-get remove -y cmake
@@ -22,7 +22,7 @@ install:
   # install Ninja
   - sudo apt-get install ninja-build
 before_script:
-  - /bin/bash .travis_init.sh
+  - /bin/bash ci_init.sh
 # command to run tests
 script: python setup.py test 
 deploy:

@@ -19,8 +19,8 @@ from yotta import install
 globalconf.set('interactive', False)
 
 Test_Name = 'testing-dummy'
-Test_Deps_Name = "autopulated/github-access-testing"
-Test_Branch_Name = "autopulated/github-access-testing#master"
+Test_Deps_Name = "monty-bot/github-access-testing"
+Test_Branch_Name = "monty-bot/github-access-testing#master"
 Test_Deps_Target = "x86-osx-native,*"
 
 def hasGithubConfig():
