@@ -253,6 +253,9 @@ Synonyms: `yotta in`
 # in a module directory:
 yotta install
 yotta install <module>[@<version>]
+# GitHub usage
+yotta install <username>/<reponame>
+yotta install <username>/<reponame>#<version|tagname|branchname|commit>
 # anywhere:
 yotta install <module>[@<version>] [--global]
 ```
@@ -286,6 +289,16 @@ current module's module.json file. This uses the `^` semantic-version specifier
 to specify that only minor version updates are allowed to be installed,
 **unless** the module has a 0.x.x version number, in which case the `~`
 semantic-version specifier is used restrict updates to patch versions only.
+
+#### `yotta install <username>/<reponame>`
+Install the specified module and any missing dependencies in a similar manner to above, using GitHub as the source.
+
+When a version isn't specified, yotta will attempt to select the latest release version from the tags available on the repository. If none are found, the master branch will be installed.
+
+#### `yotta install <username>/<reponame>#<version|tagname|branchname|commit>`
+Install the specified module and any missing dependencies in a similar manner to above, using GitHub as the source.
+
+An optional version specification (which tries to match repository tags using semver), tag name, branch name or commit ID can be specified to install the repository using that marker.
 
 #### `yotta install <module>` (anywhere)
 Download the specified dependency, and install it in a subdirectory of the current directory. Options:

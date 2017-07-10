@@ -245,5 +245,8 @@ def main():
     except KeyboardInterrupt:
         logging.warning('interrupted')
         status = -1
+    except Exception as e:
+        logging.error(e)
+        status = -1
 
     sys.exit(status or 0)
