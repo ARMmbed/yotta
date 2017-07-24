@@ -475,7 +475,8 @@ class DerivedTarget(Target):
             return 'command %s failed' % (cmd)
 
     @fsutils.dropRootPrivs
-    def build(self, builddir, component, args, release_build=False, build_args=None, targets=None):
+    def build(self, builddir, component, args, release_build=False, build_args=None, targets=None,
+              release_no_debug_info_build=False):
         ''' Execute the commands necessary to build this component, and all of
             its dependencies. '''
         if build_args is None:
@@ -484,11 +485,13 @@ class DerivedTarget(Target):
             targets = []
         # in the future this may be specified in the target description, but
         # for now we only support cmake, so everything is simple:
-        build_type = ('Debug', 'RelWithDebInfo')[release_build]
-        if build_type:
-            cmd = ['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.']
+        if release_no_debug_info_build:
+            build_type = 'Release'
+        elif release_build:
+            build_type = 'RelWithDebInfo'
         else:
-            cmd = ['cmake', '-G', args.cmake_generator, '.']
+            build_type = 'Debug'
+        cmd = ['cmake', '-D', 'CMAKE_BUILD_TYPE=%s' % build_type, '-G', args.cmake_generator, '.']
         res = self.exec_helper(cmd, builddir)
         if res is not None:
             return res
