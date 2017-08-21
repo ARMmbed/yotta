@@ -51,7 +51,7 @@ def findCTests(builddir, recurse_yotta_modules=False):
     add_test_re = re.compile('add_test\\(([^" ]*)\s*"(.*)"\\)', flags=re.IGNORECASE)
     for root, dirs, files in os.walk(builddir, topdown=True):
         if not recurse_yotta_modules:
-            dirs = [d for d in dirs if d != 'ym']
+            dirs = [d for d in dirs if d != 'modules']
         if 'CTestTestfile.cmake' in files:
             with open(os.path.join(root, 'CTestTestfile.cmake'), 'r') as ctestf:
                 dir_tests = []
@@ -73,7 +73,7 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
     modtop = True
     submod = False
     module = toplevel_module
-    # <topdir> /ym/<submod>/ym/<submod2>/somedir/somedir --> submod2
+    # <topdir> /modules/<submod>/modules/<submod2>/somedir/somedir --> submod2
     for part in fsutils.fullySplitPath(build_subdir):
         if submod:
             if part in all_modules:
@@ -81,7 +81,7 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
             modtop = True
             submod = False
         else:
-            if part == 'ym' and modtop:
+            if part == 'modules' and modtop:
                 submod = True
             else:
                 submod = False

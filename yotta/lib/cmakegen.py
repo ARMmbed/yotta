@@ -112,7 +112,7 @@ class CMakeGen(object):
         if builddir is None:
             builddir = self.buildroot
         if modbuilddir is None:
-            modbuilddir = os.path.join(builddir, 'ym')
+            modbuilddir = os.path.join(builddir, 'modules')
 
         if processed_components is None:
             processed_components = dict()

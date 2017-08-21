@@ -9,6 +9,8 @@ import logging
 
 # validate, , validate things, internal
 from yotta.lib import validate
+# settings, , load and save settings, internal
+from yotta.lib import settings
 # --config option, , , internal
 from yotta import options
 
@@ -37,7 +39,10 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
-    builddir = os.path.join(cwd, 'build', target.getName())
+    if settings.getProperty('build', 'folder'):
+        builddir = settings.getProperty('build', 'folder')
+    else:
+        builddir = os.path.join(cwd, 'build', target.getName())
 
     if args.program is None:
         # if no program was specified, default to the name of the executable

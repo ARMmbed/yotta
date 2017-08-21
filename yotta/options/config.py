@@ -26,7 +26,7 @@ class ConfigAction(Action):
 
 def addTo(parser):
     parser.add_argument(
-        '--config', default=None, dest='config', help=
+        '-c', '--config', default=None, dest='config', help=
         "Specify the path to a JSON configuration file to extend the build "+
         "configuration provided by the target. This is most useful for "+
         "ensuring test coverage of the ways that different targets will "+
