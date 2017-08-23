@@ -107,7 +107,8 @@ class CMakeGen(object):
             for error in gen.generateRecursive(...):
                 print(error)
         '''
-        assert(self.configured)
+        if not self.configured:
+            yield 'Not configured'
 
         if builddir is None:
             builddir = self.buildroot
