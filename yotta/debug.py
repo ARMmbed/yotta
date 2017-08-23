@@ -11,6 +11,8 @@ import logging
 from yotta.lib import validate
 # settings, , load and save settings, internal
 from yotta.lib import settings
+# paths
+from yotta.lib import paths
 # --config option, , , internal
 from yotta import options
 
@@ -20,6 +22,7 @@ def addOptions(parser):
     parser.add_argument('program', default=None, nargs='?',
         help='name of the program to be debugged'
     )
+    paths.add_parser_argument(parser)
 
 
 def execCommand(args, following_args):
@@ -35,10 +38,7 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
-    if settings.getProperty('build', 'folder'):
-        builddir = settings.getProperty('build', 'folder')
-    else:
-        builddir = os.path.join(cwd, 'build', target.getName())
+    builddir = paths.get_configured_output_path(args, target)
 
     if args.program is None:
         if c.isApplication():

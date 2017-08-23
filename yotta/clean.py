@@ -12,13 +12,26 @@ from yotta.lib import validate
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 
+# paths
+from yotta.lib import paths
+
+
 def addOptions(parser):
-    pass
+    paths.add_parser_argument(parser)
+
 
 def execCommand(args, following_args):
-    c = validate.currentDirectoryModule()
-    if not c:
-        return 1
+    paths_to_remove = []
 
-    fsutils.rmRf(os.path.join(c.path, 'build'))
+    current = validate.currentDirectoryModule()
+    if current:
+        paths_to_remove.append(os.path.join(current.path, 'build'))
 
+    specific = paths.get_configured_output_path(args)
+    if specific:
+        paths_to_remove.append(specific)
+
+    for path in paths_to_remove:
+        if os.path.exists(path) and not validate.directoryModule(path):
+            print('removing: %s' % path)
+            fsutils.rmRf(path)

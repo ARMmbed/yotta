@@ -18,6 +18,8 @@ from yotta.lib import cmakegen
 from yotta.lib import target
 # settings, , load and save settings, internal
 from yotta.lib import settings
+# paths
+from yotta.lib import paths
 # install, , install subcommand, internal
 from yotta import install
 # --config option, , , internal
@@ -29,11 +31,7 @@ def addOptions(parser, add_build_targets=True):
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
     )
-    parser.add_argument('-o', '--output-folder', dest='output_folder',
-        default=None,
-        help='Specify a build output folder instead of ./build/<target>',
-        metavar='path/to/output/folder'
-    )
+    paths.add_parser_argument(parser)
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
     parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
     # the target class adds its own build-system specific options. In the
@@ -50,11 +48,6 @@ def addOptions(parser, add_build_targets=True):
         )
 
 def execCommand(args, following_args):
-    if args.output_folder:
-        settings.setProperty('build', 'folder', os.path.abspath(args.output_folder), True)
-    elif settings.getProperty('build', 'folder'):
-        settings.setProperty('build', 'folder', '', True)
-
     status = installAndBuild(args, following_args)
     return status['status']
 
@@ -113,10 +106,7 @@ def installAndBuild(args, following_args):
     # version specs), which it will display
     install_status = install.execCommand(args, [])
 
-    if settings.getProperty('build', 'folder'):
-        builddir = settings.getProperty('build', 'folder')
-    else:
-        builddir = os.path.join(cwd, 'build', target.getName())
+    builddir = paths.get_configured_output_path(args, target)
 
     all_deps = c.getDependenciesRecursive(
                       target = target,
