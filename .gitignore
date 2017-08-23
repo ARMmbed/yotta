@@ -13,3 +13,4 @@ dist
 git-access-testing
 github-access-testing
 *~
+*.idea
