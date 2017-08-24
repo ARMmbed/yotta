@@ -17,7 +17,7 @@ add_custom_target(all_tests)
 cmake_policy(SET CMP0017 OLD)
 
 # toolchain file for {{ target_name }}
-set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | replaceBackslashes }}")
+set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | relative | replaceBackslashes }}")
 
 # provide function for post-processing executables
 function (yotta_postprocess_target target_type_ target_name_)
@@ -54,7 +54,7 @@ if(NOT DEFINED YOTTA_FORCE_INCLUDE_FLAG)
         set(YOTTA_FORCE_INCLUDE_FLAG "-include")
     endif()
 endif()
-add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | replaceBackslashes }}\"")
+add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | relative | replaceBackslashes }}\"")
 {% endif %}
 
 # include root directories of all components we depend on (directly and
@@ -101,7 +101,7 @@ set(YOTTA_MODULE_NAME {{ component.getName() }})
 # delegate to an existing CMakeLists.txt:
 add_subdirectory(
     "{{ delegate_to | replaceBackslashes }}"
-    "{{ delegate_build_dir | replaceBackslashes }}"
+    "{{ delegate_build_dir | relative | replaceBackslashes }}"
 )
 {% else %}
 # recurse into subdirectories for this component, using the two-argument
@@ -109,8 +109,8 @@ add_subdirectory(
 # tree, not the working directory
 {% for srcdir, workingdir in add_own_subdirs %}
 add_subdirectory(
-    "{{ srcdir | replaceBackslashes }}"
-    "${CMAKE_BINARY_DIR}/{{ relpath | replaceBackslashes }}/{{ workingdir | replaceBackslashes }}"
+    "{{ srcdir | relative | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ build_dir | relative | replaceBackslashes }}/{{ workingdir | replaceBackslashes }}"
 )
 {% endfor %}
 {% endif %}
@@ -127,6 +127,6 @@ target_compile_definitions({{ component.getName() }} PRIVATE "-DYOTTA_MODULE_NAM
 {% if cmake_includes %}
 # include .cmake files provided by the target:
 {% for f in cmake_includes %}
-include("{{ f  | replaceBackslashes }}")
+include("{{ f | relative | replaceBackslashes }}")
 {% endfor %}
 {% endif %}

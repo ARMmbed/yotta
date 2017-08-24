@@ -6,6 +6,7 @@
 # standard library modules, , ,
 import os
 import logging
+import functools
 import re
 import itertools
 from collections import defaultdict
@@ -57,6 +58,7 @@ class CMakeGen(object):
         self.config_json_file = None
         self.build_info_include_file = None
         self.build_uuid = None
+        self.relative = None
 
     def _writeFile(self, path, contents):
         dirname = os.path.dirname(path)
@@ -73,6 +75,11 @@ class CMakeGen(object):
         # version they are. Anything missing here should always be a test
         # dependency that isn't going to be used, otherwise the yotta build
         # command will fail before we get here
+
+        # a single-input filter function to convert paths to be relative to the buildroot
+        self.relative = functools.partial(os.path.relpath, start=self.buildroot)
+        jinja_environment.filters['relative'] = self.relative
+
         available_dependencies = OrderedDict((k, v) for k, v in all_dependencies.items() if v)
 
         self.set_toplevel_definitions = ''
@@ -337,7 +344,7 @@ class CMakeGen(object):
 
         # make the path to the build-info header available both to CMake and
         # in the preprocessor:
-        full_build_info_header_path = replaceBackslashes(os.path.abspath(build_info_header_path))
+        full_build_info_header_path = replaceBackslashes(self.relative(build_info_header_path))
         logger.debug('build info header include path: "%s"', full_build_info_header_path)
         definitions.append(('YOTTA_BUILD_INFO_HEADER', '"'+full_build_info_header_path+'"'))
 
@@ -380,7 +387,7 @@ class CMakeGen(object):
         # out for gcc-compatible compilers only:
         config_include_file = os.path.join(builddir, 'yotta_config.h')
         config_json_file    = os.path.join(builddir, 'yotta_config.json')
-        set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"%s\")\n' % replaceBackslashes(os.path.abspath(config_json_file))
+        set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"%s\")\n' % replaceBackslashes(self.relative(config_json_file))
 
         self._writeFile(
             config_include_file,
@@ -609,16 +616,13 @@ class CMakeGen(object):
 
         # generate the top-level CMakeLists.txt
         template = jinja_environment.get_template('base_CMakeLists.txt')
-
-        relpath = os.path.relpath(builddir, self.buildroot)
-
         file_contents = template.render({ #pylint: disable=no-member
                             "toplevel": toplevel,
                          "target_name": self.target.getName(),
                      "set_definitions": self.set_toplevel_definitions,
                       "toolchain_file": toolchain_file_path,
                            "component": component,
-                             "relpath": relpath,
+                           "build_dir": builddir,
                    "include_root_dirs": include_root_dirs,
                     "include_sys_dirs": include_sys_dirs,
                   "include_other_dirs": include_other_dirs,
