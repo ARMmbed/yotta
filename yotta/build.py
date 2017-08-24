@@ -61,16 +61,16 @@ def installAndBuild(args, following_args):
         If status: is nonzero there was some sort of error. Other properties
         are optional, and may not be set if that step was not attempted.
     '''
-    build_status = generate_status = install_status = 0
+    build_status = generate_status = 0
+    args_dict = vars(args)
 
     if not hasattr(args, 'build_targets'):
-        vars(args)['build_targets'] = []
+        args_dict['build_targets'] = []
 
     if 'test' in args.build_targets:
         logging.error('Cannot build "test". Use "yotta test" to run tests.')
         return {'status':1}
 
-    cwd = os.getcwd()
     c = validate.currentDirectoryModule()
     if not c:
         return {'status':1}
@@ -87,20 +87,20 @@ def installAndBuild(args, following_args):
 
     # run the install command before building, we need to add some options the
     # install command expects to be present to do this:
-    vars(args)['component'] = None
-    vars(args)['act_globally'] = False
+    args_dict['component'] = None
+    args_dict['act_globally'] = False
     if not hasattr(args, 'install_test_deps'):
         if 'all_tests' in args.build_targets:
-            vars(args)['install_test_deps'] = 'all'
+            args_dict['install_test_deps'] = 'all'
         elif not len(args.build_targets):
-            vars(args)['install_test_deps'] = 'own'
+            args_dict['install_test_deps'] = 'own'
         else:
             # If the named build targets include tests from other modules, we
             # need to install the deps for those modules. To do this we need to
             # be able to tell which module a library belongs to, which is not
             # straightforward (especially if there is custom cmake involved).
             # That's why this is 'all', and not 'none'.
-            vars(args)['install_test_deps'] = 'all'
+            args_dict['install_test_deps'] = 'all'
 
     # install may exit non-zero for non-fatal errors (such as incompatible
     # version specs), which it will display
@@ -144,7 +144,7 @@ def installAndBuild(args, following_args):
     # run pre-build scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
-    if (not hasattr(args, 'generate_only')) or (not args.generate_only):
+    if not args_dict.get('generate_only'):
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
                 build_args=following_args, targets=args.build_targets
