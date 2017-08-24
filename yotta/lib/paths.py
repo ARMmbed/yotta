@@ -28,8 +28,10 @@ def add_parser_argument(parser):
 
 def get_configured_output_path(args, target=None):
     '''common method for setting/loading/defaulting a build output path'''
+    args = vars(args)
+
     # load from command line or local config
-    path = args.output_folder or settings.getProperty('build', BUILD_OUTPUT_KEY)
+    path = args.get('output_folder') or settings.getProperty('build', BUILD_OUTPUT_KEY)
 
     # else organise directories by target name in cwd
     if not path and target:
