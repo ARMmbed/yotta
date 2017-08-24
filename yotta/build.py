@@ -6,6 +6,7 @@
 # standard library modules, , ,
 import os
 import logging
+import shutil
 
 
 # validate, , validate things, internal
@@ -20,6 +21,7 @@ from yotta.lib import target
 from yotta.lib import settings
 # paths
 from yotta.lib import paths
+from yotta.lib import fsutils
 # install, , install subcommand, internal
 from yotta import install
 # --config option, , , internal
@@ -30,6 +32,10 @@ def addOptions(parser, add_build_targets=True):
     parser.add_argument('-g', '--generate-only', dest='generate_only',
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
+    )
+    parser.add_argument('-s', '--source-export', dest='source_export',
+        action='store_true', default=False,
+        help='Copy the source directories into the build output directory'
     )
     paths.add_parser_argument(parser)
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
@@ -143,6 +149,12 @@ def installAndBuild(args, following_args):
     logging.debug("generate done.")
     # run pre-build scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
+
+    if args.source_export:
+        source_export_path = os.path.join(builddir, 'source')
+        logging.info('copying source to %s', source_export_path)
+        fsutils.rmRf(source_export_path)
+        shutil.copytree(src='source', dst=source_export_path)
 
     if not args_dict.get('generate_only'):
         error = target.build(

@@ -5,6 +5,7 @@
 
 # standard library modules, , ,
 import os
+import logging
 
 # validate, , validate things, internal
 from yotta.lib import validate
@@ -33,5 +34,5 @@ def execCommand(args, following_args):
 
     for path in paths_to_remove:
         if os.path.exists(path) and not validate.directoryModule(path):
-            print('removing: %s' % path)
+            logging.info('removing: %s' % path)
             fsutils.rmRf(path)
