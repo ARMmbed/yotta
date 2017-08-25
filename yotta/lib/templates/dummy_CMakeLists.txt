@@ -7,5 +7,5 @@ target_link_libraries({{ libname }}
 )
 
 {% for include in cmake_files %}
-include("{{ include | replaceBackslashes }}")
+include("${CMAKE_BINARY_DIR}/{{ include | relative | replaceBackslashes }}")
 {% endfor %}

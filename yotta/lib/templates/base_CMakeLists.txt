@@ -60,7 +60,7 @@ add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"${CMAKE_BINARY_DIR}/{{ config_inc
 # include root directories of all components we depend on (directly and
 # indirectly, including ourself)
 {% for dir in include_root_dirs %}
-include_directories("{{ dir | relative | replaceBackslashes }}")
+include_directories("${CMAKE_BINARY_DIR}/{{ dir | relative | replaceBackslashes }}")
 {% endfor %}
 
 {% if add_depend_subdirs %}
@@ -78,7 +78,7 @@ add_subdirectory(
 # files with no prefix, these directories are listed in the component
 # description files:
 {% for dir in include_sys_dirs %}
-include_directories(SYSTEM "{{ dir | relative | replaceBackslashes }}")
+include_directories(SYSTEM "${CMAKE_BINARY_DIR}/{{ dir | relative | replaceBackslashes }}")
 {% endfor %}
 
 {% endif %}
@@ -87,7 +87,7 @@ include_directories(SYSTEM "{{ dir | relative | replaceBackslashes }}")
 # files. Please don't use this facility. Please. It's much, much better to fix
 # implementations that import these headers to import them using the full path.
 {% for dir in include_other_dirs %}
-include_directories("{{ dir | relative | replaceBackslashes }}")
+include_directories("${CMAKE_BINARY_DIR}/{{ dir | relative | replaceBackslashes }}")
 {% endfor %}
 
 {% endif %}
@@ -121,6 +121,7 @@ add_subdirectory(
 # tree, not the working directory
 {% for srcdir, workingdir in add_own_subdirs %}
 add_subdirectory(
+    "${CMAKE_BINARY_DIR}/{{ srcdir | relative | replaceBackslashes }}"
     "${CMAKE_BINARY_DIR}/{{ srcdir | relative | replaceBackslashes }}"
 )
 {% endfor %}
