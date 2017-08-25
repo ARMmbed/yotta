@@ -54,7 +54,7 @@ if(NOT DEFINED YOTTA_FORCE_INCLUDE_FLAG)
         set(YOTTA_FORCE_INCLUDE_FLAG "-include")
     endif()
 endif()
-add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | relative | replaceBackslashes }}\"")
+add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"${CMAKE_BINARY_DIR}/{{ config_include_file | relative | replaceBackslashes }}\"")
 {% endif %}
 
 # include root directories of all components we depend on (directly and
@@ -63,8 +63,16 @@ add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | relative
 include_directories("{{ dir | relative | replaceBackslashes }}")
 {% endfor %}
 
+{% if add_depend_subdirs %}
 # recurse into dependencies that aren't built elsewhere
-{{ add_depend_subdirs }}
+{% for depend_subdir, relpath in add_depend_subdirs %}
+add_subdirectory(
+    "${CMAKE_BINARY_DIR}/{{ depend_subdir | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ relpath | replaceBackslashes }}"
+)
+
+{% endfor %}
+{% endif %}
 {% if include_sys_dirs %}
 # Some components (I'm looking at you, libc), need to export system header
 # files with no prefix, these directories are listed in the component
@@ -105,8 +113,7 @@ set(YOTTA_MODULE_NAME {{ component.getName() }})
 {% if delegate_to %}
 # delegate to an existing CMakeLists.txt:
 add_subdirectory(
-    "{{ delegate_to | replaceBackslashes }}"
-    "{{ delegate_build_dir | relative | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ delegate_to | replaceBackslashes }}"
 )
 {% else %}
 # recurse into subdirectories for this component, using the two-argument
@@ -114,8 +121,7 @@ add_subdirectory(
 # tree, not the working directory
 {% for srcdir, workingdir in add_own_subdirs %}
 add_subdirectory(
-    "{{ srcdir | relative | replaceBackslashes }}"
-    "${CMAKE_BINARY_DIR}/{{ build_dir | relative | replaceBackslashes }}/{{ workingdir | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ srcdir | relative | replaceBackslashes }}"
 )
 {% endfor %}
 {% endif %}
@@ -132,6 +138,6 @@ target_compile_definitions({{ component.getName() }} PRIVATE "-DYOTTA_MODULE_NAM
 {% if cmake_includes %}
 # include .cmake files provided by the target:
 {% for f in cmake_includes %}
-include("{{ f | relative | replaceBackslashes }}")
+include("${CMAKE_BINARY_DIR}/{{ f | relative | replaceBackslashes }}")
 {% endfor %}
 {% endif %}

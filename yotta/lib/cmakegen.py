@@ -351,9 +351,9 @@ class CMakeGen(object):
 
         # make the path to the build-info header available both to CMake and
         # in the preprocessor:
-        full_build_info_header_path = replaceBackslashes(self.relative(build_info_header_path))
-        logger.debug('build info header include path: "%s"', full_build_info_header_path)
-        definitions.append(('YOTTA_BUILD_INFO_HEADER', '"'+full_build_info_header_path+'"'))
+        full_build_info_header_path = '"${CMAKE_BINARY_DIR}/%s"' % replaceBackslashes(self.relative(build_info_header_path))
+        logger.debug('build info header include path: %s', full_build_info_header_path)
+        definitions.append(('YOTTA_BUILD_INFO_HEADER', full_build_info_header_path))
 
         for target in self.target.getSimilarTo_Deprecated():
             if '*' not in target:
@@ -496,16 +496,13 @@ class CMakeGen(object):
             for d in dep_extra_include_dirs:
                 include_other_dirs.append(os.path.join(c.path, d))
 
-        add_depend_subdirs = ''
+        add_depend_subdirs = []
         for name, c in active_dependencies.items():
-            depend_subdir = replaceBackslashes(os.path.join(modbuilddir, name))
-            relpath = replaceBackslashes(os.path.relpath(depend_subdir, self.buildroot))
-            add_depend_subdirs += \
-                'add_subdirectory(\n' \
-                '   "%s"\n' \
-                '   "${CMAKE_BINARY_DIR}/%s"\n' \
-                ')\n' \
-                % (depend_subdir, relpath)
+            # a project-relative path to the top level dep
+            depend_subdir = os.path.join(self.relative(modbuilddir), name)
+            # a project relative path to the sub-dep
+            relpath = self.relative(depend_subdir)
+            add_depend_subdirs.append((depend_subdir, relpath))
 
         delegate_to_existing = None
         delegate_build_dir = None
@@ -614,9 +611,9 @@ class CMakeGen(object):
             # generate the top-level toolchain file:
             template = jinja_environment.get_template('toolchain.cmake')
             file_contents = template.render({  #pylint: disable=no-member
-                                   # toolchain files are provided in hierarchy
-                                   # order, but the template needs them in reverse
-                                   # order (base-first):
+               # toolchain files are provided in hierarchy
+               # order, but the template needs them in reverse
+               # order (base-first):
                 "toolchain_files": self.target.getToolchainFiles()
             })
             self._writeFile(toolchain_file_path, file_contents)

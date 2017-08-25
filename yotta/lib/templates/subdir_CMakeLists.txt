@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-include_directories("{{ source_directory | replaceBackslashes }}")
+include_directories("${CMAKE_BINARY_DIR}/{{ source_directory | relative | replaceBackslashes }}")
 
 {% if 's' in languages %}
 enable_language(ASM)
@@ -12,18 +12,18 @@ enable_language(ASM)
 set(YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES
   {% for file_name, language in source_files %}
     {% if language in lang %}
-    "{{ file_name | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ file_name | relative | replaceBackslashes }}"
     {% endif %}
   {% endfor %}
 )
 # force dependency on the config header for {{ lang }} files, which CMake otherwise wouldn't track:
-set_property(SOURCE ${YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES} PROPERTY OBJECT_DEPENDS "{{ config_include_file | replaceBackslashes }}")
+set_property(SOURCE ${YOTTA_AUTO_{{ object_name.upper() }}_{{ lang | upper }}_FILES} PROPERTY OBJECT_DEPENDS "${CMAKE_BINARY_DIR}/{{ config_include_file | relative | replaceBackslashes }}")
 {% endfor %}
 
 {% if resource_files %}
 set(YOTTA_AUTO_{{ object_name.upper() }}_RESOURCE_FILES
   {% for file_name in resource_files %}
-    "{{ file_name | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ file_name | relative | replaceBackslashes }}"
   {% endfor %}
 )
 {% endif %}
@@ -74,5 +74,5 @@ target_link_libraries({{ object_name }}
 )
 
 {% for include in cmake_files %}
-include("{{ include | replaceBackslashes }}")
+include("${CMAKE_BINARY_DIR}/{{ include | relative | replaceBackslashes }}")
 {% endfor %}

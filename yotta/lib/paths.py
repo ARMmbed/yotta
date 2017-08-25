@@ -38,8 +38,10 @@ def get_configured_output_path(args, target=None):
     path = args.get('output_folder') or from_settings
 
     # else organise directories by target name in cwd
-    if not path and target:
-        path = os.path.join(current, 'build', target.getName())
+    if not path:
+        path = os.path.join(current, 'build')
+        if target:
+            path = os.path.join(path, target.getName())
 
     path = os.path.relpath(path, start=current)
 

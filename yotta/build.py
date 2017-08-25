@@ -76,7 +76,7 @@ def installAndBuild(args, following_args):
     args_dict = vars(args)
 
     if args.export:
-        logging.warn('overriding yotta namespaces')
+        logging.info('this will be an export build')
         new_modules = settings.getProperty('build', 'modules_directory_name') or 'modules'
         new_targets = settings.getProperty('build', 'targets_directory_name') or 'targets'
         # to save downloading the cached files, copy the old cache
@@ -170,27 +170,7 @@ def installAndBuild(args, following_args):
     # run pre-build scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
-    if not args_dict.get('generate_only'):
-        error = target.build(
-                builddir, c, args, release_build=args.release_build,
-                build_args=following_args, targets=args.build_targets
-        )
-
-        if error:
-            logging.error(error)
-            build_status = 1
-        else:
-            # post-build scripts only get run if we were successful:
-            runScriptWithModules(c, all_deps.values(), 'postBuild', script_environment)
-
-        if install_status:
-            logging.warning(
-                "There were also errors installing and resolving dependencies, "+
-                "which may have caused the build failure: see above, or run "+
-                "`yotta install` for details."
-            )
-
-    if not error and args.export and args.export is not True:
+    if args.export and args.export is not True:
         # these export exclusions apply at any level of the directory structure
         excludes = {
             '.yotta.json',
@@ -213,6 +193,29 @@ def installAndBuild(args, following_args):
             )
         fsutils.rmRf(export_to)
         shutil.copytree(src='.', dst=export_to, ignore=lambda a, b: excludes)
+
+    if args_dict.get('generate_only'):
+        logging.info('skipping build step')
+    else:
+        # build in the current directory
+        error = target.build(
+                builddir, c, args, release_build=args.release_build,
+                build_args=following_args, targets=args.build_targets
+        )
+
+        if error:
+            logging.error(error)
+            build_status = 1
+        else:
+            # post-build scripts only get run if we were successful:
+            runScriptWithModules(c, all_deps.values(), 'postBuild', script_environment)
+
+        if install_status:
+            logging.warning(
+                "There were also errors installing and resolving dependencies, "+
+                "which may have caused the build failure: see above, or run "+
+                "`yotta install` for details."
+            )
 
     return {
                 'status': build_status or generate_status or install_status,
