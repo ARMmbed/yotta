@@ -59,25 +59,30 @@ add_definitions("${YOTTA_FORCE_INCLUDE_FLAG} \"{{ config_include_file | relative
 
 # include root directories of all components we depend on (directly and
 # indirectly, including ourself)
-{{ include_root_dirs }}
+{% for dir in include_root_dirs %}
+include_directories("{{ dir | relative | replaceBackslashes }}")
+{% endfor %}
 
 # recurse into dependencies that aren't built elsewhere
 {{ add_depend_subdirs }}
-
 {% if include_sys_dirs %}
 # Some components (I'm looking at you, libc), need to export system header
 # files with no prefix, these directories are listed in the component
 # description files:
-{{ include_sys_dirs }}
-{% endif %}
+{% for dir in include_sys_dirs %}
+include_directories(SYSTEM "{{ dir | relative | replaceBackslashes }}")
+{% endfor %}
 
+{% endif %}
 {% if include_other_dirs %}
 # And others (typically CMSIS implementations) need to export non-system header
 # files. Please don't use this facility. Please. It's much, much better to fix
 # implementations that import these headers to import them using the full path.
-{{ include_other_dirs }}
-{% endif %}
+{% for dir in include_other_dirs %}
+include_directories("{{ dir | relative | replaceBackslashes }}")
+{% endfor %}
 
+{% endif %}
 # modules with custom CMake build systems may append to the
 # YOTTA_GLOBAL_INCLUDE_DIRS property to add compile-time-determined include
 # directories:

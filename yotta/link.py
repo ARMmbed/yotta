@@ -3,6 +3,9 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+from yotta.lib import paths
+
+
 def addOptions(parser):
     parser.add_argument('module_or_path', default=None, nargs='?',
         help='Link a globally installed (or globally linked) module into '+
@@ -67,9 +70,9 @@ def execCommand(args, following_args):
                 logging.error("%s is neither a valid module name, nor a path to an existing module.", args.module_or_path)
                 logging.error(err)
                 return 1
-        fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_modules'))
+        fsutils.mkDirP(os.path.join(os.getcwd(), paths.Modules_Folder))
         src = os.path.join(folders.globalInstallDirectory(), link_module_name)
-        dst = os.path.join(os.getcwd(), 'yotta_modules', link_module_name)
+        dst = os.path.join(os.getcwd(), paths.Modules_Folder, link_module_name)
         # if the component is already installed, rm it
         fsutils.rmRf(dst)
     else:

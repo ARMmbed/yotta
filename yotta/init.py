@@ -11,6 +11,7 @@ import re
 
 # Component, , represents an installed component, internal
 from yotta.lib import component
+from yotta.lib import paths
 # version, , represent versions and specifications, internal
 from yotta.lib import version
 # validate, , validate various things, internal
@@ -67,7 +68,7 @@ yesNo.__name__ = "Yes/No"
 yesNo.__allowed_message = ' Please reply "Yes", or "No".'
 
 def isBannedName(name):
-    return name in ('test', 'source', 'include', 'yotta_modules', 'yotta_targets')
+    return name in ('test', 'source', 'include', paths.Modules_Folder, paths.Targets_Folder)
 
 def notBannedName(s):
     if isBannedName(s):

@@ -19,6 +19,7 @@ from yotta.lib import vcs
 from yotta.lib import fsutils
 # Pack, , common parts of Components/Targets, internal
 from yotta.lib import pack
+from yotta.lib import paths
 
 # !!! FIXME: should components lock their description file while they exist?
 # If not there are race conditions where the description file is modified by
@@ -27,8 +28,6 @@ from yotta.lib import pack
 
 
 # Constants
-Modules_Folder = 'yotta_modules'
-Targets_Folder = 'yotta_targets'
 Component_Description_File = 'module.json'
 Component_Description_File_Fallback = 'package.json'
 Component_Definitions_File = 'defines.json'
@@ -532,10 +531,10 @@ class Component(pack.Pack):
         return components
 
     def modulesPath(self):
-        return os.path.join(self.path, Modules_Folder)
+        return os.path.join(self.path, paths.Modules_Folder)
 
     def targetsPath(self):
-        return os.path.join(self.path, Targets_Folder)
+        return os.path.join(self.path, paths.Targets_Folder)
 
     def satisfyDependenciesRecursive(
                             self,

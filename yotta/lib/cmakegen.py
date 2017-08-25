@@ -18,11 +18,18 @@ from jinja2 import Environment, FileSystemLoader
 # fsutils, , misc filesystem utils, internal
 from yotta.lib import fsutils
 
+from yotta.lib import paths
+
 Template_Dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
 
 logger = logging.getLogger('cmakegen')
 
-Ignore_Subdirs = set(('build','yotta_modules', 'yotta_targets', 'CMake'))
+Ignore_Subdirs = {
+    'build',
+    'CMake',
+    paths.Modules_Folder,
+    paths.Targets_Folder,
+}
 
 jinja_environment = Environment(loader=FileSystemLoader(Template_Dir), trim_blocks=True, lstrip_blocks=True)
 
@@ -472,22 +479,22 @@ class CMakeGen(object):
             another component.
         '''
 
-        include_root_dirs = ''
+        include_root_dirs = []
         if application is not None and component is not application:
-            include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(application.path)
+            include_root_dirs.append('include_directories("%s")\n' % replaceBackslashes(application.path))
 
-        include_sys_dirs = ''
-        include_other_dirs = ''
+        include_sys_dirs = []
+        include_other_dirs = []
         for name, c in itertools.chain(((component.getName(), component),), all_dependencies.items()):
             if c is not component and c.isTestDependency():
                 continue
-            include_root_dirs += 'include_directories("%s")\n' % replaceBackslashes(c.path)
+            include_root_dirs.append(c.path)
             dep_sys_include_dirs = c.getExtraSysIncludes()
             for d in dep_sys_include_dirs:
-                include_sys_dirs += 'include_directories(SYSTEM "%s")\n' % replaceBackslashes(os.path.join(c.path, d))
+                include_sys_dirs.append(os.path.join(c.path, d))
             dep_extra_include_dirs = c.getExtraIncludes()
             for d in dep_extra_include_dirs:
-                include_other_dirs += 'include_directories("%s")\n' % replaceBackslashes(os.path.join(c.path, d))
+                include_other_dirs.append(os.path.join(c.path, d))
 
         add_depend_subdirs = ''
         for name, c in active_dependencies.items():

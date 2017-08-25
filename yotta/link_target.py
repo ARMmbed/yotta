@@ -3,6 +3,9 @@
 # Licensed under the Apache License, Version 2.0
 # See LICENSE file for details.
 
+from yotta.lib import paths
+
+
 def addOptions(parser):
     parser.add_argument('target_or_path', default=None, nargs='?',
         help='Link a globally installed (or globally linked) target into '+
@@ -73,9 +76,9 @@ def execCommand(args, following_args):
             else:
                 logging.error(err)
                 return 1
-        fsutils.mkDirP(os.path.join(os.getcwd(), 'yotta_targets'))
+        fsutils.mkDirP(os.path.join(os.getcwd(), paths.Targets_Folder))
         src = os.path.join(folders.globalTargetInstallDirectory(), link_target_name)
-        dst = os.path.join(os.getcwd(), 'yotta_targets', link_target_name)
+        dst = os.path.join(os.getcwd(), paths.Targets_Folder, link_target_name)
         # if the target is already installed, rm it
         fsutils.rmRf(dst)
     else:

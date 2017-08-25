@@ -10,6 +10,8 @@
 # standard library modules, , ,
 import os
 import sys
+from yotta.lib import paths
+
 
 def prefix():
     if 'YOTTA_PREFIX' in os.environ:
@@ -30,15 +32,15 @@ def userSettingsDirectory():
 
 def globalInstallDirectory():
     if os.name == 'nt':
-        return os.path.join(prefix(), 'Lib', 'yotta_modules')
+        return os.path.join(prefix(), 'Lib', paths.Modules_Folder)
     else:
-        return os.path.join(prefix(), 'lib', 'yotta_modules')
+        return os.path.join(prefix(), 'lib', paths.Modules_Folder)
 
 def globalTargetInstallDirectory():
     if os.name == 'nt':
-        return os.path.join(prefix(), 'Lib', 'yotta_targets')
+        return os.path.join(prefix(), 'Lib', paths.Targets_Folder)
     else:
-        return os.path.join(prefix(), 'lib', 'yotta_targets')
+        return os.path.join(prefix(), 'lib', paths.Targets_Folder)
 
 def cacheDirectory():
     return os.path.join(userSettingsDirectory(), 'cache')

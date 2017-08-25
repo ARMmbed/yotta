@@ -33,9 +33,12 @@ def addOptions(parser, add_build_targets=True):
         action='store_true', default=False,
         help='Only generate CMakeLists, don\'t run CMake or build'
     )
-    parser.add_argument('-s', '--source-export', dest='source_export',
-        action='store_true', default=False,
-        help='Copy the source directories into the build output directory'
+    parser.add_argument('-x', '--export', dest='export',
+        default=False, const=True, nargs='?',
+        help=(
+            'Export mode. If flag is set, generates builds without reference to Yotta.'
+            '[optional] Specify an output path to receive the clean build'
+        )
     )
     paths.add_parser_argument(parser)
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
@@ -67,11 +70,28 @@ def installAndBuild(args, following_args):
         If status: is nonzero there was some sort of error. Other properties
         are optional, and may not be set if that step was not attempted.
     '''
-    build_status = generate_status = 0
+    build_status = 0
+    generate_status = 0
+    error = None
     args_dict = vars(args)
 
-    if not hasattr(args, 'build_targets'):
-        args_dict['build_targets'] = []
+    if args.export:
+        logging.warn('overriding yotta namespaces')
+        new_modules = settings.getProperty('build', 'modules_directory_name') or 'modules'
+        new_targets = settings.getProperty('build', 'targets_directory_name') or 'targets'
+        # to save downloading the cached files, copy the old cache
+        try:
+            if not os.path.exists(new_modules):
+                shutil.copytree('yotta_modules', new_modules)
+                shutil.copytree('yotta_targets', new_targets)
+        except Exception as e:
+            logging.error(e)
+            logging.error('failed to use existing cache; rebuilding')
+
+        paths.Modules_Folder = new_modules
+        paths.Targets_Folder = new_targets
+
+    args_dict.setdefault('build_targets', [])
 
     if 'test' in args.build_targets:
         logging.error('Cannot build "test". Use "yotta test" to run tests.')
@@ -150,12 +170,6 @@ def installAndBuild(args, following_args):
     # run pre-build scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
-    if args.source_export:
-        source_export_path = os.path.join(builddir, 'source')
-        logging.info('copying source to %s', source_export_path)
-        fsutils.rmRf(source_export_path)
-        shutil.copytree(src='source', dst=source_export_path)
-
     if not args_dict.get('generate_only'):
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
@@ -175,6 +189,30 @@ def installAndBuild(args, following_args):
                 "which may have caused the build failure: see above, or run "+
                 "`yotta install` for details."
             )
+
+    if not error and args.export and args.export is not True:
+        # these export exclusions apply at any level of the directory structure
+        excludes = {
+            '.yotta.json',
+            '.module.json',
+            'module.json',
+            '.yotta_origin.json',
+            'target.json',
+            'yotta_modules',
+            'yotta_targets'
+        }
+        export_to = os.path.abspath(args.export)
+        logging.info('exporting built project to %s', export_to)
+        check = os.path.join(export_to, 'source')
+        if os.path.exists(export_to) and os.listdir(export_to) and not os.path.exists(check):
+            # as the export can be any path we do a sanity check before calling 'rmRf'
+            raise Exception(
+                'Aborting export: directory is not empty and does not look like a previous export'
+                ' (expecting: %s)'
+                % (check)
+            )
+        fsutils.rmRf(export_to)
+        shutil.copytree(src='.', dst=export_to, ignore=lambda a, b: excludes)
 
     return {
                 'status': build_status or generate_status or install_status,
