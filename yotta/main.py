@@ -246,7 +246,9 @@ def main():
         logging.warning('interrupted')
         status = -1
     except Exception as e:
+        import traceback
         logging.error(e)
+        logging.debug(traceback.format_exc())
         status = -1
 
     sys.exit(status or 0)
