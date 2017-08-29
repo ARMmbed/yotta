@@ -74,8 +74,9 @@ def installAndBuild(args, following_args):
     generate_status = 0
     error = None
     args_dict = vars(args)
+    export_mode_or_path = args_dict.get('export')
 
-    if args.export:
+    if export_mode_or_path:
         logging.info('this will be an export build')
         new_modules = settings.getProperty('build', 'modules_directory_name') or 'modules'
         new_targets = settings.getProperty('build', 'targets_directory_name') or 'targets'
@@ -170,18 +171,18 @@ def installAndBuild(args, following_args):
     # run pre-build scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
-    if args.export and args.export is not True:
+    if export_mode_or_path and export_mode_or_path is not True:
         # these export exclusions apply at any level of the directory structure
         excludes = {
-            '.yotta.json',
             '.module.json',
-            'module.json',
+            '.yotta.json',
             '.yotta_origin.json',
+            'module.json',
             'target.json',
             'yotta_modules',
             'yotta_targets'
         }
-        export_to = os.path.abspath(args.export)
+        export_to = os.path.abspath(export_mode_or_path)
         logging.info('exporting built project to %s', export_to)
         check = os.path.join(export_to, 'source')
         if os.path.exists(export_to) and os.listdir(export_to) and not os.path.exists(check):
