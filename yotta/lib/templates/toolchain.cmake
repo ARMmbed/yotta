@@ -5,7 +5,11 @@ if(YOTTA_META_TOOLCHAIN_FILE_INCLUDED)
 endif()
 set(YOTTA_META_TOOLCHAIN_FILE_INCLUDED 1)
 
+message("CMAKE_BINARY_DIR  : ${CMAKE_BINARY_DIR}")
+message("PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR}")
+message("CMAKE_SOURCE_DIR  : ${CMAKE_SOURCE_DIR}")
+message("PROJECT_BINARY_DIR  : ${PROJECT_BINARY_DIR}")
 {% for toolchain_file in toolchain_files %}
-include("${CMAKE_BINARY_DIR}/{{ toolchain_file | relative | replaceBackslashes }}")
+include("${PROJECT_SOURCE_DIR}/{{ toolchain_file | relative | replaceBackslashes }}")
 {% endfor %}
 
