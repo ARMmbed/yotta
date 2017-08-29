@@ -51,7 +51,7 @@ info: generate for target: x86-osx-native 0.0.7 at /path/to/helloyotta/yotta_tar
 -- Generating done
 -- Build files have been written to: /path/to/helloyotta/build/x86-osx-native
 [1/3] Building C object ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o
-FAILED: /usr/bin/cc -I/path/to/helloyotta -I/path/to/helloyotta/yotta_modules/simplelog -I/path/to/helloyotta/yotta_modules/simplelog/source -O2 -g -DNDEBUG   -include "/path/to/helloyotta/build/x86-osx-native/yotta_config.h" -MMD -MT ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o -MF ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o.d -o ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o   -c /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c
+FAILED: /usr/bin/cc -I/path/to/helloyotta -I/path/to/helloyotta/yotta_modules/simplelog -I/path/to/helloyotta/yotta_modules/simplelog/source -O2 -g -DNDEBUG   -include "/path/to/helloyotta/build/x86-osx-native/yotta_config.h" -MMD -MT modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o -MF ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o.d -o ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o   -c /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c
 /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c:25:50: error: expected ';' after expression
     printf("%s %s\n", prefixForLevel(level), msg) // deliberately missing semicolon
                                                  ^
@@ -64,14 +64,14 @@ error: command ['ninja'] failed
 Here we can see that the file that was being built when the error occurred was:
 
 ```
-[1/3] Building C object ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o
+[1/3] Building C object modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o
 ```
 
-This is a path relative to the build directory, the `ym` directory is the
+This is a path relative to the build directory, the `modules` directory is the
 subdirectory where dependencies are built, and is always followed immediately
-by a dependency name (if there were no `ym/` at the start of the path then the
+by a dependency name (if there were no `modules/` at the start of the path then the
 object would belong to the top-level module/app being built). So from
-`/ym/simplelog/...` we can tell that the failed file is in the `simplelog`
+`/modules/simplelog/...` we can tell that the failed file is in the `simplelog`
 dependency.
 
 This is also visible from the source file where the error is reported:
