@@ -6,6 +6,6 @@ endif()
 set(YOTTA_META_TOOLCHAIN_FILE_INCLUDED 1)
 
 {% for toolchain_file in toolchain_files %}
-include("{{ toolchain_file | relative | replaceBackslashes }}")
+include("${CMAKE_BINARY_DIR}/{{ toolchain_file | relative | replaceBackslashes }}")
 {% endfor %}
 

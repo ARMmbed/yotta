@@ -77,7 +77,7 @@ def installAndBuild(args, following_args):
     export_mode_or_path = args_dict.get('export')
 
     if export_mode_or_path:
-        logging.info('this will be an export build')
+        logging.info('this build will be configured for exporting')
         new_modules = settings.getProperty('build', 'modules_directory_name') or 'modules'
         new_targets = settings.getProperty('build', 'targets_directory_name') or 'targets'
         # to save downloading the cached files, copy the old cache
@@ -183,8 +183,8 @@ def installAndBuild(args, following_args):
             'yotta_targets'
         }
         export_to = os.path.abspath(export_mode_or_path)
-        logging.info('exporting built project to %s', export_to)
-        check = os.path.join(export_to, 'source')
+        logging.info('exporting unbuilt project source and dependencies to %s', export_to)
+        check = os.path.join(export_to, 'source')  # this might be insufficient, or indeed misleading.
         if os.path.exists(export_to) and os.listdir(export_to) and not os.path.exists(check):
             # as the export can be any path we do a sanity check before calling 'rmRf'
             raise Exception(
