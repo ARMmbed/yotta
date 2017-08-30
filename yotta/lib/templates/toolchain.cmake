@@ -9,13 +9,13 @@ set(YOTTA_META_TOOLCHAIN_FILE_INCLUDED 1)
 # and within those directories, project-relative paths will not work ... unless we commit this atrocity:
 string(REPLACE "/CMakeFiles/CMakeTmp" "" CMAKE_BINDIR_NO_NESTING "${CMAKE_BINARY_DIR}")
 
-message("CMAKE_BINDIR_NO_NESTING: ${CMAKE_BINDIR_NO_NESTING}")
+#message("CMAKE_BINDIR_NO_NESTING: ${CMAKE_BINDIR_NO_NESTING}")
 
-message("CMAKE_BINARY_DIR  : ${CMAKE_BINARY_DIR}")
-message("PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR}")
-message("CMAKE_SOURCE_DIR  : ${CMAKE_SOURCE_DIR}")
-message("PROJECT_BINARY_DIR  : ${PROJECT_BINARY_DIR}")
+#message("CMAKE_BINARY_DIR  : ${CMAKE_BINARY_DIR}")
+#message("PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR}")
+#message("CMAKE_SOURCE_DIR  : ${CMAKE_SOURCE_DIR}")
+#message("PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
+
 {% for toolchain_file in toolchain_files %}
-include("${CMAKE_BINDIR_NO_NESTING}/{{ toolchain_file | relative | replaceBackslashes }}")
+include("{{ toolchain_file | replaceBackslashes }}")
 {% endfor %}
-
