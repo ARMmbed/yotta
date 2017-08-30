@@ -7,7 +7,7 @@ set(YOTTA_META_TOOLCHAIN_FILE_INCLUDED 1)
 
 # this is a poor attempt to resolve build issues where CMAKE generates its own temp directories
 # and within those directories, project-relative paths will not work ... unless we commit this atrocity:
-string(REPLACE "CMakeFiles/CMakeTmp/" "" CMAKE_BINDIR_NO_NESTING "${CMAKE_BINARY_DIR}")
+string(REPLACE "/CMakeFiles/CMakeTmp" "" CMAKE_BINDIR_NO_NESTING "${CMAKE_BINARY_DIR}")
 
 message("CMAKE_BINDIR_NO_NESTING: ${CMAKE_BINDIR_NO_NESTING}")
 
