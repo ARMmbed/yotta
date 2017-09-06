@@ -45,13 +45,14 @@ print('%s')
 class TestCLIDebug(unittest.TestCase):
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_noop_debug(self):
+        target_name = 'debug-test-target'
         test_dir = util.writeTestFiles(util.Test_Trivial_Exe, True)
-        target_dir = os.path.realpath(os.path.join(test_dir, 'yotta_targets', 'debug-test-target'))
-        build_dir = os.path.realpath(os.path.join(test_dir, 'build', 'debug-test-target'))
+        target_dir = os.path.realpath(os.path.join(test_dir, 'yotta_targets', target_name))
+        build_dir = os.path.realpath(os.path.join('build', target_name))
 
-        util.writeTestFiles(_nopDebugTargetDescription('debug-test-target'), test_dir=target_dir)
-        output = util.runCheckCommand(['--target', 'debug-test-target', 'build'], test_dir)
-        output = util.runCheckCommand(['--target', 'debug-test-target', 'debug'], test_dir)
+        util.writeTestFiles(_nopDebugTargetDescription(target_name), test_dir=target_dir)
+        output = util.runCheckCommand(['--target', target_name, 'build'], test_dir)
+        output = util.runCheckCommand(['--target', target_name, 'debug'], test_dir)
         json_output = output[:output.index(JSON_MARKER)]
         result = json.loads(json_output)
 

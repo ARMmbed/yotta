@@ -19,6 +19,9 @@ cmake_policy(SET CMP0017 OLD)
 # toolchain file for {{ target_name }}
 set(CMAKE_TOOLCHAIN_FILE "{{ toolchain_file | relative | replaceBackslashes }}")
 
+# template replacement
+configure_file( yotta_config.h.cmake_template yotta_config.h )
+
 # provide function for post-processing executables
 function (yotta_postprocess_target target_type_ target_name_)
     if(COMMAND yotta_apply_target_rules)

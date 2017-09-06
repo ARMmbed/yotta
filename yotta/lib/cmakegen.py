@@ -397,7 +397,7 @@ class CMakeGen(object):
         set_definitions += 'set(YOTTA_CONFIG_MERGED_JSON_FILE \"${CMAKE_BINARY_DIR}/%s\")\n' % replaceBackslashes(self.relative(config_json_file))
 
         self._writeFile(
-            config_include_file,
+            config_include_file + '.cmake_template',
             '#ifndef __YOTTA_CONFIG_H__\n'+
             '#define __YOTTA_CONFIG_H__\n'+
             add_defs_header+

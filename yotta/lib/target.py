@@ -470,7 +470,7 @@ class DerivedTarget(Target):
                 else:
                     return '%s is not installed' % (cmd[0])
             else:
-                return 'command %s failed' % (cmd)
+                return 'command execution %s failed with %s' % (cmd, e)
         if child.returncode:
             return 'command %s failed' % (cmd)
 
