@@ -10,7 +10,7 @@ import subprocess
 import os
 
 def run(arguments, cwd='.'):
-    yottadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    yottadir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
     runyotta = [
         sys.executable,
         '-c',
@@ -24,11 +24,9 @@ def run(arguments, cwd='.'):
          stdin = subprocess.PIPE
     )
     out, err = child.communicate()
+
     # no command should ever produce a traceback:
     if 'traceback' in (out.decode('utf-8')+err.decode('utf-8')).lower():
         print(out+err)
         assert(False)
     return out.decode('utf-8'), err.decode('utf-8'), child.returncode
-
-
-
