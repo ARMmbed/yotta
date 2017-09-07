@@ -48,7 +48,7 @@ class TestCLIDebug(unittest.TestCase):
         target_name = 'debug-test-target'
         test_dir = util.writeTestFiles(util.Test_Trivial_Exe, True)
         target_dir = os.path.realpath(os.path.join(test_dir, 'yotta_targets', target_name))
-        build_dir = os.path.realpath(os.path.join('build', target_name))
+        build_dir = os.path.join('build', target_name)
 
         util.writeTestFiles(_nopDebugTargetDescription(target_name), test_dir=target_dir)
         output = util.runCheckCommand(['--target', target_name, 'build'], test_dir)
