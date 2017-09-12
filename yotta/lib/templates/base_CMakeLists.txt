@@ -70,8 +70,8 @@ include_directories("${CMAKE_BINARY_DIR}/{{ dir | relative | replaceBackslashes 
 # recurse into dependencies that aren't built elsewhere
 {% for depend_subdir, relpath in add_depend_subdirs %}
 add_subdirectory(
-    "${CMAKE_BINARY_DIR}/{{ depend_subdir | replaceBackslashes }}"
     "${CMAKE_BINARY_DIR}/{{ relpath | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ depend_subdir | replaceBackslashes }}"
 )
 
 {% endfor %}
@@ -116,7 +116,8 @@ set(YOTTA_MODULE_NAME {{ component.getName() }})
 {% if delegate_to %}
 # delegate to an existing CMakeLists.txt:
 add_subdirectory(
-    "${CMAKE_BINARY_DIR}/{{ delegate_to | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ delegate_to | relative | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ delegate_build_dir | relative | replaceBackslashes }}"
 )
 {% else %}
 # recurse into subdirectories for this component, using the two-argument
@@ -125,7 +126,7 @@ add_subdirectory(
 {% for srcdir, workingdir in add_own_subdirs %}
 add_subdirectory(
     "${CMAKE_BINARY_DIR}/{{ srcdir | relative | replaceBackslashes }}"
-    "${CMAKE_BINARY_DIR}/{{ srcdir | relative | replaceBackslashes }}"
+    "${CMAKE_BINARY_DIR}/{{ workingdir | replaceBackslashes }}"
 )
 {% endfor %}
 {% endif %}
