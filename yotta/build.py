@@ -157,7 +157,7 @@ def installAndBuild(args, following_args):
     logging.debug("config done, merged config: %s", config['merged_config_json'])
 
     script_environment = {
-        'YOTTA_MERGED_CONFIG_FILE': config['merged_config_json']
+        'YOTTA_MERGED_CONFIG_FILE': str(config['merged_config_json'])
     }
     # run pre-generate scripts for all components:
     runScriptWithModules(c, all_deps.values(), 'preGenerate', script_environment)
