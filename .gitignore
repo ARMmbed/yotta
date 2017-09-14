@@ -14,3 +14,5 @@ git-access-testing
 github-access-testing
 *~
 *.idea
+.tox
+*nosetests.xml

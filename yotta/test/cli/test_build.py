@@ -678,6 +678,30 @@ class TestCLIBuild(unittest.TestCase):
         util.rmRf(test_dir)
 
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_exportIsClean(self):
+        """
+        exported directory doesn't contain old references to yotta
+        :return:
+        """
+        test_dir = util.writeTestFiles(util.Test_Complex_Lib, True)
+        export_dir = util.writeTestFiles({}, True)
+
+        # export a generate-only output to an alternate directory
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build', '-x', export_dir, '-g'], test_dir)
+        self.assertFalse(os.path.exists(os.path.join(export_dir, paths.Modules_Folder)))
+        self.assertFalse(os.path.exists(os.path.join(export_dir, paths.Targets_Folder)))
+        self.assertFalse(os.path.exists(os.path.join(
+            export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','), paths.BUILT_MODULES_DIR
+        )))
+
+        # duplicate the new strings (for brittleness?)
+        self.assertTrue(os.path.exists(os.path.join(export_dir, 'vendor_modules')))
+        self.assertTrue(os.path.exists(os.path.join(export_dir, 'vendor_targets')))
+        self.assertTrue(os.path.exists(os.path.join(
+            export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','), 'modules'
+        )))
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_exportSpaceInPath(self):
         """
         export should dump all the CMake files into a specified directory

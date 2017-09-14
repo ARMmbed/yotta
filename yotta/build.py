@@ -77,19 +77,21 @@ def installAndBuild(args, following_args):
 
     if export_mode_or_path:
         logging.info('this build will be configured for exporting')
-        new_modules = settings.getProperty('build', 'modules_directory_name') or 'modules'
-        new_targets = settings.getProperty('build', 'targets_directory_name') or 'targets'
+        new_modules = settings.getProperty('build', 'vendor_modules_directory') or 'vendor_modules'
+        new_targets = settings.getProperty('build', 'vendor_targets_directory') or 'vendor_targets'
+        new_build_modules = settings.getProperty('build', 'built_modules_directory') or 'modules'
         # to save downloading the cached files, copy the old cache
         try:
             if not os.path.exists(new_modules):
-                shutil.copytree('yotta_modules', new_modules)
-                shutil.copytree('yotta_targets', new_targets)
+                shutil.copytree(paths.Modules_Folder, new_modules)
+                shutil.copytree(paths.Targets_Folder, new_targets)
         except Exception as e:
             logging.error(e)
             logging.error('failed to use existing cache; rebuilding')
 
         paths.Modules_Folder = new_modules
         paths.Targets_Folder = new_targets
+        paths.BUILT_MODULES_DIR = new_build_modules
 
     args_dict.setdefault('build_targets', [])
 
