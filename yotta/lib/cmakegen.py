@@ -499,10 +499,9 @@ class CMakeGen(object):
         add_depend_subdirs = []
         for name, c in active_dependencies.items():
             # a project-relative path to the top level dep
-            depend_subdir = os.path.join(self.relative(modbuilddir), name)
-            # a project relative path to the sub-dep
-            relpath = self.relative(depend_subdir)
-            add_depend_subdirs.append((depend_subdir, relpath))
+            source_dir = os.path.join(modbuilddir, name)
+            binary_dir = source_dir
+            add_depend_subdirs.append((source_dir, binary_dir))
 
         delegate_to_existing = None
         delegate_build_dir = None
