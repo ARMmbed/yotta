@@ -712,7 +712,7 @@ class TestCLIBuild(unittest.TestCase):
                 cwd=built_dir
             ).decode()
         except subprocess.CalledProcessError as e:
-            print e.output
+            print(e.output)
             raise
 
         # link the project
