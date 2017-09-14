@@ -5,6 +5,7 @@
 # See LICENSE file for details.
 
 # standard library modules, , ,
+import os
 import unittest
 import subprocess
 import copy
@@ -14,6 +15,7 @@ import datetime
 # internal modules:
 from yotta.test.cli import cli
 from yotta.test.cli import util
+from yotta.lib import paths
 
 Test_Complex = {
 'module.json': '''{
@@ -34,17 +36,6 @@ Test_Complex = {
   "testDependencies": {
     "test-testdep-e": "*"
   }
-}
-''',
-
-'source/a.c': '''
-#include "a/a.h"
-#include "b/b.h"
-#include "c/c.h"
-#include "d/d.h"
-
-int a(){
-    return 1 + b() + c() + d(); // 35
 }
 ''',
 
@@ -663,7 +654,6 @@ class TestCLIBuild(unittest.TestCase):
         self.assertIn("1234 yotta", output)
         util.rmRf(test_dir)
 
-
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
     def test_Defines_Library(self):
         test_dir = util.writeTestFiles(Test_Defines_Library)
@@ -686,6 +676,62 @@ class TestCLIBuild(unittest.TestCase):
         output = subprocess.check_output(['./build/' + util.nativeTarget().split(',')[0] + '/test/test-toplevel-lib-test-test'], cwd=test_dir).decode()
         self.assertIn("42", output)
         util.rmRf(test_dir)
+
+    @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
+    def test_exportSpaceInPath(self):
+        """
+        export should dump all the CMake files into a specified directory
+            the user should then be able to do their builds in that directory
+        :return:
+        """
+        test_dir = util.writeTestFiles(util.Test_Trivial_Exe, True)
+        export_dir = util.writeTestFiles({}, True)
+
+        # export a generate-only output to an alternate directory
+        stdout = self.runCheckCommand(['--target', util.nativeTarget(), 'build', '-x', export_dir, '-g'], test_dir)
+
+        # search for any reference to the original directory
+        # /tmp/tmpUo7pB0 spaces in path  -->  tmpUo7pB0
+        try:
+            output = subprocess.check_output(
+                ['grep', '-r', '-n', '-e', "'%s'" % os.path.basename(test_dir).split(' ', 1)[0]],
+                cwd=export_dir
+            ).decode()
+        except subprocess.CalledProcessError as e:
+            # grep returns 1 for 'nothing found' and 2 for 'error'
+            # https://www.gnu.org/software/grep/manual/grep.html#Exit-Status
+            self.assertEqual(e.returncode, 1)
+        else:
+            raise Exception('should not have found anything')
+
+        # build the project
+        built_dir = os.path.join(export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','))
+        try:
+            output = subprocess.check_output(
+                ['cmake', '-G', 'Ninja'],
+                cwd=built_dir
+            ).decode()
+        except subprocess.CalledProcessError as e:
+            print e.output
+            raise
+
+        # link the project
+        output = subprocess.check_output(
+            ['ninja'],
+            cwd=built_dir
+        ).decode()
+
+        # run the project
+        output = subprocess.check_output(
+            ['./test-trivial-exe'],
+            cwd=os.path.join(built_dir, 'source')
+        ).decode()
+
+        # it works!
+        self.assertIn('trivial-exe-running', output)
+
+        util.rmRf(test_dir)
+        util.rmRf(export_dir)
 
     def runCheckCommand(self, args, test_dir):
         stdout, stderr, statuscode = cli.run(args, cwd=test_dir)

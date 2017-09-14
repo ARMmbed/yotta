@@ -7,6 +7,7 @@ import os
 
 # this module to provide tools for path manipulation and caching
 BUILD_OUTPUT_KEY = 'folder'
+DEFAULT_BUILD_DIR = 'build'
 PARSER_OUTPUT_FOLDER_KWARGS = dict
 Modules_Folder = 'yotta_modules'
 Targets_Folder = 'yotta_targets'
@@ -39,7 +40,7 @@ def get_configured_output_path(args, target=None):
 
     # else organise directories by target name in cwd
     if not path:
-        path = os.path.join(current, 'build')
+        path = os.path.join(current, DEFAULT_BUILD_DIR)
         if target:
             path = os.path.join(path, target.getName())
 
