@@ -4,3 +4,4 @@ dockerfile
 **/.idea
 **/.vscode
 **/.DS_Store
+*.git

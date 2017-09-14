@@ -1,8 +1,9 @@
 FROM i686/ubuntu
 
-RUN apt-get update && apt-get install -yq \
- git \
+RUN apt-get -yqq update && apt-get -yqq install  \
  curl \
+ git \
+ nano \
  ninja-build \
  python \
  python-dev \
@@ -13,7 +14,7 @@ RUN apt-get update && apt-get install -yq \
 RUN python -m pip install -U pip
 
 # install yotta development dependencies
-RUN pip install \
+RUN pip install -q \
     tox \
     cython \
     nose \
@@ -47,7 +48,7 @@ ADD pypi_readme.rst .
 ADD bin/ bin/
 
 # install yotta dependencies
-RUN pip install -e .
+RUN pip install -q -e .
 
 # prepare tox in the same way as CircleCI
 ADD tox.ini .
@@ -55,10 +56,18 @@ RUN tox --notest
 
 # metadata
 LABEL description="An image for devtesting Yotta in a stable environment. One day it might replace the CircleCI script."
-LABEL incantation="docker build -t yotta . && docker run --rm --name yotta -it yotta /bin/bash"
+LABEL incantation="docker build -t yotta . && docker run --rm --name yotta -v your_yotta_dir:/yt_testbuild -it yotta /bin/bash"
 
-# development workflow
-# TODO: volume mount
+# development workflow - this bit now optional if you do a volume mount
 ADD . .
 
+RUN ls -lah
+
 RUN bash ci_init.sh
+
+# TODO: volume mount
+# You (the user) must mount your working directory into the image using the -v command at run time, because:
+# "...you can’t mount a host directory from within the Dockerfile.
+# The VOLUME instruction does not support specifying a host-dir parameter.
+# You must specify the mountpoint when you create or run the container."
+# - https://docs.docker.com/engine/reference/builder/#notes-about-specifying-volumes
