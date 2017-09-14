@@ -30,7 +30,7 @@ dependencies:
 
 test:
   override:
-    - tox
+    - tox:
         timeout: 1800
 
   post:
