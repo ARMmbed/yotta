@@ -40,7 +40,6 @@ def addOptions(parser, add_build_targets=True):
             '[optional] Specify an output path to receive the clean build'
         )
     )
-    paths.add_parser_argument(parser)
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
     parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
     # the target class adds its own build-system specific options. In the
@@ -133,7 +132,7 @@ def installAndBuild(args, following_args):
     # version specs), which it will display
     install_status = install.execCommand(args, [])
 
-    builddir = paths.get_configured_output_path(args, target)
+    builddir = os.path.join(os.getcwd(), paths.DEFAULT_BUILD_DIR, target.getName())
 
     all_deps = c.getDependenciesRecursive(
                       target = target,

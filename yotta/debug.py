@@ -22,7 +22,6 @@ def addOptions(parser):
     parser.add_argument('program', default=None, nargs='?',
         help='name of the program to be debugged'
     )
-    paths.add_parser_argument(parser)
 
 
 def execCommand(args, following_args):
@@ -38,7 +37,7 @@ def execCommand(args, following_args):
             logging.error(error)
         return 1
 
-    builddir = paths.get_configured_output_path(args, target)
+    builddir = os.path.join(os.getcwd(), paths.DEFAULT_BUILD_DIR, target.getName())
 
     if args.program is None:
         if c.isApplication():

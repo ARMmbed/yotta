@@ -1,7 +1,0 @@
-# things to ignore when copying this source directory into the docker image
-dockerfile
-.dockerignore
-**/.idea
-**/.vscode
-**/.DS_Store
-*.git
