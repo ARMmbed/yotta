@@ -30,7 +30,8 @@ dependencies:
 
 test:
   override:
-    - tox
+    - tox:
+      timeout: 1800
 
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
