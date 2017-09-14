@@ -50,8 +50,8 @@ info: generate for target: x86-osx-native 0.0.7 at /path/to/helloyotta/yotta_tar
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /path/to/helloyotta/build/x86-osx-native
-[1/3] Building C object ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o
-FAILED: /usr/bin/cc -I/path/to/helloyotta -I/path/to/helloyotta/yotta_modules/simplelog -I/path/to/helloyotta/yotta_modules/simplelog/source -O2 -g -DNDEBUG   -include "/path/to/helloyotta/build/x86-osx-native/yotta_config.h" -MMD -MT modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o -MF ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o.d -o ym/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o   -c /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c
+[1/3] Building C object modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o
+FAILED: /usr/bin/cc -I/path/to/helloyotta -I/path/to/helloyotta/yotta_modules/simplelog -I/path/to/helloyotta/yotta_modules/simplelog/source -O2 -g -DNDEBUG   -include "/path/to/helloyotta/build/x86-osx-native/yotta_config.h" -MMD -MT modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o -MF modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o.d -o modules/simplelog/source/CMakeFiles/simplelog.dir/path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c.o   -c /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c
 /path/to/helloyotta/yotta_modules/simplelog/source/simplelog.c:25:50: error: expected ';' after expression
     printf("%s %s\n", prefixForLevel(level), msg) // deliberately missing semicolon
                                                  ^
