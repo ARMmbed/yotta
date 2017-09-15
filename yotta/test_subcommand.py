@@ -74,7 +74,7 @@ def moduleFromDirname(build_subdir, all_modules, toplevel_module):
     modtop = True
     submod = False
     module = toplevel_module
-    # <topdir> /modules/<submod>/modules/<submod2>/somedir/somedir --> submod2
+    # <topdir> /ym/<submod>/ym/<submod2>/somedir/somedir --> submod2
     for part in fsutils.fullySplitPath(build_subdir):
         if submod:
             if part in all_modules:
