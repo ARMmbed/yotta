@@ -36,8 +36,7 @@ def addOptions(parser, add_build_targets=True):
     parser.add_argument('-x', '--export', dest='export',
         default=False, const=True, nargs='?',
         help=(
-            'Export mode. If flag is set, generates builds without reference to Yotta.'
-            '[optional] Specify an output path to receive the clean build'
+            'Export mode. If flag is set, generates a buildable directory structure at the specified path.'
         )
     )
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
