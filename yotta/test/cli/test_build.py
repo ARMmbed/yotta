@@ -10,7 +10,8 @@ import unittest
 import copy
 import re
 import datetime
-import sys
+import subprocess
+
 
 # internal modules:
 from yotta.test.cli import cli
