@@ -39,6 +39,7 @@ def addOptions(parser):
     # relevant build options:
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
     parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
+    parser.add_argument('-r0', '--release-no-debug-info-build', dest='release_no_debug_info_build', action='store_true', default=False)
     target.DerivedTarget.addBuildOptions(parser)
 
 

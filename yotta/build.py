@@ -41,6 +41,7 @@ def addOptions(parser, add_build_targets=True):
     )
     parser.add_argument('-r', '--release-build', dest='release_build', action='store_true', default=True)
     parser.add_argument('-d', '--debug-build', dest='release_build', action='store_false', default=True)
+    parser.add_argument('-r0', '--release-no-debug-info-build', dest='release_no_debug_info_build', action='store_true', default=False)
     # the target class adds its own build-system specific options. In the
     # future we probably want to load these from a target instance, rather than
     # from the class
@@ -201,7 +202,8 @@ def installAndBuild(args, following_args):
         # build in the current directory
         error = target.build(
                 builddir, c, args, release_build=args.release_build,
-                build_args=following_args, targets=args.build_targets
+                build_args=following_args, targets=args.build_targets,
+                release_no_debug_info_build=args.release_no_debug_info_build
         )
 
         if error:
