@@ -723,8 +723,9 @@ class TestCLIBuild(unittest.TestCase):
         # search for any reference to the original directory
         # /tmp/tmpUo7pB0 spaces in path  -->  tmpUo7pB0
         try:
+            # grep; skip sockets, recursive, phrase, directory,
             output = subprocess.check_output(
-                ['grep', '-r', '-n', '-e', "'%s'" % os.path.basename(test_dir).split(' ', 1)[0]],
+                ['grep', '-D', 'skip', '-r', "'%s'" % os.path.basename(test_dir).split(' ', 1)[0], '.'],
                 cwd=export_dir,
                 timeout=5
             ).decode()
