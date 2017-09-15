@@ -67,6 +67,7 @@ setup(
         'mbed_test_wrapper>=0.0.3,<2.0.0',
         'valinor>=0.0.0,<1.0',
         'intelhex>=2.0,<3.0',
-        'jsonpointer>=1.9,<2.0'
+        'jsonpointer>=1.9,<2.0',
+        'subprocess32>=3.2.7<4.0'
     ] + platform_deps
 )
