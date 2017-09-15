@@ -10,7 +10,6 @@ import logging
 # validate, , validate things, internal
 from yotta.lib import validate
 # settings, , load and save settings, internal
-from yotta.lib import settings
 # paths
 from yotta.lib import paths
 # --config option, , , internal
