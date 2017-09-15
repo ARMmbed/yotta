@@ -17,12 +17,6 @@ from yotta.test.cli import cli
 from yotta.test.cli import util
 from yotta.lib import paths
 
-# doesn't work on windows - but we'll not use the functionality for those tests
-if os.name == 'posix' and sys.version_info[0] < 3:
-    import subprocess32 as subprocess
-else:
-    import subprocess
-
 Test_Complex = {
 'module.json': '''{
   "name": "test-testdep-a",
@@ -726,8 +720,7 @@ class TestCLIBuild(unittest.TestCase):
             # grep; skip sockets, recursive, phrase, directory
             output = subprocess.check_output(
                 ['grep', '-D', 'skip', '-r', "'%s'" % os.path.basename(test_dir).split(' ', 1)[0], '.'],
-                cwd=export_dir,
-                timeout=5
+                cwd=export_dir
             ).decode()
         except subprocess.CalledProcessError as e:
             # grep returns 1 for 'nothing found' and 2 for 'error'
@@ -741,8 +734,7 @@ class TestCLIBuild(unittest.TestCase):
         try:
             output = subprocess.check_output(
                 ['cmake', '-G', 'Ninja'],
-                cwd=built_dir,
-                timeout=5
+                cwd=built_dir
             ).decode()
         except subprocess.CalledProcessError as e:
             print(e.output)
@@ -751,15 +743,13 @@ class TestCLIBuild(unittest.TestCase):
         # link the project
         output = subprocess.check_output(
             ['ninja'],
-            cwd=built_dir,
-            timeout=5
+            cwd=built_dir
         ).decode()
 
         # run the project
         output = subprocess.check_output(
             ['./test-trivial-exe'],
-            cwd=os.path.join(built_dir, 'source'),
-            timeout=5
+            cwd=os.path.join(built_dir, 'source')
         ).decode()
 
         # it works!
