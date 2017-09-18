@@ -273,3 +273,19 @@ subdirectory. Within this directory build products are further divided by the
 name of the [target](tutorial/targets.html) being built. This makes it safe to
 switch between building for different targets without cleaning.
 
+
+## <a href="#export-builds" name="export-builds">#</a> Exporting Builds
+
+Yotta can export the generated file structure to be later built elsewhere using:
+
+```
+yotta build -g -x some/output/path
+```
+
+In this case `-g` is used to stop the local compile from happening immediately,
+and `-x` copies the build files to the specified directory.
+
+To build and link your project you would then have to run the cmake commands
+against that output directory. The generated files use relative paths,
+making them portable; for example to send to an independent build server.
+

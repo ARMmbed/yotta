@@ -80,6 +80,8 @@ Options:
     This option is deprecated because it is now the default, unless
     `--debug-build` is specified.
 
+  * **`--export`, `-x`**: export mode. If flag is set, generates a buildable directory structure at the specified path.
+
   * **`--cmake-generator`, `-G`**: specify the CMake Generator. CMake can generate project files for various editors and IDEs.
 
   * **`name ...`**: one or more modules may be specified, in which case only these
