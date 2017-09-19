@@ -77,8 +77,8 @@ def installAndBuild(args, following_args):
 
     if export_mode_or_path:
         logging.info('this build will be configured for exporting')
-        new_modules = settings.getProperty('build', 'vendor_modules_directory') or 'vendor_modules'
-        new_targets = settings.getProperty('build', 'vendor_targets_directory') or 'vendor_targets'
+        new_modules = settings.getProperty('build', 'vendor_modules_directory') or 'modules'
+        new_targets = settings.getProperty('build', 'vendor_targets_directory') or 'targets'
         new_build_modules = settings.getProperty('build', 'built_modules_directory') or 'modules'
         # to save downloading the cached files, copy the old cache
         try:
@@ -173,16 +173,21 @@ def installAndBuild(args, following_args):
     runScriptWithModules(c, all_deps.values(), 'preBuild', script_environment)
 
     if export_mode_or_path and export_mode_or_path is not True:
-        # these export exclusions apply at any level of the directory structure
-        excludes = {
-            '.module.json',
-            '.yotta.json',
-            '.yotta_origin.json',
-            'module.json',
-            'target.json',
-            'yotta_modules',
-            'yotta_targets'
+        # includes relative to cwd / project top level
+        includes = {
+            'source',
+            paths.DEFAULT_BUILD_DIR,
+            paths.Modules_Folder,
+            paths.Targets_Folder,
+            'yotta-cloud-client',  # not sure about whitelisting... where is this coming from?
         }
+
+        def ignore_on_copy(current_dir, local_paths):
+            # only at the project root
+            if current_dir == '.':
+                # exclude = !include
+                return [p for p in local_paths if p not in includes]
+            return []
         export_to = os.path.abspath(export_mode_or_path)
         logging.info('exporting unbuilt project source and dependencies to %s', export_to)
         check = os.path.join(export_to, 'source')  # this might be insufficient, or indeed misleading.
@@ -194,7 +199,7 @@ def installAndBuild(args, following_args):
                 % (check)
             )
         fsutils.rmRf(export_to)
-        shutil.copytree(src='.', dst=export_to, ignore=lambda a, b: excludes)
+        shutil.copytree(src='.', dst=export_to, ignore=ignore_on_copy)
 
     if args_dict.get('generate_only'):
         logging.info('skipping build step')

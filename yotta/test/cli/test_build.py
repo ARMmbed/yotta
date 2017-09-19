@@ -696,8 +696,8 @@ class TestCLIBuild(unittest.TestCase):
         )))
 
         # duplicate the new strings (for brittleness?)
-        self.assertTrue(os.path.exists(os.path.join(export_dir, 'vendor_modules')))
-        self.assertTrue(os.path.exists(os.path.join(export_dir, 'vendor_targets')))
+        self.assertTrue(os.path.exists(os.path.join(export_dir, 'modules')))
+        self.assertTrue(os.path.exists(os.path.join(export_dir, 'targets')))
         self.assertTrue(os.path.exists(os.path.join(
             export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','), 'modules'
         )))
