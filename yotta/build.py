@@ -134,7 +134,8 @@ def installAndBuild(args, following_args):
     # version specs), which it will display
     install_status = install.execCommand(args, [])
 
-    builddir = os.path.join(os.getcwd(), paths.DEFAULT_BUILD_DIR, target.getName())
+    builddir = os.path.join(os.getcwd(), paths.DEFAULT_BUILD_DIR, target.getName()) if not export_mode_or_path else \
+        os.path.join(os.getcwd(), paths.DEFAULT_EXPORT_BUILD_RELPATH)
 
     all_deps = c.getDependenciesRecursive(
                       target = target,
@@ -176,7 +177,7 @@ def installAndBuild(args, following_args):
         # includes relative to cwd / project top level
         includes = {
             'source',
-            paths.DEFAULT_BUILD_DIR,
+            paths.DEFAULT_EXPORT_BUILD_RELPATH,
             paths.Modules_Folder,
             paths.Targets_Folder,
             'yotta-cloud-client',  # not sure about whitelisting... where is this coming from?
@@ -200,6 +201,9 @@ def installAndBuild(args, following_args):
             )
         fsutils.rmRf(export_to)
         shutil.copytree(src='.', dst=export_to, ignore=ignore_on_copy)
+        fsutils.rmRf(builddir)
+        fsutils.rmRf(paths.Modules_Folder)
+        fsutils.rmRf(paths.Targets_Folder)
 
     if args_dict.get('generate_only'):
         logging.info('skipping build step')

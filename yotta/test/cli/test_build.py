@@ -692,14 +692,14 @@ class TestCLIBuild(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(export_dir, paths.Modules_Folder)))
         self.assertFalse(os.path.exists(os.path.join(export_dir, paths.Targets_Folder)))
         self.assertFalse(os.path.exists(os.path.join(
-            export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','), paths.BUILT_MODULES_DIR
+            export_dir, paths.DEFAULT_EXPORT_BUILD_RELPATH, paths.BUILT_MODULES_DIR
         )))
 
         # duplicate the new strings (for brittleness?)
         self.assertTrue(os.path.exists(os.path.join(export_dir, 'modules')))
         self.assertTrue(os.path.exists(os.path.join(export_dir, 'targets')))
         self.assertTrue(os.path.exists(os.path.join(
-            export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','), 'modules'
+            export_dir, paths.DEFAULT_EXPORT_BUILD_RELPATH, 'modules'
         )))
 
     @unittest.skipIf(not util.canBuildNatively(), "can't build natively on windows yet")
@@ -731,7 +731,7 @@ class TestCLIBuild(unittest.TestCase):
             raise Exception('should not have found anything')
 
         # build the project
-        built_dir = os.path.join(export_dir, paths.DEFAULT_BUILD_DIR, util.nativeTarget().rstrip(','))
+        built_dir = os.path.join(export_dir, paths.DEFAULT_EXPORT_BUILD_RELPATH)
         try:
             output = subprocess.check_output(
                 ['cmake', '-G', 'Ninja'],
