@@ -481,7 +481,7 @@ class CMakeGen(object):
 
         include_root_dirs = []
         if application is not None and component is not application:
-            include_root_dirs.append('include_directories("%s")\n' % replaceBackslashes(application.path))
+            include_root_dirs.append(application.path)
 
         include_sys_dirs = []
         include_other_dirs = []
