@@ -18,6 +18,7 @@ install:
   - curl -fsSL http://www.cmake.org/files/v3.2/cmake-3.2.3-Linux-x86_64.sh > /tmp/install-cmake.sh
   - chmod +x /tmp/install-cmake.sh
   - sudo /tmp/install-cmake.sh --prefix=/usr/local --exclude-subdir
+  - pip install --upgrade pip setuptools
   - pip install .
   # install Ninja
   - sudo apt-get install ninja-build
