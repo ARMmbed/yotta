@@ -228,6 +228,12 @@ If you are having trouble with pip not installing yotta, try running `sudo pip i
 
 On Ubuntu the default pip installation `python-pip` is out of date (1.5.2) and cannot upgrade itself via `sudo pip install -U pip`. To solve this you will need to install pip from `easy_install` by running `easy_install pip`. You should then be able to install yotta by running `pip2 install yotta`. 
 
+If you encounter problems with the cryptography library, e.g. `'module' object has no attribute 'X509_up_ref'`, manually upgrading the cryptography library may fix your issue:
+
+```sh
+pip install --upgrade cryptography
+```
+
 You can also try [installing pip from the Pypy registry](https://pip.pypa.io/en/stable/installing/) if everything else fails.
 
 
