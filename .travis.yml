@@ -32,4 +32,4 @@ deploy:
   server: https://testpypi.python.org/pypi
   user: "thegecko"
   password:
-    secure: Ks8vwWD4oSa+HirFCs3bozgn73IwATomI7sm97Hb+sWu8qkExtnpnvlp/X97prmRFjfRF2t+R/oVOWMJTKRcg+a/9kCRmbDQfRD411Z1lDudd2/NThDQXr1fE1D0ql8+QErBYB2+1Oz8vdYeVlFxqxwksSk9PrG+OK5i/ptG5cs=
+    secure: "Lv25Fqu0ESutC3Pm5KmM8MiDyStlKcQY+o9kWKFrfmiSh6SDj5g3MxLkBp7GifNGj7PqqikoS3vraL+0Cd2edYjKkGTi+8j9Ax/1WO4BpIO8PVw+nyL+mhiKHNBaHNaG2oA8K56i82qqaA7xGy5doZyyo11cT+6X/qPDCW8ZZCw="
