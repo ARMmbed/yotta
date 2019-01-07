@@ -6,7 +6,7 @@ section: reference/ignore
 
 # .yotta_ignore Reference
 
-A `.yotta_ingore` file can be added to any module or target to make yotta
+A `.yotta_ignore` file can be added to any module or target to make yotta
 completely ignore any listed files. Listed files are ignored when
 auto-generating build files, and when publishing to the registry (but note that
 custom CMakeLists files may still refer to ignored files).
@@ -43,7 +43,7 @@ the whole of the directory `c` (including any subdirectory `d`) will be ignored.
  * Ignore all dotfiles files everywhere: `.*`
 
 
-## Always-Ingored Files
+## Always-Ignored Files
 
 Files matching some patterns will always be ignored by yotta, whether or not a
 .yotta_ignore file is present. This list currently includes:
