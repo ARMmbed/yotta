@@ -1,37 +1,37 @@
-machine:
-  environment:
-    PYTHONIOENCODING: UTF-8
-    YOTTA_GITHUB_AUTHTOKEN: 8d1dfa2011f74b1f26504918982e1e2ba154b910
+version: 2
 
-dependencies:
-  pre:
-    # set up SSH and yotta
-    - bash ci_init.sh
+jobs:
+  build:
+    working_directory: ~/ARMmbed/yotta
+    parallelism: 1
+    shell: /bin/bash --login
+    environment:
+      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
+      PYTHONIOENCODING: UTF-8
+      YOTTA_GITHUB_AUTHTOKEN: 8d1dfa2011f74b1f26504918982e1e2ba154b910
+    docker:
+      - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
+        command: /sbin/init
+    steps:
+      - checkout
 
-    # get an up-to-date CMake
-    - sudo apt-get remove -y cmake
-    - curl -fsSL http://www.cmake.org/files/v3.2/cmake-3.2.3-Linux-i386.sh > /tmp/install-cmake.sh
-    - chmod +x /tmp/install-cmake.sh
-    - sudo /tmp/install-cmake.sh --prefix=/usr/local --exclude-subdir
+      # set up SSH and yotta
+      - run: bash ci_init.sh
 
-    # install Ninja
-    - sudo apt-get install ninja-build
+      # get an up-to-date CMake
+      - run: sudo apt-get remove -y cmake
+      - run: curl -fsSL http://www.cmake.org/files/v3.2/cmake-3.2.3-Linux-i386.sh > /tmp/install-cmake.sh
+      - run: chmod +x /tmp/install-cmake.sh
+      - run: sudo /tmp/install-cmake.sh --prefix=/usr/local --exclude-subdir
 
-    # we use tox to run tests:
-    - pip install tox
+      # install Ninja
+      - run: sudo apt-get install ninja-build
 
-  override:
-    - pyenv local 2.7.10 3.3.3 3.4.3 3.5.0
-    # pre-build the tox environments, so we can cache them:
-    - tox --notest
-
-  cache_directories:
-    - ".tox"
-
-test:
-  override:
-    - tox
-
-  post:
-    - mkdir -p $CIRCLE_TEST_REPORTS/junit
-    - find . -name "*nosetests.xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+      # we use tox to run tests:
+      - run: sudo pip install tox
+      - run: pyenv local 2.7.12 3.4.4 3.5.3 3.6.1
+      - run: tox
+      - run: mkdir -p $CIRCLE_TEST_REPORTS/junit
+      - run: find . -name "*nosetests.xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+      - store_test_results:
+          path: $CIRCLE_TEST_REPORTS
