@@ -59,13 +59,13 @@ setup(
         'colorama>=0.3,<0.4',
         'hgapi>=1.7,<2',
         'Jinja2>=2.7.0,<3',
-        'cryptography>=2.1.4,<2.2',
+        'cryptography>=2.1.4,<=2.3',
         'PyJWT>=1.0,<2.0',
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
         'argcomplete>=0.8.0,<2.0',
         'mbed_test_wrapper>=0.0.3,<2.0.0',
-        'valinor>=0.0.0,<1.0',
+        'valinor>=1.1.4,<2.0',
         'intelhex>=2.0,<3.0',
         'jsonpointer>=1.9,<2.0'
     ] + platform_deps
