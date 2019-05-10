@@ -8,7 +8,7 @@ jobs:
     environment:
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
       PYTHONIOENCODING: UTF-8
-      YOTTA_GITHUB_AUTHTOKEN: 8d1dfa2011f74b1f26504918982e1e2ba154b910
+      YOTTA_GITHUB_AUTHTOKEN: 112860445f1befd1d7f8bb1187428761ca5aa834
     docker:
       - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
         command: /sbin/init

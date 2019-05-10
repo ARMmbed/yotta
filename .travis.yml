@@ -12,7 +12,7 @@ addons:
    - gcc-4.8
    - g++-4.8
 env:
-  - CC=gcc-4.8 CXX=g++-4.8 PYTHONIOENCODING=UTF-8 YOTTA_GITHUB_AUTHTOKEN=8d1dfa2011f74b1f26504918982e1e2ba154b910
+  - CC=gcc-4.8 CXX=g++-4.8 PYTHONIOENCODING=UTF-8 YOTTA_GITHUB_AUTHTOKEN=112860445f1befd1d7f8bb1187428761ca5aa834
 install:
   # install a newer version of CMake:
   - sudo apt-get remove -y cmake
@@ -29,7 +29,7 @@ before_script:
 script: python setup.py test 
 deploy:
   provider: pypi
-  server: https://testpypi.python.org/pypi
+  server: https://test.pypi.org/legacy/
   user: "thegecko"
   password:
-    secure: "Lv25Fqu0ESutC3Pm5KmM8MiDyStlKcQY+o9kWKFrfmiSh6SDj5g3MxLkBp7GifNGj7PqqikoS3vraL+0Cd2edYjKkGTi+8j9Ax/1WO4BpIO8PVw+nyL+mhiKHNBaHNaG2oA8K56i82qqaA7xGy5doZyyo11cT+6X/qPDCW8ZZCw="
+    secure: "AUJKU0jjpz8BO5yOvtbRr1assvLyUQxIkZ8Z9zqg0iE1eTO2CuPVuPvfgkbuSBnqwtHOkMVtvHR+Xq1QZUf446wyOENo1NzlLpB1xPPzdw4M1hYk7R4xztOHoopLnFk09pJ6KkqMi3sdGTPfOhjRJ6gu/S8+bdADg8gfZHGgZEY="

@@ -29,7 +29,7 @@ Test_Module_JSON = '''{
   ],
   "dependencies": {
     "testing-dummy": "git@github.com:yottatest/testing-dummy.git",
-    "other-testing-dummy": "git@github.com:yottatest/other-testing-dummy.git#0.0.4"
+    "other-testing-dummy": "git@github.com:yottatest/other-testing-dummy.git#0.0.5"
   }
 }
 '''
