@@ -30,6 +30,7 @@ script: python setup.py test
 deploy:
   provider: pypi
   server: https://test.pypi.org/legacy/
+  skip_existing: true
   user: "thegecko"
   password:
     secure: "AUJKU0jjpz8BO5yOvtbRr1assvLyUQxIkZ8Z9zqg0iE1eTO2CuPVuPvfgkbuSBnqwtHOkMVtvHR+Xq1QZUf446wyOENo1NzlLpB1xPPzdw4M1hYk7R4xztOHoopLnFk09pJ6KkqMi3sdGTPfOhjRJ6gu/S8+bdADg8gfZHGgZEY="
