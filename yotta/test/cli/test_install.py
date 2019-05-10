@@ -19,7 +19,7 @@ from yotta.lib import settings
 
 
 Test_Name = 'testing-dummy'
-Test_Github_Name = "monty-bot/github-access-testing"
+Test_Github_Name = "yottatest/github-access-testing"
 Test_Target = "x86-osx-native,*"
 
 Test_Module_JSON = '''{
@@ -45,7 +45,7 @@ Test_Module_JSON = '''{
   },
   "targetDependencies": {
     "x86-osx-native": {
-        "other-testing-dummy": "git@github.com:monty-bot/other-testing-dummy.git#0.0.4"
+        "other-testing-dummy": "git@github.com:yottatest/other-testing-dummy.git#0.0.4"
     }
   },
   "testDependencies": {

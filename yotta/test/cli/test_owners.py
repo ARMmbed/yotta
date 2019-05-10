@@ -20,7 +20,7 @@ Test_Module_JSON = '''{
   "version": "0.0.2",
   "description": "Git Access Testing",
   "author": "autopulated",
-  "homepage": "https://github.com/monty-bot/git-access-testing",
+  "homepage": "https://github.com/yottatest/git-access-testing",
   "licenses": [
     {
       "url": "about:blank",
@@ -28,8 +28,8 @@ Test_Module_JSON = '''{
     }
   ],
   "dependencies": {
-    "testing-dummy": "git@github.com:monty-bot/testing-dummy.git",
-    "other-testing-dummy": "git@github.com:monty-bot/other-testing-dummy.git#0.0.4"
+    "testing-dummy": "git@github.com:yottatest/testing-dummy.git",
+    "other-testing-dummy": "git@github.com:yottatest/other-testing-dummy.git#0.0.4"
   }
 }
 '''

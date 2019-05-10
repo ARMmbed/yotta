@@ -41,7 +41,7 @@ Private_Module_JSON = '''{
   },
   "targetDependencies": {
     "x86-osx-native": {
-        "other-testing-dummy": "git@github.com:monty-bot/other-testing-dummy.git#0.0.4"
+        "other-testing-dummy": "git@github.com:yottatest/other-testing-dummy.git#0.0.4"
     }
   }
 }
