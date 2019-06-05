@@ -12,7 +12,7 @@ addons:
    - gcc-4.8
    - g++-4.8
 env:
-  - CC=gcc-4.8 CXX=g++-4.8 PYTHONIOENCODING=UTF-8 YOTTA_GITHUB_AUTHTOKEN=112860445f1befd1d7f8bb1187428761ca5aa834
+  - CC=gcc-4.8 CXX=g++-4.8 PYTHONIOENCODING=UTF-8
 install:
   # install a newer version of CMake:
   - sudo apt-get remove -y cmake
