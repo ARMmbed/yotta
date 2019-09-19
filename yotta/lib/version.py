@@ -92,6 +92,9 @@ class Version(object):
         self.version.prerelease = None
         self.version.build = None
 
+    def truncate(self, level):
+        return self.version.truncate(level)
+
     def __str__(self):
         return str(self.version)
 
