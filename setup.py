@@ -59,7 +59,7 @@ setup(
         'colorama>=0.3,<0.4',
         'hgapi>=1.7,<2',
         'Jinja2>=2.7.0,<3',
-        'cryptography>=2.1.4,<=2.3',
+        'cryptography>=2.8,<3',
         'PyJWT>=1.0,<2.0',
         'pathlib>=1.0.1,<1.1',
         'jsonschema>=2.4.0,<3.0',
