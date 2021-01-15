@@ -1,6 +1,8 @@
+## Deprecation note!
+
+**Please note: This repository is deprecated and it is no longer actively maintained**.
+
 ## yotta: Build Software with Reusable Components
-[![Build Status](https://travis-ci.org/ARMmbed/yotta.svg)](https://travis-ci.org/ARMmbed/yotta)
-[![Build Status](https://circleci.com/gh/ARMmbed/yotta.svg?style=shield)](https://circleci.com/gh/ARMmbed/yotta)
 
 yotta is a tool from [ARM mbed](https://mbed.org), to make it easier to build
 better software with C++ and C by re-using modules. Publish your own modules to
